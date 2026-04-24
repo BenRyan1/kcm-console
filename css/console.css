@@ -1,0 +1,301 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   KCM CONSOLE — STYLESHEET
+   Compliant with KCM Graphics Standards (per Ben's master spec).
+   Dark theme only. Teal/gold/purple/coral palette. Cinzel + Montserrat.
+   ───────────────────────────────────────────────────────────────────────── */
+
+:root {
+  /* ── KCM Canonical Tokens ──────────────────────────────────────────── */
+  --bg-deep:          #0a0a15;
+  --bg-panel:         #12121f;
+  --bg-elevated:      #1a1a2a;
+
+  --primary-teal:     #008080;
+  --primary-teal-lt:  #00c0c0;
+  --primary-gold:     #F4D03F;
+  --primary-purple:   #8B6BA3;
+  --primary-coral:    #CF7A5A;
+
+  --text-primary:     #e8e8f8;
+  --text-secondary:   #b0b0cc;
+  --text-muted:       #7878a0;
+
+  --border-teal:      rgba(0, 128, 128, 0.2);
+  --border-teal-br:   rgba(0, 128, 128, 0.5);
+
+  /* ── 12-Color Chromatic Spectrum™ ─────────────────────────────────── */
+  --pc-C:             #FFFF00;
+  --pc-Cs:            #FFC400;
+  --pc-D:             #FF8000;
+  --pc-Ds:            #FF4000;
+  --pc-E:             #FF0000;
+  --pc-F:             #C4007F;
+  --pc-Fs:            #8000FF;
+  --pc-G:             #4000FF;
+  --pc-Gs:            #0000FF;
+  --pc-A:             #007FFF;
+  --pc-As:            #00FF80;
+  --pc-B:             #80FF00;
+
+  /* ── Typography ───────────────────────────────────────────────────── */
+  --font-display:     'Cinzel', 'Georgia', serif;
+  --font-body:        'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  /* ── Scale ────────────────────────────────────────────────────────── */
+  --space-xs:         0.5rem;
+  --space-sm:         1rem;
+  --space-md:         1.5rem;
+  --space-lg:         2.5rem;
+  --space-xl:         4rem;
+
+  --radius-sm:        4px;
+  --radius-md:        8px;
+  --radius-lg:        12px;
+}
+
+/* ─── Reset ─────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--text-primary);
+  background: var(--bg-deep);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--primary-teal-lt);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+a:hover, a:focus { color: var(--primary-gold); text-decoration: underline; }
+a:focus-visible { outline: 2px solid var(--primary-gold); outline-offset: 3px; }
+
+/* ─── Header ────────────────────────────────────────────────────────── */
+.kcm-header {
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border-teal);
+  padding: var(--space-md) 0;
+}
+.kcm-header__inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--space-md);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+}
+.kcm-header__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+.kcm-header__mark {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  /* Rotated -15° (CCW) so the edge between B and C sits at 12 o'clock, matching main clock */
+  background: conic-gradient(
+    from -15deg,
+    var(--pc-C) 0deg 30deg,
+    var(--pc-Cs) 30deg 60deg,
+    var(--pc-D) 60deg 90deg,
+    var(--pc-Ds) 90deg 120deg,
+    var(--pc-E) 120deg 150deg,
+    var(--pc-F) 150deg 180deg,
+    var(--pc-Fs) 180deg 210deg,
+    var(--pc-G) 210deg 240deg,
+    var(--pc-Gs) 240deg 270deg,
+    var(--pc-A) 270deg 300deg,
+    var(--pc-As) 300deg 330deg,
+    var(--pc-B) 330deg 360deg
+  );
+  box-shadow: 0 0 0 2px var(--bg-deep), 0 0 0 3px var(--primary-teal);
+  flex-shrink: 0;
+}
+.kcm-header__title h1 {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0;
+  color: var(--text-primary);
+  letter-spacing: 0.02em;
+}
+.kcm-header__tagline {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin: 0;
+  letter-spacing: 0.05em;
+}
+.kcm-header__nav {
+  display: flex;
+  gap: var(--space-md);
+}
+.kcm-header__nav a {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+.kcm-header__nav a:hover { color: var(--primary-teal-lt); text-decoration: none; }
+
+/* ─── Main ──────────────────────────────────────────────────────────── */
+.kcm-main {
+  flex: 1;
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  padding: var(--space-lg) var(--space-md);
+}
+
+/* ─── Hero ──────────────────────────────────────────────────────────── */
+.kcm-hero {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr;
+  gap: var(--space-xl);
+  align-items: center;
+  padding: var(--space-lg) 0;
+  border-bottom: 1px solid var(--border-teal);
+}
+
+@media (max-width: 768px) {
+  .kcm-hero {
+    grid-template-columns: 1fr;
+    gap: var(--space-lg);
+    text-align: center;
+  }
+}
+
+.kcm-hero__chromatic {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.kcm-chromatic-clock {
+  width: 100%;
+  max-width: 360px;
+  height: auto;
+  filter: drop-shadow(0 0 20px rgba(0, 128, 128, 0.3));
+}
+
+.kcm-hero__heading {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 600;
+  margin: 0 0 var(--space-md);
+  color: var(--primary-gold);
+  letter-spacing: 0.02em;
+}
+.kcm-hero__lede {
+  font-size: 1.1rem;
+  line-height: 1.7;
+  color: var(--text-primary);
+  margin: 0 0 var(--space-md);
+}
+.kcm-hero__meta {
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: var(--space-md);
+}
+.kcm-hero__badge {
+  display: inline-block;
+  padding: 0.3rem 0.8rem;
+  background: var(--primary-teal);
+  color: var(--bg-deep);
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.kcm-hero__version {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+/* ─── Status section ────────────────────────────────────────────────── */
+.kcm-status {
+  padding: var(--space-lg) 0;
+}
+.kcm-status__title {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  color: var(--primary-teal-lt);
+  margin: 0 0 var(--space-md);
+  font-weight: 500;
+}
+.kcm-status__list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-md);
+}
+.kcm-status__list li {
+  padding: var(--space-md);
+  background: var(--bg-panel);
+  border: 1px solid var(--border-teal);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  line-height: 1.6;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+.kcm-status__list li:hover {
+  border-color: var(--border-teal-br);
+  transform: translateY(-2px);
+}
+.kcm-status__list strong {
+  color: var(--primary-gold);
+  display: block;
+  margin-bottom: var(--space-xs);
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 1.05rem;
+}
+
+/* ─── Footer ────────────────────────────────────────────────────────── */
+.kcm-footer {
+  background: var(--bg-panel);
+  border-top: 1px solid var(--border-teal);
+  padding: var(--space-md) 0;
+  margin-top: var(--space-xl);
+}
+.kcm-footer__inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--space-md);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+}
+.kcm-footer__copy, .kcm-footer__contact {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* ─── Accessibility ─────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  html { scroll-behavior: auto; }
+}

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KCM Console — Keys, Codes & Modes</title>
+  <meta name="description" content="The Keys, Codes & Modes Console — a visual operating system for music. Powered by the 12-Color Chromatic Spectrum™ and the FreeStyle® Musical Device patents." />
+  <meta name="author" content="Benjamin Ryan" />
+
+  <!-- Favicon (chromatic wheel, C centered at 12 o'clock) -->
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="KCM Console — Keys, Codes & Modes" />
+  <meta property="og:description" content="A visual operating system for music. Coming soon." />
+  <meta property="og:url" content="https://console.keyscodesandmodes.com/" />
+  <meta property="og:type" content="website" />
+
+  <!-- Canonical -->
+  <link rel="canonical" href="https://console.keyscodesandmodes.com/" />
+
+  <!-- KCM Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="css/console.css" />
+
+  <!-- Analytics — Session 12 wires these in -->
+</head>
+<body>
+  <header class="kcm-header" role="banner">
+    <div class="kcm-header__inner">
+      <div class="kcm-header__brand">
+        <span class="kcm-header__mark" aria-hidden="true"></span>
+        <div class="kcm-header__title">
+          <h1>KCM Console</h1>
+          <p class="kcm-header__tagline">A visual operating system for music</p>
+        </div>
+      </div>
+      <nav class="kcm-header__nav" aria-label="Primary">
+        <a href="https://keyscodesandmodes.com" rel="noopener">Main Site</a>
+        <a href="https://keyscodesandmodes.com/about.html" rel="noopener">About</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="kcm-main" id="main">
+    <section class="kcm-hero" aria-labelledby="hero-heading">
+      <div class="kcm-hero__chromatic" aria-hidden="true">
+        <!-- 12-Color Chromatic Spectrum™. C CENTERED at 12 o'clock, clockwise. -->
+        <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg" class="kcm-chromatic-clock">
+          <g id="chromatic-wedges"></g>
+          <circle cx="200" cy="200" r="60" fill="var(--bg-deep)" stroke="var(--primary-teal)" stroke-width="2" />
+          <text x="200" y="195" text-anchor="middle" fill="var(--text-primary)" font-family="Cinzel, serif" font-size="18" font-weight="600">KCM</text>
+          <text x="200" y="215" text-anchor="middle" fill="var(--text-secondary)" font-family="Montserrat, sans-serif" font-size="10" letter-spacing="2">CONSOLE</text>
+        </svg>
+      </div>
+
+      <div class="kcm-hero__text">
+        <h2 id="hero-heading" class="kcm-hero__heading">Coming Soon</h2>
+        <p class="kcm-hero__lede">
+          The KCM Console connects the Keys, Codes &amp; Modes application suite through a shared harmonic state. Change the root in one panel — watch every other panel follow.
+        </p>
+        <div class="kcm-hero__meta">
+          <span class="kcm-hero__badge">Build v0.1.1 · Session 1</span>
+          <span class="kcm-hero__version" id="build-version">Console shell deployed</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="kcm-status" aria-label="Build status">
+      <h3 class="kcm-status__title">What ships in v1</h3>
+      <ul class="kcm-status__list">
+        <li><strong>Cross-panel synchronization.</strong> Root, mode, scale, and active notes shared across panels in real time.</li>
+        <li><strong>.gcis file format.</strong> Save your harmonic state. Load it back later. Portable between sessions.</li>
+        <li><strong>Built on what already works.</strong> Music Theory Pro, Circle of Fifths, and CAGED Explorer join the Console as the first panels.</li>
+      </ul>
+    </section>
+  </main>
+
+  <footer class="kcm-footer" role="contentinfo">
+    <div class="kcm-footer__inner">
+      <p class="kcm-footer__copy">
+        © 2026 Keys, Codes &amp; Modes™. 12-Color Chromatic Spectrum™. FreeStyle® Musical Device (4 US patents).
+      </p>
+      <p class="kcm-footer__contact">
+        Benjamin Ryan · <a href="mailto:ben@keyscodesandmodes.com">ben@keyscodesandmodes.com</a>
+      </p>
+    </div>
+  </footer>
+
+  <script src="js/console.js" defer></script>
+</body>
+</html>
