@@ -1,3 +1,5 @@
+
+
 # KCM Console
 
 The Keys, Codes & Modes Console — a visual operating system for music.
@@ -111,5 +113,5 @@ Benjamin Ryan · ben@keyscodesandmodes.com · 805-886-4092
 Santa Barbara, California
 
 ---
-
+BBR
 *Built one Claude session at a time. See `CONSOLE_BUILD_STATE.md` for how.*
