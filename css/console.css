@@ -299,3 +299,111 @@ a:focus-visible { outline: 2px solid var(--primary-gold); outline-offset: 3px; }
   }
   html { scroll-behavior: auto; }
 }
+
+/* ─── Dev panel (Session 2, shown only when body.dev-mode) ──────────── */
+/* Gated so the public page is unaffected. Append ?dev=1 to URL to show. */
+.kcm-dev {
+  margin-top: var(--space-xl);
+  padding: var(--space-md);
+  background: var(--bg-panel);
+  border: 1px solid var(--border-teal);
+  border-radius: var(--radius-md);
+}
+.kcm-dev__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  padding-bottom: var(--space-sm);
+  border-bottom: 1px solid var(--border-teal);
+  margin-bottom: var(--space-md);
+  flex-wrap: wrap;
+}
+.kcm-dev__header h3 {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  color: var(--primary-teal-lt);
+  margin: 0;
+  font-weight: 500;
+}
+.kcm-dev__tag {
+  font-size: 0.7rem;
+  color: var(--primary-gold);
+  font-family: var(--font-body);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.kcm-dev__grid {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: var(--space-md);
+}
+@media (max-width: 768px) {
+  .kcm-dev__grid { grid-template-columns: 1fr; }
+}
+.kcm-dev__col h4 {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin: 0 0 var(--space-xs);
+  font-weight: 500;
+}
+.kcm-dev__readout {
+  background: var(--bg-deep);
+  border: 1px solid var(--border-teal);
+  border-radius: var(--radius-sm);
+  padding: var(--space-sm);
+  color: var(--primary-teal-lt);
+  font-family: 'Courier New', Consolas, monospace;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  margin: 0 0 var(--space-xs);
+  white-space: pre;
+  overflow-x: auto;
+}
+.kcm-dev__meta {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin: 0;
+  font-family: 'Courier New', Consolas, monospace;
+}
+.kcm-dev__group { margin-bottom: var(--space-md); }
+.kcm-dev__group label {
+  display: block;
+  font-size: 0.7rem;
+  color: var(--primary-gold);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: var(--space-xs);
+  font-family: var(--font-body);
+  font-weight: 500;
+}
+.kcm-dev__btns { display: flex; flex-wrap: wrap; gap: 6px; }
+.kcm-dev__btns button {
+  padding: 6px 10px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-teal);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+}
+.kcm-dev__btns button:hover {
+  background: var(--primary-teal);
+  color: var(--bg-deep);
+  border-color: var(--primary-teal);
+}
+.kcm-dev__btns button:focus-visible {
+  outline: 2px solid var(--primary-gold);
+  outline-offset: 2px;
+}
+.kcm-dev__btns button.is-active {
+  background: var(--primary-gold);
+  color: var(--bg-deep);
+  border-color: var(--primary-gold);
+}
