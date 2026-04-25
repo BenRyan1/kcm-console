@@ -64,10 +64,62 @@
           watch every other panel follow.
         </p>
         <div class="kcm-hero__meta">
-          <span class="kcm-hero__badge">v0.3.0 · Session 3</span>
-          <span class="kcm-hero__version" id="build-version">Build v0.3.0 · Session 3 · 2026-04-25</span>
+          <span class="kcm-hero__badge">v0.4.0 · Session 4</span>
+          <span class="kcm-hero__version" id="build-version">Build v0.4.0 · Session 4 · 2026-04-25</span>
         </div>
       </div>
+    </section>
+
+    </section>
+
+    <!-- ── Panel grid (Session 4+) ──────────────────────────────────────
+         Desktop: 2-column. Mobile: 1-column.
+         Panel cards added here as sessions progress.
+    ──────────────────────────────────────────────────────────────────── -->
+    <section class="kcm-panels" aria-label="Application panels">
+
+      <!-- Panel 1: Music Theory Pro (Live Integrated — 3D sphere view) -->
+      <div class="kcm-panel" id="panel-mtp-live">
+        <div class="kcm-panel__header">
+          <span class="kcm-panel__accent"></span>
+          <h3 class="kcm-panel__title">Music Theory Pro — 3D</h3>
+          <div class="kcm-panel__controls">
+            <button class="kcm-panel__btn" data-panel-action="minimize" aria-label="Minimize panel">−</button>
+          </div>
+        </div>
+        <div class="kcm-panel__body">
+          <iframe
+            id="iframe-mtp-live"
+            class="kcm-panel__iframe"
+            src="music-theory-pro-live-integrated.html"
+            title="Music Theory Pro 3D"
+            allow="autoplay; midi"
+            loading="lazy"
+          ></iframe>
+        </div>
+      </div>
+
+      <!-- Panel 2: Music Theory Pro (Original — chromatic circle view) -->
+      <div class="kcm-panel" id="panel-mtp">
+        <div class="kcm-panel__header">
+          <span class="kcm-panel__accent" style="background:var(--primary-gold);"></span>
+          <h3 class="kcm-panel__title">Music Theory Pro — Classic</h3>
+          <div class="kcm-panel__controls">
+            <button class="kcm-panel__btn" data-panel-action="minimize" aria-label="Minimize panel">−</button>
+          </div>
+        </div>
+        <div class="kcm-panel__body">
+          <iframe
+            id="iframe-mtp"
+            class="kcm-panel__iframe"
+            src="music-theory-pro.html"
+            title="Music Theory Pro Classic"
+            allow="autoplay; midi"
+            loading="lazy"
+          ></iframe>
+        </div>
+      </div>
+
     </section>
 
     <section class="kcm-status" aria-label="Build status">

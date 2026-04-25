@@ -41,7 +41,8 @@
     'http://localhost:8080',
     'http://127.0.0.1',
     'http://127.0.0.1:3000',
-    'http://127.0.0.1:8080'
+    'http://127.0.0.1:8080',
+    'null'   // srcdoc iframes report origin as string 'null' — dev harness only
   ];
   // ──────────────────────────────────────────────────────────────────────
 
@@ -157,6 +158,40 @@
     console.error('[KCM.bridge] KCM.bus not found — load console.js before bridge.js.');
   }
 
+  // ── Panel registration (Session 4+) ─────────────────────────────────
+  // Registers real app iframes with the bridge on load.
+  // Wires minimize toggle on panel header buttons.
+  function initPanels() {
+    // Music Theory Pro — 3D (live-integrated)
+    var mtpLiveIframe = document.getElementById('iframe-mtp-live');
+    if (mtpLiveIframe) {
+      mtpLiveIframe.addEventListener('load', function () {
+        bridge.register(mtpLiveIframe);
+        console.log('[KCM.bridge] Music Theory Pro 3D panel registered.');
+      });
+    }
+
+    // Music Theory Pro — Classic (original)
+    var mtpIframe = document.getElementById('iframe-mtp');
+    if (mtpIframe) {
+      mtpIframe.addEventListener('load', function () {
+        bridge.register(mtpIframe);
+        console.log('[KCM.bridge] Music Theory Pro Classic panel registered.');
+      });
+    }
+
+    // Minimize buttons (stub — toggles .is-minimized on the panel card)
+    document.querySelectorAll('[data-panel-action="minimize"]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var panel = btn.closest('.kcm-panel');
+        if (!panel) return;
+        var minimized = panel.classList.toggle('is-minimized');
+        btn.textContent = minimized ? '+' : '−';
+        btn.setAttribute('aria-label', minimized ? 'Restore panel' : 'Minimize panel');
+      });
+    });
+  }
+
   // ── Bridge-test harness (gated by ?bridge-test=1) ───────────────────
   function isBridgeTestMode() {
     try {
@@ -226,8 +261,12 @@
 
   // ── Init ─────────────────────────────────────────────────────────────
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', mountBridgeTestHarness);
+    document.addEventListener('DOMContentLoaded', function () {
+      initPanels();
+      mountBridgeTestHarness();
+    });
   } else {
+    initPanels();
     mountBridgeTestHarness();
   }
 
