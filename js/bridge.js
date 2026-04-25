@@ -162,21 +162,12 @@
   // Registers real app iframes with the bridge on load.
   // Wires minimize toggle on panel header buttons.
   function initPanels() {
-    // Music Theory Pro — 3D (live-integrated)
-    var mtpLiveIframe = document.getElementById('iframe-mtp-live');
-    if (mtpLiveIframe) {
-      mtpLiveIframe.addEventListener('load', function () {
-        bridge.register(mtpLiveIframe);
-        console.log('[KCM.bridge] Music Theory Pro 3D panel registered.');
-      });
-    }
-
-    // Music Theory Pro — Classic (original)
+    // Music Theory Pro (Classic)
     var mtpIframe = document.getElementById('iframe-mtp');
     if (mtpIframe) {
       mtpIframe.addEventListener('load', function () {
         bridge.register(mtpIframe);
-        console.log('[KCM.bridge] Music Theory Pro Classic panel registered.');
+        console.log('[KCM.bridge] Music Theory Pro panel registered.');
       });
     }
 
