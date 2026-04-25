@@ -462,3 +462,85 @@ body.bridge-test-mode #bridge-test-panel {
   background: var(--bg-deep);
   display: block;
 }
+
+/* ─── Panel grid (Session 4+) ───────────────────────────────────────────── */
+/* Panels are full-width, stacked vertically — each app needs room to breathe */
+.kcm-panels {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  margin: var(--space-lg) 0;
+}
+
+.kcm-panel {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-teal);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: border-color 0.2s ease;
+  width: 100%;
+}
+.kcm-panel:hover { border-color: var(--border-teal-br); }
+
+.kcm-panel__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 0.6rem var(--space-sm);
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--border-teal);
+  flex-shrink: 0;
+}
+.kcm-panel__accent {
+  width: 3px;
+  height: 1.2rem;
+  background: var(--primary-teal);
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+.kcm-panel__title {
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--primary-teal-lt);
+  margin: 0;
+  flex: 1;
+  letter-spacing: 0.04em;
+}
+.kcm-panel__controls { display: flex; gap: 4px; }
+.kcm-panel__btn {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-deep);
+  border: 1px solid var(--border-teal);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+.kcm-panel__btn:hover { background: var(--primary-teal); color: var(--bg-deep); }
+.kcm-panel__btn:focus-visible { outline: 2px solid var(--primary-gold); outline-offset: 2px; }
+
+.kcm-panel__body {
+  flex: 1;
+  overflow: hidden;
+}
+.kcm-panel.is-minimized .kcm-panel__body {
+  height: 0;
+  overflow: hidden;
+}
+
+.kcm-panel__iframe {
+  width: 100%;
+  height: 780px;
+  border: none;
+  display: block;
+  background: var(--bg-deep);
+}
