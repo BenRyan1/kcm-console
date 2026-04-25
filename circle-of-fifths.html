@@ -507,7 +507,22 @@
 
             window.addEventListener('message', function(ev) {
                 try {
-                    if (!ev.data || ev.data.type !== 'KCM_STATE') return;
+                    if (!ev.data) return;
+
+                    // ── STOP ALL ─────────────────────────────────────
+                    if (ev.data.type === 'KCM_STOP') {
+                        if (audioCtxRef && audioCtxRef.current) {
+                            audioCtxRef.current.suspend();
+                        }
+                        if (window._kcmCoF) {
+                            window._kcmCoF.setActiveNote(null);
+                            window._kcmCoF.setActiveType(null);
+                        }
+                        console.log('[KCM→CoF] stop received.');
+                        return;
+                    }
+
+                    if (ev.data.type !== 'KCM_STATE') return;
                     var payload = ev.data.payload;
                     if (!payload || !payload.root) return;
 

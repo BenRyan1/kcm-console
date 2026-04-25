@@ -189,7 +189,19 @@
       });
     }
 
-    // Minimize buttons (stub — toggles .is-minimized on the panel card)
+    // ── Stop All button ──────────────────────────────────────────────
+    var stopBtn = document.getElementById('kcm-stop-all');
+    if (stopBtn) {
+      stopBtn.addEventListener('click', function () {
+        var msg = { type: 'KCM_STOP' };
+        iframes.forEach(function (iframe) {
+          try {
+            if (iframe.contentWindow) iframe.contentWindow.postMessage(msg, '*');
+          } catch (e) { /* silent */ }
+        });
+        console.log('[KCM.bridge] KCM_STOP broadcast to', iframes.size, 'panels.');
+      });
+    }
     document.querySelectorAll('[data-panel-action="minimize"]').forEach(function (btn) {
       btn.addEventListener('click', function () {
         var panel = btn.closest('.kcm-panel');

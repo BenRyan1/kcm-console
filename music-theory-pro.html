@@ -2429,7 +2429,16 @@ window.addEventListener('unhandledrejection', function(event) {
 
             window.addEventListener('message', function(ev) {
                 try {
-                    if (!ev.data || ev.data.type !== 'KCM_STATE') return;
+                    if (!ev.data) return;
+
+                    // ── STOP ALL ─────────────────────────────────────
+                    if (ev.data.type === 'KCM_STOP') {
+                        if (audioContext) audioContext.suspend();
+                        console.log('[KCM→MTP] stop received.');
+                        return;
+                    }
+
+                    if (ev.data.type !== 'KCM_STATE') return;
                     var payload = ev.data.payload;
                     if (!payload) return;
 

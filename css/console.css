@@ -544,3 +544,26 @@ body.bridge-test-mode #bridge-test-panel {
   display: block;
   background: var(--bg-deep);
 }
+
+/* ─── Stop All button (always visible in header) ────────────────────────── */
+.kcm-stop-btn {
+  padding: 0.4rem 1rem;
+  background: transparent;
+  border: 1px solid var(--primary-coral);
+  border-radius: var(--radius-sm);
+  color: var(--primary-coral);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: 0.05em;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.kcm-stop-btn:hover {
+  background: var(--primary-coral);
+  color: var(--bg-deep);
+}
+.kcm-stop-btn:focus-visible {
+  outline: 2px solid var(--primary-gold);
+  outline-offset: 3px;
+}
