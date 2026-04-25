@@ -274,6 +274,18 @@
                 return audioCtxRef.current;
             }
 
+            // Publish root change to Console bus → all panels follow
+            const postToConsole = (patch) => {
+                try { window.parent.postMessage({ type: 'KCM_STATE_PATCH', payload: patch }, '*'); }
+                catch(e) { /* silent if no parent */ }
+            };
+
+            // CoF uses flat notation; KCM bus uses sharps — convert for bus
+            const FLAT_TO_SHARP = {
+                'Db':'C#','Eb':'D#','Gb':'F#','Ab':'G#','Bb':'A#'
+            };
+            const toSharp = note => FLAT_TO_SHARP[note] || note;
+
             const getTriad      = root => { const c=['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B']; const i=c.indexOf(root); return [root, c[(i+4)%12], c[(i+7)%12]]; };
             const getMinorTriad = root => { const c=['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B']; const i=c.indexOf(root); return [root, c[(i+3)%12], c[(i+7)%12]]; };
 
@@ -285,6 +297,11 @@
                 setActiveNote(note); setActiveType(isMinor ? 'inner' : 'outer');
                 playNotes(ctx, triad, 4, 0.9);
                 if (typeof trackEvent === 'function') trackEvent('note_click', { event_category:'circle_of_fifths', event_label: note + (isMinor?'_minor':'_major') });
+                // Publish to Console bus so MTP and MSP follow
+                postToConsole({
+                    root: toSharp(note),
+                    mode: isMinor ? 'aeolian' : 'ionian'
+                });
                 await new Promise(r => setTimeout(r, 700));
                 setActiveNote(null); setActiveType(null);
                 isMinor ? setIsPlayingInner(false) : setIsPlayingOuter(false);

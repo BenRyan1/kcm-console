@@ -1410,11 +1410,21 @@
         });
         
         /* ==================== EVENT LISTENERS ==================== */
+
+        // Helper: post a KCM_STATE_PATCH to the Console host when user
+        // changes root or mode directly inside this panel.
+        function postToConsole(patch) {
+            try {
+                window.parent.postMessage({ type: 'KCM_STATE_PATCH', payload: patch }, '*');
+            } catch(e) { /* silent if no parent */ }
+        }
         
         document.getElementById("tonicSelect").addEventListener("change", (e) => {
             currentTonic = e.target.value;
             renderModes();
             renderPlayZone();
+            // Publish new root to the Console bus → all panels follow
+            postToConsole({ root: currentTonic });
         });
         
         document.getElementById("speedSelect").addEventListener("change", (e) => {
