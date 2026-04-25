@@ -171,6 +171,15 @@
       });
     }
 
+    // Circle of Fifths
+    var cofIframe = document.getElementById('iframe-cof');
+    if (cofIframe) {
+      cofIframe.addEventListener('load', function () {
+        bridge.register(cofIframe);
+        console.log('[KCM.bridge] Circle of Fifths panel registered.');
+      });
+    }
+
     // Minimize buttons (stub — toggles .is-minimized on the panel card)
     document.querySelectorAll('[data-panel-action="minimize"]').forEach(function (btn) {
       btn.addEventListener('click', function () {
