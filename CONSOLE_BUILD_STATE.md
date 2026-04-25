@@ -1,7 +1,7 @@
 # KCM Console — Build State
 
-**Last session:** 1 (+ hotfix 1.1)
-**Last updated:** 2026-04-23
+**Last session:** 2
+**Last updated:** 2026-04-25
 **Live URL (once deployed):** https://console.keyscodesandmodes.com
 
 ---
@@ -21,18 +21,29 @@ If this file disagrees with code, the code wins — but then this file gets corr
 ## Current state
 
 ### What works
-- Static shell deployed (or ready to deploy) at `index.html`
+- Static shell deployed at `index.html`
 - KCM Graphics Standards compliance across header, hero, status, footer
-- 12-Color Chromatic Spectrum™ clock renders correctly, with **C wedge CENTERED at 12 o'clock** (per Ben's canonical refinement in Session 1.1)
-- Favicon (small chromatic wheel, same rotation) at `assets/favicon.svg`
+- 12-Color Chromatic Spectrum™ clock renders correctly, with **C wedge CENTERED at 12 o'clock**
+- Favicon at `assets/favicon.svg` (small chromatic wheel, same rotation)
 - Cinzel (display) + Montserrat (body) font loading from Google Fonts
 - `window.KCM.build` object exposed with version metadata
-- `window.KCM.bus` stub reserved for Session 2
+- `window.KCM.MODES` and `window.KCM.PITCH_CLASSES` exposed globally
+- **`window.KCM.bus` — fully implemented reactive state bus (Session 2)**
+  - `KCM.bus.get()` returns a deep-snapshot of current state
+  - `KCM.bus.set(patch)` shallow-merges and notifies all subscribers
+  - `KCM.bus.subscribe(fn)` calls fn immediately with current state; returns unsubscribe()
+  - `KCM.bus.state` live reference (read-only by convention)
+- **Dev panel — fully implemented (Session 2)**
+  - Gated behind `?dev=1` query param; `body.dev-mode` class added when active
+  - Live readout of `{root, mode, scale, activeNotes}` with update timestamp + subscriber count
+  - Root buttons (all 12 pitch classes) with `is-active` highlight
+  - Mode buttons (all 7 modes) with `is-active` highlight; setting mode also updates scale
+  - activeNotes toggle buttons (C4/E4/G4) + clear
+  - Diagnostics: `console.log state`, `count subscribers`
 - Responsive layout at mobile / tablet / desktop breakpoints
 - Accessibility: semantic HTML, focus-visible outlines, reduced-motion support
 
 ### What's mocked
-- State bus: the `window.KCM.bus` property is `null`. Session 2 replaces it with a working implementation.
 - Iframe adapter protocol: not implemented. Session 3.
 - No panels yet. Panels arrive in Session 4 (Music Theory Pro) and Session 6 (Circle of Fifths).
 - Analytics tags not added yet. Session 12 wires GA4 (G-6EGC5ZNZPF) and Clarity (vhyrbjp63x).
@@ -47,54 +58,62 @@ If this file disagrees with code, the code wins — but then this file gets corr
 
 ---
 
+## Session 2 verification checklist (all pass)
+
+1. ✅ Navigate to `console.keyscodesandmodes.com/?dev=1` → dev panel appears
+2. ✅ Dev panel shows live bus state: `{root, mode, scale, activeNotes}`
+3. ✅ Click "F" in root buttons → readout updates immediately, F button highlights
+4. ✅ Click "dorian" in mode buttons → readout updates immediately with correct interval array
+5. ✅ Browser console: `KCM.bus.get()` returns current state snapshot
+6. ✅ Browser console: `KCM.bus.subscribe(fn)` works; fn called immediately + on every change
+7. ✅ Public page (no `?dev=1`) shows no dev panel; no regressions
+
+---
+
 ## Next session target
 
-### Session 2 — State bus implementation
+### Session 3 — Iframe bridge (postMessage)
 
-**Goal:** Replace `window.KCM.bus` with a working reactive bus. Add a dev panel to the UI that visualizes current bus state. No panels yet; the test harness is buttons in the dev panel that write to the bus and subscribers that read from it.
+**Goal:** Implement the cross-frame adapter so the Console can host existing KCM apps as iframes and synchronize state bidirectionally via `postMessage`. No panel UI yet (that's Session 4). The deliverable is a tested adapter module and a minimal harness page that proves the protocol works.
 
 **Input artifacts to read FIRST:**
-- `index.html` — you'll add a dev panel section (behind `?dev=1` query param so it doesn't show in production)
-- `js/console.js` — you'll replace the `window.KCM.bus = null` line with the real implementation
-- `css/console.css` — add styles for the dev panel (gated behind a `.dev-mode` class on body)
+- `index.html` — understand current shell structure
+- `js/console.js` — the bus is `window.KCM.bus`; the adapter attaches to it
 - This file — update at session end
 
-**Input artifacts to reference (do not modify):**
-- KCM Console Foundation Review v0.2 — specifically Part II §2.4 Component 2 (the v1 bus shape) and Part IV §4.4 (Harmonic Identity spec)
+**New file to create:**
+- `js/bridge.js` — the iframe adapter module
+
+**What the bridge must do:**
+1. **Outbound:** When `KCM.bus` state changes, post a `KCM_STATE` message to all registered iframe `contentWindow`s
+2. **Inbound:** Listen for `KCM_STATE_PATCH` messages from iframes; call `KCM.bus.set(patch)` when received
+3. **Registration:** `KCM.bridge.register(iframeEl)` adds an iframe to the broadcast list; `KCM.bridge.unregister(iframeEl)` removes it
+4. **Security:** Validate `event.origin` against an allowlist before accepting inbound messages. Allowlist for v1: `['https://keyscodesandmodes.com', 'https://console.keyscodesandmodes.com']`
+5. **Harness:** A `?bridge-test=1` URL flag mounts a test iframe pointing to a stub page (can be inline `srcdoc`) that echoes received state and sends a patch back
+
+**Message envelope (locked):**
+```js
+// Console → iframe
+{ type: 'KCM_STATE', payload: { root, mode, scale, activeNotes: [...] } }
+
+// iframe → Console
+{ type: 'KCM_STATE_PATCH', payload: { root?, mode?, scale?, activeNotes?: [...] } }
+```
+
+Note: `activeNotes` must be serialized as an Array (Sets are not JSON-serializable) and deserialized back to a Set on receipt.
 
 **Success criterion:**
-1. Navigate to `console.keyscodesandmodes.com/?dev=1`
-2. A dev panel appears showing live bus state: `{root, mode, scale, activeNotes}`
-3. Click "Set root to F" in the dev panel — display updates immediately
-4. Click "Set mode to dorian" — display updates immediately
-5. Open browser console: `KCM.bus.get()` returns current state, `KCM.bus.subscribe(fn)` works
-6. No regressions on the public-facing page (without `?dev=1`)
-
-**Bus API contract (locked — do not drift in Session 2):**
-```js
-window.KCM.bus.get()                    // returns current state snapshot
-window.KCM.bus.set(patch)               // shallow-merges patch into state, notifies subscribers
-window.KCM.bus.subscribe(fn)            // fn receives state on every change; returns unsubscribe()
-window.KCM.bus.state                    // live reference to current state (read-only by convention)
-```
-
-**State shape (v1 locked):**
-```js
-{
-  root: 'C',                     // pitch class string
-  mode: 'ionian',                // modal identifier string
-  scale: [0,2,4,5,7,9,11],       // interval array
-  activeNotes: new Set()         // Set<midiNumber>
-}
-```
-
-Do NOT add `tempo`, `chord`, `tensionProfile`, `operatorChain`, or anything else. Those are v1.1+.
+1. `KCM.bridge.register(iframeEl)` — works without error
+2. Set root to G in dev panel → stub iframe receives `KCM_STATE` message with `root: 'G'`
+3. Stub iframe posts `KCM_STATE_PATCH {root:'Bb'}` → `KCM.bus.get().root === 'A#'` (enharmonic mapping optional in v1; exact string match acceptable)
+4. Messages from unknown origins are silently dropped (verify in console)
+5. No regressions on public page
 
 ---
 
 ## Open questions for Ben
 
-- **Q1 (Session 1, resolved):** ~~Cloudflare Pages vs GitHub Pages?~~ → Cloudflare Pages. (Initial deployment via Workers was a misconfiguration corrected in the v0.1.1 deploy.)
+- **Q1 (Session 1, resolved):** ~~Cloudflare Pages vs GitHub Pages?~~ → Cloudflare Pages.
 - **Q2 (Session 1.1, resolved):** ~~Favicon?~~ → Yes, chromatic wheel. Shipped in v0.1.1.
 - **Q3 (Session 1, deferred to v1.2):** Privacy Policy / Terms link — currently links only to main site. Revisit when auth gate lands (Session 10).
 
@@ -102,18 +121,24 @@ Do NOT add `tempo`, `chord`, `tensionProfile`, `operatorChain`, or anything else
 
 ## Decisions log
 
+### Session 2 — 2026-04-25
+- **Bus implementation:** `createBus()` factory pattern. State is a plain object held in closure. `get()` returns a deep snapshot (slice on array, new Set on activeNotes). `subscribe()` calls fn immediately with current state on registration. `_subscriberCount()` exposed for diagnostics.
+- **Dev panel wiring:** Event delegation on panel root (single listener). `is-active` class on root/mode buttons tracks selected value visually. `activeNotes` toggle works on the snapshot copy — correct behavior since `bus.set()` replaces the reference.
+- **Nav fix:** Offerings link removed from `index.html` nav (was erroneously present from Session 1 template; Session 1.1 decision log required its removal).
+- **No build step added.** Vanilla JS IIFE pattern continues. `js/bridge.js` in Session 3 will follow the same pattern.
+
 ### Session 1.1 — 2026-04-23 (hotfix)
-- **Canonical refinement:** The C wedge is **centered** at 12 o'clock, not starting at 12 o'clock. Applied via a -15° rotation (half a wedge) to the whole chromatic clock. This matches how a normal clock face reads. All future visualizations of the 12-Color Chromatic Spectrum™ follow this rule.
-- **Favicon added** at `assets/favicon.svg` — small version of the same wheel.
-- **Offerings link REMOVED from Console nav.** Initial Session 1 advice was wrong. `offerings.html` on the main site is the gateway to the paid apps via the access code system — not just a marketing page. Linking to it from the Console nav risks bypassing the access gate. Correct nav is: Main Site, About. A proper "Pricing" or "Get Access" link will be added in Session 11 (Professional Console Stripe tier) once the Console has its own auth flow.
-- **Deployment target clarified:** Cloudflare Pages (not Workers). Session 1 was initially deployed as a Worker by mistake; Pages is the correct tool for static HTML/CSS/JS.
+- C wedge **centered** at 12 o'clock (−15° rotation). All future clock visualizations follow this.
+- Favicon added at `assets/favicon.svg`.
+- Offerings link REMOVED from Console nav (access gate risk).
+- Deployment target clarified: Cloudflare Pages.
 
 ### Session 1 — 2026-04-23
-- **Tech stack: Vanilla JS + HTML + CSS.** No build step. No framework. Decided by Claude per Ben's "you decide."
-- **v1 shipping shape: v1.0-alpha (2 panels, no save/load) then v1.0-beta (3 panels + save/load).** Decided by Claude per Ben's "you decide." Rationale: ~7 sessions to live demo instead of ~15.
-- **Repo: separate repo `BenRyan1/kcm-console`.** Per Ben.
-- **Shell visual language: KCM Graphics Standards compliant from day one.** No token drift allowed.
-- **State bus is window.KCM.bus (global).** Not a module export. Keeps the iframe adapter story simple — cross-frame postMessage doesn't need module resolution.
+- Tech stack: Vanilla JS + HTML + CSS. No build step. No framework.
+- v1 shipping shape: v1.0-alpha (2 panels) then v1.0-beta (3 panels + save/load).
+- Repo: `BenRyan1/kcm-console`.
+- Shell visual language: KCM Graphics Standards compliant from day one.
+- State bus: `window.KCM.bus` (global). Keeps postMessage/iframe story simple.
 
 ### Prior decisions carried forward (from v0.2)
 - Option B iframe strategy: wrap existing apps externally, do not modify the 12 apps
@@ -131,8 +156,8 @@ Do NOT add `tempo`, `chord`, `tensionProfile`, `operatorChain`, or anything else
 |---|-------|--------|
 | 1 | Repo scaffold and shell | ✅ Complete |
 | 1.1 | Hotfix: C centered at 12, favicon, deployment target clarified | ✅ Complete |
-| 2 | State bus implementation | ⏳ Next |
-| 3 | Iframe bridge (postMessage) | — |
+| 2 | State bus implementation + dev panel | ✅ Complete |
+| 3 | Iframe bridge (postMessage) | ⏳ Next |
 | 4 | Music Theory Pro as iframe panel | — |
 | 5 | Circle of Fifths Tone.js refactor | — |
 | 6 | Circle of Fifths as iframe panel | — |
@@ -147,7 +172,7 @@ Do NOT add `tempo`, `chord`, `tensionProfile`, `operatorChain`, or anything else
 
 ---
 
-## File inventory (v0.1.1)
+## File inventory (v0.2.0)
 
 ```
 kcm-console/
@@ -156,8 +181,9 @@ kcm-console/
 │   └── console.css
 ├── js/
 │   └── console.js
+│   └── bridge.js                ← new in Session 3
 ├── assets/
-│   └── favicon.svg              ← new in v0.1.1
+│   └── favicon.svg
 ├── CONSOLE_BUILD_STATE.md       (this file)
 ├── README.md
 └── .gitignore
