@@ -64,8 +64,8 @@
           watch every other panel follow.
         </p>
         <div class="kcm-hero__meta">
-          <span class="kcm-hero__badge">v0.2.0 · Session 2</span>
-          <span class="kcm-hero__version" id="build-version">Build v0.2.0 · Session 2· 2026-04-25</span>
+          <span class="kcm-hero__badge">v0.3.0 · Session 3</span>
+          <span class="kcm-hero__version" id="build-version">Build v0.3.0 · Session 3 · 2026-04-25</span>
         </div>
       </div>
     </section>
@@ -78,6 +78,44 @@
         <li><strong>Built on what already works.</strong> Music Theory Pro, Circle of Fifths, and CAGED Explorer join the Console as the first panels.</li>
       </ul>
     </section>
+
+    <!--
+      BRIDGE TEST HARNESS — Session 3
+      Visible only when URL has ?bridge-test=1 (body.bridge-test-mode set by bridge.js).
+      Has no user-facing function — keep gated or remove before launch.
+    -->
+    <section class="kcm-bridge-test" aria-label="Bridge test harness" id="bridge-test-panel">
+      <div class="kcm-bridge-test__header">
+        <h3>Bridge Test — postMessage Harness</h3>
+        <span class="kcm-dev__tag">Session 3 · ?bridge-test=1</span>
+      </div>
+      <div class="kcm-bridge-test__grid">
+
+        <div class="kcm-bridge-test__col">
+          <h4>Stub iframe (receives KCM_STATE)</h4>
+          <iframe
+            id="bridge-test-iframe"
+            class="kcm-bridge-test__iframe"
+            title="Bridge test stub"
+            sandbox="allow-scripts"
+            srcdoc="<!DOCTYPE html><html><head><meta charset='UTF-8'><style>body{margin:0;padding:12px;background:#0a0a15;color:#e8e8f8;font:13px/1.5 monospace;}h4{color:#00c0c0;font-family:serif;margin:0 0 8px;font-size:14px;}pre{background:#12121f;border:1px solid rgba(0,128,128,0.3);border-radius:4px;padding:10px;color:#00c0c0;font-size:12px;overflow-x:auto;white-space:pre-wrap;margin:0 0 8px;}.label{color:#F4D03F;font-size:11px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px;}button{padding:6px 12px;background:#1a1a2a;border:1px solid rgba(0,128,128,0.4);border-radius:4px;color:#b0b0cc;font:12px monospace;cursor:pointer;margin-right:6px;}button:hover{background:#008080;color:#0a0a15;}</style></head><body><h4>KCM Stub iframe</h4><div class='label'>Last received KCM_STATE</div><pre id='out'>waiting...</pre><div class='label'>Send patch to Console</div><button id='bf'>root &rarr; F</button><button id='bd'>mode &rarr; dorian</button><button id='bn'>toggle note 65</button><script>window.addEventListener('message',function(e){if(!e.data||e.data.type!=='KCM_STATE')return;document.getElementById('out').textContent=JSON.stringify(e.data.payload,null,2);});function send(p){window.parent.postMessage({type:'KCM_STATE_PATCH',payload:p},'*');}document.getElementById('bf').onclick=function(){send({root:'F'});};document.getElementById('bd').onclick=function(){send({mode:'dorian',scale:[0,2,3,5,7,9,10]});};var on=false;document.getElementById('bn').onclick=function(){on=!on;send({activeNotes:on?[65]:[]});};<\/script></body></html>"
+          ></iframe>
+        </div>
+
+        <div class="kcm-bridge-test__col">
+          <h4>Bridge diagnostics</h4>
+          <pre class="kcm-dev__readout" id="bridge-diag">initialising...</pre>
+          <div class="kcm-dev__btns" style="margin-top:8px;">
+            <button data-bridge-action="register">register iframe</button>
+            <button data-bridge-action="unregister">unregister iframe</button>
+            <button data-bridge-action="origins">log allowed origins</button>
+            <button data-bridge-action="count">log registered count</button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
   </main>
 
   <footer class="kcm-footer" role="contentinfo">
@@ -92,5 +130,6 @@
   </footer>
 
   <script src="js/console.js" defer></script>
+  <script src="js/bridge.js" defer></script>
 </body>
 </html>
