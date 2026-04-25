@@ -138,10 +138,10 @@
 
   // ── Build version stamp ──────────────────────────────────────────────
   const BUILD = {
-    version: '0.4.0',
-    session: 4,
+    version: '0.7.0',
+    session: 7,
     built:   '2026-04-25',
-    notes:   'MTP panels + bridge. Two MTP variants wired.'
+    notes:   '3 panels live: MTP + CoF + Modal Stencil. v1.0-alpha.'
   };
 
   function stampBuildVersion() {

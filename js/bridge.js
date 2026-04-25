@@ -180,6 +180,15 @@
       });
     }
 
+    // Modal Stencil Player
+    var mspIframe = document.getElementById('iframe-msp');
+    if (mspIframe) {
+      mspIframe.addEventListener('load', function () {
+        bridge.register(mspIframe);
+        console.log('[KCM.bridge] Modal Stencil Player panel registered.');
+      });
+    }
+
     // Minimize buttons (stub — toggles .is-minimized on the panel card)
     document.querySelectorAll('[data-panel-action="minimize"]').forEach(function (btn) {
       btn.addEventListener('click', function () {
