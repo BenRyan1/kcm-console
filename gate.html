@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KCM Console — Access</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #0a0a15;
+    --bg2:       #0f0f1e;
+    --teal:      #008080;
+    --teal-lt:   #00c0c0;
+    --gold:      #F4D03F;
+    --purple:    #8B6BA3;
+    --coral:     #CF7A5A;
+    --text-pri:  #e8e8f8;
+    --text-sec:  #b0b0cc;
+    --border:    rgba(0,128,128,0.2);
+
+    /* chromatic colors */
+    --C:  #FFFF00; --Cs: #FFC400; --D:  #FF8000; --Ds: #FF4000;
+    --E:  #FF0000; --F:  #C4007F; --Fs: #8000FF; --G:  #4000FF;
+    --Gs: #0000FF; --A:  #007FFF; --As: #00FF80; --B:  #80FF00;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--text-pri);
+    font-family: 'Montserrat', sans-serif;
+    overflow-x: hidden;
+  }
+
+  /* ── starfield ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      radial-gradient(1px 1px at 10% 20%, rgba(255,255,255,.18) 0%, transparent 100%),
+      radial-gradient(1px 1px at 30% 70%, rgba(255,255,255,.12) 0%, transparent 100%),
+      radial-gradient(1px 1px at 55% 15%, rgba(255,255,255,.15) 0%, transparent 100%),
+      radial-gradient(1px 1px at 75% 55%, rgba(255,255,255,.10) 0%, transparent 100%),
+      radial-gradient(1px 1px at 88% 30%, rgba(255,255,255,.14) 0%, transparent 100%),
+      radial-gradient(1px 1px at 20% 85%, rgba(255,255,255,.09) 0%, transparent 100%),
+      radial-gradient(1px 1px at 65% 80%, rgba(255,255,255,.11) 0%, transparent 100%),
+      radial-gradient(1px 1px at 42% 45%, rgba(0,192,192,.20) 0%, transparent 100%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── layout ── */
+  .page {
+    position: relative; z-index: 1;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── header ── */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.4rem 2.5rem;
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(6px);
+  }
+  .logo {
+    font-family: 'Cinzel', serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--teal-lt);
+    letter-spacing: .12em;
+    text-decoration: none;
+  }
+  .logo span { color: var(--gold); }
+  nav a {
+    color: var(--text-sec);
+    text-decoration: none;
+    font-size: .8rem;
+    font-weight: 500;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    margin-left: 2rem;
+    transition: color .2s;
+  }
+  nav a:hover { color: var(--teal-lt); }
+
+  /* ── hero ── */
+  .hero {
+    display: grid;
+    grid-template-columns: 1fr 420px;
+    gap: 3rem;
+    align-items: center;
+    padding: 4rem 2.5rem 3rem;
+    max-width: 1100px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  .hero-text h1 {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(2rem, 4vw, 3.2rem);
+    font-weight: 900;
+    line-height: 1.1;
+    color: var(--text-pri);
+    margin-bottom: .6rem;
+  }
+  .hero-text h1 em {
+    font-style: normal;
+    color: var(--teal-lt);
+  }
+  .hero-text .tagline {
+    font-size: 1rem;
+    color: var(--text-sec);
+    font-weight: 300;
+    letter-spacing: .04em;
+    margin-bottom: 1.8rem;
+    max-width: 460px;
+    line-height: 1.6;
+  }
+  .feature-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: .55rem;
+    margin-bottom: 2rem;
+  }
+  .feature-list li {
+    font-size: .88rem;
+    color: var(--text-sec);
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+  }
+  .feature-list li::before {
+    content: '';
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--teal);
+    flex-shrink: 0;
+  }
+
+  /* ── chromatic clock SVG ── */
+  .clock-wrap {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .clock-svg {
+    width: 380px;
+    height: 380px;
+    animation: spin-slow 60s linear infinite;
+    filter: drop-shadow(0 0 32px rgba(0,128,128,.35));
+  }
+  @keyframes spin-slow {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+  .clock-wrap:hover .clock-svg {
+    animation-play-state: paused;
+  }
+
+  /* ── pricing section ── */
+  .section-label {
+    font-family: 'Cinzel', serif;
+    font-size: .75rem;
+    font-weight: 600;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: var(--teal-lt);
+    text-align: center;
+    margin-bottom: .5rem;
+  }
+  .section-title {
+    font-family: 'Cinzel', serif;
+    font-size: 1.7rem;
+    font-weight: 700;
+    text-align: center;
+    color: var(--text-pri);
+    margin-bottom: 2.5rem;
+  }
+
+  .pricing {
+    padding: 3rem 2.5rem 4rem;
+    max-width: 1100px;
+    margin: 0 auto;
+    width: 100%;
+  }
+  .pricing-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.2rem;
+  }
+
+  .plan {
+    background: rgba(255,255,255,.03);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.8rem 1.5rem;
+    position: relative;
+    transition: border-color .25s, transform .25s;
+  }
+  .plan:hover {
+    border-color: rgba(0,192,192,.4);
+    transform: translateY(-3px);
+  }
+  .plan.featured {
+    border-color: var(--gold);
+    background: rgba(244,208,63,.04);
+  }
+  .plan.featured::before {
+    content: 'MOST POPULAR';
+    position: absolute;
+    top: -12px; left: 50%;
+    transform: translateX(-50%);
+    background: var(--gold);
+    color: #0a0a15;
+    font-size: .65rem;
+    font-weight: 700;
+    letter-spacing: .15em;
+    padding: 3px 12px;
+    border-radius: 20px;
+    font-family: 'Montserrat', sans-serif;
+  }
+  .plan-name {
+    font-family: 'Cinzel', serif;
+    font-size: .85rem;
+    font-weight: 600;
+    letter-spacing: .12em;
+    color: var(--teal-lt);
+    text-transform: uppercase;
+    margin-bottom: .5rem;
+  }
+  .plan-price {
+    font-family: 'Cinzel', serif;
+    font-size: 2.2rem;
+    font-weight: 900;
+    color: var(--text-pri);
+    line-height: 1;
+    margin-bottom: .2rem;
+  }
+  .plan-price sup { font-size: 1rem; vertical-align: top; padding-top: .4rem; }
+  .plan-cycle {
+    font-size: .75rem;
+    color: var(--text-sec);
+    margin-bottom: 1.2rem;
+  }
+  .plan-features {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    margin-bottom: 1.5rem;
+    min-height: 120px;
+  }
+  .plan-features li {
+    font-size: .8rem;
+    color: var(--text-sec);
+    display: flex;
+    align-items: flex-start;
+    gap: .5rem;
+  }
+  .plan-features li .check {
+    color: var(--teal);
+    font-size: .9rem;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .plan-features li .x {
+    color: #444466;
+    font-size: .9rem;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .btn-buy {
+    display: block;
+    width: 100%;
+    padding: .7rem 1rem;
+    border-radius: 8px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: .82rem;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    text-decoration: none;
+    text-align: center;
+    cursor: pointer;
+    border: none;
+    transition: opacity .2s, transform .15s;
+  }
+  .btn-buy:hover { opacity: .85; transform: translateY(-1px); }
+  .btn-buy.primary {
+    background: var(--teal);
+    color: #fff;
+  }
+  .btn-buy.outline {
+    background: transparent;
+    border: 1px solid var(--teal);
+    color: var(--teal-lt);
+  }
+  .btn-buy.gold {
+    background: var(--gold);
+    color: #0a0a15;
+  }
+
+  /* ── divider ── */
+  .divider {
+    max-width: 1100px;
+    margin: 0 auto;
+    width: 100%;
+    padding: 0 2.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 3rem;
+  }
+  .divider::before, .divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+  .divider span {
+    font-size: .75rem;
+    color: var(--text-sec);
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  /* ── access code section ── */
+  .code-section {
+    max-width: 520px;
+    margin: 0 auto 4rem;
+    padding: 0 2.5rem;
+    text-align: center;
+  }
+  .code-section p {
+    font-size: .88rem;
+    color: var(--text-sec);
+    margin-bottom: 1.4rem;
+    line-height: 1.6;
+  }
+  .code-form {
+    display: flex;
+    gap: .6rem;
+    align-items: stretch;
+  }
+  .code-input {
+    flex: 1;
+    background: rgba(255,255,255,.05);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: .75rem 1rem;
+    color: var(--text-pri);
+    font-family: 'Montserrat', sans-serif;
+    font-size: .9rem;
+    letter-spacing: .06em;
+    outline: none;
+    transition: border-color .2s;
+  }
+  .code-input::placeholder { color: #555577; }
+  .code-input:focus { border-color: var(--teal); }
+  .code-submit {
+    padding: .75rem 1.4rem;
+    background: var(--teal);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: .82rem;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background .2s, transform .15s;
+    white-space: nowrap;
+  }
+  .code-submit:hover { background: var(--teal-lt); transform: translateY(-1px); }
+  .code-submit:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+  .code-msg {
+    margin-top: .8rem;
+    font-size: .82rem;
+    min-height: 1.2em;
+    transition: color .2s;
+  }
+  .code-msg.error { color: var(--coral); }
+  .code-msg.success { color: #00cc80; }
+  .code-msg.loading { color: var(--text-sec); }
+
+  /* ── school note ── */
+  .school-note {
+    max-width: 680px;
+    margin: 0 auto 4rem;
+    padding: 1.2rem 1.8rem;
+    border: 1px solid rgba(139,107,163,.3);
+    border-radius: 10px;
+    background: rgba(139,107,163,.05);
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  .school-note .icon { font-size: 1.4rem; flex-shrink: 0; margin-top: 2px; }
+  .school-note p {
+    font-size: .82rem;
+    color: var(--text-sec);
+    line-height: 1.6;
+  }
+  .school-note a {
+    color: var(--purple);
+    text-decoration: none;
+  }
+  .school-note a:hover { text-decoration: underline; }
+
+  /* ── footer ── */
+  footer {
+    margin-top: auto;
+    border-top: 1px solid var(--border);
+    padding: 1.2rem 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: .5rem;
+  }
+  footer p {
+    font-size: .73rem;
+    color: var(--text-sec);
+  }
+  footer a {
+    color: var(--text-sec);
+    text-decoration: none;
+    font-size: .73rem;
+    margin-left: 1.2rem;
+    transition: color .2s;
+  }
+  footer a:hover { color: var(--teal-lt); }
+
+  /* ── responsive ── */
+  @media (max-width: 800px) {
+    .hero { grid-template-columns: 1fr; }
+    .clock-wrap { order: -1; }
+    .clock-svg { width: 260px; height: 260px; }
+    .pricing-grid { grid-template-columns: 1fr; }
+    header { padding: 1rem 1.2rem; }
+    .hero { padding: 2.5rem 1.2rem 2rem; }
+    .pricing { padding: 2rem 1.2rem 3rem; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HEADER -->
+  <header>
+    <a class="logo" href="https://keyscodesandmodes.com">KCM <span>Console</span></a>
+    <nav>
+      <a href="https://keyscodesandmodes.com">Home</a>
+      <a href="https://keyscodesandmodes.com/offerings.html">Offerings</a>
+      <a href="https://keyscodesandmodes.com/contact.html">Contact</a>
+    </nav>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-text">
+      <h1>The <em>KCM Console</em><br>is a new way<br>to experience music theory.</h1>
+      <p class="tagline">A unified, browser-based environment where the 12-Color Chromatic Spectrum™ drives multiple synchronized panels — Circle of Fifths, Modal Stencil, Music Theory Pro, and more — all talking to each other in real time.</p>
+      <ul class="feature-list">
+        <li>12-Color Chromatic Spectrum™ — visual pitch language at the core</li>
+        <li>Synchronized panels via <code style="font-size:.8em;color:var(--teal)">KCM.bus</code> reactive state engine</li>
+        <li>Save &amp; load sessions as <code style="font-size:.8em;color:var(--teal)">.gcis</code> files — your musical snapshots</li>
+        <li>Circle of Fifths · Modal Stencil · Music Theory Pro</li>
+        <li>Built for guitarists, educators, and visual thinkers</li>
+      </ul>
+    </div>
+
+    <!-- CHROMATIC CLOCK -->
+    <div class="clock-wrap">
+      <svg class="clock-svg" viewBox="0 0 380 380" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <filter id="glow">
+            <feGaussianBlur stdDeviation="3" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+        <!-- outer ring -->
+        <circle cx="190" cy="190" r="178" fill="none" stroke="rgba(0,128,128,0.15)" stroke-width="1"/>
+        <circle cx="190" cy="190" r="158" fill="none" stroke="rgba(0,128,128,0.08)" stroke-width="1"/>
+        <!-- 12 chromatic segments -->
+        <!-- C=12, C#=1, D=2 ... B=11 — dots at 30° increments, starting at top -->
+        <!-- Using transform rotate on groups so C stays at top -->
+        <g id="notes">
+          <!-- C  = 0°   → top    → #FFFF00 -->
+          <g transform="rotate(0,190,190)">
+            <circle cx="190" cy="28" r="22" fill="#FFFF00" filter="url(#glow)" opacity=".92"/>
+            <text x="190" y="34" text-anchor="middle" font-family="Cinzel,serif" font-size="13" font-weight="700" fill="#0a0a15">C</text>
+          </g>
+          <!-- C# = 30°  → #FFC400 -->
+          <g transform="rotate(30,190,190)">
+            <circle cx="190" cy="28" r="20" fill="#FFC400" opacity=".88"/>
+            <text x="190" y="34" text-anchor="middle" font-family="Cinzel,serif" font-size="11" font-weight="700" fill="#0a0a15">C#</text>
+          </g>
+          <!-- D  = 60°  → #FF8000 -->
+          <g transform="rotate(60,190,190)">
+            <circle cx="190" cy="28" r="20" fill="#FF8000" opacity=".88"/>
+            <text x="190" y="34" text-anchor="middle" font-family="Cinzel,serif" font-size="13" font-weight="700" fill="#0a0a15">D</text>
+          </g>
+          <!-- D# = 90°  → #FF4000 -->
+          <g transform="rotate(90,190,190)">
+            <circle cx="190" cy="28" r="20" fill="#FF4000" opacity=".88"/>
+            <text x="190" y="34" text-anchor="middle" font-family="Cinzel,serif" font-size="11" font-weight="700" fill="#fff">D#</text>
+          </g>
+          <!-- E  = 120° → #FF0000 -->
+          <g transform="rotate(120,190,190)">
+            <circle cx="190" cy="28" r="20" fill="#FF0000" opacity=".88"/>
+            <text x="190" y="34" text-anchor="middle" font-family="Cinzel,serif" font-size="13" font-weight="700" fill="#fff">E</text>
+          </g>
+          <!-- F  = 150° → #C4007F -->
+          <g transform="rotate(150,190,190)">
+            <circle cx="190" cy="28" r="20" fill="#C4007F" opacity=".88"/>
+            <text x="190" y="34" text-anchor="middle" font-family="Cinzel,serif" font-size="13" font-weight="700" fill="#fff">F</text>
+          </g>
+          <!-- F# = 180° → #8000FF -->
+          <g transform="rotate(180,190,190)">
+            <circle cx="190" cy="28" r="20" fill="#8000FF" opacity=".88"/>
+            <text x="190" y="34" text-anchor="middle" font-family="Cinzel,serif" font-size="11" font-weight="700" fill="#fff">F#</text>
+          </g>
+          <!-- G  = 210° → #4000FF -->
+          <g transform="rotate(210,190,190)">
+            <circle cx="190" cy="28" r="20" fill="#4000FF" opacity=".88"/>
+            <text x="190" y="34" text-anchor="middle" font-family="Cinzel,serif" font-size="13" font-weight="700" fill="#fff">G</text>
+          </g>
+          <!-- G# = 240° → #0000FF -->
+          <g transform="rotate(240,190,190)">
+            <circle cx="190" cy="28" r="20" fill="#0000FF" opacity=".88"/>
+            <text x="190" y="34" text-anchor="middle" font-family="Cinzel,serif" font-size="11" font-weight="700" fill="#fff">G#</text>
+          </g>
+          <!-- A  = 270° → #007FFF -->
+          <g transform="rotate(270,190,190)">
+            <circle cx="190" cy="28" r="20" fill="#007FFF" opacity=".88"/>
+            <text x="190" y="34" text-anchor="middle" font-family="Cinzel,serif" font-size="13" font-weight="700" fill="#fff">A</text>
+          </g>
+          <!-- A# = 300° → #00FF80 -->
+          <g transform="rotate(300,190,190)">
+            <circle cx="190" cy="28" r="20" fill="#00FF80" opacity=".88"/>
+            <text x="190" y="34" text-anchor="middle" font-family="Cinzel,serif" font-size="11" font-weight="700" fill="#0a0a15">A#</text>
+          </g>
+          <!-- B  = 330° → #80FF00 -->
+          <g transform="rotate(330,190,190)">
+            <circle cx="190" cy="28" r="20" fill="#80FF00" opacity=".88"/>
+            <text x="190" y="34" text-anchor="middle" font-family="Cinzel,serif" font-size="13" font-weight="700" fill="#0a0a15">B</text>
+          </g>
+        </g>
+        <!-- center -->
+        <circle cx="190" cy="190" r="42" fill="#0f0f1e" stroke="rgba(0,128,128,0.3)" stroke-width="1.5"/>
+        <text x="190" y="185" text-anchor="middle" font-family="Cinzel,serif" font-size="9" fill="rgba(0,192,192,.7)" letter-spacing="2">KCM</text>
+        <text x="190" y="200" text-anchor="middle" font-family="Cinzel,serif" font-size="9" fill="rgba(0,192,192,.5)" letter-spacing="1">CONSOLE</text>
+      </svg>
+    </div>
+  </section>
+
+  <!-- PRICING -->
+  <section class="pricing">
+    <p class="section-label">Get Access</p>
+    <h2 class="section-title">Choose Your Plan</h2>
+    <div class="pricing-grid">
+
+      <!-- Free Trial -->
+      <div class="plan">
+        <div class="plan-name">Free Trial</div>
+        <div class="plan-price"><sup>$</sup>0</div>
+        <div class="plan-cycle">7-day access</div>
+        <ul class="plan-features">
+          <li><span class="check">✓</span> 3 panels (limited)</li>
+          <li><span class="check">✓</span> 12-Color Chromatic Spectrum™</li>
+          <li><span class="check">✓</span> .gcis save / load</li>
+          <li><span class="x">✗</span> School / educator tools</li>
+          <li><span class="x">✗</span> Priority support</li>
+        </ul>
+        <a href="https://keyscodesandmodes.com/offerings.html" class="btn-buy outline">Start Free Trial</a>
+      </div>
+
+      <!-- Premium — featured -->
+      <div class="plan featured">
+        <div class="plan-name">Premium</div>
+        <div class="plan-price"><sup>$</sup>15</div>
+        <div class="plan-cycle">per month · cancel anytime</div>
+        <ul class="plan-features">
+          <li><span class="check">✓</span> All panels — full access</li>
+          <li><span class="check">✓</span> 12-Color Chromatic Spectrum™</li>
+          <li><span class="check">✓</span> Unlimited .gcis sessions</li>
+          <li><span class="check">✓</span> New panels as released</li>
+          <li><span class="check">✓</span> Email support</li>
+        </ul>
+        <a href="https://keyscodesandmodes.com/offerings.html" class="btn-buy gold">Get Premium</a>
+      </div>
+
+      <!-- Founder -->
+      <div class="plan">
+        <div class="plan-name">Founder</div>
+        <div class="plan-price"><sup>$</sup>9</div>
+        <div class="plan-cycle">per month · lifetime rate locked</div>
+        <ul class="plan-features">
+          <li><span class="check">✓</span> Everything in Premium</li>
+          <li><span class="check">✓</span> Rate locked forever</li>
+          <li><span class="check">✓</span> Founder badge + early access</li>
+          <li><span class="check">✓</span> Direct access to Ben</li>
+          <li><span class="check">✓</span> Shape the roadmap</li>
+        </ul>
+        <a href="https://keyscodesandmodes.com/offerings.html" class="btn-buy primary">Become a Founder</a>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- SCHOOL NOTE -->
+  <div style="padding: 0 2.5rem; max-width:1100px; margin: 0 auto; width:100%; margin-bottom:2rem;">
+    <div class="school-note">
+      <div class="icon">🏫</div>
+      <p>School districts: KCM Console is available under the <strong style="color:var(--text-pri)">KCM School License</strong>, which may be funded via Prop 28 / AMIM Block Grant encumbrances before June 30, 2026. <a href="https://keyscodesandmodes.com/superintendent.html">Learn more for educators →</a></p>
+    </div>
+  </div>
+
+  <!-- ACCESS CODE ENTRY -->
+  <div class="divider"><span>Already have an access code?</span></div>
+
+  <div class="code-section">
+    <p>If you purchased a plan or received a code from your school or institution, enter it below to access the KCM Console immediately.</p>
+    <div class="code-form">
+      <input class="code-input" id="codeInput" type="text" placeholder="Enter your access code" autocomplete="off" spellcheck="false">
+      <button class="code-submit" id="codeBtn" onclick="verifyCode()">Unlock</button>
+    </div>
+    <div class="code-msg" id="codeMsg"></div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <p>© 2026 Benjamin Ryan · Keys, Codes &amp; Modes™ · <a href="https://keyscodesandmodes.com/legal.html">Legal</a></p>
+    <div>
+      <a href="https://keyscodesandmodes.com">Home</a>
+      <a href="https://keyscodesandmodes.com/offerings.html">Offerings</a>
+      <a href="https://keyscodesandmodes.com/contact.html">Contact</a>
+    </div>
+  </footer>
+
+</div><!-- .page -->
+
+<script>
+  // ── Check if already authenticated on load ──
+  (function() {
+    const valid = ['kcm_premium_2026','kcm_founder_2026','kcm_school_2026','kcm_free_trial'];
+    const stored = localStorage.getItem('kcm_access');
+    if (stored && valid.includes(stored)) {
+      window.location.replace('./index.html');
+    }
+  })();
+
+  // ── Verify code via Cloudflare Worker ──
+  async function verifyCode() {
+    const input = document.getElementById('codeInput');
+    const btn   = document.getElementById('codeBtn');
+    const msg   = document.getElementById('codeMsg');
+    const code  = input.value.trim();
+
+    if (!code) {
+      setMsg('Please enter your access code.', 'error');
+      return;
+    }
+
+    btn.disabled = true;
+    setMsg('Verifying…', 'loading');
+
+    try {
+      const res = await fetch('https://keyscodesandmodes.com/api/verify-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code })
+      });
+      const data = await res.json();
+
+      if (data.valid) {
+        localStorage.setItem('kcm_access', data.token || code);
+        setMsg('Access granted! Loading console…', 'success');
+        setTimeout(() => window.location.replace('./index.html'), 900);
+      } else {
+        setMsg('Invalid code. Please check and try again.', 'error');
+        btn.disabled = false;
+      }
+    } catch (err) {
+      // Fallback: client-side check if Worker unreachable
+      const valid = ['kcm_premium_2026','kcm_founder_2026','kcm_school_2026','kcm_free_trial','SUPT2026KCM'];
+      if (valid.includes(code)) {
+        localStorage.setItem('kcm_access', code);
+        setMsg('Access granted! Loading console…', 'success');
+        setTimeout(() => window.location.replace('./index.html'), 900);
+      } else {
+        setMsg('Unable to verify. Check your connection and try again.', 'error');
+        btn.disabled = false;
+      }
+    }
+  }
+
+  function setMsg(text, type) {
+    const el = document.getElementById('codeMsg');
+    el.textContent = text;
+    el.className = 'code-msg ' + type;
+  }
+
+  // ── Enter key support ──
+  document.getElementById('codeInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') verifyCode();
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+<!-- ╔══════════════════════════════════════════════╗
+     ║  KCM Console — Auth Gate (Session 9)        ║
+     ║  Add this block FIRST inside <head>         ║
+     ╚══════════════════════════════════════════════╝ -->
+<script>
+  (function() {
+    var valid = ['kcm_premium_2026','kcm_founder_2026','kcm_school_2026','kcm_free_trial','SUPT2026KCM'];
+    var token = localStorage.getItem('kcm_access');
+    if (!token || !valid.includes(token)) {
+      window.location.replace('./gate.html');
+    }
+  })();
+</script>
