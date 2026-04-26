@@ -1,5 +1,4 @@
 
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -39,6 +38,23 @@
         </div>
       </div>
       <nav class="kcm-header__nav" aria-label="Primary">
+        <!-- Session title — editable inline -->
+        <input
+          type="text"
+          id="kcm-session-title"
+          class="kcm-session-title"
+          value="KCM Session"
+          maxlength="48"
+          aria-label="Session title"
+          spellcheck="false"
+        />
+        <!-- Save / Load -->
+        <button class="kcm-gcis-btn kcm-gcis-btn--save" id="kcm-save" aria-label="Save session as .gcis file">
+          ⬇ Save .gcis
+        </button>
+        <button class="kcm-gcis-btn kcm-gcis-btn--load" id="kcm-load" aria-label="Load .gcis session file">
+          ⬆ Load .gcis
+        </button>
         <button class="kcm-stop-btn" id="kcm-stop-all" aria-label="Stop all audio playback">⏹ Stop All</button>
         <a href="https://keyscodesandmodes.com" rel="noopener">Main Site</a>
         <a href="https://keyscodesandmodes.com/about.html" rel="noopener">About</a>
@@ -66,8 +82,8 @@
           watch every other panel follow.
         </p>
         <div class="kcm-hero__meta">
-          <span class="kcm-hero__badge">v0.4.0 · Session 4</span>
-          <span class="kcm-hero__version" id="build-version">Build v0.4.0 · Session 4 · 2026-04-25</span>
+          <span class="kcm-hero__badge">v0.8.0 · Session 8</span>
+          <span class="kcm-hero__version" id="build-version">Build v0.8.0 · Session 8 · 2026-04-25</span>
         </div>
       </div>
     </section>
@@ -206,7 +222,6 @@
 
   <script src="js/console.js" defer></script>
   <script src="js/bridge.js" defer></script>
+  <script src="js/gcis.js" defer></script>
 </body>
 </html>
-
-

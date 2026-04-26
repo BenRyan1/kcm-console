@@ -567,3 +567,66 @@ body.bridge-test-mode #bridge-test-panel {
   outline: 2px solid var(--primary-gold);
   outline-offset: 3px;
 }
+
+/* ─── Session title input (Session 8) ─────────────────────────────────── */
+.kcm-session-title {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(0,128,128,0.3);
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-weight: 500;
+  padding: 0.2rem 0.4rem;
+  width: 160px;
+  transition: border-color 0.2s ease, color 0.2s ease;
+  outline: none;
+}
+.kcm-session-title:focus {
+  border-bottom-color: var(--primary-teal-lt);
+  color: var(--text-primary);
+}
+.kcm-session-title::placeholder { color: var(--text-muted); }
+
+/* ─── Save / Load .gcis buttons (Session 8) ───────────────────────────── */
+.kcm-gcis-btn {
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  transition: all 0.15s ease;
+  border: 1px solid;
+}
+.kcm-gcis-btn--save {
+  background: transparent;
+  border-color: var(--primary-teal);
+  color: var(--primary-teal-lt);
+}
+.kcm-gcis-btn--save:hover {
+  background: var(--primary-teal);
+  color: var(--bg-deep);
+}
+.kcm-gcis-btn--load {
+  background: transparent;
+  border-color: var(--primary-gold);
+  color: var(--primary-gold);
+}
+.kcm-gcis-btn--load:hover {
+  background: var(--primary-gold);
+  color: var(--bg-deep);
+}
+.kcm-gcis-btn--flash {
+  background: var(--primary-teal) !important;
+  color: var(--bg-deep) !important;
+}
+.kcm-gcis-btn--flash-gold {
+  background: var(--primary-gold) !important;
+  color: var(--bg-deep) !important;
+}
+.kcm-gcis-btn:focus-visible {
+  outline: 2px solid var(--primary-gold);
+  outline-offset: 2px;
+}

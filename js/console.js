@@ -138,10 +138,10 @@
 
   // ── Build version stamp ──────────────────────────────────────────────
   const BUILD = {
-    version: '0.7.0',
-    session: 7,
+    version: '0.8.0',
+    session: 8,
     built:   '2026-04-25',
-    notes:   '3 panels live: MTP + CoF + Modal Stencil. v1.0-alpha.'
+    notes:   '.gcis format + Save/Load. KCM standard established.'
   };
 
   function stampBuildVersion() {

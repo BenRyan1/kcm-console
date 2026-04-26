@@ -189,6 +189,51 @@
       });
     }
 
+    // ── Save .gcis button ──────────────────────────────────────────────
+    var saveBtn = document.getElementById('kcm-save');
+    if (saveBtn) {
+      saveBtn.addEventListener('click', function () {
+        if (!window.KCM || !window.KCM.bus || !window.KCM.gcis) {
+          alert('KCM not fully loaded — try again in a moment.'); return;
+        }
+        var titleEl  = document.getElementById('kcm-session-title');
+        var title    = titleEl ? titleEl.value.trim() || 'KCM Session' : 'KCM Session';
+        var filename = window.KCM.gcis.saveToDisk(window.KCM.bus.get(), {
+          title: title, author: 'Benjamin Ryan'
+        });
+        saveBtn.textContent = '✓ Saved!';
+        saveBtn.classList.add('kcm-gcis-btn--flash');
+        setTimeout(function () {
+          saveBtn.textContent = '⬇ Save .gcis';
+          saveBtn.classList.remove('kcm-gcis-btn--flash');
+        }, 2000);
+      });
+    }
+
+    // ── Load .gcis button ──────────────────────────────────────────────
+    var loadBtn = document.getElementById('kcm-load');
+    if (loadBtn) {
+      loadBtn.addEventListener('click', function () {
+        if (!window.KCM || !window.KCM.bus || !window.KCM.gcis) {
+          alert('KCM not fully loaded — try again in a moment.'); return;
+        }
+        window.KCM.gcis.loadFromDisk(
+          function (result) {
+            window.KCM.bus.set(result.state);
+            var titleEl = document.getElementById('kcm-session-title');
+            if (titleEl && result.meta.title) titleEl.value = result.meta.title;
+            loadBtn.textContent = '✓ ' + result.meta.title;
+            loadBtn.classList.add('kcm-gcis-btn--flash-gold');
+            setTimeout(function () {
+              loadBtn.textContent = '⬆ Load .gcis';
+              loadBtn.classList.remove('kcm-gcis-btn--flash-gold');
+            }, 3000);
+          },
+          function (err) { alert('Could not load .gcis: ' + err); }
+        );
+      });
+    }
+
     // ── Stop All button ──────────────────────────────────────────────
     var stopBtn = document.getElementById('kcm-stop-all');
     if (stopBtn) {
