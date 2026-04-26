@@ -63,11 +63,11 @@
         .title-block{text-align:center;margin-bottom:1.25rem;}
         .title-block h2{font-family:var(--fd);font-size:clamp(1.4rem,3.5vw,2rem);background:linear-gradient(135deg,var(--gold),var(--teal));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
         .title-block p{color:var(--text2);font-size:.82rem;margin-top:.25rem;}
-        .grid{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:1.5rem;align-items:start;}
+        .grid{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:1.5rem;align-items:stretch;}
         @media(max-width:768px){.grid{grid-template-columns:1fr;}}
 
         .wheel-wrap{display:flex;justify-content:center;}
-        .wheel-box{width:100%;max-width:480px;background:rgba(0,128,128,.04);border:2px solid rgba(0,128,128,.2);border-radius:20px;padding:1.25rem;box-shadow:0 8px 40px rgba(0,128,128,.1);}
+        .wheel-box{width:100%;max-width:480px;background:rgba(0,128,128,.04);border:2px solid rgba(0,128,128,.2);border-radius:20px;padding:1.25rem;box-shadow:0 8px 40px rgba(0,128,128,.1);display:flex;flex-direction:column;}
 
         .trans-row{display:flex;align-items:center;justify-content:center;gap:.75rem;margin-top:1rem;}
         .trans-btn{width:48px;height:48px;border-radius:50%;background:rgba(0,128,128,.12);border:2px solid rgba(0,128,128,.4);color:var(--teal);font-size:1.4rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;user-select:none;}
@@ -110,32 +110,33 @@
 
 
         /* Progression card */
-        .prog-card { padding-bottom: 0.75rem; }
-        .prog-tabs { display:flex; gap:6px; margin-bottom:0.75rem; }
-        .prog-tab { flex:1; padding:0.35rem; border-radius:6px; border:1px solid rgba(207,122,90,.35);
-          background:transparent; color:rgba(207,122,90,.6); font-family:var(--fd);
-          font-size:0.7rem; letter-spacing:.1em; text-transform:uppercase; cursor:pointer;
-          transition:all .15s; }
-        .prog-tab.active { background:var(--coral); color:var(--bg); border-color:var(--coral);
-          box-shadow:0 0 12px rgba(207,122,90,.4); }
-        .prog-list { display:flex; flex-direction:column; gap:5px; max-height:320px;
-          overflow-y:auto; padding-right:2px; }
-        .prog-list::-webkit-scrollbar { width:3px; }
-        .prog-list::-webkit-scrollbar-track { background:transparent; }
-        .prog-list::-webkit-scrollbar-thumb { background:rgba(207,122,90,.3); border-radius:2px; }
-        .prog-item { width:100%; padding:0.55rem 0.7rem; border-radius:8px; text-align:left;
-          border:1px solid rgba(207,122,90,.2); background:rgba(207,122,90,.04);
+        .prog-card { padding-bottom:.75rem; }
+        .prog-tabs { display:flex; gap:5px; margin-bottom:.65rem; }
+        .prog-tab { flex:1; padding:.35rem; border-radius:6px;
+          border:1px solid rgba(207,122,90,.35); background:transparent;
+          color:rgba(207,122,90,.6); font-family:var(--fd);
+          font-size:.68rem; letter-spacing:.1em; text-transform:uppercase;
           cursor:pointer; transition:all .15s; }
-        .prog-item:hover:not(:disabled) { background:rgba(207,122,90,.1); border-color:rgba(207,122,90,.45); }
-        .prog-item.active { border-color:var(--coral); background:rgba(207,122,90,.15);
-          box-shadow:0 0 10px rgba(207,122,90,.25); }
+        .prog-tab.active { background:var(--coral); color:var(--bg);
+          border-color:var(--coral); box-shadow:0 0 10px rgba(207,122,90,.4); }
+
+        /* 2-column grid, no scroll */
+        .prog-grid { display:grid; grid-template-columns:1fr 1fr; gap:5px; align-content:start; }
+        .prog-item { padding:.55rem .5rem; border-radius:8px; text-align:left;
+          border:1px solid rgba(207,122,90,.2); background:rgba(207,122,90,.04);
+          cursor:pointer; transition:all .18s; }
+        .prog-item:hover:not(:disabled) { background:rgba(207,122,90,.12);
+          border-color:rgba(207,122,90,.5);
+          box-shadow:0 0 12px rgba(207,122,90,.2); }
+        .prog-item.active { border-color:var(--coral); background:rgba(207,122,90,.18);
+          box-shadow:0 0 16px rgba(207,122,90,.4); }
         .prog-item:disabled { opacity:.3; cursor:not-allowed; }
-        .prog-top { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:3px; }
-        .prog-numeral { font-family:var(--fd); font-size:0.78rem; color:var(--coral); font-weight:700; }
-        .prog-badge { font-size:0.68rem; color:var(--text2); letter-spacing:.03em; }
-        .prog-chords { font-size:0.82rem; color:var(--gold); font-weight:700; margin-bottom:2px;
-          font-family:var(--fd); letter-spacing:.03em; }
-        .prog-desc { font-size:0.7rem; color:rgba(232,232,232,.4); line-height:1.4; }
+        .prog-roman { font-family:var(--fd); font-size:.65rem; color:rgba(207,122,90,.7);
+          letter-spacing:.04em; margin-bottom:2px; }
+        .prog-chords-big { font-family:var(--fd); font-size:.85rem; color:var(--gold);
+          font-weight:700; letter-spacing:.03em; margin-bottom:2px; line-height:1.2; }
+        .prog-name-sm { font-size:.65rem; color:rgba(232,232,232,.4); }
+
         .stop-btn{width:100%;padding:.45rem;margin-top:4px;background:transparent;border:1px solid rgba(207,122,90,.3);border-radius:7px;cursor:pointer;color:rgba(207,122,90,.7);font-family:var(--fb);font-size:.78rem;font-weight:600;}
         .info{font-size:.8rem;color:var(--text2);line-height:1.65;}
         .info strong{color:var(--gold);}
@@ -231,86 +232,100 @@ function getIVV(majorIdx){
   };
 }
 
-/* ── Diatonic engine ────────────────────────────────────────────
-   Major scale degrees from COF root position.
-   MAJOR_SCALE semitones from root: [0,2,4,5,7,9,11]
-   Chord qualities: I=maj, IIm, IIIm, IV=maj, V=maj, VIm, VII°
-   All progressions use this lookup — they transpose automatically.
-──────────────────────────────────────────────────────────────── */
-const MAJOR_SCALE = [0, 2, 4, 5, 7, 9, 11];
-const DEG_QUALITY = [false, true, true, false, false, true, true]; // true = minor
+/* ── Diatonic engine ──────────────────────────────────────────────────
+   Builds chords from any root using major OR natural minor scale.
+   Major scale:        [0,2,4,5,7,9,11]  — I IIm IIIm IV V VIm VII°
+   Natural minor scale:[0,2,3,5,7,8,10]  — i II° III iv v VI VII
+   All progressions auto-transpose from locked root.
+──────────────────────────────────────────────────────────────────────── */
+const MAJ_SCALE  = [0,2,4,5,7,9,11];
+const MIN_SCALE  = [0,2,3,5,7,8,10];
+const MAJ_MINOR  = [false,true,true,false,false,true,true];  // chord quality in major
+const MIN_MINOR  = [true,true,false,true,true,false,false];  // chord quality in minor
 
-// Get diatonic chord at degree (0=I, 1=II, 2=III, 3=IV, 4=V, 5=VI, 6=VII)
-// from a COF root note (e.g. 'C')
-function diatonic(root, degree) {
-  const ri = CHROM.indexOf(root);
-  const noteIdx = (ri + MAJOR_SCALE[degree]) % 12;
-  return { n: CHROM[noteIdx], m: DEG_QUALITY[degree] };
+function diatonicChord(root, degree, useMinor) {
+  const ri  = CHROM.indexOf(root);
+  const scl = useMinor ? MIN_SCALE : MAJ_SCALE;
+  const qlt = useMinor ? MIN_MINOR : MAJ_MINOR;
+  const idx = (ri + scl[degree % 7]) % 12;
+  return { n: CHROM[idx], m: qlt[degree % 7] };
 }
 
-// Build a progression from degree array, e.g. [0,5,1,4] = I·VI·II·V
-function buildProg(root, degrees) {
-  return degrees.map(d => diatonic(root, d));
+function buildProg(root, degrees, useMinor) {
+  return degrees.map(d => diatonicChord(root, d, useMinor));
 }
 
-// Roman numeral label for a degree
-const ROMAN_MAJ = ['I','II','III','IV','V','VI','VII'];
-const ROMAN_MIN = ['i','ii','iii','iv','v','vi','vii'];
-function roman(degree, isMinor) {
-  return (isMinor ? ROMAN_MIN : ROMAN_MAJ)[degree] + (DEG_QUALITY[degree] ? '' : '');
-}
+// Roman numeral display
+const R_MAJ = ['I','II','III','IV','V','VI','VII'];
+const R_MIN = ['i','ii°','III','iv','v','VI','VII'];
 
-/* Progression library — degrees reference diatonic() above */
+/* ── Progression library ──────────────────────────────────────────────
+   mode:'maj' = uses major scale from majorRoot
+   mode:'min' = uses natural minor scale from relMin (Am when root is C)
+   degrees = indices into the 7-note diatonic scale (0=tonic, 3=4th, 4=5th etc)
+──────────────────────────────────────────────────────────────────────── */
 const PROGRESSIONS = [
-  // ── Major progressions ──────────────────────────────────────
-  { name:'I · IV · V',          label:'The Big Three',        mode:'maj',
+  // ── MAJOR ─────────────────────────────────────────────────────────
+  { mode:'maj', roman:'I · IV · V',
+    name:'The Big Three',
     degrees:[0,3,4],
-    desc:'The foundation of rock, blues, folk & country.' },
+    ex:'C · F · G' },
 
-  { name:'I · IIm · IIIm · IV · V', label:'Scale Walk',      mode:'maj',
+  { mode:'maj', roman:'I · IIm · IIIm · IV · V',
+    name:'Scale Walk Up',
     degrees:[0,1,2,3,4],
-    desc:'Walk up the first five diatonic chords. C Dm Em F G.' },
+    ex:'C · Dm · Em · F · G' },
 
-  { name:'I · VIm · IV · V',    label:'50s Classic',          mode:'maj',
+  { mode:'maj', roman:'I · VIm · IV · V',
+    name:'50s Classic',
     degrees:[0,5,3,4],
-    desc:'C Am F G — the most recorded progression in pop history.' },
+    ex:'C · Am · F · G' },
 
-  { name:'I · VIm · IIm · V',   label:'I · vi · ii · V',     mode:'maj',
+  { mode:'maj', roman:'I · VIm · IIm · V',
+    name:'1 · 6 · 2 · 5',
     degrees:[0,5,1,4],
-    desc:'C Am Dm G — jazz standard backbone. Smooth voice leading.' },
+    ex:'C · Am · Dm · G' },
 
-  { name:'IIm · V · I',         label:'2 · 5 · 1',            mode:'maj',
+  { mode:'maj', roman:'IIm · V · I',
+    name:'2 · 5 · 1',
     degrees:[1,4,0],
-    desc:'Dm G C — the most important jazz progression. Resolution.' },
+    ex:'Dm · G · C' },
 
-  { name:'I · VI · IV · V',     label:'1 · 6 · 4 · 5',        mode:'maj',
-    degrees:[0,5,3,4],
-    desc:'C Am F G — same as 50s Classic, defines a generation.' },
-
-  { name:'IIIm · VIm · IIm · V', label:'3 · 6 · 2 · 5',      mode:'maj',
+  { mode:'maj', roman:'IIIm · VIm · IIm · V',
+    name:'3 · 6 · 2 · 5',
     degrees:[2,5,1,4],
-    desc:'Em Am Dm G — descends the diatonic scale. Jazz & bossa.' },
+    ex:'Em · Am · Dm · G' },
 
-  { name:'I · V · VIm · IV',    label:'Pop Anthem',            mode:'maj',
+  { mode:'maj', roman:'I · V · VIm · IV',
+    name:'Pop Anthem',
     degrees:[0,4,5,3],
-    desc:'C G Am F — four chords that power thousands of pop songs.' },
+    ex:'C · G · Am · F' },
 
-  // ── Minor progressions ─────────────────────────────────────
-  { name:'i · iv · v',          label:'Minor 1 · 4 · 5',      mode:'min',
+  { mode:'maj', roman:'I · IV · I · V',
+    name:'Blues Turnaround',
+    degrees:[0,3,0,4],
+    ex:'C · F · C · G' },
+
+  // ── MINOR ─────────────────────────────────────────────────────────
+  { mode:'min', roman:'i · iv · v',
+    name:'Minor 1 · 4 · 5',
     degrees:[0,3,4],
-    desc:'Natural minor power trio. Dark and direct.' },
+    ex:'Am · Dm · Em' },
 
-  { name:'i · VIm · IIIm · VII', label:'Minor Epic',          mode:'min',
+  { mode:'min', roman:'i · VI · III · VII',
+    name:'Minor Epic',
     degrees:[0,5,2,6],
-    desc:'Am F C G in A minor. Anthemic, cinematic.' },
+    ex:'Am · F · C · G' },
 
-  { name:'i · VII · VI · V',    label:'Andalusian Cadence',   mode:'min',
+  { mode:'min', roman:'i · VII · VI · V',
+    name:'Andalusian Cadence',
     degrees:[0,6,5,4],
-    desc:'Am G F E — descending. Flamenco, Bach, rock.' },
+    ex:'Am · G · F · E' },
 
-  { name:'IIm · V · i',         label:'2 · 5 · 1 Minor',      mode:'min',
+  { mode:'min', roman:'IIm · V · i',
+    name:'2 · 5 · 1 Minor',
     degrees:[1,4,0],
-    desc:'The minor 251. Darker resolution than major.' },
+    ex:'Bm · E · Am' },
 ];
 
 /* ── Component ──────────────────────────────────────────────────── */
@@ -409,7 +424,10 @@ function MusicCircle() {
   function playIVV(){
     if(playing) return;
     stopAll(); setPlaying(true);
-    const seq=[{n:tonic,m:isMinor},{n:IV,m:isMinor},{n:V,m:isMinor},{n:tonic,m:isMinor}];
+    // Major: I IV V I from majorRoot using major scale
+    // Minor: i iv v i from relMin using minor scale
+    const root = isMinor ? relMin : majorRoot;
+    const seq = buildProg(root, [0,3,4,0], isMinor);
     seq.forEach(({n,m},i)=>playChord(n,m,i*1.15));
     const done=setTimeout(()=>{ setPlaying(false); setFlash(null); },4*1150+300);
     timers.current.push(done);
@@ -418,7 +436,11 @@ function MusicCircle() {
   function playProg(prog){
     if(playing) return;
     stopAll(); setPlaying(true);
-    const seq = buildProg(majorRoot, prog.degrees);
+    // For minor progs: build from relMin (Am), using minor scale
+    // For major progs: build from majorRoot (C), using major scale
+    const root = prog.mode==='min' ? relMin : majorRoot;
+    const useMinor = prog.mode==='min';
+    const seq = buildProg(root, prog.degrees, useMinor);
     seq.forEach(({n,m},i)=>playChord(n,m,i*1.15));
     const done=setTimeout(()=>{ setPlaying(false); setFlash(null); },seq.length*1150+300);
     timers.current.push(done);
@@ -464,7 +486,7 @@ function MusicCircle() {
         stroke:isRoot?'#F4D03F':(isIV||isV)?'rgba(244,208,63,.45)':'rgba(255,255,255,.18)',
         strokeWidth:isRoot?3.5:1.5,
         opacity:fOuter?1:.9,
-        style:{cursor:'pointer',filter:fOuter?`drop-shadow(0 0 12px ${COLORS[note]})`:isRoot?'drop-shadow(0 0 10px rgba(244,208,63,.7))':'none'},
+        style:{cursor:'pointer',filter:fOuter?`drop-shadow(0 0 22px ${COLORS[note]}) drop-shadow(0 0 40px ${COLORS[note]})`:isRoot?'drop-shadow(0 0 10px rgba(244,208,63,.7))':'none',transform:fOuter?'scale(1.18)':'scale(1)',transition:'transform .1s'},
         onClick:()=>selectMajor(note)
       }),
 
@@ -515,7 +537,7 @@ function MusicCircle() {
         stroke:isRelRoot?'#F4D03F':'rgba(255,255,255,.14)',
         strokeWidth:isRelRoot?3:1.2,
         opacity:fInner?1:.85,
-        style:{cursor:'pointer',filter:fInner?`drop-shadow(0 0 10px ${COLORS[relM]})`:isRelRoot?'drop-shadow(0 0 8px rgba(244,208,63,.5))':'none'},
+        style:{cursor:'pointer',filter:fInner?`drop-shadow(0 0 20px ${COLORS[relM]}) drop-shadow(0 0 35px ${COLORS[relM]})`:isRelRoot?'drop-shadow(0 0 8px rgba(244,208,63,.5))':'none',transform:fInner?'scale(1.15)':'scale(1)',transition:'transform .1s'},
         onClick:()=>selectMinor(relM)
       }),
 
@@ -573,13 +595,13 @@ function MusicCircle() {
             ...notes,
             /* Center hub */
             React.createElement('circle',{cx,cy,r:66,fill:'#070d18',stroke:'rgba(0,128,128,.45)',strokeWidth:2.5}),
-            React.createElement('text',{x:cx,y:cy-8,textAnchor:'middle',dominantBaseline:'central',
-              fontSize:'24',fontWeight:'900',fontFamily:'Cinzel,serif',
-              fill:tonicClr,style:{filter:`drop-shadow(0 0 10px ${tonicClr}99)`}
-            },tonic),
-            React.createElement('text',{x:cx,y:cy+14,textAnchor:'middle',dominantBaseline:'central',
-              fontSize:'10',fontFamily:'Montserrat,sans-serif',
-              fill:'rgba(232,232,232,.4)',letterSpacing:'2'
+            React.createElement('text',{x:cx,y:cy-9,textAnchor:'middle',dominantBaseline:'central',
+              fontSize:'26',fontWeight:'900',fontFamily:'Cinzel,serif',
+              fill:tonicClr,style:{filter:`drop-shadow(0 0 12px ${tonicClr}99)`}
+            },tonic+(isMinor?'m':'')),
+            React.createElement('text',{x:cx,y:cy+13,textAnchor:'middle',dominantBaseline:'central',
+              fontSize:'9',fontFamily:'Montserrat,sans-serif',
+              fill:'rgba(232,232,232,.35)',letterSpacing:'2'
             },isMinor?'MINOR':'MAJOR'),
             /* Fixed 12-o'clock pointer */
             React.createElement('polygon',{points:'250,12 244,26 256,26',fill:'#F4D03F',opacity:.85})
@@ -606,7 +628,7 @@ function MusicCircle() {
       ),
 
       /* ── RIGHT: Control Panel ── */
-      React.createElement('div',null,
+      React.createElement('div',{style:{display:'flex',flexDirection:'column',height:'100%'}},
 
         /* Major / Minor toggle */
         React.createElement('div',{className:'card'},
@@ -667,48 +689,46 @@ function MusicCircle() {
           )
         ),
 
-        /* Progressions */
-        React.createElement('div',{className:'card prog-card'},
+        /* Progressions — fills bottom of right panel, aligns with wheel ───── */
+        React.createElement('div',{className:'card prog-card',style:{flex:1,display:'flex',flexDirection:'column'}},
           React.createElement('div',{className:'card-title',style:{color:'var(--coral)'}},
-            'Progressions in ' + majorRoot + (isMinor?' minor':' major')),
+            'Progressions — ' + majorRoot + (isMinor ? ' minor' : ' major')),
 
-          // Filter tabs: Major / Minor / All
+          // Mode tabs
           React.createElement('div',{className:'prog-tabs'},
-            ['maj','min','all'].map(tab=>
+            [{k:'maj',l:'Major'},{k:'min',l:'Minor'},{k:'all',l:'All'}].map(({k,l})=>
               React.createElement('button',{
-                key:tab,
-                className:'prog-tab'+(progFilter===tab?' active':''),
-                onClick:()=>setProgFilter(tab)
-              }, tab==='maj'?'Major':tab==='min'?'Minor':'All')
+                key:k,
+                className:'prog-tab'+(progFilter===k?' active':''),
+                onClick:()=>setProgFilter(k)
+              },l)
             )
           ),
 
-          // Progression list
-          React.createElement('div',{className:'prog-list'},
+          // Progression grid — 2 columns, no scroll
+          React.createElement('div',{className:'prog-grid',style:{flex:1}},
             PROGRESSIONS
               .filter(p=> progFilter==='all' || p.mode===progFilter)
               .map((p,i)=>{
-                // Build chord names for this root
-                const seq = buildProg(majorRoot, p.degrees);
-                const chordNames = seq.map(({n,m})=>n+(m?'m':'')).join(' · ');
-                const isActive = activeProg===i+progFilter;
+                const root = p.mode==='min' ? relMin : majorRoot;
+                const seq  = buildProg(root, p.degrees, p.mode==='min');
+                const chordNames = seq.map(({n,m})=>n+(m?'m':'')).join('·');
+                const id = p.mode+i;
+                const isActive = activeProg===id;
                 return React.createElement('button',{
-                  key:i,
+                  key:id,
                   className:'prog-item'+(isActive?' active':''),
                   disabled:playing,
-                  onClick:()=>{ setActiveProg(i+progFilter); playProg(p); }
+                  onClick:()=>{ setActiveProg(id); playProg(p); }
                 },
-                  React.createElement('div',{className:'prog-top'},
-                    React.createElement('span',{className:'prog-numeral'},p.name),
-                    React.createElement('span',{className:'prog-badge'},p.label)
-                  ),
-                  React.createElement('div',{className:'prog-chords'},chordNames),
-                  React.createElement('div',{className:'prog-desc'},p.desc)
+                  React.createElement('div',{className:'prog-roman'},p.roman),
+                  React.createElement('div',{className:'prog-chords-big'},chordNames),
+                  React.createElement('div',{className:'prog-name-sm'},p.name)
                 );
               })
           ),
 
-          React.createElement('button',{className:'stop-btn',onClick:stopAll},'⏹ Stop All')
+          React.createElement('button',{className:'stop-btn',onClick:stopAll},'⏹ Stop')
         ),
 
         /* How it works */

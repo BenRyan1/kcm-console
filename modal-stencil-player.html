@@ -478,38 +478,65 @@
             flex-direction: column;
             align-items: center;
             gap: 12px;
-            cursor: move;
-            transition: transform 0.3s, opacity 0.3s;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
             user-select: none;
+            border-radius: 12px;
+            border: 2px solid transparent;
+            padding: 6px 4px;
+            min-width: 0;
+            overflow: hidden;
         }
         
-        .mode-column.dragging {
-            opacity: 0.4;
-            transform: scale(0.9);
+        .mode-column:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0, 128, 128, 0.3);
+            border-color: rgba(0, 128, 128, 0.4);
+        }
+
+        .mode-column.active-mode {
+            border-color: #F4D03F;
+            box-shadow: 0 0 24px rgba(244, 208, 63, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .mode-column.active-mode .mode-label {
+            border-color: var(--primary-gold);
+            background: rgba(244, 208, 63, 0.15);
+            color: var(--primary-gold);
         }
         
         .mode-column.in-play-zone {
-            cursor: grab;
+            cursor: pointer;
         }
         
-        .mode-column.in-play-zone:active {
-            cursor: grabbing;
+        .mode-column.in-play-zone:hover {
+            border-color: rgba(207, 122, 90, 0.5);
+            box-shadow: 0 0 16px rgba(207, 122, 90, 0.3);
         }
         
         .mode-label {
             font-family: var(--font-display);
-            font-size: 0.8rem;
+            font-size: 0.68rem;
             font-weight: 700;
             color: var(--light-text);
             text-transform: uppercase;
-            letter-spacing: 1.5px;
-            padding: 10px 16px;
+            letter-spacing: 0.08em;
+            padding: 8px 6px;
             background: rgba(74, 123, 167, 0.3);
             border-radius: 8px;
             border: 2px solid rgba(74, 123, 167, 0.5);
             transition: all 0.3s;
             width: 100%;
             text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 36px;
         }
         
         .mode-column:hover .mode-label {
@@ -909,8 +936,8 @@
                     </div>
                     <div class="play-zone-content">
                         <div class="play-zone-hint">
-                            Drag any mode from the right →<br>
-                            to hear it play automatically
+                            Click any mode →<br>
+                            to activate it here
                         </div>
                     </div>
                     <div class="play-zone-footer">
@@ -922,7 +949,7 @@
                 <div class="modes-column">
                     <div class="modes-header">
                         <div class="modes-title">Seven Modal Stencils</div>
-                        <div class="modes-subtitle">Drag any mode to Play Zone • Click notes to play</div>
+                        <div class="modes-subtitle">Click any mode to activate • Click notes to play</div>
                     </div>
                     <div class="modes-grid" id="modes-bank"></div>
                 </div>
@@ -939,7 +966,7 @@
                 <div class="info-content">
                     <ul>
                         <li><strong>Click any note</strong> to hear its MIDI sound (C4-C5 range)</li>
-                        <li><strong>Drag a mode</strong> from the right column into the Play Zone on the left</li>
+                        <li><strong>Click any mode</strong> in the right column to activate it in the Play Zone — click again to deactivate</li>
                         <li><strong>Auto-play</strong> begins immediately, ascending and descending through all 8 degrees</li>
                         <li><strong>Change tonic</strong> to transpose all modes to a different key</li>
                         <li><strong>Record</strong> captures both auto-play and manual note clicks with precise timing</li>
@@ -1195,10 +1222,28 @@
             modesBank.innerHTML = "";
             
             for (const [modeKey, modeData] of Object.entries(MODES)) {
-                if (playingMode === modeKey) continue;
-                
                 const column = createModeColumn(modeKey, modeData);
-                setupDragAndDrop(column);
+                column.draggable = false; // disable drag — use click instead
+                
+                // Highlight active mode
+                if (playingMode === modeKey) {
+                    column.classList.add("active-mode");
+                }
+
+                // Click to select/deselect mode
+                column.addEventListener("click", (e) => {
+                    if (e.target.closest(".degree-cell")) return; // let cell clicks through
+                    if (playingMode === modeKey) {
+                        playingMode = null;
+                    } else {
+                        playingMode = modeKey;
+                    }
+                    renderModes();
+                    renderPlayZone();
+                    // Publish to Console bus
+                    postToConsole({ mode: modeKey });
+                });
+
                 modesBank.appendChild(column);
             }
         }
@@ -1220,69 +1265,31 @@
                 const modeData = MODES[playingMode];
                 const column = createModeColumn(playingMode, modeData);
                 column.classList.add("in-play-zone");
-                setupDragFromPlayZone(column);
+                // Click play zone column to deselect
+                column.addEventListener("click", (e) => {
+                    if (e.target.closest(".degree-cell")) return;
+                    playingMode = null;
+                    renderModes();
+                    renderPlayZone();
+                });
                 playZoneContent.appendChild(column);
-                
                 startPlaying();
             } else {
                 playZone.classList.remove("active");
                 hint.style.display = "block";
                 stopButton.disabled = true;
                 stopPlaying();
-                
                 const existingColumn = playZoneContent.querySelector(".mode-column");
                 if (existingColumn) existingColumn.remove();
             }
         }
         
-        /* ==================== DRAG AND DROP ==================== */
-        
-        function setupDragAndDrop(column) {
-            column.addEventListener("dragstart", (e) => {
-                e.dataTransfer.effectAllowed = "move";
-                e.dataTransfer.setData("text/plain", column.dataset.mode);
-                column.classList.add("dragging");
-            });
-            
-            column.addEventListener("dragend", (e) => {
-                column.classList.remove("dragging");
-            });
+        /* ==================== BUS PUBLISH ==================== */
+        function postToConsole(patch) {
+            try { window.parent.postMessage({ type: 'KCM_STATE_PATCH', payload: patch }, '*'); }
+            catch(e) { /* silent if no parent */ }
         }
-        
-        function setupDragFromPlayZone(column) {
-            column.addEventListener("dragstart", (e) => {
-                e.dataTransfer.effectAllowed = "move";
-                e.dataTransfer.setData("text/plain", "from-play-zone");
-                column.classList.add("dragging");
-            });
-            
-            column.addEventListener("dragend", (e) => {
-                column.classList.remove("dragging");
-            });
-        }
-        
-        const playZone = document.querySelector(".play-zone");
-        
-        playZone.addEventListener("dragover", (e) => {
-            e.preventDefault();
-            e.dataTransfer.dropEffect = "move";
-        });
-        
-        playZone.addEventListener("drop", (e) => {
-            e.preventDefault();
-            const data = e.dataTransfer.getData("text/plain");
-            
-            if (data === "from-play-zone") {
-                playingMode = null;
-                renderPlayZone();
-                renderModes();
-            } else if (data) {
-                playingMode = data;
-                renderPlayZone();
-                renderModes();
-            }
-        });
-        
+
         /* ==================== AUTO-PLAY ==================== */
         
         function startPlaying() {
