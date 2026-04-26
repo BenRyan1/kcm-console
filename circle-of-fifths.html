@@ -401,8 +401,26 @@ function MusicCircle() {
     return ctxRef.current;
   }
   function clearTimers(){ timers.current.forEach(clearTimeout); timers.current=[]; }
-  function stopAll(){ clearTimers(); setPlaying(false); setFlash(null); }
+  function stopAll(){
+    clearTimers();
+    setPlaying(false);
+    setFlash(null);
+    // Suspend audio context — cuts any notes currently playing immediately
+    if(ctxRef.current && ctxRef.current.state === 'running'){
+      ctxRef.current.suspend();
+    }
+  }
 
+  // Play a single note (no chord) — used for sequence/progression playback
+  function playNote(note, minor=false, delay=0){
+    const ctx=getCtx();
+    playNotes(ctx, [note], 4, 0.55, delay);  // single note, shorter duration
+    const t1=setTimeout(()=>setFlash({note,type:minor?'inner':'outer'}), delay*1000);
+    const t2=setTimeout(()=>setFlash(null), (delay+0.55)*1000);
+    timers.current.push(t1,t2);
+  }
+
+  // Play a chord (triad) — used for direct note clicks only
   function playChord(note, minor=false, delay=0){
     const ctx=getCtx();
     const triad = minor ? minTriad(note) : majTriad(note);
@@ -442,12 +460,11 @@ function MusicCircle() {
   function playIVV(){
     if(playing) return;
     stopAll(); setPlaying(true);
-    // Major: I IV V I from majorRoot using major scale
-    // Minor: i iv v i from relMin using minor scale
     const root = isMinor ? relMin : majorRoot;
     const seq = buildProg(root, [0,3,4,0], isMinor);
-    seq.forEach(({n,m},i)=>playChord(n,m,i*1.15));
-    const done=setTimeout(()=>{ setPlaying(false); setFlash(null); },4*1150+300);
+    // Sequential single notes — no chords
+    seq.forEach(({n,m},i)=>playNote(n,m,0.15+i*0.7));
+    const done=setTimeout(()=>{ setPlaying(false); setFlash(null); },(seq.length*700)+500);
     timers.current.push(done);
   }
 
@@ -459,8 +476,9 @@ function MusicCircle() {
     const root = prog.mode==='min' ? relMin : majorRoot;
     const useMinor = prog.mode==='min';
     const seq = buildProg(root, prog.degrees, useMinor);
-    seq.forEach(({n,m},i)=>playChord(n,m,0.15+i*1.15));
-    const done=setTimeout(()=>{ setPlaying(false); setFlash(null); },(seq.length*1150)+450);
+    // Sequential single notes — hear the scale movement between chords
+    seq.forEach(({n,m},i)=>playNote(n,m,0.15+i*0.7));
+    const done=setTimeout(()=>{ setPlaying(false); setFlash(null); },(seq.length*700)+500);
     timers.current.push(done);
   }
 
