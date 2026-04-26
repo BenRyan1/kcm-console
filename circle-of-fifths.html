@@ -213,7 +213,12 @@ const COLORS = {
   E:'#FF0000',F:'#C4007F',Gb:'#8000FF',G:'#4000FF',
   Ab:'#0000FF',A:'#007FFF',Bb:'#00FF80',B:'#80FF00'
 };
-const DARK_INK = new Set(['C','Db','D','Bb','B']); // bright colors need dark text
+const DARK_INK = new Set(['C','Db','D','Bb','B']);
+
+// Display formatter — converts internal flat notation to proper ♭ symbol
+// Only used for rendering text to the user, never for music logic
+const FMT = {Db:'D♭',Eb:'E♭',Gb:'G♭',Ab:'A♭',Bb:'B♭'};
+const fmt = n => FMT[n]||n;  // e.g. fmt('Eb') → 'E♭', fmt('G') → 'G' // bright colors need dark text
 
 const F2S = {Db:'C#',Eb:'D#',Gb:'F#',Ab:'G#',Bb:'A#'};
 const S2F = {'C#':'Db','D#':'Eb','F#':'Gb','G#':'Ab','A#':'Bb'};
@@ -342,9 +347,17 @@ function MusicCircle() {
   // Derived values
   const majorRoot = COF[rootIdx];
   const tonic     = isMinor ? (REL_MIN[majorRoot]||majorRoot) : majorRoot;
-  const {I,IV,V}  = getIVV(rootIdx);
   const relMin    = REL_MIN[majorRoot]||majorRoot;
   const relMaj    = majorRoot;
+
+  // I·IV·V — major uses COF positions; minor uses natural minor scale from relMin
+  // Natural minor degrees: 0=i(Am), 3=iv(Dm), 4=v(Em) — all minor quality
+  const {I,IV,V} = isMinor
+    ? { I:  diatonicChord(relMin,0,true).n,
+        IV: diatonicChord(relMin,3,true).n,
+        V:  diatonicChord(relMin,4,true).n }
+    : getIVV(rootIdx);
+
   const tonicClr  = COLORS[tonic]||'#008080';
   const ivClr     = COLORS[IV]||'#8B6BA3';
   const vClr      = COLORS[V]||'#CF7A5A';
@@ -486,7 +499,7 @@ function MusicCircle() {
         stroke:isRoot?'#F4D03F':(isIV||isV)?'rgba(244,208,63,.45)':'rgba(255,255,255,.18)',
         strokeWidth:isRoot?3.5:1.5,
         opacity:fOuter?1:.9,
-        style:{cursor:'pointer',filter:fOuter?`drop-shadow(0 0 22px ${COLORS[note]}) drop-shadow(0 0 40px ${COLORS[note]})`:isRoot?'drop-shadow(0 0 10px rgba(244,208,63,.7))':'none',transform:fOuter?'scale(1.18)':'scale(1)',transition:'transform .1s'},
+        style:{cursor:'pointer',filter:fOuter?`drop-shadow(0 0 22px ${COLORS[note]}) drop-shadow(0 0 40px ${COLORS[note]})`:isRoot?'drop-shadow(0 0 10px rgba(244,208,63,.7))':'none'},
         onClick:()=>selectMajor(note)
       }),
 
@@ -502,7 +515,7 @@ function MusicCircle() {
         x:ox,y:oy+1,textAnchor:'middle',dominantBaseline:'central',
         fontSize:isRoot?'17':'15',fontWeight:'bold',fill:inkO,
         style:{pointerEvents:'none',userSelect:'none'}
-      },note),
+      },fmt(note)),
 
       /* ── Major↔Minor toggle pill (only on active root) ── */
       isRoot && React.createElement('g',{
@@ -537,7 +550,7 @@ function MusicCircle() {
         stroke:isRelRoot?'#F4D03F':'rgba(255,255,255,.14)',
         strokeWidth:isRelRoot?3:1.2,
         opacity:fInner?1:.85,
-        style:{cursor:'pointer',filter:fInner?`drop-shadow(0 0 20px ${COLORS[relM]}) drop-shadow(0 0 35px ${COLORS[relM]})`:isRelRoot?'drop-shadow(0 0 8px rgba(244,208,63,.5))':'none',transform:fInner?'scale(1.15)':'scale(1)',transition:'transform .1s'},
+        style:{cursor:'pointer',filter:fInner?`drop-shadow(0 0 20px ${COLORS[relM]}) drop-shadow(0 0 35px ${COLORS[relM]})`:isRelRoot?'drop-shadow(0 0 8px rgba(244,208,63,.5))':'none'},
         onClick:()=>selectMinor(relM)
       }),
 
@@ -553,24 +566,27 @@ function MusicCircle() {
         x:ix,y:iy+1,textAnchor:'middle',dominantBaseline:'central',
         fontSize:'11',fontWeight:'bold',fill:inkI,
         style:{pointerEvents:'none',userSelect:'none'}
-      },relM+'m')
+      },fmt(relM)+'m')
     );
   });
 
   /* ── Render ───────────────────────────────────────────────────── */
   return React.createElement('div',{className:'wrap'},
 
+    /* Title */
     React.createElement('div',{className:'title-block'},
       React.createElement('h2',null,'Circle of Fifths'),
       React.createElement('p',null,'Click any note to lock root · ◀ ▶ or arrow keys to transpose')
     ),
 
+    /* Main 2-col grid */
     React.createElement('div',{className:'grid'},
 
-      /* ── LEFT: Wheel ── */
+      /* ── LEFT: Wheel + transpose below ── */
       React.createElement('div',{className:'wheel-wrap'},
         React.createElement('div',{className:'wheel-box'},
 
+          /* SVG Wheel */
           React.createElement('svg',{
             viewBox:'0 0 500 500',
             style:{width:'100%',height:'auto',borderRadius:'50%',
@@ -579,7 +595,6 @@ function MusicCircle() {
               border:'3px solid rgba(0,128,128,.3)'},
             role:'img','aria-label':'Circle of Fifths'
           },
-            /* Spoke lines */
             COF.map((_,i)=>{
               const a=angle(i);
               return React.createElement('line',{key:'sp'+i,
@@ -587,39 +602,42 @@ function MusicCircle() {
                 x2:cx+218*Math.cos(a),y2:cy+218*Math.sin(a),
                 stroke:'rgba(0,128,128,.1)',strokeWidth:1});
             }),
-            /* Guide rings */
             React.createElement('circle',{cx,cy,r:215,fill:'none',stroke:'rgba(0,128,128,.12)',strokeWidth:1}),
             React.createElement('circle',{cx,cy,r:155,fill:'none',stroke:'rgba(139,107,163,.1)',strokeWidth:1}),
             React.createElement('circle',{cx,cy,r:105,fill:'none',stroke:'rgba(0,128,128,.07)',strokeWidth:1}),
-            /* Notes */
             ...notes,
-            /* Center hub */
             React.createElement('circle',{cx,cy,r:66,fill:'#070d18',stroke:'rgba(0,128,128,.45)',strokeWidth:2.5}),
-            React.createElement('text',{x:cx,y:cy-9,textAnchor:'middle',dominantBaseline:'central',
-              fontSize:'26',fontWeight:'900',fontFamily:'Cinzel,serif',
-              fill:tonicClr,style:{filter:`drop-shadow(0 0 12px ${tonicClr}99)`}
-            },tonic+(isMinor?'m':'')),
-            React.createElement('text',{x:cx,y:cy+13,textAnchor:'middle',dominantBaseline:'central',
-              fontSize:'9',fontFamily:'Montserrat,sans-serif',
-              fill:'rgba(232,232,232,.35)',letterSpacing:'2'
-            },isMinor?'MINOR':'MAJOR'),
-            /* Fixed 12-o'clock pointer */
+            React.createElement('text',{x:cx,y:cy,textAnchor:'middle',fontFamily:'Cinzel,serif',
+              style:{dominantBaseline:'central'}
+            },
+              React.createElement('tspan',{x:cx,dy:'-0.55em',fontSize:'26',fontWeight:'900',
+                fill:tonicClr,style:{filter:`drop-shadow(0 0 10px ${tonicClr}99)`}
+              },fmt(tonic)+(isMinor?'m':'')),
+
+              React.createElement('tspan',{x:cx,dy:'1.4em',fontSize:'9',
+                fontFamily:'Montserrat,sans-serif',fill:'rgba(232,232,232,.35)',letterSpacing:'2'
+              },isMinor?'MINOR':'MAJOR')
+            ),
             React.createElement('polygon',{points:'250,12 244,26 256,26',fill:'#F4D03F',opacity:.85})
           ),
 
-          /* Transpose row */
+          /* Transpose — below wheel, inside left column */
           React.createElement('div',{className:'trans-row'},
-            React.createElement('div',null,
-              React.createElement('button',{className:'trans-btn',onClick:()=>doTranspose(-1),'aria-label':'Transpose CCW (up a 4th)'},'◀'),
+            React.createElement('div',{style:{textAlign:'center'}},
+              React.createElement('button',{className:'trans-btn',
+                onClick:()=>doTranspose(-1),'aria-label':'Up a 4th'},'◀'),
               React.createElement('div',{className:'trans-lbl'},'+4th')
             ),
             React.createElement('div',{className:'root-pill'},
-              React.createElement('div',{className:'root-note',style:{color:tonicClr,textShadow:`0 0 16px ${tonicClr}88`}},
-                tonic+(isMinor?'m':'')),
+              React.createElement('div',{className:'root-note',
+                style:{color:tonicClr,textShadow:`0 0 16px ${tonicClr}88`}
+              },fmt(tonic)+(isMinor?'m':'')),
+
               React.createElement('div',{className:'root-lbl'},isMinor?'minor':'major')
             ),
-            React.createElement('div',null,
-              React.createElement('button',{className:'trans-btn',onClick:()=>doTranspose(1),'aria-label':'Transpose CW (up a 5th)'},'▶'),
+            React.createElement('div',{style:{textAlign:'center'}},
+              React.createElement('button',{className:'trans-btn',
+                onClick:()=>doTranspose(1),'aria-label':'Up a 5th'},'▶'),
               React.createElement('div',{className:'trans-lbl'},'+5th')
             )
           ),
@@ -628,36 +646,56 @@ function MusicCircle() {
       ),
 
       /* ── RIGHT: Control Panel ── */
-      React.createElement('div',{style:{display:'flex',flexDirection:'column',height:'100%'}},
+      React.createElement('div',{style:{display:'flex',flexDirection:'column',gap:'0.6rem'}},
 
-        /* Major / Minor toggle */
-        React.createElement('div',{className:'card'},
-          React.createElement('div',{className:'card-title',style:{color:isMinor?'var(--purple)':'var(--teal)'}},
-            'Mode'),
-          React.createElement('div',{className:'mm-row'},
-            React.createElement('button',{
-              className:`mm-btn maj${!isMinor?' on':''}`,
-              onClick:()=>{ setIsMinor(false); playChord(majorRoot,false); postBus({root:toSharp(majorRoot),mode:'ionian'}); }
-            },'● Major'),
-            React.createElement('button',{
-              className:`mm-btn min${isMinor?' on':''}`,
-              onClick:()=>{ setIsMinor(true); playChord(relMin,true); postBus({root:toSharp(relMin),mode:'aeolian'}); }
-            },'◉ Minor')
+        /* Progressions — top of right panel, biggest section */
+        React.createElement('div',{className:'card',style:{flex:'1 1 auto'}},
+          React.createElement('div',{className:'card-title',style:{color:'var(--coral)'}},
+            'Progressions — '+fmt(majorRoot)+(isMinor?' minor':' major')),
+
+          /* Major / Minor / All tabs */
+          React.createElement('div',{className:'prog-tabs'},
+            [{k:'maj',l:'Major'},{k:'min',l:'Minor'},{k:'all',l:'All'}].map(({k,l})=>
+              React.createElement('button',{key:k,
+                className:'prog-tab'+(progFilter===k?' active':''),
+                onClick:()=>setProgFilter(k)
+              },l)
+            )
           ),
-          React.createElement('p',{className:'rel-note'},
-            isMinor
-              ? `${tonic}m · relative major: ${relMaj}`
-              : `${majorRoot} major · relative minor: ${relMin}m`)
+
+          /* 2-column grid */
+          React.createElement('div',{className:'prog-grid'},
+            PROGRESSIONS
+              .filter(p=>progFilter==='all'||p.mode===progFilter)
+              .map((p,i)=>{
+                const root = p.mode==='min' ? relMin : majorRoot;
+                const seq  = buildProg(root, p.degrees, p.mode==='min');
+                const chordNames = seq.map(({n,m})=>fmt(n)+(m?'m':'')).join(' · ');
+                const id = p.mode+i;
+                return React.createElement('button',{key:id,
+                  className:'prog-item'+(activeProg===id?' active':''),
+                  disabled:playing,
+                  onClick:()=>{ setActiveProg(id); playProg(p); }
+                },
+                  React.createElement('div',{className:'prog-roman'},p.roman),
+                  React.createElement('div',{className:'prog-chords-big'},chordNames),
+                  React.createElement('div',{className:'prog-name-sm'},p.name)
+                );
+              })
+          ),
+
+          React.createElement('button',{className:'stop-btn',onClick:stopAll,
+            style:{marginTop:'0.5rem'}},'⏹ Stop')
         ),
 
-        /* I - IV - V */
+        /* I · IV · V */
         React.createElement('div',{className:'card'},
           React.createElement('div',{className:'card-title',style:{color:'var(--gold)'}},
-            isMinor?'i · iv · v  —  Tonic · Sub · Dominant':'I · IV · V  —  Tonic · Sub · Dominant'),
+            isMinor?'i · iv · v':'I · IV · V'),
           React.createElement('div',{className:'ivv-row'},
-            [{r:isMinor?'i':'I',note:tonic,clr:tonicClr,role:'Tonic'},
-             {r:isMinor?'iv':'IV',note:IV,clr:ivClr,role:'Subdominant'},
-             {r:isMinor?'v':'V',note:V,clr:vClr,role:'Dominant'}
+            [{r:isMinor?'i':'I',   note:tonic,clr:tonicClr, role:'Tonic'},
+             {r:isMinor?'iv':'IV', note:IV,   clr:ivClr,    role:'Subdominant'},
+             {r:isMinor?'v':'V',   note:V,    clr:vClr,     role:'Dominant'}
             ].map(({r,note,clr,role})=>
               React.createElement('button',{key:r,className:'c-btn',
                 onClick:()=>{ if(!playing){ playChord(note,isMinor); postBus({root:toSharp(note),mode:isMinor?'aeolian':'ionian'}); }},
@@ -666,7 +704,7 @@ function MusicCircle() {
                   background:flash&&flash.note===note?`${clr}22`:'transparent'}
               },
                 React.createElement('div',{className:'c-roman',style:{color:clr}},r),
-                React.createElement('div',{className:'c-name',style:{color:clr}},note+(isMinor?'m':'')),
+                React.createElement('div',{className:'c-name', style:{color:clr}},fmt(note)+(isMinor?'m':'')),
                 React.createElement('div',{className:'c-role'},role)
               )
             )
@@ -678,71 +716,27 @@ function MusicCircle() {
           },playing?'▶ Playing…':`▶ Play ${isMinor?'i·iv·v':'I·IV·V'} Sequence`)
         ),
 
-        /* Relative relationship */
+        /* Major / Minor toggle — bottom */
         React.createElement('div',{className:'card'},
-          React.createElement('div',{className:'card-title',style:{color:'var(--purple)'}},
-            'Relative Relationship'),
-          React.createElement('p',{className:'info'},
+          React.createElement('div',{className:'mm-row'},
+            React.createElement('button',{
+              className:`mm-btn maj${!isMinor?' on':''}`,
+              onClick:()=>{ setIsMinor(false); playChord(majorRoot,false); postBus({root:toSharp(majorRoot),mode:'ionian'}); }
+            },'● Major'),
+            React.createElement('button',{
+              className:`mm-btn min${isMinor?' on':''}`,
+              onClick:()=>{ setIsMinor(true); playChord(relMin,true); postBus({root:toSharp(relMin),mode:'aeolian'}); }
+            },'◉ Minor')
+          ),
+          React.createElement('p',{className:'rel-note',style:{margin:'0.4rem 0 0'}},
             isMinor
-              ? React.createElement('span',null,React.createElement('strong',null,tonic+'m'),` shares every note with `,React.createElement('strong',null,relMaj+' major'),`. Inner ring = relative minors — always the 6th degree of the outer major key.`)
-              : React.createElement('span',null,React.createElement('strong',null,majorRoot+' major'),` shares every note with `,React.createElement('strong',null,relMin+'m'),`. Inner ring = relative minors — always the 6th degree of the outer major key.`)
-          )
-        ),
-
-        /* Progressions — fills bottom of right panel, aligns with wheel ───── */
-        React.createElement('div',{className:'card prog-card',style:{flex:1,display:'flex',flexDirection:'column'}},
-          React.createElement('div',{className:'card-title',style:{color:'var(--coral)'}},
-            'Progressions — ' + majorRoot + (isMinor ? ' minor' : ' major')),
-
-          // Mode tabs
-          React.createElement('div',{className:'prog-tabs'},
-            [{k:'maj',l:'Major'},{k:'min',l:'Minor'},{k:'all',l:'All'}].map(({k,l})=>
-              React.createElement('button',{
-                key:k,
-                className:'prog-tab'+(progFilter===k?' active':''),
-                onClick:()=>setProgFilter(k)
-              },l)
-            )
-          ),
-
-          // Progression grid — 2 columns, no scroll
-          React.createElement('div',{className:'prog-grid',style:{flex:1}},
-            PROGRESSIONS
-              .filter(p=> progFilter==='all' || p.mode===progFilter)
-              .map((p,i)=>{
-                const root = p.mode==='min' ? relMin : majorRoot;
-                const seq  = buildProg(root, p.degrees, p.mode==='min');
-                const chordNames = seq.map(({n,m})=>n+(m?'m':'')).join('·');
-                const id = p.mode+i;
-                const isActive = activeProg===id;
-                return React.createElement('button',{
-                  key:id,
-                  className:'prog-item'+(isActive?' active':''),
-                  disabled:playing,
-                  onClick:()=>{ setActiveProg(id); playProg(p); }
-                },
-                  React.createElement('div',{className:'prog-roman'},p.roman),
-                  React.createElement('div',{className:'prog-chords-big'},chordNames),
-                  React.createElement('div',{className:'prog-name-sm'},p.name)
-                );
-              })
-          ),
-
-          React.createElement('button',{className:'stop-btn',onClick:stopAll},'⏹ Stop')
-        ),
-
-        /* How it works */
-        React.createElement('div',{className:'card',style:{border:'1px solid rgba(0,128,128,.12)'}},
-          React.createElement('div',{className:'card-title',style:{color:'var(--gold)'}},
-            '🎓 How It Works'),
-          React.createElement('p',{className:'info'},
-            `The gold ▲ at 12 o'clock is your anchor. Click any outer note to lock it as root. The gold selector ring stays fixed while all relationships update. ◀ ▶ transpose one step at a time — auto-plays each chord. Inner ring = relative minors at the same position. Click the `,
-            React.createElement('strong',null,'→ min / → MAJ'),
-            ` pill on the active root to flip between major and minor instantly.`)
+              ? fmt(tonic)+'m  ·  relative major: '+fmt(relMaj)
+              : fmt(majorRoot)+' major  ·  relative minor: '+fmt(relMin)+'m')
         )
-      )
-    )
-  );
+
+      ) /* end right panel */
+    ) /* end grid */
+  ); /* end wrap */
 }
 
 ReactDOM.render(React.createElement(MusicCircle), document.getElementById('root'));
