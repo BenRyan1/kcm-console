@@ -1,0 +1,212 @@
+/* ═══════════════════════════════════════════════════════════════
+   KCM Console — SUNO Prompt Generator Panel Styles
+   Session 11 · 2026-04-26
+   Appended to console.css OR inlined into index.html <head>
+═══════════════════════════════════════════════════════════════ */
+
+/* ── Panel container ── */
+.kcm-suno-panel {
+  max-width: 1400px;
+  margin: 0 auto 2.5rem;
+  padding: 0 2rem;
+}
+
+/* ── Card ── */
+.kcm-suno-panel > * {
+  background: rgba(0, 128, 128, 0.06);
+  border: 1px solid rgba(0, 128, 128, 0.25);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+/* re-wrap so header + body are one card */
+.kcm-suno-panel {
+  background: rgba(0, 128, 128, 0.06);
+  border: 1px solid rgba(0, 128, 128, 0.25);
+  border-radius: 12px;
+  overflow: hidden;
+  max-width: 1400px;
+  margin: 0 auto 2.5rem;
+}
+
+/* ── Header ── */
+.kcm-suno__header {
+  padding: 1rem 1.5rem .6rem;
+  border-bottom: 1px solid rgba(0, 128, 128, 0.15);
+}
+
+.kcm-suno__title-row {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  margin-bottom: .25rem;
+}
+
+.kcm-suno__icon {
+  font-size: 1.3rem;
+  color: var(--primary-teal, #008080);
+}
+
+.kcm-suno__title {
+  font-family: 'Cinzel', serif;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #00c0c0;
+  letter-spacing: .06em;
+  margin: 0;
+}
+
+.kcm-suno__state-badge {
+  margin-left: auto;
+  font-family: 'Montserrat', sans-serif;
+  font-size: .72rem;
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: #0a0a15;
+  background: #F4D03F;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+
+.kcm-suno__sub {
+  font-size: .72rem;
+  color: #b0b0cc;
+  font-family: 'Montserrat', sans-serif;
+  margin: 0;
+}
+
+/* ── Body ── */
+.kcm-suno__body {
+  padding: 1.2rem 1.5rem 1.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: .9rem;
+}
+
+/* ── Prompt textarea wrap ── */
+.kcm-suno__prompt-wrap {
+  position: relative;
+}
+
+.kcm-suno__prompt {
+  width: 100%;
+  background: rgba(10, 10, 21, 0.6);
+  border: 1px solid rgba(0, 128, 128, 0.2);
+  border-radius: 8px;
+  padding: .9rem 1rem 2rem;
+  color: #e8e8f8;
+  font-family: 'Montserrat', monospace;
+  font-size: .82rem;
+  line-height: 1.6;
+  resize: vertical;
+  outline: none;
+  transition: border-color .2s;
+}
+
+.kcm-suno__prompt:focus {
+  border-color: rgba(0, 192, 192, 0.4);
+}
+
+.kcm-suno__prompt-type {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: .65rem;
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: #b0b0cc;
+  background: rgba(0, 128, 128, 0.15);
+  border: 1px solid rgba(0, 128, 128, 0.2);
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.kcm-suno__prompt-type--ai {
+  color: #F4D03F;
+  background: rgba(244, 208, 63, 0.1);
+  border-color: rgba(244, 208, 63, 0.3);
+}
+
+/* ── Action buttons ── */
+.kcm-suno__actions {
+  display: flex;
+  gap: .7rem;
+  flex-wrap: wrap;
+}
+
+.kcm-suno__btn {
+  font-family: 'Montserrat', sans-serif;
+  font-size: .78rem;
+  font-weight: 600;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  border: none;
+  border-radius: 7px;
+  padding: .6rem 1.1rem;
+  cursor: pointer;
+  transition: opacity .18s, transform .15s, background .18s;
+}
+
+.kcm-suno__btn:hover:not(:disabled) {
+  opacity: .88;
+  transform: translateY(-1px);
+}
+
+.kcm-suno__btn:disabled {
+  opacity: .4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.kcm-suno__btn--enhance {
+  background: rgba(244, 208, 63, 0.15);
+  border: 1px solid rgba(244, 208, 63, 0.4);
+  color: #F4D03F;
+  flex: 1;
+}
+
+.kcm-suno__btn--enhance:hover:not(:disabled) {
+  background: rgba(244, 208, 63, 0.25);
+}
+
+.kcm-suno__btn--template {
+  background: rgba(0, 128, 128, 0.12);
+  border: 1px solid rgba(0, 128, 128, 0.25);
+  color: #b0b0cc;
+}
+
+.kcm-suno__btn--copy {
+  background: #008080;
+  color: #fff;
+  padding: .6rem 1.6rem;
+  margin-left: auto;
+  font-size: .82rem;
+}
+
+.kcm-suno__btn--copy:hover:not(:disabled) {
+  background: #00c0c0;
+  opacity: 1;
+}
+
+/* ── Status message ── */
+.kcm-suno__status {
+  font-family: 'Montserrat', sans-serif;
+  font-size: .76rem;
+  min-height: 1.2em;
+  transition: color .2s;
+}
+
+.kcm-suno__status--success { color: #00cc80; }
+.kcm-suno__status--error   { color: #CF7A5A; }
+.kcm-suno__status--loading { color: #b0b0cc; }
+.kcm-suno__status--info    { color: #00c0c0; }
+
+/* ── Responsive ── */
+@media (max-width: 600px) {
+  .kcm-suno-panel { margin: 0 1rem 2rem; }
+  .kcm-suno__body { padding: 1rem; }
+  .kcm-suno__btn--copy { margin-left: 0; width: 100%; }
+}

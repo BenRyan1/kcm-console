@@ -15,103 +15,31 @@
   </script>
   <!-- ═══════════════════════════════════════════════ -->
 
-  <!-- ── Core ── -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <title>KCM Console — Visual Music Theory | Keys, Codes &amp; Modes™</title>
-  <meta name="description" content="KCM Console is a browser-based visual music theory environment. Synchronized panels — Circle of Fifths, Modal Stencil, Music Theory Pro — powered by the 12-Color Chromatic Spectrum™. Save sessions as .gcis files. Built by Benjamin Ryan." />
+  <title>KCM Console — Keys, Codes & Modes</title>
+  <meta name="description" content="The Keys, Codes & Modes Console — a visual operating system for music. Powered by the 12-Color Chromatic Spectrum™ and the FreeStyle® Musical Device patents." />
   <meta name="author" content="Benjamin Ryan" />
-  <meta name="robots" content="index, follow" />
-  <meta name="theme-color" content="#008080" />
-  <meta name="keywords" content="music theory, visual music theory, keys codes modes, chromatic spectrum, circle of fifths, modal stencil, music education, KCM console, Benjamin Ryan, FreeStyle musical device" />
 
-  <!-- ── Canonical ── -->
+  <!-- Favicon (chromatic wheel, C centered at 12 o'clock) -->
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="KCM Console — Keys, Codes & Modes" />
+  <meta property="og:description" content="A visual operating system for music. Coming soon." />
+  <meta property="og:url" content="https://console.keyscodesandmodes.com/" />
+  <meta property="og:type" content="website" />
+
+  <!-- Canonical -->
   <link rel="canonical" href="https://console.keyscodesandmodes.com/" />
 
-  <!-- ── Favicons ── -->
-  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
-  <link rel="apple-touch-icon" href="assets/favicon.svg" />
-
-  <!-- ── Open Graph (Facebook / LinkedIn / iMessage) ── -->
-  <meta property="og:type"        content="website" />
-  <meta property="og:site_name"   content="Keys, Codes &amp; Modes™" />
-  <meta property="og:title"       content="KCM Console — Visual Music Theory" />
-  <meta property="og:description" content="A browser-based visual music theory environment. Synchronized panels driven by the 12-Color Chromatic Spectrum™. Save sessions as .gcis files." />
-  <meta property="og:url"         content="https://console.keyscodesandmodes.com/" />
-  <meta property="og:image"       content="https://console.keyscodesandmodes.com/assets/og-console.png" />
-  <meta property="og:image:width"  content="1200" />
-  <meta property="og:image:height" content="630" />
-  <meta property="og:image:alt"   content="KCM Console — 12-Color Chromatic Spectrum™ music theory panels" />
-  <meta property="og:locale"      content="en_US" />
-
-  <!-- ── Twitter / X Card ── -->
-  <meta name="twitter:card"        content="summary_large_image" />
-  <meta name="twitter:site"        content="@keyscodesandmodes" />
-  <meta name="twitter:creator"     content="@benryanmusic" />
-  <meta name="twitter:title"       content="KCM Console — Visual Music Theory" />
-  <meta name="twitter:description" content="Browser-based music theory environment. Circle of Fifths, Modal Stencil &amp; more, all synchronized via the 12-Color Chromatic Spectrum™." />
-  <meta name="twitter:image"       content="https://console.keyscodesandmodes.com/assets/og-console.png" />
-  <meta name="twitter:image:alt"   content="KCM Console panels" />
-
-  <!-- ── JSON-LD Structured Data ── -->
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "WebApplication",
-    "name": "KCM Console",
-    "url": "https://console.keyscodesandmodes.com/",
-    "description": "A browser-based visual music theory environment powered by the 12-Color Chromatic Spectrum™. Synchronized interactive panels for Circle of Fifths, Modal Stencil Player, and Music Theory Pro. Save and load harmonic sessions as .gcis files.",
-    "applicationCategory": "EducationalApplication",
-    "operatingSystem": "Web",
-    "browserRequirements": "Requires JavaScript. Works in all modern browsers.",
-    "inLanguage": "en-US",
-    "isAccessibleForFree": false,
-    "offers": {
-      "@type": "Offer",
-      "price": "15.00",
-      "priceCurrency": "USD",
-      "url": "https://keyscodesandmodes.com/offerings.html"
-    },
-    "creator": {
-      "@type": "Person",
-      "name": "Benjamin Ryan",
-      "url": "https://keyscodesandmodes.com/about.html",
-      "sameAs": [
-        "https://keyscodesandmodes.com",
-        "https://benryanphotographer.com"
-      ]
-    },
-    "publisher": {
-      "@type": "Organization",
-      "name": "Keys, Codes &amp; Modes™",
-      "url": "https://keyscodesandmodes.com",
-      "logo": {
-        "@type": "ImageObject",
-        "url": "https://keyscodesandmodes.com/assets/kcm-logo.svg"
-      }
-    },
-    "featureList": [
-      "12-Color Chromatic Spectrum™ visualization",
-      "Circle of Fifths interactive panel",
-      "Modal Stencil Player",
-      "Music Theory Pro panel",
-      "Synchronized harmonic state bus",
-      ".gcis session save and load",
-      "SUNO AI prompt generator"
-    ]
-  }
-  </script>
-
-  <!-- ── Fonts ── -->
+  <!-- KCM Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet" />
 
-  <!-- ── Styles ── -->
   <link rel="stylesheet" href="css/console.css" />
   <link rel="stylesheet" href="css/suno-panel.css" />
-  <link rel="stylesheet" href="css/responsive.css" />
 </head>
 <body>
   <header class="kcm-header" role="banner">
@@ -161,15 +89,15 @@
       </div>
 
       <div class="kcm-hero__text">
-        <h2 id="hero-heading" class="kcm-hero__heading">KCM Console</h2>
+        <h2 id="hero-heading" class="kcm-hero__heading">Coming Soon</h2>
         <p class="kcm-hero__lede">
-          A visual operating system for music theory. The KCM Console connects the
-          Keys, Codes &amp; Modes application suite through a shared harmonic state.
-          Change the root in one panel — watch every other panel follow in real time.
+          The KCM Console connects the Keys, Codes &amp; Modes application suite
+          through a shared harmonic state. Change the root in one panel —
+          watch every other panel follow.
         </p>
         <div class="kcm-hero__meta">
-          <span class="kcm-hero__badge">v1.0 · Live</span>
-          <span class="kcm-hero__version" id="build-version">Build v1.0 · 2026-04-26</span>
+          <span class="kcm-hero__badge">v0.9.0 · Session 9</span>
+          <span class="kcm-hero__version" id="build-version">Build v0.9.0 · Session 9 · 2026-04-26</span>
         </div>
       </div>
     </section>

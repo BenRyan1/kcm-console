@@ -1,0 +1,254 @@
+/* ═══════════════════════════════════════════════════════════════
+   KCM Console — Responsive Layer
+   Covers: mobile 320px → tablet 768px → desktop 1024px+
+   Add to index.html: <link rel="stylesheet" href="css/responsive.css" />
+═══════════════════════════════════════════════════════════════ */
+
+/* ── Base: ensure no horizontal scroll ── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  min-width: 320px;
+  overflow-x: hidden;
+}
+
+/* ── Header: stack on mobile ── */
+@media (max-width: 640px) {
+  .kcm-header__inner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: .6rem;
+    padding: .8rem 1rem;
+  }
+
+  .kcm-header__nav {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: .4rem;
+    padding: 0;
+  }
+
+  .kcm-session-title {
+    width: 100%;
+    font-size: .8rem;
+  }
+
+  .kcm-header__title h1 {
+    font-size: 1.1rem;
+  }
+
+  .kcm-header__tagline {
+    font-size: .7rem;
+  }
+}
+
+/* ── Hero: stack on tablet ── */
+@media (max-width: 900px) {
+  .kcm-hero {
+    flex-direction: column;
+    gap: 1.5rem;
+    padding: 1.5rem 1.2rem;
+  }
+
+  .kcm-hero__chromatic {
+    width: 200px;
+    height: 200px;
+    margin: 0 auto;
+  }
+
+  .kcm-hero__heading {
+    font-size: clamp(1.4rem, 4vw, 2rem);
+  }
+}
+
+@media (max-width: 640px) {
+  .kcm-hero {
+    padding: 1rem .8rem;
+  }
+
+  .kcm-hero__chromatic {
+    width: 160px;
+    height: 160px;
+  }
+
+  .kcm-hero__lede {
+    font-size: .85rem;
+    line-height: 1.6;
+  }
+
+  .kcm-hero__meta {
+    flex-wrap: wrap;
+    gap: .4rem;
+  }
+}
+
+/* ── Panels grid: 2-col → 1-col ── */
+@media (max-width: 900px) {
+  .kcm-panels {
+    grid-template-columns: 1fr;
+    padding: 0 1.2rem;
+    gap: 1.2rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .kcm-panels {
+    padding: 0 .8rem;
+    gap: 1rem;
+  }
+
+  .kcm-panel__body {
+    height: 340px; /* taller on mobile so panels are usable */
+  }
+
+  .kcm-panel__iframe {
+    height: 340px;
+  }
+}
+
+/* ── Panel header: tighten on small screens ── */
+@media (max-width: 640px) {
+  .kcm-panel__header {
+    padding: .5rem .7rem;
+  }
+
+  .kcm-panel__title {
+    font-size: .8rem;
+  }
+}
+
+/* ── SUNO panel: full responsive ── */
+@media (max-width: 900px) {
+  .kcm-suno-panel {
+    margin: 0 1.2rem 2rem;
+  }
+
+  .kcm-suno__actions {
+    flex-wrap: wrap;
+  }
+
+  .kcm-suno__btn--copy {
+    width: 100%;
+    margin-left: 0;
+    margin-top: .3rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .kcm-suno-panel {
+    margin: 0 .8rem 1.5rem;
+  }
+
+  .kcm-suno__header {
+    padding: .8rem 1rem .5rem;
+  }
+
+  .kcm-suno__title-row {
+    flex-wrap: wrap;
+    gap: .5rem;
+  }
+
+  .kcm-suno__state-badge {
+    font-size: .65rem;
+    padding: 2px 8px;
+  }
+
+  .kcm-suno__body {
+    padding: .9rem 1rem 1.1rem;
+  }
+
+  .kcm-suno__prompt {
+    font-size: .78rem;
+    padding: .7rem .8rem 2rem;
+    rows: 6;
+  }
+
+  .kcm-suno__btn {
+    font-size: .73rem;
+    padding: .55rem .9rem;
+  }
+
+  .kcm-suno__btn--enhance,
+  .kcm-suno__btn--template {
+    flex: 1 1 45%;
+  }
+}
+
+/* ── Status section ── */
+@media (max-width: 640px) {
+  .kcm-status {
+    padding: 1rem .8rem;
+    margin: 0 .8rem 1.5rem;
+  }
+
+  .kcm-status__title {
+    font-size: .9rem;
+  }
+
+  .kcm-status__list li {
+    font-size: .82rem;
+  }
+}
+
+/* ── Footer ── */
+@media (max-width: 640px) {
+  .kcm-footer__inner {
+    flex-direction: column;
+    gap: .3rem;
+    padding: 1rem .8rem;
+    text-align: center;
+  }
+
+  .kcm-footer__copy,
+  .kcm-footer__contact {
+    font-size: .72rem;
+  }
+}
+
+/* ── Main padding ── */
+@media (max-width: 640px) {
+  .kcm-main {
+    padding: 0 0 3rem;
+  }
+}
+
+/* ── Touch targets: min 44px tap size ── */
+@media (max-width: 900px) {
+  .kcm-panel__btn,
+  .kcm-gcis-btn,
+  .kcm-stop-btn,
+  .kcm-suno__btn {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* ── Bridge test: hide on mobile (dev only) ── */
+@media (max-width: 900px) {
+  .kcm-bridge-test {
+    display: none;
+  }
+}
+
+/* ── Print: clean output ── */
+@media print {
+  .kcm-header,
+  .kcm-suno__actions,
+  .kcm-bridge-test,
+  .kcm-hero__chromatic {
+    display: none;
+  }
+
+  body {
+    background: #fff;
+    color: #000;
+  }
+
+  .kcm-suno__prompt {
+    border: 1px solid #ccc;
+    color: #000;
+    background: #fff;
+  }
+}

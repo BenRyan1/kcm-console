@@ -1092,6 +1092,8 @@
         let isRecording = false;
         let recordedNotes = [];
         let recordingStartTime = 0;
+        // Guard: audio ONLY starts after an explicit user click — never on bus sync
+        let userHasStartedAudio = false;
         
         /* ==================== AUDIO / MIDI ==================== */
         
@@ -1233,6 +1235,7 @@
                 // Click to select/deselect mode
                 column.addEventListener("click", (e) => {
                     if (e.target.closest(".degree-cell")) return; // let cell clicks through
+                    userHasStartedAudio = true; // user explicitly chose to play
                     if (playingMode === modeKey) {
                         playingMode = null;
                     } else {
@@ -1273,7 +1276,8 @@
                     renderPlayZone();
                 });
                 playZoneContent.appendChild(column);
-                startPlaying();
+                // Only auto-play if the user has explicitly clicked a mode themselves
+                if (userHasStartedAudio) startPlaying();
             } else {
                 playZone.classList.remove("active");
                 hint.style.display = "block";
