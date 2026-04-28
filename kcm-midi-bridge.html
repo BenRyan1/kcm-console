@@ -1,0 +1,1245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KCM × Suno MIDI Bridge | Keys, Codes & Modes™</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ocean:#4A7BA7;--navy:#2a4d6f;--gold:#F4D03F;--purple:#8B6BA3;
+  --teal:#008080;--coral:#CF7A5A;--bg1:#0f0f1e;--bg2:#1a1a2e;
+  --bg3:#1e2040;--text:#E8E8E8;--muted:#9090b0;--border:rgba(74,123,167,0.25);
+}
+body{background:var(--bg1);color:var(--text);font-family:'Montserrat',sans-serif;font-size:13px;min-height:100vh}
+.spectrum-strip{height:4px;background:linear-gradient(to right,#FFFF00,#FFC400,#FF8000,#FF4000,#FF0000,#C4007F,#8000FF,#4000FF,#0000FF,#007FFF,#00FF80,#80FF00,#FFFF00)}
+.site-header{background:var(--navy);border-bottom:3px solid var(--gold);padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between}
+.logo-wrap{display:flex;align-items:center;gap:12px}
+.logo-text h1{font-family:'Cinzel',serif;font-size:12px;font-weight:700;letter-spacing:.12em;background:linear-gradient(135deg,var(--gold),var(--ocean));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.logo-text .sub{font-size:10px;color:rgba(232,232,232,0.5);font-style:italic;letter-spacing:.04em}
+.header-badge{font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--teal);border:1px solid rgba(0,128,128,0.4);padding:4px 12px;border-radius:20px}
+
+.main{display:grid;grid-template-columns:280px 1fr 280px;gap:0;height:calc(100vh - 64px);overflow:hidden}
+
+.panel{background:var(--bg1);border-right:1px solid var(--border);overflow-y:auto;padding:16px}
+.panel:last-child{border-right:none;border-left:1px solid var(--border)}
+.panel-label{font-size:9px;letter-spacing:.28em;text-transform:uppercase;color:var(--teal);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.panel-label::before{content:'';width:16px;height:1px;background:var(--teal)}
+
+.section-label{font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:rgba(232,232,232,0.3);margin:12px 0 7px}
+
+/* App grid */
+.app-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:10px}
+.app-card{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 10px;cursor:pointer;transition:all .2s}
+.app-card:hover{border-color:rgba(244,208,63,0.4)}
+.app-card.active{border-color:var(--gold);background:rgba(244,208,63,0.06)}
+.app-card.active .app-name{color:var(--gold)}
+.app-name{font-size:10px;font-weight:600;color:var(--text);margin-bottom:2px;font-family:'Cinzel',serif}
+.app-tag{font-size:8px;color:var(--muted)}
+
+/* Clock wheel */
+.wheel-wrap{display:flex;flex-direction:column;align-items:center;gap:8px;margin:10px 0}
+#kcmWheel{width:190px;height:190px;border-radius:50%;cursor:pointer;display:block}
+.wheel-readout{text-align:center;font-size:11px;color:var(--muted)}
+.wheel-note{font-family:'Cinzel',serif;font-size:20px;font-weight:900;color:var(--gold)}
+
+/* Modes */
+.mode-pills{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px}
+.mode-pill{background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:4px 10px;font-size:9px;color:var(--muted);cursor:pointer;transition:all .2s;letter-spacing:.04em}
+.mode-pill:hover{border-color:var(--purple);color:var(--purple)}
+.mode-pill.active{background:rgba(139,107,163,0.15);border-color:var(--purple);color:var(--purple)}
+
+/* Sliders */
+.slider-row{margin-bottom:8px}
+.slider-lbl{display:flex;justify-content:space-between;font-size:9px;color:var(--muted);margin-bottom:3px}
+.slider-lbl span:last-child{color:var(--text);font-weight:600}
+input[type=range]{width:100%;height:3px;-webkit-appearance:none;appearance:none;border-radius:2px;background:rgba(74,123,167,0.3);outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;background:var(--gold);cursor:pointer}
+
+/* MIDI live */
+.midi-live{display:flex;align-items:center;gap:8px;background:var(--bg2);border:1px solid rgba(0,128,128,0.3);border-radius:7px;padding:7px 10px;margin-bottom:8px}
+.midi-dot{width:7px;height:7px;border-radius:50%;background:var(--teal);flex-shrink:0;animation:mdot 1.8s ease infinite}
+@keyframes mdot{0%,100%{opacity:1}50%{opacity:.3}}
+.midi-info{flex:1;font-size:9px;color:var(--teal);letter-spacing:.06em}
+.midi-val{font-size:9px;color:var(--muted)}
+
+/* Structure selects */
+.struct-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
+.struct-btn{background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:7px;text-align:center;cursor:pointer;transition:all .2s}
+.struct-btn:hover{border-color:var(--ocean)}
+.struct-btn.active{border-color:var(--ocean);background:rgba(74,123,167,0.12)}
+.struct-btn-name{font-size:10px;color:var(--text);font-weight:600;font-family:'Cinzel',serif}
+.struct-btn-desc{font-size:8px;color:var(--muted);margin-top:2px}
+
+/* Center panel */
+.center{background:var(--bg2);overflow-y:auto;padding:20px}
+
+/* Prompt box */
+.prompt-box{background:var(--bg1);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px}
+.prompt-box-label{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--ocean);margin-bottom:8px}
+.prompt-text{font-size:11px;color:rgba(232,232,232,0.65);line-height:1.8;font-style:italic}
+
+/* Generate button */
+.gen-btn{width:100%;background:var(--gold);color:var(--bg1);border:none;border-radius:9px;padding:13px;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;font-family:'Cinzel',serif;transition:all .2s;margin-bottom:14px}
+.gen-btn:hover{background:#fff}
+.gen-btn:active{transform:scale(.98)}
+
+/* Track list */
+.track-list{background:var(--bg1);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:14px}
+.track-list-header{padding:10px 14px;border-bottom:1px solid var(--border);font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+.track-row{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid rgba(255,255,255,0.04);transition:background .2s;cursor:pointer}
+.track-row:last-child{border-bottom:none}
+.track-row:hover{background:rgba(74,123,167,0.08)}
+.track-row.selected{background:rgba(244,208,63,0.05)}
+.track-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.track-name{flex:1;font-size:11px;color:var(--text);font-family:'Cinzel',serif}
+.track-meta{font-size:9px;color:var(--muted)}
+.track-badge{font-size:8px;padding:2px 8px;border-radius:10px;background:rgba(0,128,128,0.12);color:var(--teal);border:1px solid rgba(0,128,128,0.3);letter-spacing:.06em}
+.track-play{width:22px;height:22px;border-radius:50%;background:rgba(74,123,167,0.15);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:8px;color:var(--ocean);cursor:pointer;transition:all .2s;flex-shrink:0}
+.track-play:hover{background:rgba(74,123,167,0.3);border-color:var(--ocean)}
+
+/* Waveform */
+.waveform{height:44px;background:var(--bg1);border:1px solid var(--border);border-radius:8px;overflow:hidden;display:flex;align-items:center;padding:0 10px;gap:1.5px;margin-bottom:14px}
+.wf-bar{border-radius:1px;width:2.5px;flex-shrink:0;background:rgba(74,123,167,0.45)}
+
+/* Return analysis */
+.return-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:14px}
+.return-card{background:var(--bg1);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center}
+.return-val{font-family:'Cinzel',serif;font-size:16px;font-weight:900;color:var(--gold);line-height:1;margin-bottom:4px}
+.return-lbl{font-size:8px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase}
+
+/* MIDI export panel */
+.midi-export-panel{background:var(--bg1);border:1px solid rgba(0,128,128,0.35);border-radius:10px;overflow:hidden;margin-bottom:14px}
+.midi-export-header{background:rgba(0,128,128,0.1);padding:11px 14px;border-bottom:1px solid rgba(0,128,128,0.2);display:flex;align-items:center;gap:8px}
+.midi-export-icon{width:8px;height:8px;border-radius:50%;background:var(--teal)}
+.midi-export-title{font-size:10px;font-weight:700;color:var(--teal);letter-spacing:.1em;font-family:'Cinzel',serif}
+.midi-track-rows{padding:10px 14px}
+.midi-track-row{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04)}
+.midi-track-row:last-child{border-bottom:none}
+.midi-track-color{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+.midi-track-name{flex:1;font-size:10px;color:var(--text);font-family:'Cinzel',serif}
+.midi-track-info{font-size:9px;color:var(--muted)}
+.midi-track-ch{font-size:8px;padding:2px 7px;border-radius:10px;background:rgba(139,107,163,0.12);color:var(--purple);border:1px solid rgba(139,107,163,0.25)}
+.toggle{width:28px;height:16px;border-radius:8px;background:rgba(0,128,128,0.3);border:1px solid rgba(0,128,128,0.5);position:relative;cursor:pointer;transition:background .2s;flex-shrink:0}
+.toggle.on{background:var(--teal)}
+.toggle::after{content:'';position:absolute;width:12px;height:12px;border-radius:50%;background:#fff;top:1px;left:1px;transition:transform .2s}
+.toggle.on::after{transform:translateX(12px)}
+
+/* Download buttons */
+.dl-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:10px 14px 14px}
+.dl-btn{border-radius:8px;padding:10px;text-align:center;cursor:pointer;font-family:'Cinzel',serif;font-size:10px;font-weight:700;letter-spacing:.08em;transition:all .2s;border:none}
+.dl-btn.primary{background:var(--teal);color:#fff}
+.dl-btn.primary:hover{background:#00a0a0}
+.dl-btn.secondary{background:var(--bg3);color:var(--ocean);border:1px solid var(--border)}
+.dl-btn.secondary:hover{border-color:var(--ocean);color:var(--text)}
+.dl-btn.gold{background:var(--gold);color:var(--bg1)}
+.dl-btn.gold:hover{background:#fff}
+.dl-btn:active{transform:scale(.97)}
+.suno-status{font-size:8px;padding:2px 8px;border-radius:10px;margin-left:4px;font-family:'Cinzel',serif;letter-spacing:.06em;display:inline-block}
+.suno-status.no{background:rgba(255,85,85,0.12);color:#ff7070;border:1px solid rgba(255,85,85,0.3)}
+.suno-status.yes{background:rgba(0,128,128,0.12);color:var(--teal);border:1px solid rgba(0,128,128,0.3)}
+.suno-status.partial{background:rgba(244,208,63,0.12);color:var(--gold);border:1px solid rgba(244,208,63,0.3)}
+.suno-compat{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:10px}
+.suno-compat-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:9px;color:var(--muted)}
+.suno-compat-row:last-child{border-bottom:none}
+.suno-compat-format{font-weight:600;color:var(--text);min-width:58px;font-family:'Cinzel',serif}
+.audio-render-box{background:rgba(244,208,63,0.05);border:1px solid rgba(244,208,63,0.25);border-radius:8px;padding:10px 12px;margin-bottom:10px}
+.audio-render-label{font-size:9px;color:var(--gold);letter-spacing:.14em;text-transform:uppercase;margin-bottom:6px;font-family:'Cinzel',serif}
+.audio-render-steps{font-size:9px;color:var(--muted);line-height:2}
+/* Suno sliders */
+.suno-ctrl-panel{background:var(--bg1);border:1px solid rgba(139,107,163,0.35);border-radius:10px;overflow:hidden;margin-bottom:14px}
+.suno-ctrl-header{background:rgba(139,107,163,0.1);border-bottom:1px solid rgba(139,107,163,0.2);padding:9px 14px;display:flex;align-items:center;gap:8px}
+.suno-ctrl-dot{width:7px;height:7px;border-radius:50%;background:var(--purple);flex-shrink:0}
+.suno-ctrl-title{font-size:10px;font-weight:700;color:var(--purple);letter-spacing:.1em;font-family:'Cinzel',serif}
+.suno-ctrl-body{padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.suno-slider-row{display:flex;flex-direction:column;gap:3px}
+.suno-slider-top{display:flex;justify-content:space-between;align-items:baseline}
+.suno-slider-name{font-size:10px;font-weight:600;color:var(--text);font-family:'Cinzel',serif}
+.suno-slider-val{font-size:11px;font-weight:700;font-family:'Cinzel',serif}
+.suno-slider-desc{font-size:8px;color:var(--muted);margin-bottom:3px}
+.suno-range{width:100%;height:3px;-webkit-appearance:none;appearance:none;border-radius:2px;outline:none;cursor:pointer}
+.suno-range::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;cursor:pointer}
+.suno-range.audio{background:rgba(0,128,128,0.3)}
+.suno-range.audio::-webkit-slider-thumb{background:var(--teal)}
+.suno-range.style{background:rgba(74,123,167,0.3)}
+.suno-range.style::-webkit-slider-thumb{background:var(--ocean)}
+.suno-range.weird{background:rgba(207,122,90,0.3)}
+.suno-range.weird::-webkit-slider-thumb{background:var(--coral)}
+.suno-slider-track{height:3px;border-radius:2px;position:relative}
+/* Metatag pills */
+.metatag-wrap{background:var(--bg1);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:14px}
+.metatag-label{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--ocean);margin-bottom:8px;font-family:'Cinzel',serif}
+.metatag-grid{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px}
+.mtag{font-size:9px;padding:3px 9px;border-radius:12px;border:1px solid var(--border);color:var(--muted);cursor:pointer;transition:all .2s;font-family:'Courier New',monospace;letter-spacing:.02em;user-select:none}
+.mtag:hover{border-color:var(--ocean);color:var(--ocean)}
+.mtag.on{background:rgba(74,123,167,0.12);border-color:var(--ocean);color:var(--ocean)}
+.mtag.on.gold{background:rgba(244,208,63,0.1);border-color:var(--gold);color:var(--gold)}
+/* Seed design guide */
+.seed-guide{background:var(--bg2);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:14px}
+.seed-guide-hdr{padding:8px 12px;border-bottom:1px solid var(--border);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);font-family:'Cinzel',serif}
+.seed-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border)}
+.seed-cell{background:var(--bg2);padding:8px 10px}
+.seed-cell-lbl{font-size:8px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:3px;font-family:'Cinzel',serif}
+.seed-cell-val{font-size:10px;color:var(--text);font-weight:600}
+.seed-cell-sub{font-size:8px;color:var(--muted);margin-top:1px}
+/* Render instrument selector */
+.inst-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:10px}
+.inst-btn{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:6px 4px;text-align:center;cursor:pointer;transition:all .2s}
+.inst-btn:hover{border-color:var(--ocean)}
+.inst-btn.active{border-color:var(--gold);background:rgba(244,208,63,0.06)}
+.inst-btn-name{font-size:9px;color:var(--text);font-weight:600;font-family:'Cinzel',serif}
+.inst-btn-genre{font-size:7px;color:var(--muted);margin-top:2px}
+.dl-note{font-size:8px;color:var(--muted);text-align:center;padding:0 14px 10px;line-height:1.5}
+
+/* Status */
+.status-bar{display:flex;align-items:center;gap:6px;padding:8px 14px;background:var(--bg2);border-radius:8px;margin-bottom:10px}
+.status-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.status-text{font-size:9px;color:var(--muted);flex:1}
+.status-time{font-size:9px;color:var(--muted)}
+
+/* Log */
+.log-box{background:var(--bg1);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:9px;color:var(--muted);font-family:'Courier New',monospace;line-height:1.8;max-height:110px;overflow-y:auto}
+.log-line.ok{color:var(--teal)}
+.log-line.info{color:var(--ocean)}
+.log-line.gold{color:var(--gold)}
+
+/* Export grid right panel */
+.export-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:12px}
+.export-btn{background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:9px;text-align:center;cursor:pointer;transition:all .2s}
+.export-btn:hover{border-color:var(--ocean)}
+.export-btn-name{font-size:10px;font-weight:600;color:var(--ocean);font-family:'Cinzel',serif}
+.export-btn-desc{font-size:8px;color:var(--muted);margin-top:2px}
+
+.divider{height:1px;background:linear-gradient(to right,transparent,var(--border),transparent);margin:12px 0}
+</style>
+</head>
+<body>
+
+<div class="spectrum-strip"></div>
+
+<header class="site-header">
+  <div class="logo-wrap">
+    <svg width="38" height="38" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" style="filter:drop-shadow(0 2px 6px rgba(74,123,167,0.5));flex-shrink:0">
+      <circle cx="100" cy="100" r="98" fill="#4A7BA7" stroke="#008080" stroke-width="2"/>
+      <polygon points="100,15 185,185 15,185" fill="#F4D03F" opacity="0.9"/>
+      <polygon points="100,15 15,185 15,55" fill="#8B6BA3" opacity="0.75"/>
+      <polygon points="100,15 185,55 185,185" fill="#6FA5A5" opacity="0.75"/>
+      <polygon points="15,55 100,100 15,185" fill="#CF7A5A" opacity="0.65"/>
+      <polygon points="185,55 100,100 185,185" fill="#9AAF7A" opacity="0.65"/>
+      <polygon points="100,55 145,100 100,145 55,100" fill="#E8D77F" opacity="0.6"/>
+      <circle cx="100" cy="100" r="50" fill="none" stroke="#008080" stroke-width="3"/>
+      <circle cx="100" cy="100" r="7" fill="#F4D03F"/>
+    </svg>
+    <div class="logo-text">
+      <h1>KEYS, CODES & MODES™</h1>
+      <span class="sub">× Suno MIDI Bridge — Proprietary IP</span>
+    </div>
+  </div>
+  <div class="header-badge">MIDI LIVE · 3 TRACKS · LOGIC READY</div>
+</header>
+
+<div class="main">
+
+  <!-- ══════════════════════════════════════
+       LEFT PANEL — KCM SOURCE
+  ══════════════════════════════════════ -->
+  <div class="panel">
+    <div class="panel-label">KCM Source</div>
+
+    <div class="section-label">Active KCM app</div>
+    <div class="app-grid">
+      <div class="app-card active" onclick="selectApp(this,'Chromatic Clock')">
+        <div class="app-name">Chromatic Clock</div>
+        <div class="app-tag">Key · mode · color</div>
+      </div>
+      <div class="app-card" onclick="selectApp(this,'Circle of Modes')">
+        <div class="app-name">Circle of Modes</div>
+        <div class="app-tag">Modal progressions</div>
+      </div>
+      <div class="app-card" onclick="selectApp(this,'Fretboard')">
+        <div class="app-name">Fretboard</div>
+        <div class="app-tag">Voicings · MIDI</div>
+      </div>
+      <div class="app-card" onclick="selectApp(this,'Rhythm Clock')">
+        <div class="app-name">Rhythm Clock</div>
+        <div class="app-tag">Groove · tempo</div>
+      </div>
+    </div>
+
+    <div class="section-label">12-Color Chromatic Clock™</div>
+    <div class="wheel-wrap">
+      <canvas id="kcmWheel" width="380" height="380"></canvas>
+      <div class="wheel-readout">
+        <div class="wheel-note" id="wheelNote">A</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px">
+          <span id="wheelColor">Sky Blue</span> ·
+          <span id="wheelMode">Dorian</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-label">Mode</div>
+    <div class="mode-pills" id="modePills">
+      <div class="mode-pill" onclick="setMode(this,'Ionian')">Ionian</div>
+      <div class="mode-pill active" onclick="setMode(this,'Dorian')">Dorian</div>
+      <div class="mode-pill" onclick="setMode(this,'Phrygian')">Phrygian</div>
+      <div class="mode-pill" onclick="setMode(this,'Lydian')">Lydian</div>
+      <div class="mode-pill" onclick="setMode(this,'Mixolydian')">Mixolydian</div>
+      <div class="mode-pill" onclick="setMode(this,'Aeolian')">Aeolian</div>
+      <div class="mode-pill" onclick="setMode(this,'Locrian')">Locrian</div>
+    </div>
+
+    <div class="midi-live">
+      <div class="midi-dot"></div>
+      <div class="midi-info" id="midiLive">MIDI · note 69 · vel 92 · ch 1</div>
+      <div class="midi-val" id="midiNote">A4</div>
+    </div>
+
+    <div class="section-label">Parameters</div>
+    <div class="slider-row">
+      <div class="slider-lbl"><span>Tempo</span><span id="tempoLbl">92 bpm</span></div>
+      <input type="range" min="40" max="200" value="92" step="1" oninput="p.tempo=+this.value;document.getElementById('tempoLbl').textContent=this.value+' bpm';rebuild()">
+    </div>
+    <div class="slider-row">
+      <div class="slider-lbl"><span>Bars</span><span id="barsLbl">8</span></div>
+      <input type="range" min="4" max="32" value="8" step="4" oninput="p.bars=+this.value;document.getElementById('barsLbl').textContent=this.value;rebuild()">
+    </div>
+    <div class="slider-row">
+      <div class="slider-lbl"><span>Velocity</span><span id="velLbl">92</span></div>
+      <input type="range" min="40" max="127" value="92" step="1" oninput="p.velocity=+this.value;document.getElementById('velLbl').textContent=this.value;rebuild()">
+    </div>
+    <div class="slider-row">
+      <div class="slider-lbl"><span>Complexity</span><span id="compLbl">65%</span></div>
+      <input type="range" min="0" max="100" value="65" step="1" oninput="p.complexity=+this.value;document.getElementById('compLbl').textContent=this.value+'%';rebuild()">
+    </div>
+
+    <div class="section-label">Structure</div>
+    <div class="struct-grid">
+      <div class="struct-btn active" onclick="selectStruct(this,'AABA')">
+        <div class="struct-btn-name">AABA</div>
+        <div class="struct-btn-desc">Jazz standard form</div>
+      </div>
+      <div class="struct-btn" onclick="selectStruct(this,'12-Bar')">
+        <div class="struct-btn-name">12-Bar</div>
+        <div class="struct-btn-desc">Blues / rock</div>
+      </div>
+      <div class="struct-btn" onclick="selectStruct(this,'Modal')">
+        <div class="struct-btn-name">Modal</div>
+        <div class="struct-btn-desc">Free vamp</div>
+      </div>
+      <div class="struct-btn" onclick="selectStruct(this,'Custom')">
+        <div class="struct-btn-name">Custom</div>
+        <div class="struct-btn-desc">User defined</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       CENTER PANEL — BRIDGE
+  ══════════════════════════════════════ -->
+  <div class="center">
+
+    <!-- KCM → Suno prompt (full metatag version) -->
+    <div class="section-label" style="margin-top:0">KCM → Suno bridge prompt</div>
+    <div class="prompt-box">
+      <div class="prompt-box-label">Proprietary KCM algorithm · metatag-injected · copy to Suno Custom Mode</div>
+      <div class="prompt-text" id="promptOut">A Dorian, cool introspective jazz, modal feel, Sky Blue tonal palette, walking bass, brushed drums, [BPM: 92] [Key: A Dorian] [Instrumental] [No Melody Solo]</div>
+    </div>
+
+    <!-- Suno Influence Sliders -->
+    <div class="section-label">Suno influence controls — audio seed</div>
+    <div class="suno-ctrl-panel">
+      <div class="suno-ctrl-header">
+        <div class="suno-ctrl-dot"></div>
+        <div class="suno-ctrl-title">Suno Slider Stack — KCM Seed Control</div>
+      </div>
+      <div class="suno-ctrl-body">
+
+        <div class="suno-slider-row">
+          <div class="suno-slider-top">
+            <div>
+              <div class="suno-slider-name">Audio Influence</div>
+              <div class="suno-slider-desc">How strongly Suno follows the uploaded KCM audio seed</div>
+            </div>
+            <div class="suno-slider-val" id="audioInflVal" style="color:var(--teal)">75%</div>
+          </div>
+          <input type="range" class="suno-range audio" min="0" max="100" value="75" step="1"
+            oninput="s.audioInfl=+this.value;document.getElementById('audioInflVal').textContent=this.value+'%';updateInfluenceBar('audioBar',this.value,'var(--teal)');updatePrompt()">
+          <div style="height:3px;border-radius:2px;background:rgba(0,128,128,0.15);margin-top:3px;position:relative">
+            <div id="audioBar" style="height:100%;border-radius:2px;background:var(--teal);width:75%;transition:width .15s"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:8px;color:var(--muted);margin-top:2px">
+            <span>Suno free</span><span>← KCM sweet spot: 70–85% →</span><span>KCM locks</span>
+          </div>
+        </div>
+
+        <div class="suno-slider-row">
+          <div class="suno-slider-top">
+            <div>
+              <div class="suno-slider-name">Style Influence</div>
+              <div class="suno-slider-desc">How tightly Suno follows the KCM text prompt direction</div>
+            </div>
+            <div class="suno-slider-val" id="styleInflVal" style="color:var(--ocean)">78%</div>
+          </div>
+          <input type="range" class="suno-range style" min="0" max="100" value="78" step="1"
+            oninput="s.styleInfl=+this.value;document.getElementById('styleInflVal').textContent=this.value+'%';updateInfluenceBar('styleBar',this.value,'var(--ocean)');updatePrompt()">
+          <div style="height:3px;border-radius:2px;background:rgba(74,123,167,0.15);margin-top:3px">
+            <div id="styleBar" style="height:100%;border-radius:2px;background:var(--ocean);width:78%;transition:width .15s"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:8px;color:var(--muted);margin-top:2px">
+            <span>Loose</span><span>← KCM sweet spot: 70–85% →</span><span>Strict</span>
+          </div>
+        </div>
+
+        <div class="suno-slider-row">
+          <div class="suno-slider-top">
+            <div>
+              <div class="suno-slider-name">Weirdness</div>
+              <div class="suno-slider-desc">Novelty — keep low to preserve KCM modal identity</div>
+            </div>
+            <div class="suno-slider-val" id="weirdVal" style="color:var(--coral)">15%</div>
+          </div>
+          <input type="range" class="suno-range weird" min="0" max="100" value="15" step="1"
+            oninput="s.weird=+this.value;document.getElementById('weirdVal').textContent=this.value+'%';updateInfluenceBar('weirdBar',this.value,'var(--coral)');updatePrompt()">
+          <div style="height:3px;border-radius:2px;background:rgba(207,122,90,0.15);margin-top:3px">
+            <div id="weirdBar" style="height:100%;border-radius:2px;background:var(--coral);width:15%;transition:width .15s"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:8px;color:var(--muted);margin-top:2px">
+            <span>Stable</span><span>← KCM sweet spot: 10–20% →</span><span>Wild</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Metatag injection panel -->
+    <div class="section-label">Suno metatag injection — auto-added to prompt</div>
+    <div class="metatag-wrap">
+      <div class="metatag-label">Structure tags</div>
+      <div class="metatag-grid" id="structTags">
+        <div class="mtag on gold" onclick="toggleTag(this,'[Instrumental]')">[Instrumental]</div>
+        <div class="mtag on" onclick="toggleTag(this,'[No Melody Solo]')">[No Melody Solo]</div>
+        <div class="mtag" onclick="toggleTag(this,'[Verse]')">[Verse]</div>
+        <div class="mtag" onclick="toggleTag(this,'[Chorus]')">[Chorus]</div>
+        <div class="mtag" onclick="toggleTag(this,'[Bridge]')">[Bridge]</div>
+        <div class="mtag" onclick="toggleTag(this,'[Intro]')">[Intro]</div>
+        <div class="mtag" onclick="toggleTag(this,'[Outro]')">[Outro]</div>
+        <div class="mtag" onclick="toggleTag(this,'[Build]')">[Build]</div>
+      </div>
+      <div class="metatag-label">Production tags</div>
+      <div class="metatag-grid" id="prodTags">
+        <div class="mtag on" onclick="toggleTag(this,'[No Drums]')">[No Drums]</div>
+        <div class="mtag" onclick="toggleTag(this,'[Brushed Drums]')">[Brushed Drums]</div>
+        <div class="mtag" onclick="toggleTag(this,'[Walking Bass]')">[Walking Bass]</div>
+        <div class="mtag" onclick="toggleTag(this,'[Dry Mix]')">[Dry Mix]</div>
+        <div class="mtag" onclick="toggleTag(this,'[Minimal Reverb]')">[Minimal Reverb]</div>
+        <div class="mtag" onclick="toggleTag(this,'[Studio Quality]')">[Studio Quality]</div>
+        <div class="mtag" onclick="toggleTag(this,'[Lo-fi]')">[Lo-fi]</div>
+        <div class="mtag" onclick="toggleTag(this,'[Cinematic]')">[Cinematic]</div>
+      </div>
+      <div class="metatag-label">Theory tags — KCM auto-injects</div>
+      <div class="metatag-grid" id="theoryTags">
+        <div class="mtag on gold" id="bpmTag" onclick="toggleTag(this,'[BPM: 92]')">[BPM: 92]</div>
+        <div class="mtag on gold" id="keyTag" onclick="toggleTag(this,'[Key: A Dorian]')">[Key: A Dorian]</div>
+        <div class="mtag" onclick="toggleTag(this,'[Time: 4/4]')">[Time: 4/4]</div>
+        <div class="mtag" onclick="toggleTag(this,'[Chord: i-iv-i-v]')">[Chord: i-iv-i-v]</div>
+      </div>
+    </div>
+
+    <!-- Audio Seed Design Guide -->
+    <div class="section-label">KCM audio seed design — what to render</div>
+    <div class="seed-guide">
+      <div class="seed-guide-hdr">Optimal seed spec · maximizes Suno Audio Influence</div>
+      <div class="seed-grid">
+        <div class="seed-cell">
+          <div class="seed-cell-lbl">Duration</div>
+          <div class="seed-cell-val">8–16 seconds</div>
+          <div class="seed-cell-sub">One full chord progression pass</div>
+        </div>
+        <div class="seed-cell">
+          <div class="seed-cell-lbl">Content</div>
+          <div class="seed-cell-val">Chords + Bass only</div>
+          <div class="seed-cell-sub">No melody — let Suno write it</div>
+        </div>
+        <div class="seed-cell">
+          <div class="seed-cell-lbl">Production</div>
+          <div class="seed-cell-val">Dry, no reverb</div>
+          <div class="seed-cell-sub">Heavy reverb confuses pitch detection</div>
+        </div>
+        <div class="seed-cell">
+          <div class="seed-cell-lbl">Start point</div>
+          <div class="seed-cell-val">Beat 1, root chord</div>
+          <div class="seed-cell-sub">Suno anchors to first 2 seconds</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Render instrument selector -->
+    <div class="section-label">Render instrument — shapes Suno's sonic direction</div>
+    <div class="inst-grid" id="instGrid">
+      <div class="inst-btn" onclick="setInstrument(this,'Piano')">
+        <div class="inst-btn-name">Piano</div>
+        <div class="inst-btn-genre">Jazz · Classical</div>
+      </div>
+      <div class="inst-btn active" onclick="setInstrument(this,'Acoustic Guitar')">
+        <div class="inst-btn-name">Ac. Guitar</div>
+        <div class="inst-btn-genre">Folk · Country</div>
+      </div>
+      <div class="inst-btn" onclick="setInstrument(this,'Electric Guitar')">
+        <div class="inst-btn-name">El. Guitar</div>
+        <div class="inst-btn-genre">Rock · Blues</div>
+      </div>
+      <div class="inst-btn" onclick="setInstrument(this,'Synth Pad')">
+        <div class="inst-btn-name">Synth Pad</div>
+        <div class="inst-btn-genre">Ambient · Electronic</div>
+      </div>
+    </div>
+
+    <button class="gen-btn" onclick="generate()">Generate via KCM Bridge ▶</button>
+
+    <div class="section-label">Generated tracks</div>
+    <div class="track-list" id="trackList">
+      <div class="track-list-header">Session output</div>
+      <div class="track-row selected" onclick="selectTrack(this,0)">
+        <div class="track-dot" style="background:#007FFF"></div>
+        <div class="track-name">Sky Modal — Take 1</div>
+        <div class="track-meta">A Dor · 8 bars</div>
+        <div class="track-badge">MIDI</div>
+        <div class="track-play" onclick="event.stopPropagation();playPreview(0)">▶</div>
+      </div>
+      <div class="track-row" onclick="selectTrack(this,1)">
+        <div class="track-dot" style="background:#007FFF;opacity:.5"></div>
+        <div class="track-name">Sky Modal — Take 2</div>
+        <div class="track-meta">A Dor · 8 bars</div>
+        <div class="track-badge">MIDI</div>
+        <div class="track-play" onclick="event.stopPropagation();playPreview(1)">▶</div>
+      </div>
+    </div>
+
+    <div class="section-label">Waveform — Suno return</div>
+    <div class="waveform" id="waveform"></div>
+
+    <div class="section-label">Suno → KCM return analysis</div>
+    <div class="return-grid">
+      <div class="return-card">
+        <div class="return-val" id="retKey" style="color:#007FFF">A</div>
+        <div class="return-lbl">Key detected</div>
+      </div>
+      <div class="return-card">
+        <div class="return-val" id="retMode">Dorian</div>
+        <div class="return-lbl">Mode identified</div>
+      </div>
+      <div class="return-card">
+        <div class="return-val" id="retColor" style="font-size:11px">Sky Blue</div>
+        <div class="return-lbl">KCM color</div>
+      </div>
+    </div>
+
+    <div class="section-label">Bridge log</div>
+    <div class="log-box" id="logBox">
+      <div class="log-line ok">✓ KCM bridge initialized · A Dorian · Sky Blue</div>
+      <div class="log-line info">→ Modal algorithm: [0,2,3,5,7,9,10]</div>
+      <div class="log-line info">→ Progression: i-iv-i-v · 4 chords · 8 bars</div>
+      <div class="log-line ok">✓ MIDI tracks built: Chords (ch1) · Bass (ch2) · Melody (ch3)</div>
+      <div class="log-line gold">◆ Suno prompt generated · ready to send</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       RIGHT PANEL — MIDI EXPORT
+  ══════════════════════════════════════ -->
+  <div class="panel">
+    <div class="panel-label">Output & Export</div>
+
+    <!-- Suno Compatibility Matrix -->
+    <div class="section-label">Suno input — what it accepts</div>
+    <div class="suno-compat">
+      <div class="suno-compat-row">
+        <div class="suno-compat-format">.mid file</div>
+        <span class="suno-status no">Not accepted</span>
+        <div style="flex:1">Standard upload is audio only</div>
+      </div>
+      <div class="suno-compat-row">
+        <div class="suno-compat-format">MIDI anchor</div>
+        <span class="suno-status partial">Studio Pro</span>
+        <div style="flex:1">Structural anchoring — Pro/Premier</div>
+      </div>
+      <div class="suno-compat-row">
+        <div class="suno-compat-format">.wav audio</div>
+        <span class="suno-status yes">Accepted</span>
+        <div style="flex:1">Upload Audio · 6–120 sec</div>
+      </div>
+      <div class="suno-compat-row">
+        <div class="suno-compat-format">.mp3 audio</div>
+        <span class="suno-status yes">Accepted</span>
+        <div style="flex:1">Upload Audio · standard input</div>
+      </div>
+      <div class="suno-compat-row">
+        <div class="suno-compat-format">Text prompt</div>
+        <span class="suno-status yes">Always</span>
+        <div style="flex:1">KCM bridge prompt — all plans</div>
+      </div>
+    </div>
+
+    <!-- KCM MIDI tracks -->
+    <div class="section-label">KCM MIDI — DAW export</div>
+    <div class="midi-export-panel">
+      <div class="midi-export-header">
+        <div class="midi-export-icon"></div>
+        <div class="midi-export-title">KCM Bridge — 3-Track MIDI</div>
+      </div>
+      <div class="midi-track-rows" id="midiTrackRows">
+        <div class="midi-track-row">
+          <div class="toggle on" onclick="toggleTrack(this,0)"></div>
+          <div class="midi-track-color" style="background:#F4D03F;border-radius:3px"></div>
+          <div class="midi-track-name">Chords</div>
+          <div class="midi-track-info" id="chordInfo">4 chords · 8 bars</div>
+          <div class="midi-track-ch">Ch 1</div>
+        </div>
+        <div class="midi-track-row">
+          <div class="toggle on" onclick="toggleTrack(this,1)"></div>
+          <div class="midi-track-color" style="background:#008080;border-radius:3px"></div>
+          <div class="midi-track-name">Bass</div>
+          <div class="midi-track-info" id="bassInfo">Root walk · 8 bars</div>
+          <div class="midi-track-ch">Ch 2</div>
+        </div>
+        <div class="midi-track-row">
+          <div class="toggle on" onclick="toggleTrack(this,2)"></div>
+          <div class="midi-track-color" style="background:#8B6BA3;border-radius:3px"></div>
+          <div class="midi-track-name">Melody</div>
+          <div class="midi-track-info" id="melodyInfo">Modal scale · 8 bars</div>
+          <div class="midi-track-ch">Ch 3</div>
+        </div>
+      </div>
+      <div class="dl-grid">
+        <button class="dl-btn primary" onclick="exportMidi()">Download .mid</button>
+        <button class="dl-btn secondary" onclick="exportSeparate()">3 Separate Tracks</button>
+      </div>
+      <div class="dl-note" id="dlNote">Logic Pro · Ableton · GarageBand · any DAW<br>File → Import → MIDI File · 3 tracks appear automatically</div>
+    </div>
+
+    <!-- Suno audio path -->
+    <div class="audio-render-box">
+      <div class="audio-render-label">KCM → Suno via audio render</div>
+      <div class="audio-render-steps">
+        <div>1. Download KCM .mid</div>
+        <div>2. Open in Logic / GarageBand</div>
+        <div>3. Add instrument, bounce to .wav</div>
+        <div>4. Upload .wav to Suno Upload Audio</div>
+        <div>5. Suno builds full arrangement around it</div>
+      </div>
+      <div style="margin-top:8px">
+        <button class="dl-btn gold" style="width:100%;font-size:9px" onclick="exportMidiAndLog()">Download .mid → render → Suno</button>
+      </div>
+    </div>
+
+    <!-- Suno structured prompt path -->
+    <div class="section-label">KCM → Suno via prompt (always works)</div>
+    <div style="background:var(--bg2);border:1px solid rgba(0,128,128,0.25);border-radius:8px;padding:10px 12px;margin-bottom:10px">
+      <div style="font-size:9px;color:var(--muted);line-height:2">
+        <div style="color:var(--teal);font-weight:600;font-family:'Cinzel',serif;margin-bottom:4px">KCM bridge prompt · copy to Suno</div>
+        <div id="promptCopyBox" style="font-style:italic;color:rgba(232,232,232,0.55);line-height:1.7;margin-bottom:8px">A Dorian, cool introspective jazz, modal feel, Sky Blue tonal palette, 92bpm, 8 bars</div>
+        <button class="dl-btn secondary" style="width:100%;font-size:9px" onclick="copyPrompt()">Copy Prompt for Suno</button>
+      </div>
+    </div>
+
+    <!-- Track details -->
+    <div class="section-label">File details</div>
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:10px;font-size:9px;line-height:2;color:var(--muted)">
+      <div><span style="color:var(--text);font-weight:600">File:</span> <span id="filenameLbl">KCM_A_Dorian_92bpm.mid</span></div>
+      <div><span style="color:var(--text);font-weight:600">Format:</span> MIDI Type 1 · 480 PPQ · 3 tracks</div>
+      <div><span style="color:var(--text);font-weight:600">Tempo:</span> <span id="tempoDetail">92 bpm · 652,174 μs/beat</span></div>
+      <div><span style="color:var(--text);font-weight:600">Key:</span> <span id="keySigDetail">A Dorian</span></div>
+      <div><span style="color:var(--text);font-weight:600">Bars:</span> <span id="barsDetail">8 bars · 32 beats</span></div>
+      <div><span style="color:var(--text);font-weight:600">Color:</span> <span id="colorDetail" style="color:#007FFF">Sky Blue #007FFF</span></div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- All output options -->
+    <div class="section-label">All output paths</div>
+    <div class="export-grid">
+      <div class="export-btn" onclick="exportMidi()">
+        <div class="export-btn-name">Logic Pro</div>
+        <div class="export-btn-desc">.mid → import</div>
+      </div>
+      <div class="export-btn" onclick="exportMidi()">
+        <div class="export-btn-name">Ableton</div>
+        <div class="export-btn-desc">.mid → drag in</div>
+      </div>
+      <div class="export-btn" onclick="exportMidi()">
+        <div class="export-btn-name">GarageBand</div>
+        <div class="export-btn-desc">.mid → import</div>
+      </div>
+      <div class="export-btn" onclick="exportMidi()">
+        <div class="export-btn-name">FL Studio</div>
+        <div class="export-btn-desc">.mid → import</div>
+      </div>
+      <div class="export-btn" onclick="copyPrompt()">
+        <div class="export-btn-name">Suno prompt</div>
+        <div class="export-btn-desc">Copy KCM text</div>
+      </div>
+      <div class="export-btn" onclick="exportMidiAndLog()">
+        <div class="export-btn-name">Suno audio</div>
+        <div class="export-btn-desc">.mid → .wav → upload</div>
+      </div>
+    </div>
+
+    <div class="status-bar">
+      <div class="status-dot" id="statusDot" style="background:var(--teal)"></div>
+      <div class="status-text" id="statusText">Bridge ready · KCM algorithm active</div>
+    </div>
+  </div>
+</div>
+
+<div class="spectrum-strip"></div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   KCM 12-COLOR CHROMATIC SPECTRUM™ — CANONICAL CONSTANTS
+═══════════════════════════════════════════════════════════ */
+const NOTES=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
+const COLORS=['Yellow','Amber','Orange','Red-Orange','Red','Magenta','Violet','Indigo','Blue','Sky Blue','Mint','Lime'];
+const HEX=['#FFFF00','#FFC400','#FF8000','#FF4000','#FF0000','#C4007F','#8000FF','#4000FF','#0000FF','#007FFF','#00FF80','#80FF00'];
+const SHARPS=[0,0,0,0,0,1,1,1,2,0,2,2]; // key sig sharps (approximation)
+
+const MODES={
+  Ionian:    [0,2,4,5,7,9,11],
+  Dorian:    [0,2,3,5,7,9,10],
+  Phrygian:  [0,1,3,5,7,8,10],
+  Lydian:    [0,2,4,6,7,9,11],
+  Mixolydian:[0,2,4,5,7,9,10],
+  Aeolian:   [0,2,3,5,7,8,10],
+  Locrian:   [0,1,3,5,6,8,10]
+};
+
+const PROGRESSIONS={
+  Ionian:    [0,3,4,0],
+  Dorian:    [0,3,0,4],
+  Phrygian:  [0,1,0,6],
+  Lydian:    [0,1,4,0],
+  Mixolydian:[0,6,3,0],
+  Aeolian:   [0,6,3,4],
+  Locrian:   [0,1,4,0]
+};
+
+const MOOD={
+  Ionian:'bright, open, resolved, hopeful',
+  Dorian:'cool, introspective, minor with lift',
+  Phrygian:'dark, tense, Spanish character',
+  Lydian:'dreamy, floating, otherworldly',
+  Mixolydian:'swagger, folk warmth, driving',
+  Aeolian:'melancholic, natural minor',
+  Locrian:'dissonant, unstable, tense'
+};
+
+/* State */
+let p={root:9,mode:'Dorian',tempo:92,bars:8,velocity:92,complexity:65,structure:'AABA'};
+let s={audioInfl:75,styleInfl:78,weird:15}; // Suno slider state
+let trackEnabled=[true,true,true];
+let kcmAC=null;
+let currentMidiData=null;
+let activeTags=new Set(['[Instrumental]','[No Melody Solo]','[No Drums]','[BPM: 92]','[Key: A Dorian]']);
+let activeInstrument='Acoustic Guitar';
+
+/* ── WHEEL ────────────────────────────────────────────────── */
+const SEG=2*Math.PI/12, START=-Math.PI/2-Math.PI/12;
+
+function drawWheel(){
+  const cv=document.getElementById('kcmWheel');
+  const ctx=cv.getContext('2d'),S=190;
+  const OUTER=S*0.93,INNER=S*0.30;
+  ctx.clearRect(0,0,380,380);
+  ctx.beginPath();ctx.arc(S,S,OUTER+4,0,2*Math.PI);ctx.fillStyle='#0f0f1e';ctx.fill();
+
+  NOTES.forEach((n,i)=>{
+    const a1=START+i*SEG,a2=a1+SEG,mid=(a1+a2)/2,act=(i===p.root);
+    const r=parseInt(HEX[i].slice(1,3),16),g=parseInt(HEX[i].slice(3,5),16),b=parseInt(HEX[i].slice(5,7),16);
+    ctx.save();
+    if(act){ctx.shadowColor=HEX[i];ctx.shadowBlur=20;}
+    ctx.beginPath();
+    ctx.moveTo(S+INNER*Math.cos(a1),S+INNER*Math.sin(a1));
+    ctx.arc(S,S,OUTER,a1,a2);ctx.arc(S,S,INNER,a2,a1,true);ctx.closePath();
+    ctx.fillStyle=act?HEX[i]:`rgba(${r},${g},${b},0.82)`;
+    ctx.fill();ctx.shadowBlur=0;
+    ctx.strokeStyle='#0f0f1e';ctx.lineWidth=2;ctx.stroke();
+    ctx.restore();
+
+    const lx=S+(OUTER+INNER)/2*Math.cos(mid),ly=S+(OUTER+INNER)/2*Math.sin(mid);
+    const light=['#FFFF00','#FFC400','#00FF80','#80FF00'].includes(HEX[i]);
+    ctx.fillStyle=act?(light?'#111':'#fff'):(light?'rgba(0,0,0,0.8)':'rgba(255,255,255,0.92)');
+    ctx.font=`bold ${n.length>1?11:13}px Cinzel,serif`;
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(n,lx,ly);
+  });
+
+  /* dividers & tick at 12 */
+  for(let i=0;i<12;i++){
+    const a=START+i*SEG,isC=(i===0);
+    ctx.save();ctx.strokeStyle=isC?'rgba(244,208,63,0.6)':'rgba(15,15,30,0.9)';
+    ctx.lineWidth=isC?2.5:2;ctx.beginPath();
+    ctx.moveTo(S+INNER*Math.cos(a),S+INNER*Math.sin(a));
+    ctx.lineTo(S+OUTER*Math.cos(a),S+OUTER*Math.sin(a));ctx.stroke();ctx.restore();
+  }
+
+  /* hub */
+  const hub=ctx.createRadialGradient(S,S,0,S,S,INNER);
+  hub.addColorStop(0,'#1e2040');hub.addColorStop(1,'#0f0f1e');
+  ctx.beginPath();ctx.arc(S,S,INNER,0,2*Math.PI);ctx.fillStyle=hub;ctx.fill();
+  ctx.strokeStyle='#008080';ctx.lineWidth=3;ctx.stroke();
+
+  ctx.fillStyle=HEX[p.root];ctx.font='bold 28px Cinzel,serif';
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(NOTES[p.root],S,S-10);
+  ctx.fillStyle='rgba(232,232,232,0.35)';ctx.font='10px Montserrat,sans-serif';
+  ctx.fillText(p.mode,S,S+12);
+
+  /* gold triangle at 12 o'clock (C/START position) */
+  ctx.save();
+  ctx.translate(S+(OUTER+12)*Math.cos(START),S+(OUTER+12)*Math.sin(START));
+  ctx.rotate(START+Math.PI/2);
+  ctx.beginPath();ctx.moveTo(0,-8);ctx.lineTo(-5,5);ctx.lineTo(5,5);ctx.closePath();
+  ctx.fillStyle='#F4D03F';ctx.shadowColor='#F4D03F';ctx.shadowBlur=8;ctx.fill();
+  ctx.restore();
+}
+
+function kcmHit(e){
+  const cv=document.getElementById('kcmWheel');
+  const S=190,INNER=S*0.30,OUTER=S*0.93;
+  const rc=cv.getBoundingClientRect(),sx=cv.width/rc.width,sy=cv.height/rc.height;
+  const dx=(e.clientX-rc.left)*sx-S,dy=(e.clientY-rc.top)*sy-S;
+  const r=Math.sqrt(dx*dx+dy*dy);
+  if(r<INNER||r>OUTER)return -1;
+  let a=Math.atan2(dy,dx)-START;if(a<0)a+=2*Math.PI;
+  return Math.floor(a/SEG)%12;
+}
+
+document.getElementById('kcmWheel').addEventListener('click',function(e){
+  const idx=kcmHit(e);if(idx<0)return;
+  p.root=idx;rebuild();
+});
+
+/* ── MIDI BINARY ENCODER ────────────────────────────────── */
+/* Standard MIDI file (Type 1, multi-track) — pure JS, no deps */
+
+function writeByte(arr,b){arr.push(b&0xFF);}
+function writeWord(arr,w){arr.push((w>>8)&0xFF,w&0xFF);}
+function writeDWord(arr,d){arr.push((d>>24)&0xFF,(d>>16)&0xFF,(d>>8)&0xFF,d&0xFF);}
+function writeVarLen(arr,v){
+  let buf=[v&0x7F];v>>=7;
+  while(v){buf.unshift((v&0x7F)|0x80);v>>=7;}
+  buf.forEach(b=>arr.push(b));
+}
+function writeStr(arr,s){for(let i=0;i<s.length;i++)arr.push(s.charCodeAt(i));}
+
+function buildTempoTrack(bpm){
+  const usPerBeat=Math.round(60000000/bpm);
+  const t=[];
+  /* Track header */
+  [0x4D,0x54,0x72,0x6B].forEach(b=>t.push(b));
+  const body=[];
+  /* delta=0, Set Tempo */
+  writeVarLen(body,0);body.push(0xFF,0x51,0x03);
+  body.push((usPerBeat>>16)&0xFF,(usPerBeat>>8)&0xFF,usPerBeat&0xFF);
+  /* delta=0, Time Signature 4/4 */
+  writeVarLen(body,0);body.push(0xFF,0x58,0x04,0x04,0x02,0x18,0x08);
+  /* delta=0, Key Signature */
+  writeVarLen(body,0);body.push(0xFF,0x59,0x02,SHARPS[p.root]&0x7F,0x00);
+  /* delta=0, Text — KCM metadata */
+  const meta=`KCM Bridge: ${NOTES[p.root]} ${p.mode} ${bpm}bpm | 12-Color Chromatic Spectrum(tm) | keyscodesandmodes.com`;
+  writeVarLen(body,0);body.push(0xFF,0x01,meta.length);writeStr(body,meta);
+  /* End of track */
+  writeVarLen(body,0);body.push(0xFF,0x2F,0x00);
+  writeDWord(t,body.length);
+  body.forEach(b=>t.push(b));
+  return t;
+}
+
+function buildChordTrack(rootMidi,modeName,bars,vel,ppq){
+  const mode=MODES[modeName];
+  const prog=PROGRESSIONS[modeName];
+  const beatsPerChord=4; // one chord per bar
+  const totalBars=bars;
+  const t=[];
+  [0x4D,0x54,0x72,0x6B].forEach(b=>t.push(b));
+  const body=[];
+  /* Track name */
+  const tname='KCM Chords';
+  writeVarLen(body,0);body.push(0xFF,0x03,tname.length);writeStr(body,tname);
+  /* Program: piano (0) on ch0 */
+  writeVarLen(body,0);body.push(0xC0,0x00);
+
+  const chordsPerBar=1;
+  const chordDur=ppq*beatsPerChord;
+  const reps=Math.ceil(totalBars/prog.length);
+
+  for(let rep=0;rep<reps;rep++){
+    prog.forEach((degIdx,ci)=>{
+      const bar=rep*prog.length+ci;if(bar>=totalBars)return;
+      /* chord voicing: root + 3rd + 5th + 7th from scale */
+      const chordTones=[0,2,4,6].map(si=>{
+        const sd=(degIdx+si)%mode.length;
+        return rootMidi+mode[degIdx]+mode[sd]-mode[0];
+      }).filter(n=>n<=127);
+
+      /* note on for each chord tone */
+      chordTones.forEach((n,ni)=>{
+        writeVarLen(body,ni===0?(ci===0&&rep===0?0:0):0);
+        body.push(0x90,n,vel);
+      });
+      /* note off after chord duration */
+      chordTones.forEach((n,ni)=>{
+        writeVarLen(body,ni===0?chordDur-10:0);
+        body.push(0x80,n,0);
+      });
+    });
+  }
+
+  writeVarLen(body,0);body.push(0xFF,0x2F,0x00);
+  writeDWord(t,body.length);body.forEach(b=>t.push(b));
+  return t;
+}
+
+function buildBassTrack(rootMidi,modeName,bars,vel,ppq){
+  const mode=MODES[modeName];
+  const prog=PROGRESSIONS[modeName];
+  const t=[];
+  [0x4D,0x54,0x72,0x6B].forEach(b=>t.push(b));
+  const body=[];
+  const tname='KCM Bass';
+  writeVarLen(body,0);body.push(0xFF,0x03,tname.length);writeStr(body,tname);
+  writeVarLen(body,0);body.push(0xC1,0x20); /* ch1 = bass (program 32 acoustic bass) */
+
+  const bassRoot=rootMidi-24; /* 2 octaves down */
+  const noteDur=ppq; /* quarter note bass hits */
+  const reps=Math.ceil(bars/prog.length);
+
+  let first=true;
+  for(let rep=0;rep<reps;rep++){
+    prog.forEach((degIdx,ci)=>{
+      const bar=rep*prog.length+ci;if(bar>=bars)return;
+      const root=bassRoot+mode[degIdx];
+      const fifth=bassRoot+mode[degIdx]+mode[4]-mode[0];
+      /* root on beat 1 */
+      writeVarLen(body,first?0:0);body.push(0x91,Math.max(21,root),vel-10);first=false;
+      writeVarLen(body,noteDur-5);body.push(0x81,Math.max(21,root),0);
+      /* fifth on beat 3 */
+      writeVarLen(body,noteDur);body.push(0x91,Math.max(21,fifth),vel-20);
+      writeVarLen(body,noteDur-5);body.push(0x81,Math.max(21,fifth),0);
+      /* root again beats 2,4 */
+      writeVarLen(body,noteDur);body.push(0x91,Math.max(21,root),vel-25);
+      writeVarLen(body,noteDur-5);body.push(0x81,Math.max(21,root),0);
+      writeVarLen(body,noteDur);body.push(0x91,Math.max(21,root),vel-30);
+      writeVarLen(body,noteDur-5);body.push(0x81,Math.max(21,root),0);
+    });
+  }
+
+  writeVarLen(body,0);body.push(0xFF,0x2F,0x00);
+  writeDWord(t,body.length);body.forEach(b=>t.push(b));
+  return t;
+}
+
+function buildMelodyTrack(rootMidi,modeName,bars,vel,ppq,complexity){
+  const mode=MODES[modeName];
+  const t=[];
+  [0x4D,0x54,0x72,0x6B].forEach(b=>t.push(b));
+  const body=[];
+  const tname='KCM Melody';
+  writeVarLen(body,0);body.push(0xFF,0x03,tname.length);writeStr(body,tname);
+  writeVarLen(body,0);body.push(0xC2,0x04); /* ch2 = electric piano */
+
+  const melRoot=rootMidi+12; /* 1 octave up */
+  const scale=mode.map(s=>melRoot+s);
+  const totalBeats=bars*4;
+  const cxFactor=complexity/100;
+
+  let beatPos=0;
+  let first=true;
+  while(beatPos<totalBeats){
+    /* choose note duration based on complexity */
+    const dur=cxFactor>0.7?(Math.random()<0.5?ppq/2:ppq):(Math.random()<0.3?ppq/2:ppq*2);
+    const noteIdx=Math.floor(Math.random()*scale.length);
+    const note=scale[noteIdx];
+    const noteVel=vel-20+Math.floor(Math.random()*20);
+
+    writeVarLen(body,first?0:0);
+    body.push(0x92,note,noteVel);first=false;
+    writeVarLen(body,Math.round(dur)-5);
+    body.push(0x82,note,0);
+
+    beatPos+=dur/ppq;
+    if(beatPos>=totalBeats)break;
+    /* occasional rest */
+    if(Math.random()<0.25-cxFactor*0.1){
+      const restDur=ppq/2;
+      writeVarLen(body,Math.round(restDur));
+      beatPos+=restDur/ppq;
+    }
+  }
+
+  writeVarLen(body,0);body.push(0xFF,0x2F,0x00);
+  writeDWord(t,body.length);body.forEach(b=>t.push(b));
+  return t;
+}
+
+function buildMidiFile(){
+  const PPQ=480;
+  const rootMidi=12+(4*12)+p.root; /* octave 4 */
+
+  const tempoTrack=buildTempoTrack(p.tempo);
+  const chordTrack=trackEnabled[0]?buildChordTrack(rootMidi,p.mode,p.bars,p.velocity,PPQ):null;
+  const bassTrack=trackEnabled[1]?buildBassTrack(rootMidi,p.mode,p.bars,p.velocity,PPQ):null;
+  const melodyTrack=trackEnabled[2]?buildMelodyTrack(rootMidi,p.mode,p.bars,p.velocity,PPQ,p.complexity):null;
+
+  const tracks=[tempoTrack,chordTrack,bassTrack,melodyTrack].filter(Boolean);
+  const numTracks=tracks.length;
+
+  /* MIDI File Header */
+  const header=[
+    0x4D,0x54,0x68,0x64, /* MThd */
+    0x00,0x00,0x00,0x06, /* length = 6 */
+    0x00,0x01,           /* format = 1 (multi-track) */
+    (numTracks>>8)&0xFF,numTracks&0xFF,
+    (PPQ>>8)&0xFF,PPQ&0xFF
+  ];
+
+  const all=[...header];
+  tracks.forEach(t=>t.forEach(b=>all.push(b)));
+  return new Uint8Array(all);
+}
+
+function downloadBlob(data,filename){
+  const blob=new Blob([data],{type:'audio/midi'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=filename;a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),3000);
+}
+
+function getFilename(){
+  return `KCM_${NOTES[p.root].replace('♯','s')}_${p.mode}_${p.tempo}bpm_${p.bars}bars.mid`;
+}
+
+function toggleTag(el,tag){
+  if(activeTags.has(tag)){
+    activeTags.delete(tag);
+    el.classList.remove('on','gold');
+  } else {
+    activeTags.add(tag);
+    el.classList.add('on');
+  }
+  rebuild();
+  addLog(`→ Tag ${activeTags.has(tag)?'added':'removed'}: ${tag}`,'info');
+}
+
+function setInstrument(el,name){
+  document.querySelectorAll('.inst-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  activeInstrument=name;
+  rebuild();
+  addLog(`→ Render instrument: ${name} · shapes Suno sonic direction`,'info');
+}
+
+function updateInfluenceBar(id,val,color){
+  const el=document.getElementById(id);
+  if(el){el.style.width=val+'%';el.style.background=color;}
+}
+
+function copyPrompt(){
+  const txt=document.getElementById('promptOut').textContent;
+  navigator.clipboard.writeText(txt).then(()=>{
+    addLog('✓ Prompt copied · paste into Suno custom mode','ok');
+    setStatus('ok','Prompt copied — paste into Suno');
+  }).catch(()=>{
+    addLog('→ Select & copy: '+txt.substring(0,60)+'...','info');
+  });
+}
+
+function exportMidiAndLog(){
+  exportMidi();
+  addLog('→ Next: open .mid in Logic/GarageBand · add instrument · bounce to .wav','info');
+  addLog('→ Then: Suno → Create → Upload Audio → select .wav','info');
+  addLog('◆ Suno will build arrangement around your KCM audio seed','gold');
+}
+
+function exportMidi(){
+  addLog(`→ Building KCM MIDI · ${NOTES[p.root]} ${p.mode} · ${p.tempo}bpm · ${p.bars} bars`,'info');
+  const data=buildMidiFile();
+  currentMidiData=data;
+  const fname=getFilename();
+  downloadBlob(data,fname);
+  addLog(`✓ Downloaded: ${fname} (${data.length} bytes)`,'ok');
+  addLog(`◆ Drop into Logic Pro: File → Import → MIDI File`,'gold');
+  setStatus('ok',`MIDI exported · ${fname}`);
+}
+
+function exportSeparate(){
+  const PPQ=480;
+  const rootMidi=12+(4*12)+p.root;
+  const tracks=[
+    {fn:()=>buildChordTrack(rootMidi,p.mode,p.bars,p.velocity,PPQ),name:'Chords',en:trackEnabled[0]},
+    {fn:()=>buildBassTrack(rootMidi,p.mode,p.bars,p.velocity,PPQ),name:'Bass',en:trackEnabled[1]},
+    {fn:()=>buildMelodyTrack(rootMidi,p.mode,p.bars,p.velocity,PPQ,p.complexity),name:'Melody',en:trackEnabled[2]}
+  ];
+  tracks.forEach(({fn,name,en})=>{
+    if(!en)return;
+    const PPQ2=480;
+    const tempoTrack=buildTempoTrack(p.tempo);
+    const trk=fn();
+    const numTracks=2;
+    const header=[0x4D,0x54,0x68,0x64,0x00,0x00,0x00,0x06,0x00,0x01,(numTracks>>8)&0xFF,numTracks&0xFF,(PPQ2>>8)&0xFF,PPQ2&0xFF];
+    const all=new Uint8Array([...header,...tempoTrack,...trk]);
+    const note=NOTES[p.root].replace('♯','s');
+    downloadBlob(all,`KCM_${note}_${p.mode}_${name}_${p.tempo}bpm.mid`);
+  });
+  addLog(`✓ Exported 3 separate MIDI tracks`,'ok');
+}
+
+/* ── UI HELPERS ─────────────────────────────────────────── */
+function rebuild(){
+  drawWheel();
+  const n=NOTES[p.root],c=COLORS[p.root],h=HEX[p.root];
+  document.getElementById('wheelNote').textContent=n;
+  document.getElementById('wheelNote').style.color=h;
+  document.getElementById('wheelColor').textContent=c;
+  document.getElementById('wheelMode').textContent=p.mode;
+  document.getElementById('midiLive').textContent=`MIDI · note ${48+p.root} · vel ${p.velocity} · ch 1`;
+  document.getElementById('midiNote').textContent=n+'4';
+
+  const mood=MOOD[p.mode]||'';
+  const tagStr=Array.from(activeTags).join(' ');
+  const promptStr=`${n} ${p.mode}, ${mood}, ${c.toLowerCase()} tonal palette, ${activeInstrument.toLowerCase()} chords + bass, ${tagStr}`;
+  document.getElementById('promptOut').textContent=promptStr;
+  const pcb=document.getElementById('promptCopyBox');
+  if(pcb)pcb.textContent=promptStr;
+
+  // Update auto-injected theory tags
+  const bpmTagEl=document.getElementById('bpmTag');
+  const keyTagEl=document.getElementById('keyTag');
+  const bpmTag=`[BPM: ${p.tempo}]`;
+  const keyTag=`[Key: ${n} ${p.mode}]`;
+  if(bpmTagEl){bpmTagEl.textContent=bpmTag; if(activeTags.has('[BPM: 92]')||activeTags.has(bpmTag)){activeTags.delete('[BPM: 92]');activeTags.add(bpmTag);bpmTagEl.classList.add('on','gold');}}
+  if(keyTagEl){keyTagEl.textContent=keyTag; if(activeTags.has('[Key: A Dorian]')||activeTags.has(keyTag)){activeTags.delete('[Key: A Dorian]');activeTags.add(keyTag);keyTagEl.classList.add('on','gold');}}
+
+  document.getElementById('retKey').textContent=n;
+  document.getElementById('retKey').style.color=h;
+  document.getElementById('retMode').textContent=p.mode;
+  document.getElementById('retColor').textContent=c;
+  document.getElementById('retColor').style.color=h;
+
+  document.getElementById('filenameLbl').textContent=getFilename();
+  const usPerBeat=Math.round(60000000/p.tempo);
+  document.getElementById('tempoDetail').textContent=`${p.tempo} bpm · ${usPerBeat.toLocaleString()} μs/beat`;
+  document.getElementById('keySigDetail').textContent=`${n} ${p.mode}`;
+  document.getElementById('barsDetail').textContent=`${p.bars} bars · ${p.bars*4} beats`;
+  document.getElementById('colorDetail').textContent=`${c} ${h}`;
+  document.getElementById('colorDetail').style.color=h;
+  document.getElementById('dlNote').textContent=`KCM-generated MIDI · ${n} ${p.mode} · ${p.tempo}bpm · ${p.bars} bars\nDrag directly into Logic Pro, Ableton, or any DAW`;
+
+  const prog=PROGRESSIONS[p.mode];
+  document.getElementById('chordInfo').textContent=`${prog.length} chords · ${p.bars} bars`;
+  document.getElementById('bassInfo').textContent=`Root walk · ${p.bars} bars`;
+  document.getElementById('melodyInfo').textContent=`Modal scale · ${p.bars} bars`;
+}
+
+function setMode(el,mode){
+  document.querySelectorAll('.mode-pill').forEach(m=>m.classList.remove('active'));
+  el.classList.add('active');p.mode=mode;rebuild();
+  addLog(`→ Mode: ${mode} · scale ${JSON.stringify(MODES[mode])}`,'info');
+}
+
+function selectApp(el,name){
+  document.querySelectorAll('.app-card').forEach(a=>a.classList.remove('active'));
+  el.classList.add('active');
+  addLog(`→ App: ${name} active`,'info');
+}
+
+function selectStruct(el,structName){
+  document.querySelectorAll('.struct-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');p.structure=structName;
+  addLog(`→ Structure: ${structName}`,'info');
+}
+
+function toggleTrack(el,idx){
+  el.classList.toggle('on');
+  trackEnabled[idx]=el.classList.contains('on');
+  addLog(`→ Track ${['Chords','Bass','Melody'][idx]}: ${trackEnabled[idx]?'enabled':'disabled'}`,'info');
+}
+
+function selectTrack(el,idx){
+  document.querySelectorAll('.track-row').forEach(r=>r.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function generate(){
+  const n=NOTES[p.root],c=COLORS[p.root];
+  addLog(`→ Generating · ${n} ${p.mode} · ${p.tempo}bpm`,'info');
+  addLog(`→ Scale: ${JSON.stringify(MODES[p.mode])}`,'info');
+  const prog=PROGRESSIONS[p.mode].map(d=>['i','ii','iii','iv','v','vi','vii'][d]);
+  addLog(`→ Progression: ${prog.join(' - ')}`,'info');
+  const li=document.createElement('div');
+  li.className='track-row';
+  const dur=`${p.bars} bars`;
+  li.innerHTML=`<div class="track-dot" style="background:${HEX[p.root]}"></div><div class="track-name">${c} ${p.mode} — Take ${document.querySelectorAll('.track-row').length+1}</div><div class="track-meta">${n} ${p.mode} · ${dur}</div><div class="track-badge">MIDI</div><div class="track-play">▶</div>`;
+  document.getElementById('trackList').appendChild(li);
+  buildWaveform();
+  addLog(`✓ Track generated · ready to export`,'ok');
+  setStatus('ok',`Generated · ${n} ${p.mode} · ${p.bars} bars`);
+}
+
+function playPreview(idx){
+  if(!kcmAC)kcmAC=new(window.AudioContext||window.webkitAudioContext)();
+  const rootMidi=60+p.root;
+  const mode=MODES[p.mode];
+  const prog=PROGRESSIONS[p.mode];
+  const tempo=p.tempo;
+  const secPerBeat=60/tempo;
+  const t=kcmAC.currentTime+0.05;
+  prog.forEach((degIdx,i)=>{
+    const beatStart=t+i*secPerBeat*2;
+    const chord=[0,2,4].map(si=>{const sd=(degIdx+si)%mode.length;return rootMidi+mode[degIdx]+mode[sd]-mode[0];});
+    chord.forEach(note=>{
+      const o=kcmAC.createOscillator(),g=kcmAC.createGain();
+      o.type='sine';o.frequency.value=440*Math.pow(2,(note-69)/12);
+      g.gain.setValueAtTime(0.18,beatStart);
+      g.gain.exponentialRampToValueAtTime(0.001,beatStart+secPerBeat*1.8);
+      o.connect(g);g.connect(kcmAC.destination);
+      o.start(beatStart);o.stop(beatStart+secPerBeat*2);
+    });
+  });
+  addLog(`▶ Preview · ${NOTES[p.root]} ${p.mode} · ${prog.length} chords`,'ok');
+}
+
+function buildWaveform(){
+  const wf=document.getElementById('waveform');wf.innerHTML='';
+  const n=Math.floor(wf.offsetWidth/4)||80;
+  for(let i=0;i<n;i++){
+    const d=document.createElement('div');
+    d.className='wf-bar';d.style.height=(6+Math.random()*28)+'px';
+    d.style.opacity=(0.25+Math.random()*0.6).toFixed(2);
+    wf.appendChild(d);
+  }
+}
+
+function addLog(msg,cls){
+  const box=document.getElementById('logBox');
+  const d=document.createElement('div');
+  d.className='log-line '+(cls||'');d.textContent=msg;
+  box.appendChild(d);box.scrollTop=box.scrollHeight;
+}
+
+function setStatus(state,msg){
+  const dot=document.getElementById('statusDot');
+  const txt=document.getElementById('statusText');
+  dot.style.background=state==='ok'?'var(--teal)':state==='err'?'#ff5555':'var(--gold)';
+  txt.textContent=msg;
+}
+
+/* Init */
+drawWheel();
+rebuild();
+buildWaveform();
+</script>
+</body>
+</html>
