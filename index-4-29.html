@@ -1,6 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <!-- ═══════════════════════════════════════════════
+       KCM Console — Auth Gate  (Session 9)
+       MUST be first in <head> — redirects to gate.html
+       if no valid kcm_access token in localStorage.
+  ════════════════════════════════════════════════ -->
+  <script>
+    (function () {
+      var valid = ['kcm_premium_2026','kcm_founder_2026','kcm_school_2026','kcm_free_trial','SUPT2026KCM'];
+      var t = localStorage.getItem('kcm_access');
+      if (!t || valid.indexOf(t) === -1) window.location.replace('./gate.html');
+    })();
+  </script>
+  <!-- ═══════════════════════════════════════════════ -->
+
   <!-- ── Core ── -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -52,12 +66,12 @@
     "operatingSystem": "Web",
     "browserRequirements": "Requires JavaScript. Works in all modern browsers.",
     "inLanguage": "en-US",
-    "isAccessibleForFree": true,
+    "isAccessibleForFree": false,
     "offers": {
       "@type": "Offer",
-      "price": "0",
+      "price": "15.00",
       "priceCurrency": "USD",
-      "url": "https://console.keyscodesandmodes.com/"
+      "url": "https://keyscodesandmodes.com/offerings.html"
     },
     "creator": {
       "@type": "Person",
@@ -155,15 +169,20 @@
         </p>
         <div class="kcm-hero__meta">
           <span class="kcm-hero__badge">v1.0 · Live</span>
-          <span class="kcm-hero__version" id="build-version">Build v1.0 · 2026-04-29</span>
+          <span class="kcm-hero__version" id="build-version">Build v1.0 · 2026-04-26</span>
         </div>
       </div>
     </section>
 
-    <!-- ── Panel grid ──────────────────────────────────────────────────── -->
+    </section>
+
+    <!-- ── Panel grid (Session 4+) ──────────────────────────────────────
+         Desktop: 2-column. Mobile: 1-column.
+         Panel cards added here as sessions progress.
+    ──────────────────────────────────────────────────────────────────── -->
     <section class="kcm-panels" aria-label="Application panels">
 
-      <!-- Panel 1: Music Theory Pro -->
+      <!-- Panel 1: Music Theory Pro (Original — chromatic circle view) -->
       <div class="kcm-panel" id="panel-mtp">
         <div class="kcm-panel__header">
           <span class="kcm-panel__accent"></span>
@@ -233,7 +252,7 @@
       <ul class="kcm-status__list">
         <li><strong>Cross-panel synchronization.</strong> Root, mode, scale, and active notes shared across panels in real time.</li>
         <li><strong>.gcis file format.</strong> Save your harmonic state. Load it back later. Portable between sessions.</li>
-        <li><strong>Built on what already works.</strong> Music Theory Pro, Circle of Fifths, and Modal Stencil Player join the Console as the first panels.</li>
+        <li><strong>Built on what already works.</strong> Music Theory Pro, Circle of Fifths, and CAGED Explorer join the Console as the first panels.</li>
       </ul>
     </section>
 
