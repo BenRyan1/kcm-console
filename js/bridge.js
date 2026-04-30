@@ -101,7 +101,20 @@
       return;
     }
     var data = ev.data;
-    if (!data || data.type !== 'KCM_STATE_PATCH') return;
+    if (!data) return;
+
+    // ── Clock control messages from panels ───────────────────────────
+    if (data.type === 'KCM_CLOCK_START') {
+      var p = data.payload || {};
+      startClock(p.modeKey, p.root, p.beatMs);
+      return;
+    }
+    if (data.type === 'KCM_CLOCK_STOP') {
+      stopClock();
+      return;
+    }
+
+    if (data.type !== 'KCM_STATE_PATCH') return;
     if (!data.payload || typeof data.payload !== 'object') return;
 
     try {
@@ -117,8 +130,93 @@
 
   window.addEventListener('message', onMessage);
 
+  // ── Master Sync Clock ────────────────────────────────────────────────
+  // Single setInterval drives ALL panels in perfect sync.
+  // Broadcasts KCM_TICK to every registered iframe on each beat.
+  // Panels listen for KCM_TICK and kill their own timers.
+  var clockInterval  = null;
+  var clockStep      = 0;
+  var clockDirection = 1;
+  var clockBeatMs    = 500;
+  var clockRunning   = false;
+  var clockModeKey   = null;
+  var clockRoot      = 'C';
+
+  var MIDI_BASE  = 60;
+  var NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+
+  var CLOCK_MODES = {
+    ionian:     [0,2,4,5,7,9,11,12],
+    dorian:     [0,2,3,5,7,9,10,12],
+    phrygian:   [0,1,3,5,7,8,10,12],
+    lydian:     [0,2,4,6,7,9,11,12],
+    mixolydian: [0,2,4,5,7,9,10,12],
+    aeolian:    [0,2,3,5,7,8,10,12],
+    locrian:    [0,1,3,5,6,8,10,12]
+  };
+
+  function broadcastTick() {
+    if (!clockModeKey) return;
+    var intervals = CLOCK_MODES[clockModeKey];
+    if (!intervals) return;
+
+    var stepCount = 8;
+    if (clockStep >= stepCount) { clockDirection = -1; clockStep = stepCount - 2; }
+    if (clockStep < 0)          { clockDirection =  1; clockStep = 1; }
+
+    var rootIdx  = NOTE_NAMES.indexOf(clockRoot);
+    var semis    = intervals[clockStep];
+    var midiNote = MIDI_BASE + (rootIdx < 0 ? 0 : rootIdx) + semis;
+    var notePC   = midiNote % 12;
+    var noteName = NOTE_NAMES[notePC];
+
+    var tick = {
+      type: 'KCM_TICK',
+      payload: {
+        step: clockStep, direction: clockDirection,
+        midiNote: midiNote, noteName: noteName, notePC: notePC,
+        modeKey: clockModeKey, root: clockRoot,
+        beatMs: clockBeatMs, ts: Date.now()
+      }
+    };
+
+    iframes.forEach(function (iframe) {
+      try { if (iframe.contentWindow) iframe.contentWindow.postMessage(tick, '*'); } catch(e) {}
+    });
+
+    clockStep += clockDirection;
+  }
+
+  function startClock(modeKey, root, beatMs) {
+    clockModeKey   = modeKey  || clockModeKey;
+    clockRoot      = root     || clockRoot;
+    clockBeatMs    = beatMs   || clockBeatMs;
+    clockStep      = 0;
+    clockDirection = 1;
+    clockRunning   = true;
+    if (clockInterval) clearInterval(clockInterval);
+    clockInterval  = setInterval(broadcastTick, clockBeatMs);
+    console.log('[KCM.bridge] clock started — mode:', clockModeKey, 'root:', clockRoot, 'beatMs:', clockBeatMs);
+  }
+
+  function stopClock() {
+    if (clockInterval) clearInterval(clockInterval);
+    clockInterval = null;
+    clockRunning  = false;
+    clockStep     = 0;
+    var msg = { type: 'KCM_TICK_STOP' };
+    iframes.forEach(function (iframe) {
+      try { if (iframe.contentWindow) iframe.contentWindow.postMessage(msg, '*'); } catch(e) {}
+    });
+    console.log('[KCM.bridge] clock stopped.');
+  }
+
   // ── Public API ───────────────────────────────────────────────────────
   var bridge = {
+    clockStart: function(modeKey, root, beatMs) { startClock(modeKey, root, beatMs); },
+    clockStop:  function() { stopClock(); },
+    clockRunning: function() { return clockRunning; },
+
     register: function (iframeEl) {
       if (!iframeEl || iframeEl.tagName !== 'IFRAME') {
         console.warn('[KCM.bridge] register() requires an <iframe> element.');
@@ -238,13 +336,14 @@
     var stopBtn = document.getElementById('kcm-stop-all');
     if (stopBtn) {
       stopBtn.addEventListener('click', function () {
+        stopClock();
         var msg = { type: 'KCM_STOP' };
         iframes.forEach(function (iframe) {
           try {
             if (iframe.contentWindow) iframe.contentWindow.postMessage(msg, '*');
           } catch (e) { /* silent */ }
         });
-        console.log('[KCM.bridge] KCM_STOP broadcast to', iframes.size, 'panels.');
+        console.log('[KCM.bridge] KCM_STOP + clock stop broadcast to', iframes.size, 'panels.');
       });
     }
     document.querySelectorAll('[data-panel-action="minimize"]').forEach(function (btn) {
