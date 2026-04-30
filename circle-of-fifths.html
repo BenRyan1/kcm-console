@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,15 +6,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#008080">
     <title>Interactive Circle of Fifths | Keys, Codes & Modes</title>
-    <meta name="description" content="Lock a root note, transpose by fifths, play I-IV-V progressions. Free visual music theory tool by Benjamin Ryan.">
+    <meta name="description" content="Explore the Circle of Fifths interactively — click any note to hear major and minor triads, play arpeggios and chords. Free visual music theory tool by Benjamin Ryan.">
     <meta name="author" content="Benjamin Ryan">
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="https://keyscodesandmodes.com/apps/circle-of-fifths.html">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Keys, Codes & Modes">
+    <meta property="og:title" content="Interactive Circle of Fifths | Keys, Codes & Modes">
+    <meta property="og:description" content="Click any note to hear major and minor triads. Play arpeggios and chords around the full Circle of Fifths.">
+    <meta property="og:url" content="https://keyscodesandmodes.com/apps/circle-of-fifths.html">
+    <meta property="og:image" content="https://keyscodesandmodes.com/images/kcm-social-share.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:site" content="@keyscodesandmodes">
+    <meta name="twitter:title" content="Interactive Circle of Fifths | Keys, Codes & Modes">
+    <meta name="twitter:description" content="Click any note to hear major and minor triads. Play arpeggios and chords.">
+    <meta name="twitter:image" content="https://keyscodesandmodes.com/images/kcm-social-share.jpg">
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Interactive Circle of Fifths","url":"https://keyscodesandmodes.com/apps/circle-of-fifths.html","applicationCategory":"EducationalApplication","isAccessibleForFree":true,"author":{"@type":"Person","name":"Benjamin Ryan","address":{"@type":"PostalAddress","streetAddress":"1187 Coast Village Rd #110","addressLocality":"Santa Barbara","addressRegion":"CA","postalCode":"93108","addressCountry":"US"}}}</script>
 
+    <!-- KCM Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
 
+    <!-- Cookie Consent -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cookieconsent@3/build/cookieconsent.min.css">
     <script src="https://cdn.jsdelivr.net/npm/cookieconsent@3/build/cookieconsent.min.js"></script>
     <script>
@@ -34,758 +49,586 @@
       window.dataLayer=window.dataLayer||[];
       function gtag(){dataLayer.push(arguments);}window.gtag=gtag;
       gtag('js',new Date());
-      gtag('config','G-6EGC5ZNZPF',{'anonymize_ip':true});
+      gtag('config','G-6EGC5ZNZPF',{'anonymize_ip':true,'allow_google_signals':false,'allow_ad_personalization_signals':false,'cookie_flags':'SameSite=None;Secure'});
     }
     function trackEvent(n,p){if(typeof gtag==='function')gtag('event',n,p);}
     </script>
 
+    <!-- React (no Tone.js — replaced with Web Audio API in Session 5) -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
     <style>
-        :root{--teal:#008080;--gold:#F4D03F;--purple:#8B6BA3;--coral:#CF7A5A;--bg:#0a0a15;--text:#e8e8f8;--text2:#b0b0cc;--panel:#12121f;--border:rgba(0,128,128,0.2);--fd:'Cinzel',serif;--fb:'Montserrat',sans-serif;}
+        /* ══════════════════════════════════
+           KCM DESIGN TOKENS
+           ══════════════════════════════════ */
+        :root {
+            --primary-teal:   #008080;
+            --primary-gold:   #F4D03F;
+            --primary-purple: #8B6BA3;
+            --primary-coral:  #CF7A5A;
+            --dark-bg:        #0f0f1e;
+            --light-text:     #E8E8E8;
+            --font-display:   'Cinzel', serif;
+            --font-body:      'Montserrat', sans-serif;
+        }
         *{margin:0;padding:0;box-sizing:border-box;}
-        body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100vh;}
-        .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);}
-        :focus-visible{outline:3px solid var(--gold);outline-offset:3px;}
-        svg circle{outline:none!important;} svg *:focus{outline:none!important;}
+        body{font-family:var(--font-body);background:radial-gradient(ellipse at center,#1a1a2e 0%,#0a0a15 100%);color:var(--light-text);min-height:100vh;}
 
-        .app-header{background:linear-gradient(135deg,rgba(15,15,30,.97),rgba(26,26,46,.97));border-bottom:3px solid var(--teal);padding:.85rem 2rem;position:sticky;top:0;z-index:1000;box-shadow:0 4px 20px rgba(0,128,128,.2);}
-        .app-header-inner{max-width:1300px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;}
-        .app-brand{display:flex;align-items:center;gap:.75rem;}
-        .app-title{font-family:var(--fd);font-size:1.3rem;background:linear-gradient(135deg,var(--gold),var(--teal));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:2px;}
-        .app-nav a{color:var(--text2);text-decoration:none;font-size:.9rem;padding:.4rem .9rem;border-radius:20px;transition:all .2s;}
-        .app-nav a:hover{color:var(--gold);}
+        /* ── Accessibility ── */
+        .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
+        .skip-link{position:absolute;top:-44px;left:0;background:var(--primary-gold);color:#0a0a15;padding:10px 18px;font-weight:700;font-family:var(--font-body);text-decoration:none;z-index:10000;border-radius:0 0 6px 0;}
+        .skip-link:focus{top:0;}
+        :focus-visible{outline:3px solid var(--primary-gold);outline-offset:3px;}
+
+        /* ══ FIX: No rectangles on SVG circles ══
+           Browsers draw a default focus rectangle on ANY focusable element.
+           SVG circles must never have tabIndex or role=button.
+           We handle clicks only — no keyboard focus on circles. */
+        svg circle{outline:none !important;}
+        svg *:focus{outline:none !important;}
+
+        /* ══════════════════════════════════
+           HEADER (exact APP_HEADER_TEMPLATE)
+           ══════════════════════════════════ */
+        .app-header{background:linear-gradient(135deg,rgba(15,15,30,0.95),rgba(26,26,46,0.95));backdrop-filter:blur(10px);border-bottom:3px solid var(--primary-teal);padding:1rem 2rem;position:sticky;top:0;z-index:1000;box-shadow:0 4px 20px rgba(0,128,128,0.2);}
+        .app-header-content{max-width:1400px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;}
+        .app-logo-section{display:flex;align-items:center;gap:1rem;}
+        .app-logo-svg{width:50px;height:50px;filter:drop-shadow(0 2px 8px rgba(244,208,63,0.3));transition:transform 0.3s ease;}
+        .app-logo-section:hover .app-logo-svg{transform:scale(1.1) rotate(5deg);}
+        .app-title{font-family:var(--font-display);font-size:1.5rem;background:linear-gradient(135deg,var(--primary-gold),var(--primary-teal),var(--primary-purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin:0;line-height:1.2;letter-spacing:2px;}
+        .app-nav-links{display:flex;gap:1.5rem;align-items:center;}
+        .app-nav-links a{color:var(--light-text);text-decoration:none;font-family:var(--font-body);font-size:1rem;font-weight:500;padding:0.5rem 1rem;border-radius:25px;transition:all 0.3s ease;min-height:44px;display:inline-flex;align-items:center;}
+        .app-nav-links a:hover{color:var(--primary-gold);background:rgba(0,128,128,0.1);}
+        .upgrade-link{background:linear-gradient(135deg,var(--primary-teal),#006666) !important;color:white !important;padding:0.75rem 1.5rem !important;border-radius:50px;font-weight:700;box-shadow:0 4px 15px rgba(0,128,128,0.3);}
+        .upgrade-link:hover{background:linear-gradient(135deg,#006666,var(--primary-teal)) !important;transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,128,128,0.5) !important;}
 
         #root{width:100%;}
-        .wrap{max-width:1200px;margin:0 auto;padding:1.5rem 1rem;}
-        .title-block{text-align:center;margin-bottom:1.25rem;}
-        .title-block h2{font-family:var(--fd);font-size:clamp(1.4rem,3.5vw,2rem);background:linear-gradient(135deg,var(--gold),var(--teal));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-        .title-block p{color:var(--text2);font-size:.82rem;margin-top:.25rem;}
-        .grid{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:1.5rem;align-items:stretch;}
-        @media(max-width:768px){.grid{grid-template-columns:1fr;}}
 
-        .wheel-wrap{display:flex;justify-content:center;}
-        .wheel-box{width:100%;max-width:480px;background:rgba(0,128,128,.04);border:2px solid rgba(0,128,128,.2);border-radius:20px;padding:1.25rem;box-shadow:0 8px 40px rgba(0,128,128,.1);display:flex;flex-direction:column;}
+        /* ══════════════════════════════════
+           FOOTER (exact APP_FOOTER_TEMPLATE)
+           ══════════════════════════════════ */
+        .app-footer{background:linear-gradient(135deg,rgba(15,15,30,0.95),rgba(26,26,46,0.95));backdrop-filter:blur(10px);border-top:3px solid var(--primary-teal);padding:2.5rem 2rem 2rem;margin-top:4rem;}
+        .app-footer-content{max-width:1400px;margin:0 auto;display:flex;flex-direction:column;align-items:center;gap:2rem;}
+        .app-social-section{display:flex;flex-direction:column;align-items:center;gap:1.5rem;}
+        .app-social-title{font-family:var(--font-display);color:var(--primary-gold);font-size:1.3rem;margin:0;letter-spacing:1px;}
+        .app-social-links{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;}
+        .app-social-links a{width:50px;height:50px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,rgba(0,128,128,0.2),rgba(139,107,163,0.2));border:2px solid rgba(0,128,128,0.3);border-radius:50%;color:var(--primary-gold);transition:all 0.3s ease;backdrop-filter:blur(5px);text-decoration:none;}
+        .app-social-links a:hover{background:linear-gradient(135deg,rgba(0,128,128,0.4),rgba(139,107,163,0.4));border-color:var(--primary-teal);transform:translateY(-5px) scale(1.1);box-shadow:0 8px 25px rgba(0,128,128,0.5);}
+        .app-social-links svg{width:22px;height:22px;fill:currentColor;}
+        .app-footer-divider{width:100%;max-width:600px;height:2px;background:linear-gradient(90deg,transparent,rgba(0,128,128,0.3),transparent);}
+        .app-copyright{text-align:center;color:rgba(232,232,232,0.6);font-size:0.95rem;line-height:1.8;}
+        .app-copyright strong{color:var(--primary-gold);}
+        .app-copyright p{margin:0.5rem 0;}
+        .app-legal-links{display:flex;gap:2rem;justify-content:center;flex-wrap:wrap;}
+        .app-legal-links a{color:rgba(232,232,232,0.5);text-decoration:none;font-size:0.9rem;transition:color 0.3s ease;min-height:44px;display:inline-flex;align-items:center;}
+        .app-legal-links a:hover{color:var(--primary-gold);}
 
-        .trans-row{display:flex;align-items:center;justify-content:center;gap:.75rem;margin-top:1rem;}
-        .trans-btn{width:48px;height:48px;border-radius:50%;background:rgba(0,128,128,.12);border:2px solid rgba(0,128,128,.4);color:var(--teal);font-size:1.4rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;user-select:none;}
-        .trans-btn:hover{background:var(--teal);color:var(--bg);box-shadow:0 0 16px rgba(0,128,128,.5);}
-        .trans-btn:active{transform:scale(.93);}
-        .trans-lbl{font-family:var(--fd);font-size:.68rem;color:var(--text2);letter-spacing:.1em;text-align:center;text-transform:uppercase;margin-top:4px;}
-
-        .root-pill{display:flex;flex-direction:column;align-items:center;gap:2px;background:rgba(255,255,255,.04);border:1px solid rgba(0,128,128,.25);border-radius:12px;padding:.4rem 1.2rem;min-width:80px;}
-        .root-note{font-family:var(--fd);font-size:1.6rem;font-weight:900;line-height:1;}
-        .root-lbl{font-size:.65rem;color:var(--text2);letter-spacing:.12em;text-transform:uppercase;}
-        .key-hint{font-size:.68rem;color:rgba(232,232,232,.3);text-align:center;margin-top:.4rem;letter-spacing:.05em;}
-
-        .card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:1rem;margin-bottom:.75rem;}
-        .card-title{font-family:var(--fd);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;margin-bottom:.65rem;}
-
-        .mm-row{display:flex;gap:8px;}
-        .mm-btn{flex:1;padding:.6rem;border-radius:8px;font-family:var(--fd);font-size:.95rem;font-weight:700;cursor:pointer;border:2px solid;transition:all .15s;}
-        .mm-btn.maj{border-color:var(--teal);}
-        .mm-btn.maj.on{background:var(--teal);color:var(--bg);box-shadow:0 0 16px rgba(0,128,128,.5);}
-        .mm-btn.maj:not(.on){background:transparent;color:var(--teal);}
-        .mm-btn.min{border-color:var(--purple);}
-        .mm-btn.min.on{background:var(--purple);color:var(--bg);box-shadow:0 0 16px rgba(139,107,163,.5);}
-        .mm-btn.min:not(.on){background:transparent;color:var(--purple);}
-        .rel-note{font-size:.75rem;color:var(--text2);margin-top:.5rem;text-align:center;}
-
-        .ivv-row{display:flex;gap:8px;margin-bottom:.65rem;}
-        .c-btn{flex:1;padding:.6rem .3rem;border-radius:10px;cursor:pointer;border:2px solid;text-align:center;transition:all .15s;background:transparent;}
-        .c-roman{font-family:var(--fd);font-size:1.3rem;font-weight:900;line-height:1;}
-        .c-name{font-size:.82rem;font-weight:700;margin-top:3px;}
-        .c-role{font-size:.62rem;color:var(--text2);margin-top:2px;letter-spacing:.04em;}
-
-        .play-btn{width:100%;padding:.6rem;border-radius:8px;border:1px solid;font-family:var(--fb);font-size:.82rem;font-weight:600;cursor:pointer;letter-spacing:.04em;transition:all .15s;margin-bottom:5px;}
-        .play-btn:disabled{opacity:.35;cursor:not-allowed;}
-
-        .prog-btn{width:100%;padding:.5rem .75rem;border-radius:7px;border:1px solid rgba(207,122,90,.3);background:rgba(207,122,90,.06);cursor:pointer;text-align:left;display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;transition:all .15s;}
-        .prog-btn:hover:not(:disabled){background:rgba(207,122,90,.12);border-color:rgba(207,122,90,.5);}
-        .prog-btn:disabled{opacity:.35;cursor:not-allowed;}
-        .prog-name{font-family:var(--fd);font-size:.74rem;color:var(--coral);}
-        .prog-chord{font-size:.72rem;color:var(--text2);font-family:monospace;}
-
-
-        /* Progression card */
-        .prog-card { padding-bottom:.75rem; }
-        .prog-tabs { display:flex; gap:5px; margin-bottom:.65rem; }
-        .prog-tab { flex:1; padding:.35rem; border-radius:6px;
-          border:1px solid rgba(207,122,90,.35); background:transparent;
-          color:rgba(207,122,90,.6); font-family:var(--fd);
-          font-size:.68rem; letter-spacing:.1em; text-transform:uppercase;
-          cursor:pointer; transition:all .15s; }
-        .prog-tab.active { background:var(--coral); color:var(--bg);
-          border-color:var(--coral); box-shadow:0 0 10px rgba(207,122,90,.4); }
-
-        /* 2-column grid, no scroll */
-        .prog-grid { display:grid; grid-template-columns:1fr 1fr; gap:5px; align-content:start; }
-        .prog-item { padding:.55rem .5rem; border-radius:8px; text-align:left;
-          border:1px solid rgba(207,122,90,.2); background:rgba(207,122,90,.04);
-          cursor:pointer; transition:all .18s; }
-        .prog-item:hover:not(:disabled) { background:rgba(207,122,90,.12);
-          border-color:rgba(207,122,90,.5);
-          box-shadow:0 0 12px rgba(207,122,90,.2); }
-        .prog-item.active { border-color:var(--coral); background:rgba(207,122,90,.18);
-          box-shadow:0 0 16px rgba(207,122,90,.4); }
-        .prog-item:disabled { opacity:.3; cursor:not-allowed; }
-        .prog-roman { font-family:var(--fd); font-size:.65rem; color:rgba(207,122,90,.7);
-          letter-spacing:.04em; margin-bottom:2px; }
-        .prog-chords-big { font-family:var(--fd); font-size:.85rem; color:var(--gold);
-          font-weight:700; letter-spacing:.03em; margin-bottom:2px; line-height:1.2; }
-        .prog-name-sm { font-size:.65rem; color:rgba(232,232,232,.4); }
-
-        .stop-btn{width:100%;padding:.45rem;margin-top:4px;background:transparent;border:1px solid rgba(207,122,90,.3);border-radius:7px;cursor:pointer;color:rgba(207,122,90,.7);font-family:var(--fb);font-size:.78rem;font-weight:600;}
-        .info{font-size:.8rem;color:var(--text2);line-height:1.65;}
-        .info strong{color:var(--gold);}
-
-        .app-footer{background:rgba(15,15,30,.97);border-top:2px solid var(--teal);padding:2rem;margin-top:3rem;text-align:center;color:rgba(232,232,232,.5);font-size:.85rem;line-height:1.8;}
-        .app-footer strong{color:var(--gold);}
-        .app-footer a{color:var(--text2);text-decoration:none;}
+        /* ══════════════════════════════════
+           RESPONSIVE
+           ══════════════════════════════════ */
+        @media(max-width:1023px)and (min-width:768px){.app-title{font-size:1.25rem;}}
+        @media(max-width:767px){
+            .app-header{padding:1rem;}
+            .app-title{font-size:1.1rem;letter-spacing:1px;}
+            .app-logo-svg{width:40px;height:40px;}
+            .app-nav-links{gap:0.75rem;}
+            .app-nav-links a{font-size:0.9rem;padding:0.5rem 0.75rem;}
+            .upgrade-link{padding:0.6rem 1rem !important;}
+            .app-footer{padding:2rem 1rem 1.5rem;}
+            .app-social-links{gap:0.75rem;}
+            .app-social-links a{width:45px;height:45px;}
+            .app-legal-links{flex-direction:column;gap:0.5rem;text-align:center;}
+            .app-copyright{font-size:0.85rem;}
+        }
+        @media(max-width:479px){
+            .app-title{font-size:0.95rem;letter-spacing:0;}
+            .app-logo-svg{width:32px;height:32px;}
+            .upgrade-link{padding:0.5rem 0.75rem !important;font-size:0.82rem;}
+        }
+        @media(hover:none)and (pointer:coarse){
+            .app-logo-section:hover .app-logo-svg{transform:none;}
+            .upgrade-link:hover{transform:none !important;}
+            .app-social-links a:hover{transform:none;}
+        }
+        @media(prefers-reduced-motion:reduce){*{transition-duration:0.01ms !important;animation-duration:0.01ms !important;}}
+        @media(forced-colors:active){.upgrade-link{border:2px solid ButtonText;}.app-social-links a{border:2px solid ButtonText;}}
+        @media print{.app-header,.app-footer{display:none;}body{background:white;color:black;}}
     </style>
 </head>
 <body>
-<a href="#main" class="sr-only">Skip to main content</a>
-
-<header class="app-header" role="banner">
-  <div class="app-header-inner">
-    <div class="app-brand">
-      <svg width="38" height="38" viewBox="0 0 200 200" aria-hidden="true">
-        <circle cx="100" cy="100" r="98" fill="#4A7BA7" stroke="#008080" stroke-width="2"/>
-        <polygon points="100,15 185,185 15,185" fill="#F4D03F" opacity="0.9"/>
-        <circle cx="100" cy="100" r="7" fill="#F4D03F"/>
-      </svg>
-      <h1 class="app-title">KEYS, CODES &amp; MODES</h1>
-    </div>
-    <nav class="app-nav" aria-label="App navigation">
-      <a href="/index.html">Home</a>
-      <a href="/about.html">About</a>
-    </nav>
-  </div>
-</header>
-
-<main id="main" role="main"><div id="root"></div></main>
-
-<footer class="app-footer" role="contentinfo">
-  <p>&copy; 2026 <strong>Keys, Codes &amp; Modes™</strong> | Benjamin Ryan | All Rights Reserved</p>
-  <p>Based on <em>"Keys, Codes, and Modes: A Visual Approach to Understanding Music"</em></p>
-  <p><a href="../privacy-policy.html">Privacy Policy</a> &nbsp;·&nbsp; <a href="/contact.html">Contact</a></p>
-</footer>
-
-<script type="text/babel">
-const { useState, useEffect, useRef } = React;
-
-/* ── Web Audio ──────────────────────────────────────────────────── */
-const SEMI = {C:0,Db:1,D:2,Eb:3,E:4,F:5,Gb:6,G:7,Ab:8,A:9,Bb:10,B:11};
-function toHz(note, oct=4){
-  const s=SEMI[note]; if(s===undefined) return 440;
-  return 440*Math.pow(2,((oct+1)*12+s-69)/12);
-}
-function playNotes(ctx, notes, oct, dur, delay=0){
-  notes.forEach(note=>{
-    const osc=ctx.createOscillator(), g=ctx.createGain();
-    osc.type='sine';
-    osc.frequency.setValueAtTime(toHz(note,oct), ctx.currentTime+delay);
-    g.gain.setValueAtTime(0, ctx.currentTime+delay);
-    g.gain.linearRampToValueAtTime(0.16, ctx.currentTime+delay+0.025);
-    g.gain.setValueAtTime(0.16, ctx.currentTime+delay+dur-0.08);
-    g.gain.linearRampToValueAtTime(0, ctx.currentTime+delay+dur);
-    osc.connect(g); g.connect(ctx.destination);
-    osc.start(ctx.currentTime+delay); osc.stop(ctx.currentTime+delay+dur);
-  });
-}
-
-/* ── Music data ─────────────────────────────────────────────────── */
-// Circle of Fifths — C=index 0 at 12 o'clock, clockwise
-const COF   = ['C','G','D','A','E','B','Gb','Db','Ab','Eb','Bb','F'];
-const CHROM = ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
-
-// Relative minor of each COF major key (inner ring, same angle)
-// C→Am, G→Em, D→Bm, A→Gbm, E→Dbm, B→Abm, Gb→Ebm, Db→Bbm, Ab→Fm, Eb→Cm, Bb→Gm, F→Dm
-const REL_MIN = {C:'A',G:'E',D:'B',A:'Gb',E:'Db',B:'Ab',Gb:'Eb',Db:'Bb',Ab:'F',Eb:'C',Bb:'G',F:'D'};
-const REL_MAJ = {A:'C',E:'G',B:'D',Gb:'A',Db:'E',Ab:'B',Eb:'Gb',Bb:'Db',F:'Ab',C:'Eb',G:'Bb',D:'F'};
-
-// KCM 12-Color Chromatic Spectrum™
-const COLORS = {
-  C:'#FFFF00',Db:'#FFC400',D:'#FF8000',Eb:'#FF4000',
-  E:'#FF0000',F:'#C4007F',Gb:'#8000FF',G:'#4000FF',
-  Ab:'#0000FF',A:'#007FFF',Bb:'#00FF80',B:'#80FF00'
-};
-const DARK_INK = new Set(['C','Db','D','Bb','B']);
-
-// Display formatter — converts internal flat notation to proper ♭ symbol
-// Only used for rendering text to the user, never for music logic
-const FMT = {Db:'D♭',Eb:'E♭',Gb:'G♭',Ab:'A♭',Bb:'B♭'};
-const fmt = n => FMT[n]||n;  // e.g. fmt('Eb') → 'E♭', fmt('G') → 'G' // bright colors need dark text
-
-const F2S = {Db:'C#',Eb:'D#',Gb:'F#',Ab:'G#',Bb:'A#'};
-const S2F = {'C#':'Db','D#':'Eb','F#':'Gb','G#':'Ab','A#':'Bb'};
-const toSharp = n => F2S[n]||n;
-const toFlat  = n => S2F[n]||n;
-
-const majTriad = r => { const i=CHROM.indexOf(r); return [r,CHROM[(i+4)%12],CHROM[(i+7)%12]]; };
-const minTriad = r => { const i=CHROM.indexOf(r); return [r,CHROM[(i+3)%12],CHROM[(i+7)%12]]; };
-
-// I IV V: IV = 1 step CCW (idx-1), V = 1 step CW (idx+1)
-function getIVV(majorIdx){
-  return {
-    I:  COF[majorIdx],
-    IV: COF[(majorIdx+11)%12],
-    V:  COF[(majorIdx+1)%12],
-  };
-}
-
-/* ── Diatonic engine ──────────────────────────────────────────────────
-   Builds chords from any root using major OR natural minor scale.
-   Major scale:        [0,2,4,5,7,9,11]  — I IIm IIIm IV V VIm VII°
-   Natural minor scale:[0,2,3,5,7,8,10]  — i II° III iv v VI VII
-   All progressions auto-transpose from locked root.
-──────────────────────────────────────────────────────────────────────── */
-const MAJ_SCALE  = [0,2,4,5,7,9,11];
-const MIN_SCALE  = [0,2,3,5,7,8,10];
-const MAJ_MINOR  = [false,true,true,false,false,true,true];  // chord quality in major
-const MIN_MINOR  = [true,true,false,true,true,false,false];  // chord quality in minor
-
-function diatonicChord(root, degree, useMinor) {
-  const ri  = CHROM.indexOf(root);
-  const scl = useMinor ? MIN_SCALE : MAJ_SCALE;
-  const qlt = useMinor ? MIN_MINOR : MAJ_MINOR;
-  const idx = (ri + scl[degree % 7]) % 12;
-  return { n: CHROM[idx], m: qlt[degree % 7] };
-}
-
-function buildProg(root, degrees, useMinor) {
-  return degrees.map(d => diatonicChord(root, d, useMinor));
-}
-
-// Roman numeral display
-const R_MAJ = ['I','II','III','IV','V','VI','VII'];
-const R_MIN = ['i','ii°','III','iv','v','VI','VII'];
-
-/* ── Progression library ──────────────────────────────────────────────
-   mode:'maj' = uses major scale from majorRoot
-   mode:'min' = uses natural minor scale from relMin (Am when root is C)
-   degrees = indices into the 7-note diatonic scale (0=tonic, 3=4th, 4=5th etc)
-──────────────────────────────────────────────────────────────────────── */
-const PROGRESSIONS = [
-  // ── MAJOR ─────────────────────────────────────────────────────────
-  { mode:'maj', roman:'I · IV · V',
-    name:'The Big Three',
-    degrees:[0,3,4],
-    ex:'C · F · G' },
-
-  { mode:'maj', roman:'I · IIm · IIIm · IV · V',
-    name:'Scale Walk Up',
-    degrees:[0,1,2,3,4],
-    ex:'C · Dm · Em · F · G' },
-
-  { mode:'maj', roman:'I · VIm · IV · V',
-    name:'50s Classic',
-    degrees:[0,5,3,4],
-    ex:'C · Am · F · G' },
-
-  { mode:'maj', roman:'I · VIm · IIm · V',
-    name:'1 · 6 · 2 · 5',
-    degrees:[0,5,1,4],
-    ex:'C · Am · Dm · G' },
-
-  { mode:'maj', roman:'IIm · V · I',
-    name:'2 · 5 · 1',
-    degrees:[1,4,0],
-    ex:'Dm · G · C' },
-
-  { mode:'maj', roman:'IIIm · VIm · IIm · V',
-    name:'3 · 6 · 2 · 5',
-    degrees:[2,5,1,4],
-    ex:'Em · Am · Dm · G' },
-
-  { mode:'maj', roman:'I · V · VIm · IV',
-    name:'Pop Anthem',
-    degrees:[0,4,5,3],
-    ex:'C · G · Am · F' },
-
-  { mode:'maj', roman:'I · IV · I · V',
-    name:'Blues Turnaround',
-    degrees:[0,3,0,4],
-    ex:'C · F · C · G' },
-
-  // ── MINOR ─────────────────────────────────────────────────────────
-  { mode:'min', roman:'i · iv · v',
-    name:'Minor 1 · 4 · 5',
-    degrees:[0,3,4],
-    ex:'Am · Dm · Em' },
-
-  { mode:'min', roman:'i · VI · III · VII',
-    name:'Minor Epic',
-    degrees:[0,5,2,6],
-    ex:'Am · F · C · G' },
-
-  { mode:'min', roman:'i · VII · VI · V',
-    name:'Andalusian Cadence',
-    degrees:[0,6,5,4],
-    ex:'Am · G · F · E' },
-
-  { mode:'min', roman:'IIm · V · i',
-    name:'2 · 5 · 1 Minor',
-    degrees:[1,4,0],
-    ex:'Bm · E · Am' },
-];
-
-/* ── Component ──────────────────────────────────────────────────── */
-function MusicCircle() {
-  const [rootIdx,  setRootIdx]  = useState(0);   // index into COF array
-  const [isMinor,  setIsMinor]  = useState(false);
-  const [flash,    setFlash]    = useState(null); // {note, type:'outer'|'inner'}
-  const [playing,  setPlaying]  = useState(false);
-  const [progFilter, setProgFilter] = useState('maj'); // 'maj'|'min'|'all'
-  const [activeProg, setActiveProg] = useState(null);
-
-  // Auto-sync prog filter tab when mode changes
-  useEffect(()=>{ setProgFilter(isMinor?'min':'maj'); setActiveProg(null); },[isMinor]);
-  const ctxRef    = useRef(null);
-  const timers    = useRef([]);
-
-  // Derived values
-  const majorRoot = COF[rootIdx];
-  const tonic     = isMinor ? (REL_MIN[majorRoot]||majorRoot) : majorRoot;
-  const relMin    = REL_MIN[majorRoot]||majorRoot;
-  const relMaj    = majorRoot;
-
-  // I·IV·V — major uses COF positions; minor uses natural minor scale from relMin
-  // Natural minor degrees: 0=i(Am), 3=iv(Dm), 4=v(Em) — all minor quality
-  const {I,IV,V} = isMinor
-    ? { I:  diatonicChord(relMin,0,true).n,
-        IV: diatonicChord(relMin,3,true).n,
-        V:  diatonicChord(relMin,4,true).n }
-    : getIVV(rootIdx);
-
-  const tonicClr  = COLORS[tonic]||'#008080';
-  const ivClr     = COLORS[IV]||'#8B6BA3';
-  const vClr      = COLORS[V]||'#CF7A5A';
-
-  // Expose for KCM bridge
-  useEffect(()=>{
-    window._kcmCoF = {
-      stop: ()=>{ clearTimers(); setPlaying(false); setFlash(null); if(ctxRef.current) ctxRef.current.suspend(); },
-      setRoot: note => {
-        const flat = toFlat(note)||note;
-        // Could be a major or minor root
-        const majIdx = COF.indexOf(flat);
-        if(majIdx !== -1){ setRootIdx(majIdx); return; }
-        // Try as minor root — find its relative major
-        const relMajor = REL_MAJ[flat];
-        if(relMajor){ const i=COF.indexOf(relMajor); if(i!==-1) setRootIdx(i); }
-      },
-      setIsMinor
-    };
-    window._kcmCoFStop = ()=>{ clearTimers(); setPlaying(false); setFlash(null); if(ctxRef.current) ctxRef.current.suspend(); };
-    return ()=>{ delete window._kcmCoF; delete window._kcmCoFStop; };
-  },[]);
-
-  // Arrow key transpose
-  useEffect(()=>{
-    function onKey(e){
-      if(e.key==='ArrowRight'||e.key==='ArrowUp'){ e.preventDefault(); doTranspose(1); }
-      else if(e.key==='ArrowLeft'||e.key==='ArrowDown'){ e.preventDefault(); doTranspose(-1); }
-    }
-    window.addEventListener('keydown',onKey);
-    return ()=>window.removeEventListener('keydown',onKey);
-  });
-
-  function getCtx(){
-    if(!ctxRef.current||ctxRef.current.state==='closed')
-      ctxRef.current=new(window.AudioContext||window.webkitAudioContext)();
-    if(ctxRef.current.state==='suspended') ctxRef.current.resume();
-    return ctxRef.current;
-  }
-  function clearTimers(){ timers.current.forEach(clearTimeout); timers.current=[]; }
-  function stopAll(){
-    clearTimers();
-    setPlaying(false);
-    setFlash(null);
-    // Suspend audio context — cuts any notes currently playing immediately
-    if(ctxRef.current && ctxRef.current.state === 'running'){
-      ctxRef.current.suspend();
-    }
-  }
-
-  // Play a single note (no chord) — used for sequence/progression playback
-  function playNote(note, minor=false, delay=0){
-    const ctx=getCtx();
-    playNotes(ctx, [note], 4, 0.55, delay);  // single note, shorter duration
-    const t1=setTimeout(()=>setFlash({note,type:minor?'inner':'outer'}), delay*1000);
-    const t2=setTimeout(()=>setFlash(null), (delay+0.55)*1000);
-    timers.current.push(t1,t2);
-  }
-
-  // Play a chord (triad) — used for direct note clicks only
-  function playChord(note, minor=false, delay=0){
-    const ctx=getCtx();
-    const triad = minor ? minTriad(note) : majTriad(note);
-    playNotes(ctx, triad, 4, 0.85, delay);
-    const t1=setTimeout(()=>setFlash({note,type:minor?'inner':'outer'}), delay*1000);
-    const t2=setTimeout(()=>setFlash(null), (delay+0.85)*1000);
-    timers.current.push(t1,t2);
-  }
-
-  function doTranspose(dir){
-    setRootIdx(prev=>{
-      const next=(prev+dir+12)%12;
-      const nextNote = COF[next];
-      setTimeout(()=>{ playChord(nextNote, isMinor); postBus({root:toSharp(isMinor?(REL_MIN[nextNote]||nextNote):nextNote), mode:isMinor?'aeolian':'ionian'}); },0);
-      return next;
-    });
-  }
-
-  function selectMajor(note){
-    const idx=COF.indexOf(note); if(idx===-1) return;
-    setRootIdx(idx); setIsMinor(false);
-    playChord(note, false);
-    postBus({root:toSharp(note), mode:'ionian'});
-    if(typeof trackEvent==='function') trackEvent('note_click',{event_category:'circle_of_fifths',event_label:note+'_major'});
-  }
-
-  function selectMinor(relMinNote){
-    // relMinNote e.g. 'A' — find its relative major position on wheel
-    const relMajor = REL_MAJ[relMinNote]||relMinNote;
-    const idx = COF.indexOf(relMajor); if(idx===-1) return;
-    setRootIdx(idx); setIsMinor(true);
-    playChord(relMinNote, true);
-    postBus({root:toSharp(relMinNote), mode:'aeolian'});
-    if(typeof trackEvent==='function') trackEvent('note_click',{event_category:'circle_of_fifths',event_label:relMinNote+'_minor'});
-  }
-
-  function playIVV(){
-    if(playing) return;
-    stopAll(); setPlaying(true);
-    const root = isMinor ? relMin : majorRoot;
-    const seq = buildProg(root, [0,3,4,0], isMinor);
-    // Sequential single notes — no chords
-    seq.forEach(({n,m},i)=>playNote(n,m,0.15+i*0.7));
-    const done=setTimeout(()=>{ setPlaying(false); setFlash(null); },(seq.length*700)+500);
-    timers.current.push(done);
-  }
-
-  function playProg(prog){
-    if(playing) return;
-    stopAll(); setPlaying(true);
-    // For minor progs: build from relMin (Am), using minor scale
-    // For major progs: build from majorRoot (C), using major scale
-    const root = prog.mode==='min' ? relMin : majorRoot;
-    const useMinor = prog.mode==='min';
-    const seq = buildProg(root, prog.degrees, useMinor);
-    // Sequential single notes — hear the scale movement between chords
-    seq.forEach(({n,m},i)=>playNote(n,m,0.15+i*0.7));
-    const done=setTimeout(()=>{ setPlaying(false); setFlash(null); },(seq.length*700)+500);
-    timers.current.push(done);
-  }
-
-  function postBus(patch){
-    try{ window.parent.postMessage({type:'KCM_STATE_PATCH',payload:patch},'*'); }catch(e){}
-  }
-
-  /* ── SVG Wheel ────────────────────────────────────────────────── */
-  const cx=250,cy=250,outerR=188,innerR=128,outerDot=27,innerDot=19;
-  const angle = i => (i*30-90)*Math.PI/180;
-
-  const notes = COF.map((note,i)=>{
-    const a=angle(i);
-    const ox=cx+outerR*Math.cos(a), oy=cy+outerR*Math.sin(a);
-    const ix=cx+innerR*Math.cos(a), iy=cy+innerR*Math.sin(a); // SAME angle — Am inside C
-    const relM = REL_MIN[note]||note;
-
-    const isRoot     = note===majorRoot;
-    const isIV       = note===IV && !isMinor;
-    const isV        = note===V  && !isMinor;
-    const isRelRoot  = isRoot && isMinor;
-    const fOuter     = flash&&flash.note===note&&flash.type==='outer';
-    const fInner     = flash&&flash.note===relM&&flash.type==='inner';
-    const inkO       = DARK_INK.has(note)?'#000':'#fff';
-    const inkI       = DARK_INK.has(relM)?'#000':'#fff';
-
-    return React.createElement('g',{key:note},
-
-      /* ── Outer dot selector ring ── */
-      isRoot && React.createElement('circle',{cx:ox,cy:oy,r:outerDot+11,fill:'none',
-        stroke:'#F4D03F',strokeWidth:2.5,opacity:.75,strokeDasharray:'5 3',
-        style:{pointerEvents:'none'}}),
-
-      /* ── IV / V subtle ring ── */
-      (isIV||isV) && React.createElement('circle',{cx:ox,cy:oy,r:outerDot+7,fill:'none',
-        stroke:'rgba(244,208,63,.28)',strokeWidth:1.5,style:{pointerEvents:'none'}}),
-
-      /* ── Outer dot ── */
-      React.createElement('circle',{cx:ox,cy:oy,r:outerDot,
-        fill:COLORS[note]||'#888',
-        stroke:isRoot?'#F4D03F':(isIV||isV)?'rgba(244,208,63,.45)':'rgba(255,255,255,.18)',
-        strokeWidth:isRoot?3.5:1.5,
-        opacity:fOuter?1:.9,
-        style:{cursor:'pointer',filter:fOuter?`drop-shadow(0 0 22px ${COLORS[note]}) drop-shadow(0 0 40px ${COLORS[note]})`:isRoot?'drop-shadow(0 0 10px rgba(244,208,63,.7))':'none'},
-        onClick:()=>selectMajor(note)
-      }),
-
-      /* ── Roman numeral above outer dot ── */
-      (isRoot&&!isMinor||isIV||isV) && React.createElement('text',{
-        x:ox,y:oy-outerDot-9,textAnchor:'middle',dominantBaseline:'central',
-        fontSize:'11',fontWeight:'800',fill:'#F4D03F',
-        style:{pointerEvents:'none',fontFamily:'Cinzel,serif'}
-      }, isRoot&&!isMinor?'I':isIV?'IV':'V'),
-
-      /* ── Outer label ── */
-      React.createElement('text',{
-        x:ox,y:oy+1,textAnchor:'middle',dominantBaseline:'central',
-        fontSize:isRoot?'17':'15',fontWeight:'bold',fill:inkO,
-        style:{pointerEvents:'none',userSelect:'none'}
-      },fmt(note)),
-
-      /* ── Major↔Minor toggle pill (only on active root) ── */
-      isRoot && React.createElement('g',{
-        onClick:()=>{
-          const flip=!isMinor;
-          setIsMinor(flip);
-          playChord(flip?(REL_MIN[majorRoot]||majorRoot):majorRoot, flip);
-          postBus({root:toSharp(flip?(REL_MIN[majorRoot]||majorRoot):majorRoot),mode:flip?'aeolian':'ionian'});
-        },
-        style:{cursor:'pointer'}
-      },
-        React.createElement('rect',{
-          x:ox-20,y:oy+outerDot+6,width:40,height:16,rx:8,
-          fill:isMinor?'rgba(0,128,128,.9)':'rgba(139,107,163,.9)',
-          stroke:'rgba(255,255,255,.25)',strokeWidth:1
-        }),
-        React.createElement('text',{
-          x:ox,y:oy+outerDot+14,textAnchor:'middle',dominantBaseline:'central',
-          fontSize:'8',fontWeight:'700',fill:'white',
-          style:{pointerEvents:'none',letterSpacing:'.5px'}
-        },isMinor?'→ MAJ':'→ min')
-      ),
-
-      /* ── Inner dot selector ring (minor mode) ── */
-      isRelRoot && React.createElement('circle',{cx:ix,cy:iy,r:innerDot+9,fill:'none',
-        stroke:'#F4D03F',strokeWidth:2,opacity:.6,strokeDasharray:'4 3',
-        style:{pointerEvents:'none'}}),
-
-      /* ── Inner dot ── */
-      React.createElement('circle',{cx:ix,cy:iy,r:innerDot,
-        fill:COLORS[relM]||'#888',
-        stroke:isRelRoot?'#F4D03F':'rgba(255,255,255,.14)',
-        strokeWidth:isRelRoot?3:1.2,
-        opacity:fInner?1:.85,
-        style:{cursor:'pointer',filter:fInner?`drop-shadow(0 0 20px ${COLORS[relM]}) drop-shadow(0 0 35px ${COLORS[relM]})`:isRelRoot?'drop-shadow(0 0 8px rgba(244,208,63,.5))':'none'},
-        onClick:()=>selectMinor(relM)
-      }),
-
-      /* ── Minor 'i' label above inner dot ── */
-      isRelRoot && React.createElement('text',{
-        x:ix,y:iy-innerDot-8,textAnchor:'middle',dominantBaseline:'central',
-        fontSize:'10',fontWeight:'800',fill:'#F4D03F',
-        style:{pointerEvents:'none',fontFamily:'Cinzel,serif'}
-      },'i'),
-
-      /* ── Inner label ── */
-      React.createElement('text',{
-        x:ix,y:iy+1,textAnchor:'middle',dominantBaseline:'central',
-        fontSize:'11',fontWeight:'bold',fill:inkI,
-        style:{pointerEvents:'none',userSelect:'none'}
-      },fmt(relM)+'m')
-    );
-  });
-
-  /* ── Render ───────────────────────────────────────────────────── */
-  return React.createElement('div',{className:'wrap'},
-
-    /* Title */
-    React.createElement('div',{className:'title-block'},
-      React.createElement('h2',null,'Circle of Fifths'),
-      React.createElement('p',null,'Click any note to lock root · ◀ ▶ or arrow keys to transpose')
-    ),
-
-    /* Main 2-col grid */
-    React.createElement('div',{className:'grid'},
-
-      /* ── LEFT: Wheel + transpose below ── */
-      React.createElement('div',{className:'wheel-wrap'},
-        React.createElement('div',{className:'wheel-box'},
-
-          /* SVG Wheel */
-          React.createElement('svg',{
-            viewBox:'0 0 500 500',
-            style:{width:'100%',height:'auto',borderRadius:'50%',
-              background:'radial-gradient(circle,#0d1525 0%,#050a12 100%)',
-              boxShadow:'0 8px 40px rgba(0,0,0,.7),inset 0 0 60px rgba(0,128,128,.04)',
-              border:'3px solid rgba(0,128,128,.3)'},
-            role:'img','aria-label':'Circle of Fifths'
-          },
-            COF.map((_,i)=>{
-              const a=angle(i);
-              return React.createElement('line',{key:'sp'+i,
-                x1:cx+68*Math.cos(a),y1:cy+68*Math.sin(a),
-                x2:cx+218*Math.cos(a),y2:cy+218*Math.sin(a),
-                stroke:'rgba(0,128,128,.1)',strokeWidth:1});
-            }),
-            React.createElement('circle',{cx,cy,r:215,fill:'none',stroke:'rgba(0,128,128,.12)',strokeWidth:1}),
-            React.createElement('circle',{cx,cy,r:155,fill:'none',stroke:'rgba(139,107,163,.1)',strokeWidth:1}),
-            React.createElement('circle',{cx,cy,r:105,fill:'none',stroke:'rgba(0,128,128,.07)',strokeWidth:1}),
-            ...notes,
-            React.createElement('circle',{cx,cy,r:66,fill:'#070d18',stroke:'rgba(0,128,128,.45)',strokeWidth:2.5}),
-            React.createElement('text',{x:cx,y:cy,textAnchor:'middle',fontFamily:'Cinzel,serif',
-              style:{dominantBaseline:'central'}
-            },
-              React.createElement('tspan',{x:cx,dy:'-0.55em',fontSize:'26',fontWeight:'900',
-                fill:tonicClr,style:{filter:`drop-shadow(0 0 10px ${tonicClr}99)`}
-              },fmt(tonic)+(isMinor?'m':'')),
-
-              React.createElement('tspan',{x:cx,dy:'1.4em',fontSize:'9',
-                fontFamily:'Montserrat,sans-serif',fill:'rgba(232,232,232,.35)',letterSpacing:'2'
-              },isMinor?'MINOR':'MAJOR')
-            ),
-            React.createElement('polygon',{points:'250,12 244,26 256,26',fill:'#F4D03F',opacity:.85})
-          ),
-
-          /* Transpose — below wheel, inside left column */
-          React.createElement('div',{className:'trans-row'},
-            React.createElement('div',{style:{textAlign:'center'}},
-              React.createElement('button',{className:'trans-btn',
-                onClick:()=>doTranspose(-1),'aria-label':'Up a 4th'},'◀'),
-              React.createElement('div',{className:'trans-lbl'},'+4th')
-            ),
-            React.createElement('div',{className:'root-pill'},
-              React.createElement('div',{className:'root-note',
-                style:{color:tonicClr,textShadow:`0 0 16px ${tonicClr}88`}
-              },fmt(tonic)+(isMinor?'m':'')),
-
-              React.createElement('div',{className:'root-lbl'},isMinor?'minor':'major')
-            ),
-            React.createElement('div',{style:{textAlign:'center'}},
-              React.createElement('button',{className:'trans-btn',
-                onClick:()=>doTranspose(1),'aria-label':'Up a 5th'},'▶'),
-              React.createElement('div',{className:'trans-lbl'},'+5th')
-            )
-          ),
-          React.createElement('div',{className:'key-hint'},'← → arrow keys also transpose')
-        )
-      ),
-
-      /* ── RIGHT: Control Panel ── */
-      React.createElement('div',{style:{display:'flex',flexDirection:'column',gap:'0.6rem'}},
-
-        /* Progressions — top of right panel, biggest section */
-        React.createElement('div',{className:'card',style:{flex:'1 1 auto'}},
-          React.createElement('div',{className:'card-title',style:{color:'var(--coral)'}},
-            'Progressions — '+fmt(tonic)+(isMinor?' minor':' major')),
-
-          /* Major / Minor / All tabs */
-          React.createElement('div',{className:'prog-tabs'},
-            [{k:'maj',l:'Major'},{k:'min',l:'Minor'},{k:'all',l:'All'}].map(({k,l})=>
-              React.createElement('button',{key:k,
-                className:'prog-tab'+(progFilter===k?' active':''),
-                onClick:()=>setProgFilter(k)
-              },l)
-            )
-          ),
-
-          /* 2-column grid */
-          React.createElement('div',{className:'prog-grid'},
-            PROGRESSIONS
-              .filter(p=>progFilter==='all'||p.mode===progFilter)
-              .map((p,i)=>{
-                const root = p.mode==='min' ? relMin : majorRoot;
-                const seq  = buildProg(root, p.degrees, p.mode==='min');
-                const chordNames = seq.map(({n,m})=>fmt(n)+(m?'m':'')).join(' · ');
-                const id = p.mode+i;
-                return React.createElement('button',{key:id,
-                  className:'prog-item'+(activeProg===id?' active':''),
-                  disabled:playing,
-                  onClick:()=>{ setActiveProg(id); playProg(p); }
-                },
-                  React.createElement('div',{className:'prog-roman'},p.roman),
-                  React.createElement('div',{className:'prog-chords-big'},chordNames),
-                  React.createElement('div',{className:'prog-name-sm'},p.name)
-                );
-              })
-          ),
-
-          React.createElement('button',{className:'stop-btn',onClick:stopAll,
-            style:{marginTop:'0.5rem'}},'⏹ Stop')
-        ),
-
-        /* I · IV · V */
-        React.createElement('div',{className:'card'},
-          React.createElement('div',{className:'card-title',style:{color:'var(--gold)'}},
-            isMinor?'i · iv · v':'I · IV · V'),
-          React.createElement('div',{className:'ivv-row'},
-            [{r:isMinor?'i':'I',   note:tonic,clr:tonicClr, role:'Tonic'},
-             {r:isMinor?'iv':'IV', note:IV,   clr:ivClr,    role:'Subdominant'},
-             {r:isMinor?'v':'V',   note:V,    clr:vClr,     role:'Dominant'}
-            ].map(({r,note,clr,role})=>
-              React.createElement('button',{key:r,className:'c-btn',
-                onClick:()=>{ if(!playing){ playChord(note,isMinor); postBus({root:toSharp(note),mode:isMinor?'aeolian':'ionian'}); }},
-                style:{borderColor:clr,
-                  boxShadow:flash&&flash.note===note?`0 0 20px ${clr}88`:'none',
-                  background:flash&&flash.note===note?`${clr}22`:'transparent'}
-              },
-                React.createElement('div',{className:'c-roman',style:{color:clr}},r),
-                React.createElement('div',{className:'c-name', style:{color:clr}},fmt(note)+(isMinor?'m':'')),
-                React.createElement('div',{className:'c-role'},role)
-              )
-            )
-          ),
-          React.createElement('button',{className:'play-btn',disabled:playing,onClick:playIVV,
-            style:{background:playing?'transparent':`linear-gradient(135deg,${tonicClr}44,${tonicClr}11)`,
-              borderColor:playing?'rgba(255,255,255,.1)':tonicClr,
-              color:playing?'rgba(255,255,255,.3)':'white'}
-          },playing?'▶ Playing…':`▶ Play ${isMinor?'i·iv·v':'I·IV·V'} Sequence`)
-        ),
-
-        /* Major / Minor toggle — bottom */
-        React.createElement('div',{className:'card'},
-          React.createElement('div',{className:'mm-row'},
-            React.createElement('button',{
-              className:`mm-btn maj${!isMinor?' on':''}`,
-              onClick:()=>{ setIsMinor(false); playChord(majorRoot,false); postBus({root:toSharp(majorRoot),mode:'ionian'}); }
-            },'● Major'),
-            React.createElement('button',{
-              className:`mm-btn min${isMinor?' on':''}`,
-              onClick:()=>{ setIsMinor(true); playChord(relMin,true); postBus({root:toSharp(relMin),mode:'aeolian'}); }
-            },'◉ Minor')
-          ),
-          React.createElement('p',{className:'rel-note',style:{margin:'0.4rem 0 0'}},
-            isMinor
-              ? fmt(tonic)+'m  ·  relative major: '+fmt(relMaj)
-              : fmt(majorRoot)+' major  ·  relative minor: '+fmt(relMin)+'m')
-        )
-
-      ) /* end right panel */
-    ) /* end grid */
-  ); /* end wrap */
-}
-
-ReactDOM.render(React.createElement(MusicCircle), document.getElementById('root'));
-
-/* ── KCM Console bridge listener ─────────────────────────────── */
-(function(){
-  window.addEventListener('message',function(ev){
-    try{
-      if(!ev.data) return;
-      if(ev.data.type==='KCM_STOP'){
-        // Stop all timers and suspend audio context
-        if(window._kcmCoFStop) window._kcmCoFStop();
-        return;
-      }
-      if(ev.data.type!=='KCM_STATE') return;
-      const p=ev.data.payload; if(!p||!p.root) return;
-      const flat=(S2F[p.root])||p.root;
-      if(window._kcmCoF){
-        window._kcmCoF.setRoot(flat);
-        window._kcmCoF.setIsMinor(p.mode==='aeolian');
-      }
-      console.log('[KCM→CoF] root='+p.root+'→'+flat);
-    }catch(e){console.error('[KCM→CoF]',e);}
-  });
-  console.log('[KCM→CoF] bridge listener ready.');
-})();
-</script>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <!-- KCM STANDARD HEADER -->
+    <header class="app-header" role="banner">
+        <div class="app-header-content">
+            <div class="app-logo-section">
+                <svg class="app-logo-svg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+                    <circle cx="100" cy="100" r="98" fill="#4A7BA7" stroke="#008080" stroke-width="2"/>
+                    <polygon points="100,15 185,185 15,185" fill="#F4D03F" opacity="0.9"/>
+                    <polygon points="100,15 15,185 15,55" fill="#8B6BA3" opacity="0.75"/>
+                    <polygon points="100,15 185,55 185,185" fill="#6FA5A5" opacity="0.75"/>
+                    <polygon points="15,55 100,100 15,185" fill="#CF7A5A" opacity="0.65"/>
+                    <polygon points="185,55 100,100 185,185" fill="#9AAF7A" opacity="0.65"/>
+                    <polygon points="100,55 145,100 100,145 55,100" fill="#E8D77F" opacity="0.6"/>
+                    <circle cx="100" cy="100" r="50" fill="none" stroke="#008080" stroke-width="3"/>
+                    <circle cx="100" cy="100" r="7" fill="#F4D03F"/>
+                    <line x1="40" y1="40" x2="160" y2="160" stroke="#008080" stroke-width="2" opacity="0.3"/>
+                    <line x1="160" y1="40" x2="40" y2="160" stroke="#008080" stroke-width="2" opacity="0.3"/>
+                </svg>
+                <h1 class="app-title">KEYS, CODES & MODES</h1>
+            </div>
+            <nav class="app-nav-links" role="navigation" aria-label="App navigation">
+                <a href="/index.html">Home</a>
+                <a href="../insights.html">All Apps</a>
+                <a href="/about.html">About</a>
+                <a href="/contact.html">Contact</a>
+            </nav>
+        </div>
+    </header>
+
+    <main id="main-content" role="main" aria-label="Interactive Circle of Fifths music theory tool">
+        <div id="root"></div>
+    </main>
+
+    <!-- REACT APP — Session 5: Tone.js → Web Audio API + KCM bridge listener -->
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // ── Web Audio helpers ────────────────────────────────────────────────
+        // Replaces Tone.js entirely. Uses a shared AudioContext ref.
+        // noteToFreq: converts note name + octave → Hz via equal temperament.
+        const NOTE_SEMITONES = {
+            'C':0,'Db':1,'D':2,'Eb':3,'E':4,'F':5,
+            'Gb':6,'G':7,'Ab':8,'A':9,'Bb':10,'B':11
+        };
+        function noteToHz(note, octave = 4) {
+            const semi = NOTE_SEMITONES[note];
+            if (semi === undefined) return 440;
+            // A4 = 440 Hz, MIDI note 69
+            const midi = (octave + 1) * 12 + semi;
+            return 440 * Math.pow(2, (midi - 69) / 12);
+        }
+
+        function playNotes(ctx, notes, octave, duration, delay = 0) {
+            // Plays an array of note-name strings simultaneously as sine waves.
+            notes.forEach(note => {
+                const osc   = ctx.createOscillator();
+                const gain  = ctx.createGain();
+                const freq  = noteToHz(note, octave);
+                osc.type    = 'sine';
+                osc.frequency.setValueAtTime(freq, ctx.currentTime + delay);
+                // Envelope: quick attack, sustain, release
+                gain.gain.setValueAtTime(0, ctx.currentTime + delay);
+                gain.gain.linearRampToValueAtTime(0.18, ctx.currentTime + delay + 0.02);
+                gain.gain.setValueAtTime(0.18, ctx.currentTime + delay + duration - 0.1);
+                gain.gain.linearRampToValueAtTime(0, ctx.currentTime + delay + duration);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(ctx.currentTime + delay);
+                osc.stop(ctx.currentTime + delay + duration);
+            });
+        }
+
+        // ── Main React component ─────────────────────────────────────────────
+        const MusicCircle = () => {
+            const [activeNote,     setActiveNote]     = useState(null);
+            const [activeType,     setActiveType]     = useState(null);
+            const [isPlayingOuter, setIsPlayingOuter] = useState(false);
+            const [isPlayingInner, setIsPlayingInner] = useState(false);
+            const [startNoteOuter, setStartNoteOuter] = useState('C');
+            const [startNoteInner, setStartNoteInner] = useState('A');
+            const audioCtxRef = useRef(null);
+
+            // Expose state setters on window so the KCM bridge listener can drive them
+            useEffect(() => {
+                window._kcmCoF = {
+                    setStartNoteOuter,
+                    setStartNoteInner,
+                    setActiveNote,
+                    setActiveType,
+                    noteOrder: ['C','G','D','A','E','B','Gb','Db','Ab','Eb','Bb','F']
+                };
+                return () => { delete window._kcmCoF; };
+            }, [setStartNoteOuter, setStartNoteInner]);
+
+            const noteOrder  = ['C','G','D','A','E','B','Gb','Db','Ab','Eb','Bb','F'];
+            const noteColors = {
+                'C':'#FFFF00','Db':'#FFC400','D':'#FF8000','Eb':'#FF4000',
+                'E':'#FF0000','F':'#C4007F','Gb':'#8000FF','G':'#4000FF',
+                'Ab':'#0000FF','A':'#007FFF','Bb':'#00FF80','B':'#80FF00'
+            };
+
+            // Enharmonic map: KCM bus uses sharps; CoF uses flats for some notes
+            const sharpToFlat = {
+                'C#':'Db','D#':'Eb','F#':'Gb','G#':'Ab','A#':'Bb'
+            };
+
+            function getAudioCtx() {
+                if (!audioCtxRef.current || audioCtxRef.current.state === 'closed') {
+                    audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (audioCtxRef.current.state === 'suspended') {
+                    audioCtxRef.current.resume();
+                }
+                return audioCtxRef.current;
+            }
+
+            // Publish root change to Console bus → all panels follow
+            const postToConsole = (patch) => {
+                try { window.parent.postMessage({ type: 'KCM_STATE_PATCH', payload: patch }, '*'); }
+                catch(e) { /* silent if no parent */ }
+            };
+
+            // CoF uses flat notation; KCM bus uses sharps — convert for bus
+            const FLAT_TO_SHARP = {
+                'Db':'C#','Eb':'D#','Gb':'F#','Ab':'G#','Bb':'A#'
+            };
+            const toSharp = note => FLAT_TO_SHARP[note] || note;
+
+            const getTriad      = root => { const c=['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B']; const i=c.indexOf(root); return [root, c[(i+4)%12], c[(i+7)%12]]; };
+            const getMinorTriad = root => { const c=['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B']; const i=c.indexOf(root); return [root, c[(i+3)%12], c[(i+7)%12]]; };
+
+            const playTriad = async (note, isMinor = false) => {
+                if (isPlayingOuter || isPlayingInner) return;
+                const ctx   = getAudioCtx();
+                const triad = isMinor ? getMinorTriad(note) : getTriad(note);
+                isMinor ? setIsPlayingInner(true) : setIsPlayingOuter(true);
+                setActiveNote(note); setActiveType(isMinor ? 'inner' : 'outer');
+                playNotes(ctx, triad, 4, 0.9);
+                if (typeof trackEvent === 'function') trackEvent('note_click', { event_category:'circle_of_fifths', event_label: note + (isMinor?'_minor':'_major') });
+                // Publish to Console bus so MTP and MSP follow
+                postToConsole({
+                    root: toSharp(note),
+                    mode: isMinor ? 'aeolian' : 'ionian'
+                });
+                await new Promise(r => setTimeout(r, 700));
+                setActiveNote(null); setActiveType(null);
+                isMinor ? setIsPlayingInner(false) : setIsPlayingOuter(false);
+            };
+
+            const playSequence = async (notes, isMinor, arpeggiate) => {
+                if (isPlayingOuter || isPlayingInner) return;
+                const ctx = getAudioCtx();
+                isMinor ? setIsPlayingInner(true) : setIsPlayingOuter(true);
+                for (let i = 0; i < notes.length; i++) {
+                    const note  = notes[i];
+                    const triad = isMinor ? getMinorTriad(note) : getTriad(note);
+                    if (arpeggiate) {
+                        for (let j = 0; j < triad.length; j++) {
+                            playNotes(ctx, [triad[j]], 4, 0.25);
+                            setActiveNote(triad[j]); setActiveType(isMinor ? 'inner' : 'outer');
+                            await new Promise(r => setTimeout(r, 150));
+                        }
+                    } else {
+                        playNotes(ctx, triad, 4, 0.7);
+                        setActiveNote(note); setActiveType(isMinor ? 'inner' : 'outer');
+                        await new Promise(r => setTimeout(r, 600));
+                    }
+                }
+                setActiveNote(null); setActiveType(null);
+                isMinor ? setIsPlayingInner(false) : setIsPlayingOuter(false);
+            };
+
+            const buildSeq  = (base, start) => { const i = base.indexOf(start); return [...base.slice(i), ...base.slice(0,i)]; };
+            const outerBase = ['C','G','D','A','E','B','Gb','Db','Ab','Eb','Bb','F'];
+            const innerBase = ['A','E','B','Gb','Db','Ab','Eb','Bb','F','C','G','D'];
+
+            const btn = (bg, mb='8px') => ({
+                width:'100%', padding:'12px', marginBottom:mb,
+                fontSize:'clamp(0.85rem,2.5vw,0.95rem)', fontWeight:'700',
+                fontFamily:"'Montserrat',sans-serif",
+                background:bg, color:'white', border:'none',
+                borderRadius:'50px', cursor:'pointer', minHeight:'48px',
+                boxShadow:'0 4px 12px rgba(0,0,0,0.3)',
+                transition:'all 0.3s ease', letterSpacing:'0.5px'
+            });
+
+            const renderCircle = () => {
+                const outerRadius=190, innerRadius=135, cx=250, cy=250, outerR=28, innerR=20;
+                return noteOrder.map((note, index) => {
+                    const outerAngle = (index*30-90)*(Math.PI/180);
+                    const outerX = cx + outerRadius*Math.cos(outerAngle);
+                    const outerY = cy + outerRadius*Math.sin(outerAngle);
+                    const innerAngle = (index*30-180)*(Math.PI/180);
+                    const innerX = cx + innerRadius*Math.cos(innerAngle);
+                    const innerY = cy + innerRadius*Math.sin(innerAngle);
+                    const isOuterActive = activeNote===note && (activeType==='outer' || activeType==='tick');
+                    const isInnerActive = activeNote===note && (activeType==='inner' || activeType==='tick');
+
+                    return React.createElement('g', {key:note},
+                        React.createElement('circle', {
+                            cx:outerX, cy:outerY, r:outerR,
+                            fill:noteColors[note],
+                            stroke:isOuterActive?'#F4D03F':'rgba(255,255,255,0.35)',
+                            strokeWidth:isOuterActive?4:2,
+                            opacity:isOuterActive?1:0.88,
+                            style:{cursor:'pointer'},
+                            onClick:()=>playTriad(note, false)
+                        }),
+                        isOuterActive ? React.createElement('circle', {
+                            cx:outerX, cy:outerY, r:outerR+7,
+                            fill:'none', stroke:'#F4D03F', strokeWidth:2, opacity:0.5,
+                            style:{pointerEvents:'none'}
+                        }) : null,
+                        React.createElement('text', {
+                            x:outerX, y:outerY+6, textAnchor:'middle',
+                            fontSize:'16', fontWeight:'bold', fill:'#000',
+                            style:{pointerEvents:'none', userSelect:'none'}
+                        }, note),
+                        React.createElement('circle', {
+                            cx:innerX, cy:innerY, r:innerR,
+                            fill:noteColors[note],
+                            stroke:isInnerActive?'#F4D03F':'rgba(255,255,255,0.35)',
+                            strokeWidth:isInnerActive?3:1.5,
+                            opacity:isInnerActive?1:0.88,
+                            style:{cursor:'pointer'},
+                            onClick:()=>playTriad(note, true)
+                        }),
+                        isInnerActive ? React.createElement('circle', {
+                            cx:innerX, cy:innerY, r:innerR+6,
+                            fill:'none', stroke:'#F4D03F', strokeWidth:2, opacity:0.5,
+                            style:{pointerEvents:'none'}
+                        }) : null,
+                        React.createElement('text', {
+                            x:innerX, y:innerY+5, textAnchor:'middle',
+                            fontSize:'12', fontWeight:'bold', fill:'#000',
+                            style:{pointerEvents:'none', userSelect:'none'}
+                        }, note)
+                    );
+                });
+            };
+
+            const card = (borderColor, bgFrom, bgTo) => ({
+                background:`linear-gradient(135deg,${bgFrom},${bgTo})`,
+                border:`2px solid ${borderColor}`,
+                borderRadius:'16px', padding:'1.5rem',
+                boxShadow:`0 4px 20px ${borderColor}33`
+            });
+
+            return React.createElement('div', {style:{
+                background:'radial-gradient(ellipse at center,#1a1a2e 0%,#0a0a15 100%)',
+                minHeight:'100vh', padding:'2rem 1rem',
+                fontFamily:"'Montserrat',sans-serif"
+            }},
+                React.createElement('div', {style:{textAlign:'center', marginBottom:'2rem'}},
+                    React.createElement('h2', {style:{
+                        fontFamily:"'Cinzel',serif",
+                        fontSize:'clamp(1.5rem,5vw,2.5rem)',
+                        background:'linear-gradient(135deg,#F4D03F,#008080)',
+                        WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent',
+                        backgroundClip:'text', marginBottom:'0.5rem'
+                    }}, 'Circle of Fifths'),
+                    React.createElement('p', {style:{color:'rgba(232,232,232,0.65)', fontSize:'clamp(0.88rem,2.5vw,1rem)'}},
+                        'Outer ring = Major • Inner ring = Minor • Click any note to play instantly')
+                ),
+
+                React.createElement('div', {style:{
+                    maxWidth:'1100px', margin:'0 auto',
+                    display:'grid',
+                    gridTemplateColumns:'minmax(0,2fr) minmax(0,1fr)',
+                    gap:'2rem', alignItems:'start'
+                }},
+                    React.createElement('div', {style:{display:'flex', justifyContent:'center'}},
+                        React.createElement('div', {style:{
+                            width:'100%', maxWidth:'520px',
+                            background:'linear-gradient(135deg,rgba(0,128,128,0.08),rgba(139,107,163,0.08))',
+                            border:'2px solid rgba(0,128,128,0.3)',
+                            borderRadius:'20px', padding:'1.5rem',
+                            boxShadow:'0 8px 40px rgba(0,128,128,0.15)'
+                        }},
+                            React.createElement('svg', {
+                                viewBox:'0 0 500 500',
+                                style:{
+                                    width:'100%', height:'auto',
+                                    borderRadius:'50%',
+                                    background:'radial-gradient(circle,#e8f4fd 0%,#c8dff0 60%,#9bbbd8 100%)',
+                                    boxShadow:'0 8px 32px rgba(0,0,0,0.5),inset 0 0 40px rgba(0,128,128,0.08)',
+                                    border:'4px solid rgba(0,128,128,0.45)'
+                                },
+                                role:'img',
+                                'aria-label':'Circle of Fifths — click note circles to play chords'
+                            },
+                                React.createElement('circle', {cx:'250',cy:'250',r:'240',fill:'none',stroke:'rgba(0,128,128,0.3)',strokeWidth:'2'}),
+                                React.createElement('circle', {cx:'250',cy:'250',r:'82',fill:'#1a3d5f',stroke:'rgba(0,128,128,0.6)',strokeWidth:'3'}),
+                                React.createElement('text', {x:'250',y:'240',textAnchor:'middle',fontSize:'13',fill:'#F4D03F',fontWeight:'bold',fontFamily:'Cinzel,serif'},'Circle of'),
+                                React.createElement('text', {x:'250',y:'258',textAnchor:'middle',fontSize:'13',fill:'#F4D03F',fontWeight:'bold',fontFamily:'Cinzel,serif'},'Fifths'),
+                                noteOrder.map((note,index) => {
+                                    const angle=(index*30-90)*(Math.PI/180);
+                                    const x=250+100*Math.cos(angle), y=250+100*Math.sin(angle);
+                                    const ks=['♮','1♯','2♯','3♯','4♯','5♯','6♭','5♭','4♭','3♭','2♭','1♭'];
+                                    return React.createElement('text', {key:'ks-'+note,x,y:y+4,textAnchor:'middle',fontSize:'10',fontWeight:'bold',fill:'rgba(0,80,80,0.8)'}, ks[index]);
+                                }),
+                                renderCircle()
+                            )
+                        )
+                    ),
+
+                    React.createElement('div', {style:{display:'flex', flexDirection:'column', gap:'1.5rem'}},
+                        React.createElement('div', {style:card('rgba(0,128,128,0.5)','rgba(0,128,128,0.12)','rgba(0,128,128,0.03)')},
+                            React.createElement('h3', {style:{fontFamily:"'Cinzel',serif",color:'#F4D03F',fontSize:'1rem',marginBottom:'1rem',textAlign:'center',letterSpacing:'1px'}}, '⬤ OUTER — MAJOR'),
+                            React.createElement('label', {htmlFor:'outerSelect',style:{display:'block',color:'rgba(232,232,232,0.65)',fontSize:'0.8rem',marginBottom:'6px',fontWeight:'600'}}, 'Starting Note'),
+                            React.createElement('select', {
+                                id:'outerSelect', value:startNoteOuter,
+                                onChange:(e)=>setStartNoteOuter(e.target.value),
+                                style:{width:'100%',padding:'10px',fontSize:'16px',borderRadius:'8px',border:'2px solid rgba(0,128,128,0.5)',background:'#0f1e1e',color:'#F4D03F',fontFamily:"'Montserrat',sans-serif",fontWeight:'600',marginBottom:'12px',cursor:'pointer'}
+                            }, noteOrder.map(n=>React.createElement('option',{key:n,value:n},n))),
+                            React.createElement('button', {onClick:()=>playSequence(buildSeq(outerBase,startNoteOuter),false,true),  disabled:isPlayingOuter||isPlayingInner, style:btn('linear-gradient(135deg,#008080,#006666)')},  '🎵 Play Arpeggio'),
+                            React.createElement('button', {onClick:()=>playSequence(buildSeq(outerBase,startNoteOuter),false,false), disabled:isPlayingOuter||isPlayingInner, style:btn('linear-gradient(135deg,#8B6BA3,#6a5080)','0')}, '🎹 Play Chords')
+                        ),
+
+                        React.createElement('div', {style:card('rgba(139,107,163,0.5)','rgba(139,107,163,0.12)','rgba(139,107,163,0.03)')},
+                            React.createElement('h3', {style:{fontFamily:"'Cinzel',serif",color:'#8B6BA3',fontSize:'1rem',marginBottom:'1rem',textAlign:'center',letterSpacing:'1px'}}, '◉ INNER — MINOR'),
+                            React.createElement('label', {htmlFor:'innerSelect',style:{display:'block',color:'rgba(232,232,232,0.65)',fontSize:'0.8rem',marginBottom:'6px',fontWeight:'600'}}, 'Starting Note'),
+                            React.createElement('select', {
+                                id:'innerSelect', value:startNoteInner,
+                                onChange:(e)=>setStartNoteInner(e.target.value),
+                                style:{width:'100%',padding:'10px',fontSize:'16px',borderRadius:'8px',border:'2px solid rgba(139,107,163,0.5)',background:'#150f1e',color:'#8B6BA3',fontFamily:"'Montserrat',sans-serif",fontWeight:'600',marginBottom:'12px',cursor:'pointer'}
+                            }, noteOrder.map(n=>React.createElement('option',{key:n,value:n},n))),
+                            React.createElement('button', {onClick:()=>playSequence(buildSeq(innerBase,startNoteInner),true,true),  disabled:isPlayingOuter||isPlayingInner, style:btn('linear-gradient(135deg,#8B6BA3,#6a5080)')},  '🎵 Play Arpeggio'),
+                            React.createElement('button', {onClick:()=>playSequence(buildSeq(innerBase,startNoteInner),true,false), disabled:isPlayingOuter||isPlayingInner, style:btn('linear-gradient(135deg,#CF7A5A,#a05840)','0')}, '🎹 Play Chords')
+                        ),
+
+                        React.createElement('div', {style:{background:'rgba(255,255,255,0.04)',border:'1px solid rgba(0,128,128,0.2)',borderRadius:'12px',padding:'1.25rem',color:'rgba(232,232,232,0.65)',fontSize:'0.83rem',lineHeight:'1.75'}},
+                            React.createElement('p', {style:{fontWeight:'700',color:'#F4D03F',marginBottom:'8px',fontFamily:"'Cinzel',serif",fontSize:'0.9rem'}}, '🎓 HOW TO USE'),
+                            React.createElement('p', {style:{marginBottom:'5px'}}, 'Click any note on the wheel to hear its chord instantly.'),
+                            React.createElement('p', {style:{marginBottom:'5px'}}, 'Outer ring → Major chords'),
+                            React.createElement('p', {style:{marginBottom:'5px'}}, 'Inner ring → Minor chords'),
+                            React.createElement('p', null, 'Select a starting note then play the full sequence around the circle.')
+                        )
+                    )
+                )
+            );
+        };
+
+        ReactDOM.render(React.createElement(MusicCircle), document.getElementById('root'));
+
+        // ── KCM Console bridge listener ───────────────────────────────────────
+        // Receives KCM_STATE from Console host (bridge.js).
+        // Maps bus root (sharp notation) → CoF note (flat notation where needed).
+        // Sets startNoteOuter to the root's major key.
+        // Sets startNoteInner to the relative minor (root - 3 semitones in CoF order).
+        // Added: Session 5 — 2026-04-25
+        (function mountKCMListener() {
+            // KCM bus uses sharps; CoF uses flats for black keys
+            var SHARP_TO_FLAT = {
+                'C#':'Db','D#':'Eb','F#':'Gb','G#':'Ab','A#':'Bb'
+            };
+            // Circle of Fifths order — used to find relative minor
+            var COF_ORDER = ['C','G','D','A','E','B','Gb','Db','Ab','Eb','Bb','F'];
+            // Relative minor for each major (3 semitones down = 5 positions back in CoF)
+            var RELATIVE_MINOR = {
+                'C':'A','G':'E','D':'B','A':'Gb','E':'Db','B':'Ab',
+                'Gb':'Eb','Db':'Bb','Ab':'F','Eb':'C','Bb':'G','F':'D'
+            };
+
+            window.addEventListener('message', function(ev) {
+                try {
+                    if (!ev.data) return;
+
+                    // ── TICK (master clock beat) ──────────────────────
+                    // Fired by bridge.js on every beat — highlight the
+                    // wedge/note on the CoF wheel that matches the tick.
+                    if (ev.data.type === 'KCM_TICK') {
+                        var tk = ev.data.payload;
+                        if (!window._kcmCoF) return;
+
+                        // Map MIDI notePC (0-11 chromatic) → CoF flat notation
+                        var PC_TO_COF = ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
+                        var cofNote = PC_TO_COF[tk.notePC];
+                        if (!cofNote) return;
+
+                        // Flash the note on the wheel
+                        window._kcmCoF.setActiveNote(cofNote);
+                        window._kcmCoF.setActiveType('tick');
+
+                        // Clear after 75% of the beat duration so it pulses cleanly
+                        var clearAfter = Math.max(tk.beatMs * 0.7, 120);
+                        setTimeout(function() {
+                            if (window._kcmCoF) {
+                                window._kcmCoF.setActiveNote(null);
+                                window._kcmCoF.setActiveType(null);
+                            }
+                        }, clearAfter);
+                        return;
+                    }
+
+                    // ── TICK STOP ─────────────────────────────────────
+                    if (ev.data.type === 'KCM_TICK_STOP') {
+                        if (window._kcmCoF) {
+                            window._kcmCoF.setActiveNote(null);
+                            window._kcmCoF.setActiveType(null);
+                        }
+                        return;
+                    }
+
+                    // ── STOP ALL ─────────────────────────────────────
+                    if (ev.data.type === 'KCM_STOP') {
+                        if (audioCtxRef && audioCtxRef.current) {
+                            audioCtxRef.current.suspend();
+                        }
+                        if (window._kcmCoF) {
+                            window._kcmCoF.setActiveNote(null);
+                            window._kcmCoF.setActiveType(null);
+                        }
+                        console.log('[KCM→CoF] stop received.');
+                        return;
+                    }
+
+                    if (ev.data.type !== 'KCM_STATE') return;
+                    var payload = ev.data.payload;
+                    if (!payload || !payload.root) return;
+
+                    // Normalise root to CoF notation (sharps → flats)
+                    var root = SHARP_TO_FLAT[payload.root] || payload.root;
+
+                    // Verify root exists in CoF wheel
+                    if (COF_ORDER.indexOf(root) === -1) return;
+
+                    // Drive React state via the exposed _kcmCoF handle
+                    if (window._kcmCoF) {
+                        window._kcmCoF.setStartNoteOuter(root);
+                        var relMinor = RELATIVE_MINOR[root];
+                        if (relMinor) window._kcmCoF.setStartNoteInner(relMinor);
+                        // Flash active note briefly so user sees the update
+                        window._kcmCoF.setActiveNote(root);
+                        window._kcmCoF.setActiveType('outer');
+                        setTimeout(function() {
+                            if (window._kcmCoF) {
+                                window._kcmCoF.setActiveNote(null);
+                                window._kcmCoF.setActiveType(null);
+                            }
+                        }, 800);
+                    }
+
+                    console.log('[KCM→CoF] root=' + payload.root + '→' + root +
+                                ' relMinor=' + RELATIVE_MINOR[root]);
+                } catch(e) {
+                    console.error('[KCM→CoF] listener error:', e);
+                }
+            });
+
+            console.log('[KCM→CoF] bridge listener ready (circle-of-fifths).');
+        })();
+        // ── end KCM Console bridge listener ──────────────────────────────────
+    </script>
+    <!-- KCM STANDARD FOOTER -->
+    <footer class="app-footer" role="contentinfo">
+        <div class="app-footer-content">
+            <div class="app-footer-divider"></div>
+            <div class="app-copyright">
+                <p>&copy; 2026 <strong>Keys, Codes & Modes™</strong> | Created by <strong>Benjamin Ryan</strong> | All Rights Reserved</p>
+                <p>Based on the book <em>"Keys, Codes, and Modes: A Visual Approach to Understanding Music"</em></p>
+                <p>1187 Coast Village Rd #110 · Santa Barbara, CA 93108</p>
+            </div>
+            <div class="app-legal-links">
+                <a href="../privacy-policy.html">Privacy Policy</a>
+                <a href="/terms.html">Terms of Service</a>
+                <a href="/contact.html">Contact Us</a>
+            </div>
+        </div>
+    </footer>
 </body>
 </html>
+
