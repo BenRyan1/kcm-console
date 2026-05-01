@@ -213,6 +213,30 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
 
 .divider{height:1px;background:linear-gradient(to right,transparent,var(--border),transparent);margin:12px 0}
 
+/* ── Compliance Footer ───────────────────────────────────── */
+.bridge-footer{
+  background:var(--bg1);
+  border-top:1px solid var(--border);
+  padding:10px 24px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:8px;
+}
+.footer-left{display:flex;flex-direction:column;gap:3px}
+.footer-copy{font-size:9px;color:var(--muted);letter-spacing:.04em}
+.footer-copy span{color:rgba(232,232,232,0.45)}
+.footer-ip{font-size:8px;color:rgba(144,144,176,0.6);letter-spacing:.03em;line-height:1.5}
+.footer-center{text-align:center}
+.footer-site{font-family:'Cinzel',serif;font-size:10px;font-weight:700;letter-spacing:.12em;background:linear-gradient(135deg,var(--gold),var(--ocean));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;text-decoration:none}
+.footer-tagline{font-size:8px;color:rgba(144,144,176,0.5);letter-spacing:.06em;margin-top:2px}
+.footer-right{display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+.footer-links{display:flex;gap:10px}
+.footer-links a{font-size:8px;color:rgba(144,144,176,0.55);text-decoration:none;letter-spacing:.06em;transition:color .2s}
+.footer-links a:hover{color:var(--teal)}
+.footer-build{font-size:7px;color:rgba(144,144,176,0.35);letter-spacing:.06em;margin-top:1px}
+
 /* Console Nav Buttons */
 .console-nav{display:flex;gap:6px;margin-bottom:16px;flex-wrap:nowrap}
 .cnav-btn{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:7px 6px;text-align:center;cursor:pointer;transition:all .2s;min-width:0}
@@ -725,6 +749,40 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
     </div>
   </div>
 </div>
+
+<!-- ══════════════════════════════════════
+     COMPLIANCE FOOTER
+══════════════════════════════════════ -->
+<footer class="bridge-footer">
+
+  <div class="footer-left">
+    <div class="footer-copy">
+      © 2026 <span>Benjamin Ryan</span> · Keys, Codes &amp; Modes™ · All Rights Reserved
+    </div>
+    <div class="footer-ip">
+      FreeStyle® is a registered trademark · U.S. Patents protected ·
+      12-Color Chromatic Spectrum™ is proprietary IP ·
+      KCM × Suno MIDI Bridge algorithm © 2026 Benjamin Ryan
+    </div>
+  </div>
+
+  <div class="footer-center">
+    <a class="footer-site" href="https://keyscodesandmodes.com" target="_blank" rel="noopener">
+      KEYSCODESANDMODES.COM
+    </a>
+    <div class="footer-tagline">A Visual Approach to Understanding Music · Santa Barbara, CA</div>
+  </div>
+
+  <div class="footer-right">
+    <div class="footer-links">
+      <a href="https://keyscodesandmodes.com/privacy.html" target="_blank" rel="noopener">Privacy Policy</a>
+      <a href="https://keyscodesandmodes.com/terms.html" target="_blank" rel="noopener">Terms of Service</a>
+      <a href="https://keyscodesandmodes.com/contact.html" target="_blank" rel="noopener">Contact</a>
+    </div>
+    <div class="footer-build">KCM MIDI Bridge v7 · Build 2026 · Proprietary — Not for redistribution</div>
+  </div>
+
+</footer>
 
 <div class="spectrum-strip"></div>
 
