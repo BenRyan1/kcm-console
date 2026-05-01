@@ -414,31 +414,27 @@
             padding: 14px;
             background: linear-gradient(135deg, #008080, #005f5f);
             color: white;
-            border: 2px solid #008080;
+            border: 2px solid #00c0c0;
             border-radius: 8px;
             font-size: 1rem;
             font-weight: 700;
             cursor: pointer;
-            text-transform: uppercase;
             letter-spacing: 2px;
-            transition: all 0.3s;
             font-family: var(--font-display);
             margin-bottom: 8px;
+            transition: all 0.2s ease;
         }
-
         #play-button:hover:not(:disabled) {
             background: linear-gradient(135deg, #00a0a0, #008080);
+            box-shadow: 0 6px 24px rgba(0,192,192,0.5);
             transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(0, 128, 128, 0.5);
         }
-
         #play-button:disabled {
-            background: rgba(100, 100, 100, 0.3);
-            border-color: rgba(100, 100, 100, 0.3);
-            color: #666;
+            background: rgba(80,80,80,0.3);
+            border-color: rgba(80,80,80,0.3);
+            color: #555;
             cursor: not-allowed;
         }
-
         #stop-button {
             width: 100%;
             padding: 18px;
@@ -1123,7 +1119,7 @@
         let isRecording = false;
         let recordedNotes = [];
         let recordingStartTime = 0;
-        // Guard: audio ONLY starts after explicit ▶ Play button click — never on bus sync or mode select
+        // Guard: audio ONLY starts after an explicit user click — never on bus sync
         let userHasStartedAudio = false;
         
         /* ==================== AUDIO / MIDI ==================== */
@@ -1134,42 +1130,34 @@
             if (!audioContext) {
                 audioContext = new (window.AudioContext || window.webkitAudioContext)();
             }
-            if (audioContext.state === 'suspended') {
-                audioContext.resume();
-            }
         }
         
-        // scheduleOffset: seconds from now to start note — use shared offset for sync
-        function playNote(frequency, duration = 0.3, scheduleOffset = 0) {
+        function playNote(frequency, duration = 0.3) {
             initAudio();
-            try {
-                const oscillator = audioContext.createOscillator();
-                const gainNode = audioContext.createGain();
-                
-                oscillator.connect(gainNode);
-                gainNode.connect(audioContext.destination);
-                
-                oscillator.frequency.value = frequency;
-                oscillator.type = "sine";
-                
-                const startTime = audioContext.currentTime + scheduleOffset;
-                gainNode.gain.setValueAtTime(0.3, startTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
-                
-                oscillator.start(startTime);
-                oscillator.stop(startTime + duration);
-            } catch(e) {
-                console.warn('[MSP] playNote error:', e);
-            }
+            
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = frequency;
+            oscillator.type = "sine";
+            
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + duration);
         }
         
         function midiToFrequency(midiNote) {
             return 440 * Math.pow(2, (midiNote - 69) / 12);
         }
         
-        function playNoteByMidi(midiNote, duration = 0.3, scheduleOffset = 0) {
+        function playNoteByMidi(midiNote, duration = 0.3) {
             const frequency = midiToFrequency(midiNote);
-            playNote(frequency, duration, scheduleOffset);
+            playNote(frequency, duration);
         }
 
         /* ==================== RECORDING COUNTER ==================== */
@@ -1271,20 +1259,20 @@
                     column.classList.add("active-mode");
                 }
 
-                // Click to select/deselect mode — VISUAL ONLY, no audio until ▶ Play pressed
+                // Click to select/deselect mode — VISUAL ONLY
+                // Audio never starts here — only ▶ Play button starts it
                 column.addEventListener("click", (e) => {
-                    if (e.target.closest(".degree-cell")) return; // let cell clicks through
-                    stopPlaying(); // stop current playback when switching modes
+                    if (e.target.closest(".degree-cell")) return;
+                    stopPlaying();
+                    userHasStartedAudio = false; // always reset — click is visual only
                     if (playingMode === modeKey) {
                         playingMode = null;
-                        userHasStartedAudio = false;
                     } else {
                         playingMode = modeKey;
-                        // Don't set userHasStartedAudio here — wait for ▶ Play button
                     }
                     renderModes();
                     renderPlayZone();
-                    // Publish to Console bus
+                    // Tell all panels which mode is selected (visual state only)
                     postToConsole({ mode: modeKey });
                 });
 
@@ -1298,35 +1286,34 @@
             const hint = document.querySelector(".play-zone-hint");
             const stopButton = document.getElementById("stop-button");
             const playButton = document.getElementById("play-button");
-            
+
             if (playingMode) {
                 playZone.classList.add("active");
                 hint.style.display = "none";
                 stopButton.disabled = false;
-                playButton.disabled = false;
-                
+                if (playButton) playButton.disabled = false;
+
                 const existingColumn = playZoneContent.querySelector(".mode-column");
                 if (existingColumn) existingColumn.remove();
-                
+
                 const modeData = MODES[playingMode];
                 const column = createModeColumn(playingMode, modeData);
                 column.classList.add("in-play-zone");
-                // Click play zone column to deselect — stops audio too
                 column.addEventListener("click", (e) => {
                     if (e.target.closest(".degree-cell")) return;
                     playingMode = null;
-                    userHasStartedAudio = false;
                     stopPlaying();
+                    userHasStartedAudio = false;
                     renderModes();
                     renderPlayZone();
                 });
                 playZoneContent.appendChild(column);
-                // ✅ NEVER auto-start — wait for explicit ▶ Play button press
+                // ✅ NEVER auto-start — only ▶ Play button starts audio + animation
             } else {
                 playZone.classList.remove("active");
                 hint.style.display = "block";
                 stopButton.disabled = true;
-                playButton.disabled = true;
+                if (playButton) { playButton.disabled = true; }
                 stopPlaying();
                 userHasStartedAudio = false;
                 const existingColumn = playZoneContent.querySelector(".mode-column");
@@ -1340,58 +1327,28 @@
             catch(e) { /* silent if no parent */ }
         }
 
-        /* ==================== AUTO-PLAY ==================== */
-        
-        function startPlaying() {
-            if (playInterval) clearInterval(playInterval);
-            
-            const modeData = MODES[playingMode];
-            let currentStep = 0;
-            let direction = 1;
-            
-            const column = document.querySelector(".play-zone .mode-column");
-            if (!column) return;
-            
-            playInterval = setInterval(() => {
-                const cells = column.querySelectorAll(".degree-cell");
-                cells.forEach(cell => cell.classList.remove("active"));
-                
-                const currentCell = cells[currentStep];
-                if (currentCell) {
-                    currentCell.classList.add("active");
-                    const midiNote = parseInt(currentCell.dataset.midi);
-                    playNoteByMidi(midiNote, playSpeed / 1000);
+        /* ==================== CLOCK CONTROL (bridge delegates) ==================== */
+        // MSP no longer runs its own setInterval.
+        // It sends KCM_CLOCK_START to bridge.js, which broadcasts KCM_TICK to ALL panels.
+        // MSP listens for KCM_TICK to advance step, play audio, and highlight cells.
 
-                    // ✅ FIX: Record auto-play notes when recording is active
-                    if (isRecording) {
-                        const timestamp = Date.now() - recordingStartTime;
-                        recordedNotes.push({
-                            midi: midiNote,
-                            time: timestamp,
-                            note: currentCell.dataset.note,
-                            degree: parseInt(currentCell.dataset.degree)
-                        });
-                        updateRecCounter();
-                    }
-                }
-                
-                currentStep += direction;
-                
-                if (currentStep >= 8) {
-                    direction = -1;
-                    currentStep = 7;
-                } else if (currentStep < 0) {
-                    direction = 1;
-                    currentStep = 0;
-                }
-            }, playSpeed);
+        function startPlaying() {
+            stopPlaying(); // clear any stale state
+            if (!playingMode) return;
+            initAudio();
+            // Tell the bridge to start the master clock
+            window.parent.postMessage({
+                type: 'KCM_CLOCK_START',
+                payload: { modeKey: playingMode, root: currentTonic, beatMs: playSpeed }
+            }, '*');
         }
-        
+
         function stopPlaying() {
-            if (playInterval) {
-                clearInterval(playInterval);
-                playInterval = null;
-            }
+            // Clear any local step highlight
+            const cells = document.querySelectorAll('.degree-cell');
+            cells.forEach(c => c.classList.remove('active'));
+            // Tell bridge to stop the master clock
+            window.parent.postMessage({ type: 'KCM_CLOCK_STOP' }, '*');
         }
         
         /* ==================== RECORDING ==================== */
@@ -1484,26 +1441,34 @@
             postToConsole({ root: currentTonic });
         });
         
-        document.getElementById("play-button").addEventListener("click", () => {
-            if (!playingMode) return;
-            userHasStartedAudio = true;
-            initAudio(); // unlock AudioContext on explicit user gesture
-            startPlaying();
-        });
-
         document.getElementById("speedSelect").addEventListener("change", (e) => {
             playSpeed = parseInt(e.target.value);
             if (playingMode && userHasStartedAudio) {
-                startPlaying(); // restart at new speed only if already playing
+                startPlaying(); // restarts master clock at new speed
             }
         });
         
+        // ▶ Play button — only entry point that starts audio + animation
+        const playBtn = document.getElementById("play-button");
+        if (playBtn) {
+            playBtn.addEventListener("click", () => {
+                if (!playingMode) return;
+                userHasStartedAudio = true;
+                initAudio();
+                startPlaying();
+                playBtn.textContent = "▶ Playing...";
+                playBtn.style.background = "linear-gradient(135deg,#005f5f,#003f3f)";
+            });
+        }
+
         document.getElementById("stop-button").addEventListener("click", () => {
             stopPlaying();
             userHasStartedAudio = false;
-            // Keep mode selected visually — just stop the audio
-            const cells = document.querySelectorAll(".degree-cell");
-            cells.forEach(c => c.classList.remove("active"));
+            document.querySelectorAll(".degree-cell").forEach(c => c.classList.remove("active"));
+            if (playBtn) {
+                playBtn.textContent = "▶ Play Mode";
+                playBtn.style.background = "";
+            }
         });
         
         /* ==================== INITIALIZE ==================== */
@@ -1525,6 +1490,42 @@
                 try {
                     if (!ev.data) return;
 
+                    // ── TICK (master clock beat) ──────────────────────
+                    if (ev.data.type === 'KCM_TICK') {
+                        var tk = ev.data.payload;
+                        if (!playingMode || !userHasStartedAudio) return;
+
+                        // Advance step highlight in play zone
+                        var column = document.querySelector('.play-zone .mode-column');
+                        if (!column) return;
+                        var cells = column.querySelectorAll('.degree-cell');
+                        cells.forEach(function(c) { c.classList.remove('active'); });
+                        var cell = cells[tk.step];
+                        if (cell) {
+                            cell.classList.add('active');
+                            var midiNote = parseInt(cell.dataset.midi);
+                            playNoteByMidi(midiNote, tk.beatMs / 1000 * 0.8);
+
+                            // ✅ Broadcast active note to ALL panels via bus
+                            // This makes MTP sphere, piano, fretboard, staff ALL light up
+                            postToConsole({ activeNotes: [midiNote] });
+
+                            if (isRecording) {
+                                var timestamp = Date.now() - recordingStartTime;
+                                recordedNotes.push({ midi: midiNote, time: timestamp, note: cell.dataset.note, degree: parseInt(cell.dataset.degree) });
+                                updateRecCounter();
+                            }
+                        }
+                        return;
+                    }
+
+                    // ── TICK_STOP ─────────────────────────────────────
+                    if (ev.data.type === 'KCM_TICK_STOP') {
+                        document.querySelectorAll('.degree-cell').forEach(function(c) { c.classList.remove('active'); });
+                        postToConsole({ activeNotes: [] }); // clear all panels
+                        return;
+                    }
+
                     // ── STOP ALL ─────────────────────────────────────
                     if (ev.data.type === 'KCM_STOP') {
                         playingMode = null;
@@ -1542,34 +1543,32 @@
 
                     var changed = false;
 
-                    // Update tonic if different
+                    // Update tonic if different — VISUAL ONLY, never starts audio
                     if (payload.root && payload.root !== currentTonic) {
                         currentTonic = payload.root;
-                        // Sync the dropdown UI
                         var sel = document.getElementById('tonicSelect');
                         if (sel) sel.value = currentTonic;
                         changed = true;
                     }
 
-                    // Update active mode if valid and different
+                    // ✅ Only update playingMode from bus if user has ALREADY
+                    // started audio in this session — never auto-select a mode on arrival
                     if (payload.mode && VALID_MODES.indexOf(payload.mode) !== -1) {
-                        if (payload.mode !== playingMode) {
+                        if (userHasStartedAudio && payload.mode !== playingMode) {
                             playingMode = payload.mode;
                             changed = true;
                         }
                     }
 
                     if (changed) {
-                        // ✅ Bridge sync = VISUAL UPDATE ONLY — never starts audio
-                        // Audio only starts when user presses ▶ Play button
-                        const wasPlaying = userHasStartedAudio;
-                        userHasStartedAudio = false; // block startPlaying() in renderPlayZone
+                        // Visual refresh only — startPlaying() is guarded by userHasStartedAudio
+                        var wasPlaying = userHasStartedAudio;
+                        userHasStartedAudio = false;  // block any accidental startPlaying in renderPlayZone
                         renderModes();
                         renderPlayZone();
-                        // If audio was already playing and root changed, restart at new pitch
-                        if (wasPlaying && playingMode && playInterval) {
+                        if (wasPlaying) {
                             userHasStartedAudio = true;
-                            startPlaying();
+                            startPlaying(); // resume at new root/mode if already playing
                         }
                     }
 
