@@ -164,6 +164,27 @@
     <!-- ── Panel grid ──────────────────────────────────────────────────── -->
     <section class="kcm-panels" aria-label="Application panels">
 
+      <!-- Panel 4: KCM Chromatic Universe -->
+      <div class="kcm-panel" id="panel-cu">
+        <div class="kcm-panel__header">
+          <span class="kcm-panel__accent" style="background:var(--primary-gold);"></span>
+          <h3 class="kcm-panel__title">Chromatic Universe</h3>
+          <div class="kcm-panel__controls">
+            <button class="kcm-panel__btn" data-panel-action="minimize" aria-label="Minimize panel">−</button>
+          </div>
+        </div>
+        <div class="kcm-panel__body">
+          <iframe
+            id="iframe-cu"
+            class="kcm-panel__iframe"
+            src="kcm-chromatic-universe.html"
+            title="KCM Chromatic Universe"
+            allow="autoplay; midi"
+            loading="lazy"
+          ></iframe>
+        </div>
+      </div>
+
       <!-- Panel 1: Music Theory Pro -->
       <div class="kcm-panel" id="panel-mtp">
         <div class="kcm-panel__header">
@@ -222,27 +243,6 @@
             src="modal-stencil-player.html"
             title="Modal Stencil Player"
             allow="autoplay"
-            loading="lazy"
-          ></iframe>
-        </div>
-      </div>
-
-      <!-- Panel 4: KCM Chromatic Universe -->
-      <div class="kcm-panel" id="panel-cu">
-        <div class="kcm-panel__header">
-          <span class="kcm-panel__accent" style="background:var(--primary-gold);"></span>
-          <h3 class="kcm-panel__title">Chromatic Universe</h3>
-          <div class="kcm-panel__controls">
-            <button class="kcm-panel__btn" data-panel-action="minimize" aria-label="Minimize panel">−</button>
-          </div>
-        </div>
-        <div class="kcm-panel__body">
-          <iframe
-            id="iframe-cu"
-            class="kcm-panel__iframe"
-            src="kcm-chromatic-universe.html"
-            title="KCM Chromatic Universe"
-            allow="autoplay; midi"
             loading="lazy"
           ></iframe>
         </div>
