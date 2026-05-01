@@ -212,6 +212,15 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
 .export-btn-desc{font-size:8px;color:var(--muted);margin-top:2px}
 
 .divider{height:1px;background:linear-gradient(to right,transparent,var(--border),transparent);margin:12px 0}
+
+/* Console Nav Buttons */
+.console-nav{display:flex;gap:6px;margin-bottom:16px;flex-wrap:nowrap}
+.cnav-btn{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:7px 6px;text-align:center;cursor:pointer;transition:all .2s;min-width:0}
+.cnav-btn:hover{border-color:var(--gold);background:rgba(244,208,63,0.06)}
+.cnav-btn.active{border-color:var(--gold);background:rgba(244,208,63,0.08)}
+.cnav-btn-icon{font-size:13px;line-height:1;margin-bottom:3px}
+.cnav-btn-name{font-size:8px;font-weight:700;color:var(--text);font-family:'Cinzel',serif;letter-spacing:.05em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cnav-btn-sub{font-size:7px;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 </style>
 </head>
 <body>
@@ -249,25 +258,25 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
 
     <div class="section-label">Active KCM app</div>
     <div class="app-grid">
-      <div class="app-card active" onclick="selectApp(this,'Chromatic Clock')">
-        <div class="app-name">Chromatic Clock</div>
-        <div class="app-tag">Key · mode · color</div>
+      <div class="app-card active" onclick="selectApp(this,'Music Theory Pro','console-prompt')">
+        <div class="app-name">Music Theory Pro</div>
+        <div class="app-tag">Bridge prompt · key · mode</div>
       </div>
-      <div class="app-card" onclick="selectApp(this,'Circle of Modes')">
-        <div class="app-name">Circle of Modes</div>
-        <div class="app-tag">Modal progressions</div>
+      <div class="app-card" onclick="selectApp(this,'Circle of Fifths','console-influence')">
+        <div class="app-name">Circle of Fifths</div>
+        <div class="app-tag">Suno influence controls</div>
       </div>
-      <div class="app-card" onclick="selectApp(this,'Fretboard')">
-        <div class="app-name">Fretboard</div>
-        <div class="app-tag">Voicings · MIDI</div>
+      <div class="app-card" onclick="selectApp(this,'Modal Stencil Player','console-metatags')">
+        <div class="app-name">Modal Stencil Player</div>
+        <div class="app-tag">Metatag injection</div>
       </div>
-      <div class="app-card" onclick="selectApp(this,'Rhythm Clock')">
-        <div class="app-name">Rhythm Clock</div>
-        <div class="app-tag">Groove · tempo</div>
+      <div class="app-card" onclick="selectApp(this,'Chromatic Universe','console-seed')">
+        <div class="app-name">Chromatic Universe</div>
+        <div class="app-tag">Audio seed design</div>
       </div>
     </div>
 
-    <div class="section-label">12-Color Chromatic Clock™</div>
+    <div class="section-label">12-Color Chromatic Clock™ — KCM Source</div>
     <div class="wheel-wrap">
       <canvas id="kcmWheel" width="380" height="380"></canvas>
       <div class="wheel-readout">
@@ -340,15 +349,39 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
   ══════════════════════════════════════ -->
   <div class="center">
 
+    <!-- Console Nav Buttons -->
+    <div class="console-nav">
+      <div class="cnav-btn active" id="cnav-prompt" onclick="cnavGo('console-prompt',this)">
+        <div class="cnav-btn-icon">⬡</div>
+        <div class="cnav-btn-name">Bridge Prompt</div>
+        <div class="cnav-btn-sub">KCM → Suno</div>
+      </div>
+      <div class="cnav-btn" id="cnav-influence" onclick="cnavGo('console-influence',this)">
+        <div class="cnav-btn-icon">◈</div>
+        <div class="cnav-btn-name">Suno Controls</div>
+        <div class="cnav-btn-sub">Influence sliders</div>
+      </div>
+      <div class="cnav-btn" id="cnav-metatags" onclick="cnavGo('console-metatags',this)">
+        <div class="cnav-btn-icon">⬟</div>
+        <div class="cnav-btn-name">Metatag Inject</div>
+        <div class="cnav-btn-sub">Structure · production</div>
+      </div>
+      <div class="cnav-btn" id="cnav-seed" onclick="cnavGo('console-seed',this)">
+        <div class="cnav-btn-icon">◉</div>
+        <div class="cnav-btn-name">Audio Seed</div>
+        <div class="cnav-btn-sub">Render spec</div>
+      </div>
+    </div>
+
     <!-- KCM → Suno prompt (full metatag version) -->
-    <div class="section-label" style="margin-top:0">KCM → Suno bridge prompt</div>
+    <div id="console-prompt" class="section-label" style="margin-top:0">KCM → Suno bridge prompt</div>
     <div class="prompt-box">
       <div class="prompt-box-label">Proprietary KCM algorithm · metatag-injected · copy to Suno Custom Mode</div>
       <div class="prompt-text" id="promptOut">A Dorian, cool introspective jazz, modal feel, Sky Blue tonal palette, walking bass, brushed drums, [BPM: 92] [Key: A Dorian] [Instrumental] [No Melody Solo]</div>
     </div>
 
     <!-- Suno Influence Sliders -->
-    <div class="section-label">Suno influence controls — audio seed</div>
+    <div id="console-influence" class="section-label">Suno influence controls — audio seed</div>
     <div class="suno-ctrl-panel">
       <div class="suno-ctrl-header">
         <div class="suno-ctrl-dot"></div>
@@ -414,7 +447,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
     </div>
 
     <!-- Metatag injection panel -->
-    <div class="section-label">Suno metatag injection — auto-added to prompt</div>
+    <div id="console-metatags" class="section-label">Suno metatag injection — auto-added to prompt</div>
     <div class="metatag-wrap">
       <div class="metatag-label">Structure tags</div>
       <div class="metatag-grid" id="structTags">
@@ -448,7 +481,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
     </div>
 
     <!-- Audio Seed Design Guide -->
-    <div class="section-label">KCM audio seed design — what to render</div>
+    <div id="console-seed" class="section-label">KCM audio seed design — what to render</div>
     <div class="seed-guide">
       <div class="seed-guide-hdr">Optimal seed spec · maximizes Suno Audio Influence</div>
       <div class="seed-grid">
@@ -1149,10 +1182,23 @@ function setMode(el,mode){
   addLog(`→ Mode: ${mode} · scale ${JSON.stringify(MODES[mode])}`,'info');
 }
 
-function selectApp(el,name){
+function selectApp(el,name,consoleTarget){
   document.querySelectorAll('.app-card').forEach(a=>a.classList.remove('active'));
   el.classList.add('active');
   addLog(`→ App: ${name} active`,'info');
+  if(consoleTarget){
+    const target=document.getElementById(consoleTarget);
+    if(target){target.scrollIntoView({behavior:'smooth',block:'start'});}
+    const navMap={
+      'console-prompt':'cnav-prompt',
+      'console-influence':'cnav-influence',
+      'console-metatags':'cnav-metatags',
+      'console-seed':'cnav-seed'
+    };
+    document.querySelectorAll('.cnav-btn').forEach(b=>b.classList.remove('active'));
+    const matchBtn=document.getElementById(navMap[consoleTarget]);
+    if(matchBtn)matchBtn.classList.add('active');
+  }
 }
 
 function selectStruct(el,structName){
@@ -1234,6 +1280,14 @@ function setStatus(state,msg){
   const txt=document.getElementById('statusText');
   dot.style.background=state==='ok'?'var(--teal)':state==='err'?'#ff5555':'var(--gold)';
   txt.textContent=msg;
+}
+
+/* Console Nav */
+function cnavGo(targetId, btn){
+  document.querySelectorAll('.cnav-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const el=document.getElementById(targetId);
+  if(el){el.scrollIntoView({behavior:'smooth',block:'start'});}
 }
 
 /* Init */
