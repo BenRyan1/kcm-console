@@ -2810,6 +2810,40 @@ function etRestart() {
   document.getElementById('etSettings').style.display='block';
 }
 
+// ── KCM Console Bridge ─────────────────────────────────────────────────────
+// Listens for KCM_STATE messages from the Console's bridge.js.
+// When root changes → rotates the spoke clock to that root note.
+// When activeNotes change → highlights those notes on the clock face.
+(function() {
+  const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+
+  window.addEventListener('message', function(e) {
+    if (!e.data || e.data.type !== 'KCM_STATE') return;
+    const payload = e.data.payload;
+
+    // Root change → rotate spoke clock
+    if (payload.root !== undefined) {
+      const idx = NOTE_NAMES.indexOf(payload.root);
+      if (idx >= 0 && typeof setRootNote === 'function') {
+        setRootNote(idx);
+      }
+    }
+
+    // Active notes → highlight on clock (if spoke clock supports it)
+    if (payload.activeNotes !== undefined && typeof setActiveNotes === 'function') {
+      setActiveNotes(payload.activeNotes);
+    }
+
+    // Scale/mode change → apply stencil pattern if matching name exists
+    if (payload.mode !== undefined && typeof applyPatternByName === 'function') {
+      applyPatternByName(payload.mode);
+    }
+  });
+
+  // Announce presence to Console bridge
+  window.parent.postMessage({ type: 'KCM_PANEL_READY', panel: 'chromatic-universe' }, '*');
+})();
+
 </script>
 </body>
 </html>

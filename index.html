@@ -84,7 +84,8 @@
       "Music Theory Pro panel",
       "Synchronized harmonic state bus",
       ".gcis session save and load",
-      "SUNO AI prompt generator"
+      "SUNO AI prompt generator",
+      "KCM Chromatic Universe — spoke clock, Euclidean rhythm engine, ear training"
     ]
   }
   </script>
@@ -226,6 +227,27 @@
         </div>
       </div>
 
+      <!-- Panel 4: KCM Chromatic Universe -->
+      <div class="kcm-panel" id="panel-cu">
+        <div class="kcm-panel__header">
+          <span class="kcm-panel__accent" style="background:var(--primary-gold);"></span>
+          <h3 class="kcm-panel__title">Chromatic Universe</h3>
+          <div class="kcm-panel__controls">
+            <button class="kcm-panel__btn" data-panel-action="minimize" aria-label="Minimize panel">−</button>
+          </div>
+        </div>
+        <div class="kcm-panel__body">
+          <iframe
+            id="iframe-cu"
+            class="kcm-panel__iframe"
+            src="kcm-chromatic-universe.html"
+            title="KCM Chromatic Universe"
+            allow="autoplay; midi"
+            loading="lazy"
+          ></iframe>
+        </div>
+      </div>
+
     </section>
 
     <section class="kcm-status" aria-label="Build status">
@@ -233,7 +255,7 @@
       <ul class="kcm-status__list">
         <li><strong>Cross-panel synchronization.</strong> Root, mode, scale, and active notes shared across panels in real time.</li>
         <li><strong>.gcis file format.</strong> Save your harmonic state. Load it back later. Portable between sessions.</li>
-        <li><strong>Built on what already works.</strong> Music Theory Pro, Circle of Fifths, and Modal Stencil Player join the Console as the first panels.</li>
+        <li><strong>Built on what already works.</strong> Music Theory Pro, Circle of Fifths, Modal Stencil Player, and the new Chromatic Universe join the Console as the first four panels.</li>
       </ul>
     </section>
 
