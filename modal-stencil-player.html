@@ -1,14 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-6EGC5ZNZPF"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-6EGC5ZNZPF');
-</script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-6EGC5ZNZPF');</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Interactive Modal Stencil Player - Explore the seven musical modes with chromatic color coding and MIDI playback.">
@@ -16,866 +10,119 @@
     <meta name="theme-color" content="#4A7BA7">
     <title>Modal Stencil Player | Keys, Codes & Modes</title>
     <link rel="canonical" href="https://keyscodesandmodes.com/apps/modal-stencil-player.html">
-    
-    <!-- Favicon -->
     <link rel="icon" type="image/png" sizes="32x32" href="kcm-official-logo-32.png">
-    
-    <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Cormorant+Garamond:wght@300;400;600;700&family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
-    
     <style>
         :root {
-            /* OFFICIAL BRAND COLORS - Graphics Standards */
-            --ocean-blue: #4A7BA7;
-            --deep-navy: #2a4d6f;
-            --primary-teal: #008080;
-            --primary-gold: #F4D03F;
-            --primary-purple: #8B6BA3;
-            --primary-coral: #CF7A5A;
-            --dark-bg: #1a1a2e;
-            --darker-bg: #0f0f1e;
-            --light-text: #E8E8E8;
-            --font-display: 'Cinzel', serif;
-            --font-body: 'Montserrat', sans-serif;
-            --font-accent: 'Cormorant Garamond', serif;
-            
-            /* Chromatic Wheel Colors */
-            --c-color: #FFFF00;
-            --cs-color: #FFC400;
-            --d-color: #FF8000;
-            --ds-color: #FF4000;
-            --e-color: #FF0000;
-            --f-color: #C4007F;
-            --fs-color: #8000FF;
-            --g-color: #4000FF;
-            --gs-color: #0000FF;
-            --a-color: #007FFF;
-            --as-color: #00FF80;
-            --b-color: #80FF00;
+            --ocean-blue:#4A7BA7;--deep-navy:#2a4d6f;--primary-teal:#008080;
+            --primary-gold:#F4D03F;--primary-purple:#8B6BA3;--primary-coral:#CF7A5A;
+            --dark-bg:#1a1a2e;--darker-bg:#0f0f1e;--light-text:#E8E8E8;
+            --font-display:'Cinzel',serif;--font-body:'Montserrat',sans-serif;--font-accent:'Cormorant Garamond',serif;
+            --c-color:#FFFF00;--cs-color:#FFC400;--d-color:#FF8000;--ds-color:#FF4000;
+            --e-color:#FF0000;--f-color:#C4007F;--fs-color:#8000FF;--g-color:#4000FF;
+            --gs-color:#0000FF;--a-color:#007FFF;--as-color:#00FF80;--b-color:#80FF00;
         }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: var(--font-body);
-            background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 50%, #0f0f1e 100%);
-            color: var(--light-text);
-            line-height: 1.6;
-            overflow-x: hidden;
-        }
-        
-        /* Animated Background */
-        .bg-animation {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            opacity: 0.1;
-            background: 
-                radial-gradient(circle at 20% 50%, var(--primary-teal) 0%, transparent 50%),
-                radial-gradient(circle at 80% 80%, var(--primary-gold) 0%, transparent 50%),
-                radial-gradient(circle at 40% 20%, var(--primary-purple) 0%, transparent 50%);
-            animation: bgShift 20s ease infinite;
-        }
-        
-        @keyframes bgShift {
-            0%, 100% { transform: translate(0, 0) scale(1); }
-            50% { transform: translate(50px, 30px) scale(1.1); }
-        }
-        
-        /* ==================== HEADER ==================== */
-        header {
-            background: linear-gradient(135deg, 
-                        rgba(74, 123, 167, 0.95) 0%,
-                        rgba(42, 77, 111, 0.95) 100%);
-            border-bottom: 3px solid var(--ocean-blue);
-            box-shadow: 0 4px 20px rgba(74, 123, 167, 0.4);
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            backdrop-filter: blur(10px);
-        }
-        
-        .main-nav {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 1rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-        
-        .logo-container {
-            display: flex;
-            align-items: center;
-            gap: 1.5rem;
-        }
-        
-        .header-logo {
-            width: 120px;
-            height: 120px;
-            filter: drop-shadow(0 4px 12px rgba(0, 217, 255, 0.4));
-            animation: gentleFloat 4s ease-in-out infinite;
-        }
-        
-        @keyframes gentleFloat {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-6px); }
-        }
-        
-        .logo-text h1 {
-            font-family: var(--font-display);
-            font-size: 1.6rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, var(--primary-gold), var(--primary-teal));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            letter-spacing: 2px;
-            margin: 0;
-        }
-        
-        .logo-tagline {
-            font-family: var(--font-accent);
-            font-size: 1.1rem;
-            color: #ccc;
-            font-style: italic;
-        }
-        
-        .nav-links {
-            display: flex;
-            gap: 1.5rem;
-            list-style: none;
-        }
-        
-        .nav-links a {
-            color: var(--light-text);
-            text-decoration: none;
-            font-weight: 500;
-            font-size: 1.05rem;
-            transition: all 0.3s ease;
-            padding: 0.5rem 1rem;
-            border-radius: 4px;
-        }
-        
-        .nav-links a:hover {
-            background: rgba(244, 208, 63, 0.2);
-            color: var(--primary-gold);
-            transform: translateY(-2px);
-        }
-        
-        .nav-links a.active {
-            background: rgba(0, 128, 128, 0.3);
-            color: var(--primary-teal);
-        }
-        
-        /* ==================== MAIN CONTENT ==================== */
-        main {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 3rem 2rem 5rem;
-        }
-        
-        .page-header {
-            text-align: center;
-            margin-bottom: 3rem;
-        }
-        
-        .page-header h2 {
-            font-family: var(--font-display);
-            font-size: 3rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, var(--primary-gold), var(--primary-teal));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 1rem;
-            letter-spacing: 1px;
-        }
-        
-        .page-header p {
-            font-family: var(--font-accent);
-            font-size: 1.3rem;
-            color: #bbb;
-            font-style: italic;
-        }
-        
-        /* ==================== CONTROL PANEL ==================== */
-        .control-panel {
-            background: linear-gradient(135deg, 
-                        rgba(74, 123, 167, 0.3) 0%,
-                        rgba(0, 128, 128, 0.3) 100%);
-            border: 2px solid rgba(74, 123, 167, 0.5);
-            border-radius: 12px;
-            padding: 1rem 1.5rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-        }
-        
-        .control-grid {
-            display: flex;
-            align-items: center;
-            gap: 1.5rem;
-            flex-wrap: wrap;
-        }
-        
-        .control-section {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        
-        .control-label {
-            font-family: var(--font-display);
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: var(--primary-gold);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            white-space: nowrap;
-        }
-        
-        .control-input {
-            background: rgba(26, 26, 46, 0.8);
-            border: 2px solid rgba(74, 123, 167, 0.5);
-            color: var(--light-text);
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 0.9rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-family: var(--font-body);
-            min-width: 80px;
-        }
-        
-        .control-input:hover {
-            border-color: var(--primary-gold);
-            box-shadow: 0 0 20px rgba(244, 208, 63, 0.3);
-        }
-        
-        .control-input:focus {
-            outline: none;
-            border-color: var(--primary-teal);
-            box-shadow: 0 0 20px rgba(0, 128, 128, 0.4);
-        }
-        
-        .recording-controls {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .control-btn {
-            background: linear-gradient(135deg, var(--ocean-blue), var(--deep-navy));
-            color: white;
-            border: 2px solid var(--ocean-blue);
-            padding: 8px 14px;
-            border-radius: 6px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            white-space: nowrap;
-        }
-        
-        .control-btn:hover:not(:disabled) {
-            background: linear-gradient(135deg, var(--primary-teal), var(--ocean-blue));
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(74, 123, 167, 0.4);
-        }
-        
-        .control-btn:disabled {
-            opacity: 0.3;
-            cursor: not-allowed;
-        }
-        
-        #record-button {
-            background: linear-gradient(135deg, #c82333, #a71d2a);
-            border-color: #c82333;
-        }
-        
-        #record-button.recording {
-            animation: record-pulse 1.5s ease-in-out infinite;
-        }
-        
-        @keyframes record-pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:var(--font-body);background:linear-gradient(135deg,#0f0f1e 0%,#1a1a2e 50%,#0f0f1e 100%);color:var(--light-text);line-height:1.6;overflow-x:hidden;}
 
-        /* Recording note counter badge */
-        #rec-count {
-            display: none;
-            font-family: var(--font-display);
-            font-size: 0.75rem;
-            font-weight: 700;
-            color: #fff;
-            background: rgba(200, 35, 51, 0.85);
-            border: 1px solid #c82333;
-            border-radius: 20px;
-            padding: 3px 10px;
-            letter-spacing: 0.5px;
-            white-space: nowrap;
-        }
+        /* ══ HIDE INTERNAL FOOTER WHEN EMBEDDED IN KCM CONSOLE ══
+           The footer is part of this standalone app. When loaded inside
+           the Console iframe, this CSS rule hides it cleanly.          */
+        footer[role="contentinfo"] { display: none !important; }
 
-        #rec-count.visible {
-            display: inline-block;
-        }
-        
-        /* ==================== APP CONTAINER ==================== */
-        .app-container {
-            background: rgba(26, 26, 46, 0.6);
-            border: 2px solid rgba(74, 123, 167, 0.3);
-            border-radius: 12px;
-            padding: 2rem;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-            margin-bottom: 2rem;
-        }
-        
-        .app-layout {
-            display: grid;
-            grid-template-columns: 300px 1fr;
-            gap: 3rem;
-            min-height: 700px;
-        }
-        
-        /* ==================== PLAY ZONE ==================== */
-        .play-zone {
-            background: linear-gradient(135deg, 
-                        rgba(0, 128, 128, 0.15) 0%,
-                        rgba(74, 123, 167, 0.15) 100%);
-            border: 3px dashed var(--primary-teal);
-            border-radius: 12px;
-            padding: 1.5rem;
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-            min-height: 500px;
-            transition: all 0.3s;
-        }
-        
-        .play-zone.active {
-            background: linear-gradient(135deg, 
-                        rgba(0, 128, 128, 0.3) 0%,
-                        rgba(74, 123, 167, 0.3) 100%);
-            border-color: var(--primary-gold);
-            border-style: solid;
-            box-shadow: 0 0 30px rgba(244, 208, 63, 0.4);
-        }
-        
-        .play-zone-header {
-            text-align: center;
-            padding-bottom: 1rem;
-            border-bottom: 2px solid rgba(74, 123, 167, 0.3);
-        }
-        
-        .play-zone-title {
-            font-family: var(--font-display);
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: var(--primary-gold);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-        
-        .play-zone-content {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .play-zone-hint {
-            text-align: center;
-            color: #999;
-            font-family: var(--font-accent);
-            font-style: italic;
-            line-height: 1.8;
-        }
-        
-        .play-zone-footer {
-            padding-top: 1rem;
-            border-top: 2px solid rgba(74, 123, 167, 0.3);
-        }
-        
-        #play-button {
-            width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, #008080, #005f5f);
-            color: #fff;
-            border: 2px solid #00c0c0;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 700;
-            letter-spacing: 2px;
-            font-family: var(--font-display);
-            cursor: pointer;
-            margin-bottom: 8px;
-            transition: all 0.2s ease;
-        }
-        #play-button:hover:not(:disabled) {
-            background: linear-gradient(135deg, #00a0a0, #008080);
-            box-shadow: 0 6px 24px rgba(0,192,192,0.5);
-            transform: translateY(-2px);
-        }
-        #play-button.playing {
-            background: linear-gradient(135deg, #005050, #003535);
-            border-color: #00c0c0;
-            box-shadow: 0 0 20px rgba(0,192,192,0.4);
-        }
-        #play-button:disabled {
-            background: rgba(60,60,60,0.4);
-            border-color: rgba(80,80,80,0.3);
-            color: #444;
-            cursor: not-allowed;
-            transform: none;
-        }
-        #stop-button {
-            width: 100%;
-            padding: 18px;
-            background: linear-gradient(135deg, #c82333, #a71d2a);
-            color: white;
-            border: 2px solid #c82333;
-            border-radius: 8px;
-            font-size: 1.1rem;
-            font-weight: 700;
-            cursor: pointer;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            transition: all 0.3s;
-            font-family: var(--font-display);
-        }
-        
-        #stop-button:hover:not(:disabled) {
-            background: linear-gradient(135deg, #a71d2a, #7d1620);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(200, 35, 51, 0.5);
-        }
-        
-        #stop-button:disabled {
-            background: rgba(100, 100, 100, 0.3);
-            border-color: rgba(100, 100, 100, 0.3);
-            color: #666;
-            cursor: not-allowed;
-        }
-        
-        /* ==================== MODES GRID ==================== */
-        .modes-column {
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-        }
-        
-        .modes-header {
-            text-align: center;
-            padding-bottom: 1rem;
-            border-bottom: 2px solid rgba(74, 123, 167, 0.3);
-        }
-        
-        .modes-title {
-            font-family: var(--font-display);
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--light-text);
-            margin-bottom: 0.5rem;
-            letter-spacing: 1px;
-        }
-        
-        .modes-subtitle {
-            font-family: var(--font-accent);
-            color: #999;
-            font-style: italic;
-        }
-        
-        .modes-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-            gap: 1.25rem;
-            padding: 1.5rem 0;
-        }
-        
-        .mode-column {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 12px;
-            cursor: pointer;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            user-select: none;
-            border-radius: 12px;
-            border: 2px solid transparent;
-            padding: 6px 4px;
-            min-width: 0;
-            overflow: hidden;
-        }
-        
-        .mode-column:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 24px rgba(0, 128, 128, 0.3);
-            border-color: rgba(0, 128, 128, 0.4);
-        }
-
-        .mode-column.active-mode {
-            border-color: #F4D03F;
-            box-shadow: 0 0 24px rgba(244, 208, 63, 0.5);
-            transform: translateY(-2px);
-        }
-
-        .mode-column.active-mode .mode-label {
-            border-color: var(--primary-gold);
-            background: rgba(244, 208, 63, 0.15);
-            color: var(--primary-gold);
-        }
-        
-        .mode-column.in-play-zone {
-            cursor: pointer;
-        }
-        
-        .mode-column.in-play-zone:hover {
-            border-color: rgba(207, 122, 90, 0.5);
-            box-shadow: 0 0 16px rgba(207, 122, 90, 0.3);
-        }
-        
-        .mode-label {
-            font-family: var(--font-display);
-            font-size: 0.68rem;
-            font-weight: 700;
-            color: var(--light-text);
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            padding: 8px 6px;
-            background: rgba(74, 123, 167, 0.3);
-            border-radius: 8px;
-            border: 2px solid rgba(74, 123, 167, 0.5);
-            transition: all 0.3s;
-            width: 100%;
-            text-align: center;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            box-sizing: border-box;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 36px;
-        }
-        
-        .mode-column:hover .mode-label {
-            border-color: var(--primary-teal);
-            background: rgba(0, 128, 128, 0.4);
-            color: var(--primary-gold);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 128, 128, 0.4);
-        }
-        
-        .mode-column.in-play-zone .mode-label {
-            background: linear-gradient(135deg, var(--primary-teal), var(--ocean-blue));
-            border-color: var(--primary-gold);
-            color: white;
-            box-shadow: 0 6px 20px rgba(244, 208, 63, 0.5);
-        }
-        
-        .stencil {
-            display: flex;
-            flex-direction: column-reverse;
-            gap: 3px;
-            background: rgba(26, 26, 46, 0.5);
-            padding: 12px 8px;
-            border-radius: 8px;
-            border: 1px solid rgba(74, 123, 167, 0.3);
-            width: 100%;
-        }
-        
-        .degree-cell {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 8px 12px;
-            border-radius: 6px;
-            min-height: 42px;
-            transition: all 0.2s;
-            cursor: pointer;
-            user-select: none;
-            border: 2px solid transparent;
-        }
-        
-        .degree-cell:hover {
-            transform: scale(1.08);
-            filter: brightness(1.2);
-            border-color: rgba(255, 255, 255, 0.3);
-            box-shadow: 0 4px 12px currentColor;
-        }
-        
-        .degree-cell:active {
-            transform: scale(0.96);
-        }
-        
-        .degree-cell.active {
-            transform: scale(1.16);
-            box-shadow: 0 0 30px currentColor, 0 0 60px currentColor;
-            filter: brightness(1.4);
-            border-color: rgba(255, 255, 255, 0.5);
-            z-index: 10;
-        }
-        
-        .degree-cell.playing {
-            animation: note-pulse 0.3s ease-out;
-        }
-        
-        @keyframes note-pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.2); box-shadow: 0 0 40px currentColor; }
-            100% { transform: scale(1.08); }
-        }
-        
-        .degree-number {
-            font-size: 10px;
-            font-weight: 700;
-            color: rgba(0, 0, 0, 0.6);
-            min-width: 16px;
-        }
-        
-        .note-name {
-            font-size: 16px;
-            font-weight: 900;
-            color: #000;
-            flex: 1;
-            text-align: center;
-            font-family: var(--font-display);
-        }
-        
-        .interval {
-            font-size: 9px;
-            font-weight: 700;
-            color: rgba(0, 0, 0, 0.5);
-            min-width: 16px;
-            text-align: right;
-        }
-        
-        /* Chromatic Colors */
-        .note-C { background: var(--c-color); }
-        .note-CS { background: var(--cs-color); }
-        .note-D { background: var(--d-color); }
-        .note-DS { background: var(--ds-color); }
-        .note-E { background: var(--e-color); }
-        .note-F { background: var(--f-color); }
-        .note-FS { background: var(--fs-color); }
-        .note-G { background: var(--g-color); }
-        .note-GS { background: var(--gs-color); }
-        .note-A { background: var(--a-color); }
-        .note-AS { background: var(--as-color); }
-        .note-B { background: var(--b-color); }
-        
-        /* Light text for dark backgrounds */
-        .note-F .degree-number,
-        .note-F .note-name,
-        .note-F .interval,
-        .note-FS .degree-number,
-        .note-FS .note-name,
-        .note-FS .interval,
-        .note-G .degree-number,
-        .note-G .note-name,
-        .note-G .interval,
-        .note-GS .degree-number,
-        .note-GS .note-name,
-        .note-GS .interval,
-        .note-A .degree-number,
-        .note-A .note-name,
-        .note-A .interval {
-            color: rgba(255, 255, 255, 0.95);
-        }
-        
-        .note-F .interval,
-        .note-FS .interval,
-        .note-G .interval,
-        .note-GS .interval,
-        .note-A .interval {
-            color: rgba(255, 255, 255, 0.6);
-        }
-        
-        /* ==================== INFO PANELS ==================== */
-        .info-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 2rem;
-            margin-bottom: 3rem;
-        }
-        
-        .info-panel {
-            background: rgba(26, 26, 46, 0.6);
-            border: 2px solid rgba(0, 128, 128, 0.4);
-            border-left: 5px solid var(--primary-teal);
-            border-radius: 12px;
-            padding: 1.75rem;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-        }
-        
-        .info-panel.blue-accent {
-            border-left-color: var(--ocean-blue);
-            border-color: rgba(74, 123, 167, 0.4);
-        }
-        
-        .info-title {
-            font-family: var(--font-display);
-            font-size: 1.3rem;
-            font-weight: 700;
-            color: var(--primary-gold);
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            letter-spacing: 1px;
-        }
-        
-        .info-content {
-            color: #ccc;
-            font-size: 0.95rem;
-            line-height: 1.9;
-        }
-        
-        .info-content ul {
-            margin: 12px 0;
-            padding-left: 24px;
-        }
-        
-        .info-content li {
-            margin: 10px 0;
-        }
-        
-        .info-content strong {
-            color: var(--light-text);
-            font-weight: 600;
-        }
-        
-        /* ==================== FOOTER ==================== */
-        footer {
-            background: linear-gradient(135deg, 
-                        rgba(26, 26, 46, 0.95) 0%,
-                        rgba(15, 15, 30, 0.95) 100%);
-            border-top: 3px solid var(--ocean-blue);
-            padding: 3rem 2rem 2rem;
-            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
-        }
-        
-        .footer-content {
-            max-width: 1400px;
-            margin: 0 auto;
-            text-align: center;
-        }
-        
-        .footer-brand h3 {
-            font-family: var(--font-display);
-            font-size: 1.8rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, var(--primary-gold), var(--primary-teal));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            letter-spacing: 3px;
-            margin: 1.5rem 0;
-        }
-        
-        .footer-links {
-            display: flex;
-            gap: 2rem;
-            justify-content: center;
-            margin: 2rem 0;
-        }
-        
-        .footer-links a {
-            color: var(--light-text);
-            text-decoration: none;
-            font-size: 1.05rem;
-            transition: all 0.3s;
-            padding: 0.5rem 1rem;
-            border-radius: 4px;
-        }
-        
-        .footer-links a:hover {
-            color: var(--primary-gold);
-            background: rgba(244, 208, 63, 0.1);
-        }
-        
-        .social-links {
-            display: flex;
-            gap: 1.5rem;
-            justify-content: center;
-            margin: 2rem 0;
-        }
-        
-        .social-links a {
-            color: var(--light-text);
-            transition: all 0.3s;
-            padding: 0.75rem;
-            border-radius: 50%;
-            background: rgba(74, 123, 167, 0.2);
-        }
-        
-        .social-links a:hover {
-            color: var(--primary-gold);
-            background: rgba(244, 208, 63, 0.2);
-            transform: translateY(-3px) scale(1.1);
-        }
-        
-        .copyright {
-            margin-top: 2rem;
-            padding-top: 2rem;
-            border-top: 1px solid rgba(74, 123, 167, 0.3);
-            color: #999;
-            font-size: 0.95rem;
-        }
-        
-        .copyright strong {
-            color: var(--primary-teal);
-        }
-        
-        /* ==================== RESPONSIVE ==================== */
-        @media (max-width: 1200px) {
-            .app-layout {
-                grid-template-columns: 1fr;
-            }
-            .control-grid, .info-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-        
-        @media (max-width: 768px) {
-            .main-nav {
-                flex-direction: column;
-            }
-            .nav-links {
-                flex-wrap: wrap;
-                justify-content: center;
-            }
-            .page-header h2 {
-                font-size: 2rem;
-            }
-            .modes-grid {
-                grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
-            }
-            .footer-links {
-                flex-direction: column;
-                gap: 1rem;
-            }
-        }
+        .bg-animation{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;opacity:0.1;background:radial-gradient(circle at 20% 50%,var(--primary-teal) 0%,transparent 50%),radial-gradient(circle at 80% 80%,var(--primary-gold) 0%,transparent 50%),radial-gradient(circle at 40% 20%,var(--primary-purple) 0%,transparent 50%);animation:bgShift 20s ease infinite;}
+        @keyframes bgShift{0%,100%{transform:translate(0,0) scale(1);}50%{transform:translate(50px,30px) scale(1.1);}}
+        header{background:linear-gradient(135deg,rgba(74,123,167,0.95) 0%,rgba(42,77,111,0.95) 100%);border-bottom:3px solid var(--ocean-blue);box-shadow:0 4px 20px rgba(74,123,167,0.4);position:sticky;top:0;z-index:1000;backdrop-filter:blur(10px);}
+        .main-nav{max-width:1400px;margin:0 auto;padding:1rem 2rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;}
+        .logo-container{display:flex;align-items:center;gap:1.5rem;}
+        .header-logo{width:120px;height:120px;filter:drop-shadow(0 4px 12px rgba(0,217,255,0.4));animation:gentleFloat 4s ease-in-out infinite;}
+        @keyframes gentleFloat{0%,100%{transform:translateY(0px);}50%{transform:translateY(-6px);}}
+        .logo-text h1{font-family:var(--font-display);font-size:1.6rem;font-weight:700;background:linear-gradient(135deg,var(--primary-gold),var(--primary-teal));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:2px;margin:0;}
+        .logo-tagline{font-family:var(--font-accent);font-size:1.1rem;color:#ccc;font-style:italic;}
+        .nav-links{display:flex;gap:1.5rem;list-style:none;}
+        .nav-links a{color:var(--light-text);text-decoration:none;font-weight:500;font-size:1.05rem;transition:all 0.3s ease;padding:0.5rem 1rem;border-radius:4px;}
+        .nav-links a:hover{background:rgba(244,208,63,0.2);color:var(--primary-gold);transform:translateY(-2px);}
+        .nav-links a.active{background:rgba(0,128,128,0.3);color:var(--primary-teal);}
+        main{max-width:1400px;margin:0 auto;padding:3rem 2rem 5rem;}
+        .page-header{text-align:center;margin-bottom:3rem;}
+        .page-header h2{font-family:var(--font-display);font-size:3rem;font-weight:700;background:linear-gradient(135deg,var(--primary-gold),var(--primary-teal));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:1rem;letter-spacing:1px;}
+        .page-header p{font-family:var(--font-accent);font-size:1.3rem;color:#bbb;font-style:italic;}
+        .control-panel{background:linear-gradient(135deg,rgba(74,123,167,0.3) 0%,rgba(0,128,128,0.3) 100%);border:2px solid rgba(74,123,167,0.5);border-radius:12px;padding:1rem 1.5rem;margin-bottom:2rem;box-shadow:0 8px 24px rgba(0,0,0,0.4);}
+        .control-grid{display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap;}
+        .control-section{display:flex;align-items:center;gap:0.5rem;}
+        .control-label{font-family:var(--font-display);font-size:0.75rem;font-weight:600;color:var(--primary-gold);text-transform:uppercase;letter-spacing:1px;white-space:nowrap;}
+        .control-input{background:rgba(26,26,46,0.8);border:2px solid rgba(74,123,167,0.5);color:var(--light-text);padding:8px 12px;border-radius:6px;font-size:0.9rem;font-weight:500;cursor:pointer;transition:all 0.3s;font-family:var(--font-body);min-width:80px;}
+        .control-input:hover{border-color:var(--primary-gold);box-shadow:0 0 20px rgba(244,208,63,0.3);}
+        .recording-controls{display:flex;align-items:center;gap:8px;}
+        .control-btn{background:linear-gradient(135deg,var(--ocean-blue),var(--deep-navy));color:white;border:2px solid var(--ocean-blue);padding:8px 14px;border-radius:6px;font-size:0.8rem;font-weight:600;cursor:pointer;transition:all 0.3s;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap;}
+        .control-btn:hover:not(:disabled){background:linear-gradient(135deg,var(--primary-teal),var(--ocean-blue));transform:translateY(-2px);box-shadow:0 6px 20px rgba(74,123,167,0.4);}
+        .control-btn:disabled{opacity:0.3;cursor:not-allowed;}
+        #record-button{background:linear-gradient(135deg,#c82333,#a71d2a);border-color:#c82333;}
+        #record-button.recording{animation:record-pulse 1.5s ease-in-out infinite;}
+        @keyframes record-pulse{0%,100%{opacity:1;}50%{opacity:0.5;}}
+        #rec-count{display:none;font-family:var(--font-display);font-size:0.75rem;font-weight:700;color:#fff;background:rgba(200,35,51,0.85);border:1px solid #c82333;border-radius:20px;padding:3px 10px;letter-spacing:0.5px;white-space:nowrap;}
+        #rec-count.visible{display:inline-block;}
+        .app-container{background:rgba(26,26,46,0.6);border:2px solid rgba(74,123,167,0.3);border-radius:12px;padding:2rem;box-shadow:0 8px 32px rgba(0,0,0,0.5);margin-bottom:2rem;}
+        .app-layout{display:grid;grid-template-columns:300px 1fr;gap:3rem;min-height:700px;}
+        .play-zone{background:linear-gradient(135deg,rgba(0,128,128,0.15) 0%,rgba(74,123,167,0.15) 100%);border:3px dashed var(--primary-teal);border-radius:12px;padding:1.5rem;display:flex;flex-direction:column;gap:1.5rem;min-height:500px;transition:all 0.3s;}
+        .play-zone.active{background:linear-gradient(135deg,rgba(0,128,128,0.3) 0%,rgba(74,123,167,0.3) 100%);border-color:var(--primary-gold);border-style:solid;box-shadow:0 0 30px rgba(244,208,63,0.4);}
+        .play-zone-header{text-align:center;padding-bottom:1rem;border-bottom:2px solid rgba(74,123,167,0.3);}
+        .play-zone-title{font-family:var(--font-display);font-size:1.2rem;font-weight:700;color:var(--primary-gold);text-transform:uppercase;letter-spacing:2px;}
+        .play-zone-content{flex:1;display:flex;align-items:center;justify-content:center;}
+        .play-zone-hint{text-align:center;color:#999;font-family:var(--font-accent);font-style:italic;line-height:1.8;}
+        .play-zone-footer{padding-top:1rem;border-top:2px solid rgba(74,123,167,0.3);}
+        #play-button{width:100%;padding:14px;background:linear-gradient(135deg,#008080,#005f5f);color:#fff;border:2px solid #00c0c0;border-radius:8px;font-size:1rem;font-weight:700;letter-spacing:2px;font-family:var(--font-display);cursor:pointer;margin-bottom:8px;transition:all 0.2s ease;}
+        #play-button:hover:not(:disabled){background:linear-gradient(135deg,#00a0a0,#008080);box-shadow:0 6px 24px rgba(0,192,192,0.5);transform:translateY(-2px);}
+        #play-button.playing{background:linear-gradient(135deg,#005050,#003535);border-color:#00c0c0;box-shadow:0 0 20px rgba(0,192,192,0.4);}
+        #play-button:disabled{background:rgba(60,60,60,0.4);border-color:rgba(80,80,80,0.3);color:#444;cursor:not-allowed;transform:none;}
+        #stop-button{width:100%;padding:18px;background:linear-gradient(135deg,#c82333,#a71d2a);color:white;border:2px solid #c82333;border-radius:8px;font-size:1.1rem;font-weight:700;cursor:pointer;text-transform:uppercase;letter-spacing:2px;transition:all 0.3s;font-family:var(--font-display);}
+        #stop-button:hover:not(:disabled){background:linear-gradient(135deg,#a71d2a,#7d1620);transform:translateY(-2px);box-shadow:0 8px 24px rgba(200,35,51,0.5);}
+        #stop-button:disabled{background:rgba(100,100,100,0.3);border-color:rgba(100,100,100,0.3);color:#666;cursor:not-allowed;}
+        .modes-column{display:flex;flex-direction:column;gap:1.5rem;}
+        .modes-header{text-align:center;padding-bottom:1rem;border-bottom:2px solid rgba(74,123,167,0.3);}
+        .modes-title{font-family:var(--font-display);font-size:1.5rem;font-weight:700;color:var(--light-text);margin-bottom:0.5rem;letter-spacing:1px;}
+        .modes-subtitle{font-family:var(--font-accent);color:#999;font-style:italic;}
+        .modes-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:1.25rem;padding:1.5rem 0;}
+        .mode-column{display:flex;flex-direction:column;align-items:center;gap:12px;cursor:pointer;transition:transform 0.2s ease,box-shadow 0.2s ease;user-select:none;border-radius:12px;border:2px solid transparent;padding:6px 4px;min-width:0;overflow:hidden;}
+        .mode-column:hover{transform:translateY(-4px);box-shadow:0 8px 24px rgba(0,128,128,0.3);border-color:rgba(0,128,128,0.4);}
+        .mode-column.active-mode{border-color:#F4D03F;box-shadow:0 0 24px rgba(244,208,63,0.5);transform:translateY(-2px);}
+        .mode-column.active-mode .mode-label{border-color:var(--primary-gold);background:rgba(244,208,63,0.15);color:var(--primary-gold);}
+        .mode-column.in-play-zone:hover{border-color:rgba(207,122,90,0.5);box-shadow:0 0 16px rgba(207,122,90,0.3);}
+        .mode-label{font-family:var(--font-display);font-size:0.68rem;font-weight:700;color:var(--light-text);text-transform:uppercase;letter-spacing:0.08em;padding:8px 6px;background:rgba(74,123,167,0.3);border-radius:8px;border:2px solid rgba(74,123,167,0.5);transition:all 0.3s;width:100%;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-sizing:border-box;display:flex;align-items:center;justify-content:center;min-height:36px;}
+        .mode-column:hover .mode-label{border-color:var(--primary-teal);background:rgba(0,128,128,0.4);color:var(--primary-gold);transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,128,128,0.4);}
+        .mode-column.in-play-zone .mode-label{background:linear-gradient(135deg,var(--primary-teal),var(--ocean-blue));border-color:var(--primary-gold);color:white;box-shadow:0 6px 20px rgba(244,208,63,0.5);}
+        .stencil{display:flex;flex-direction:column-reverse;gap:3px;background:rgba(26,26,46,0.5);padding:12px 8px;border-radius:8px;border:1px solid rgba(74,123,167,0.3);width:100%;}
+        .degree-cell{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:6px;min-height:42px;transition:all 0.2s;cursor:pointer;user-select:none;border:2px solid transparent;}
+        .degree-cell:hover{transform:scale(1.08);filter:brightness(1.2);border-color:rgba(255,255,255,0.3);box-shadow:0 4px 12px currentColor;}
+        .degree-cell:active{transform:scale(0.96);}
+        .degree-cell.active{transform:scale(1.16);box-shadow:0 0 30px currentColor,0 0 60px currentColor;filter:brightness(1.4);border-color:rgba(255,255,255,0.5);z-index:10;}
+        .degree-cell.playing{animation:note-pulse 0.3s ease-out;}
+        @keyframes note-pulse{0%{transform:scale(1);}50%{transform:scale(1.2);box-shadow:0 0 40px currentColor;}100%{transform:scale(1.08);}}
+        .degree-number{font-size:10px;font-weight:700;color:rgba(0,0,0,0.6);min-width:16px;}
+        .note-name{font-size:16px;font-weight:900;color:#000;flex:1;text-align:center;font-family:var(--font-display);}
+        .interval{font-size:9px;font-weight:700;color:rgba(0,0,0,0.5);min-width:16px;text-align:right;}
+        .note-C{background:var(--c-color);}.note-CS{background:var(--cs-color);}.note-D{background:var(--d-color);}
+        .note-DS{background:var(--ds-color);}.note-E{background:var(--e-color);}.note-F{background:var(--f-color);}
+        .note-FS{background:var(--fs-color);}.note-G{background:var(--g-color);}.note-GS{background:var(--gs-color);}
+        .note-A{background:var(--a-color);}.note-AS{background:var(--as-color);}.note-B{background:var(--b-color);}
+        .note-F .degree-number,.note-F .note-name,.note-F .interval,
+        .note-FS .degree-number,.note-FS .note-name,.note-FS .interval,
+        .note-G .degree-number,.note-G .note-name,.note-G .interval,
+        .note-GS .degree-number,.note-GS .note-name,.note-GS .interval,
+        .note-A .degree-number,.note-A .note-name,.note-A .interval{color:rgba(255,255,255,0.95);}
+        .note-F .interval,.note-FS .interval,.note-G .interval,.note-GS .interval,.note-A .interval{color:rgba(255,255,255,0.6);}
+        .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-bottom:3rem;}
+        .info-panel{background:rgba(26,26,46,0.6);border:2px solid rgba(0,128,128,0.4);border-left:5px solid var(--primary-teal);border-radius:12px;padding:1.75rem;box-shadow:0 4px 16px rgba(0,0,0,0.4);}
+        .info-panel.blue-accent{border-left-color:var(--ocean-blue);border-color:rgba(74,123,167,0.4);}
+        .info-title{font-family:var(--font-display);font-size:1.3rem;font-weight:700;color:var(--primary-gold);margin-bottom:1rem;display:flex;align-items:center;gap:10px;letter-spacing:1px;}
+        .info-content{color:#ccc;font-size:0.95rem;line-height:1.9;}
+        .info-content ul{margin:12px 0;padding-left:24px;}.info-content li{margin:10px 0;}.info-content strong{color:var(--light-text);font-weight:600;}
+        @media(max-width:1200px){.app-layout{grid-template-columns:1fr;}.control-grid,.info-grid{grid-template-columns:1fr;}}
+        @media(max-width:768px){.main-nav{flex-direction:column;}.nav-links{flex-wrap:wrap;justify-content:center;}.page-header h2{font-size:2rem;}.modes-grid{grid-template-columns:repeat(auto-fit,minmax(90px,1fr));}}
     </style>
 </head>
-
 <body>
     <div class="bg-animation"></div>
-    
-    <!-- ==================== HEADER ==================== -->
     <header>
         <nav class="main-nav">
             <div class="logo-container">
@@ -904,50 +151,30 @@
             </ul>
         </nav>
     </header>
-    
-    <!-- ==================== MAIN CONTENT ==================== -->
     <main>
         <div class="page-header">
             <h2>Interactive Modal Stencil Player</h2>
             <p>Explore the seven musical modes with chromatic color coding and MIDI playback</p>
         </div>
-        
-        <!-- Control Panel -->
         <div class="control-panel">
             <div class="control-grid">
-                <!-- Tonic Key -->
                 <div class="control-section">
                     <label class="control-label" for="tonicSelect">Tonic Key</label>
                     <select id="tonicSelect" class="control-input">
-                        <option>C</option>
-                        <option>C#</option>
-                        <option>D</option>
-                        <option>D#</option>
-                        <option>E</option>
-                        <option>F</option>
-                        <option>F#</option>
-                        <option>G</option>
-                        <option>G#</option>
-                        <option>A</option>
-                        <option>A#</option>
-                        <option>B</option>
+                        <option>C</option><option>C#</option><option>D</option><option>D#</option>
+                        <option>E</option><option>F</option><option>F#</option><option>G</option>
+                        <option>G#</option><option>A</option><option>A#</option><option>B</option>
                     </select>
                 </div>
-                
-                <!-- Play Speed -->
                 <div class="control-section">
                     <label class="control-label" for="speedSelect">Play Speed</label>
                     <select id="speedSelect" class="control-input">
-                        <option value="800">Slow</option>
-                        <option value="500" selected>Medium</option>
-                        <option value="300">Fast</option>
-                        <option value="150">Very Fast</option>
+                        <option value="800">Slow</option><option value="500" selected>Medium</option>
+                        <option value="300">Fast</option><option value="150">Very Fast</option>
                     </select>
                 </div>
-                
-                <!-- Recording Controls -->
                 <div class="control-section">
-                    <label class="control-label">Recording Controls</label>
+                    <label class="control-label">Recording</label>
                     <div class="recording-controls">
                         <button id="record-button" class="control-btn">🔴 Record</button>
                         <span id="rec-count">0 notes</span>
@@ -957,28 +184,16 @@
                 </div>
             </div>
         </div>
-        
-        <!-- App Container -->
         <div class="app-container">
             <div class="app-layout">
-                <!-- LEFT: Play Zone -->
                 <div class="play-zone">
-                    <div class="play-zone-header">
-                        <div class="play-zone-title">▶ Play Zone</div>
-                    </div>
-                    <div class="play-zone-content">
-                        <div class="play-zone-hint">
-                            Click any mode →<br>
-                            to activate it here
-                        </div>
-                    </div>
+                    <div class="play-zone-header"><div class="play-zone-title">▶ Play Zone</div></div>
+                    <div class="play-zone-content"><div class="play-zone-hint">Click any mode →<br>to activate it here</div></div>
                     <div class="play-zone-footer">
                         <button id="play-button" disabled>▶ Start</button>
                         <button id="stop-button" disabled>⏹ Stop</button>
                     </div>
                 </div>
-                
-                <!-- RIGHT: Modes Grid -->
                 <div class="modes-column">
                     <div class="modes-header">
                         <div class="modes-title">Seven Modal Stencils</div>
@@ -988,599 +203,148 @@
                 </div>
             </div>
         </div>
-        
-        <!-- Info Panels -->
         <div class="info-grid">
             <div class="info-panel">
-                <div class="info-title">
-                    <span>💡</span>
-                    <span>How to Use</span>
-                </div>
-                <div class="info-content">
-                    <ul>
-                        <li><strong>Click any note</strong> to hear its MIDI sound (C4-C5 range)</li>
-                        <li><strong>Click any mode</strong> in the right column to activate it in the Play Zone — click again to deactivate</li>
-                        <li><strong>Auto-play</strong> begins immediately, ascending and descending through all 8 degrees</li>
-                        <li><strong>Change tonic</strong> to transpose all modes to a different key</li>
-                        <li><strong>Record</strong> captures both auto-play and manual note clicks with precise timing</li>
-                    </ul>
-                </div>
+                <div class="info-title"><span>💡</span><span>How to Use</span></div>
+                <div class="info-content"><ul>
+                    <li><strong>Click any note</strong> to hear its sound</li>
+                    <li><strong>Click any mode</strong> to activate it in the Play Zone</li>
+                    <li><strong>Auto-play</strong> ascends and descends through all 8 degrees</li>
+                    <li><strong>Change tonic</strong> to transpose to a different key</li>
+                    <li><strong>Record</strong> captures auto-play and manual clicks</li>
+                </ul></div>
             </div>
-            
             <div class="info-panel blue-accent">
-                <div class="info-title">
-                    <span>🎼</span>
-                    <span>Musical Concepts</span>
-                </div>
-                <div class="info-content">
-                    <ul>
-                        <li><strong>Modal Stencils:</strong> Invariant interval patterns that create unique flavors</li>
-                        <li><strong>Scale Degrees:</strong> Numbered 1-8 (octave), showing position in the scale</li>
-                        <li><strong>Intervals:</strong> The "1" and "2" values show half-steps and whole-steps</li>
-                        <li><strong>Chromatic Wheel:</strong> Visual color coding maps notes to the spectrum</li>
-                        <li><strong>Seven Modes:</strong> Ionian, Dorian, Phrygian, Lydian, Mixolydian, Aeolian, Locrian</li>
-                    </ul>
-                </div>
+                <div class="info-title"><span>🎼</span><span>Musical Concepts</span></div>
+                <div class="info-content"><ul>
+                    <li><strong>Modal Stencils:</strong> Invariant interval patterns</li>
+                    <li><strong>Scale Degrees:</strong> Numbered 1-8 (octave)</li>
+                    <li><strong>Intervals:</strong> Half-steps and whole-steps</li>
+                    <li><strong>Chromatic Wheel:</strong> Color coding maps notes to spectrum</li>
+                    <li><strong>Seven Modes:</strong> Ionian, Dorian, Phrygian, Lydian, Mixolydian, Aeolian, Locrian</li>
+                </ul></div>
             </div>
         </div>
     </main>
-    
-    <!-- ==================== FOOTER ==================== -->
+
+    <!-- Internal footer — hidden by CSS when embedded in KCM Console -->
     <footer role="contentinfo">
-        <div class="footer-content">
-            <svg width="35" height="35" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 2px 8px rgba(244, 208, 63, 0.3)); margin: 0 auto 1.5rem; display: block; opacity: 0.7;">
-                <circle cx="100" cy="100" r="98" fill="#4A7BA7" stroke="#008080" stroke-width="2"/>
-                <polygon points="100,15 185,185 15,185" fill="#F4D03F" opacity="0.9"/>
-                <polygon points="100,15 15,185 15,55" fill="#8B6BA3" opacity="0.75"/>
-                <polygon points="100,15 185,55 185,185" fill="#6FA5A5" opacity="0.75"/>
-                <polygon points="15,55 100,100 15,185" fill="#CF7A5A" opacity="0.65"/>
-                <polygon points="185,55 100,100 185,185" fill="#9AAF7A" opacity="0.65"/>
-                <polygon points="100,55 145,100 100,145 55,100" fill="#E8D77F" opacity="0.6"/>
-                <circle cx="100" cy="100" r="50" fill="none" stroke="#008080" stroke-width="3"/>
-                <circle cx="100" cy="100" r="7" fill="#F4D03F"/>
-                <line x1="40" y1="40" x2="160" y2="160" stroke="#008080" stroke-width="2" opacity="0.3"/>
-                <line x1="160" y1="40" x2="40" y2="160" stroke="#008080" stroke-width="2" opacity="0.3"/>
-            </svg>
-            
-            <div class="footer-brand">
-                <h3>KEYS, CODES & MODES</h3>
-            </div>
-            
-            <nav class="footer-links" aria-label="Footer navigation">
-                <a href="/index.html">Home</a>
-                <a href="/offerings.html">Applications</a>
-                <a href="password.html">Pricing</a>
+        <div style="max-width:1400px;margin:0 auto;text-align:center;padding:3rem 2rem 2rem;">
+            <h3 style="font-family:'Cinzel',serif;font-size:1.8rem;background:linear-gradient(135deg,#F4D03F,#008080);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:3px;margin:1.5rem 0;">KEYS, CODES & MODES</h3>
+            <nav style="display:flex;gap:2rem;justify-content:center;margin:2rem 0;">
+                <a href="/index.html" style="color:#E8E8E8;text-decoration:none;">Home</a>
+                <a href="/offerings.html" style="color:#E8E8E8;text-decoration:none;">Applications</a>
+                <a href="password.html" style="color:#E8E8E8;text-decoration:none;">Pricing</a>
             </nav>
-            
-            <nav class="social-links" aria-label="Social media links">
-                <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" aria-label="Follow us on Facebook">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                    </svg>
-                </a>
-                <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" aria-label="Follow us on Twitter">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-                    </svg>
-                </a>
-                <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Follow us on Instagram">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
-                    </svg>
-                </a>
-                <a href="https://www.linkedin.com/in/ben-ryan-guitar-freestyle/" target="_blank" rel="noopener noreferrer" aria-label="Connect on LinkedIn">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                        <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-                    </svg>
-                </a>
-            </nav>
-            
-            <div class="copyright">
-                <p>&copy; 2026 Keys, Codes & Modes. Created by <strong>Benjamin Ryan</strong>. All rights reserved.</p>
-                <p style="margin-top: 0.5rem; font-size: 0.9rem;">Based on the book "Keys, Codes, and Modes: A Visual Approach to Understanding Music"</p>
-                <p style="margin-top: 0.5rem; font-size: 0.9rem; color: #666;">Santa Barbara, California</p>
+            <div style="margin-top:2rem;padding-top:2rem;border-top:1px solid rgba(74,123,167,0.3);color:#999;font-size:0.95rem;">
+                <p>&copy; 2026 Keys, Codes & Modes. Created by <strong style="color:#008080;">Benjamin Ryan</strong>. All rights reserved.</p>
+                <p style="margin-top:0.5rem;font-size:0.9rem;">Based on the book "Keys, Codes, and Modes: A Visual Approach to Understanding Music"</p>
+                <p style="margin-top:0.5rem;font-size:0.9rem;color:#666;">Santa Barbara, California</p>
             </div>
         </div>
     </footer>
-    
+
     <script>
-        /* ==================== DATA ==================== */
-        
-        const NOTES = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
-        
-        // MIDI note numbers starting from C4 (Middle C = 60)
-        const MIDI_BASE = 60;
-        
-        // Color mapping for chromatic notes
-        const NOTE_COLORS = {
-            "C": "C", "C#": "CS", "D": "D", "D#": "DS", "E": "E", "F": "F",
-            "F#": "FS", "G": "G", "G#": "GS", "A": "A", "A#": "AS", "B": "B"
+        const NOTES=["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+        const MIDI_BASE=60;
+        const NOTE_COLORS={"C":"C","C#":"CS","D":"D","D#":"DS","E":"E","F":"F","F#":"FS","G":"G","G#":"GS","A":"A","A#":"AS","B":"B"};
+        const MODES={
+            ionian:{intervals:[0,2,4,5,7,9,11,12],name:"Ionian"},
+            dorian:{intervals:[0,2,3,5,7,9,10,12],name:"Dorian"},
+            phrygian:{intervals:[0,1,3,5,7,8,10,12],name:"Phrygian"},
+            lydian:{intervals:[0,2,4,6,7,9,11,12],name:"Lydian"},
+            mixolydian:{intervals:[0,2,4,5,7,9,10,12],name:"Mixolydian"},
+            aeolian:{intervals:[0,2,3,5,7,8,10,12],name:"Aeolian"},
+            locrian:{intervals:[0,1,3,5,6,8,10,12],name:"Locrian"}
         };
-        
-        // Modal interval patterns (semitones from tonic)
-        const MODES = {
-            ionian:      { intervals: [0,2,4,5,7,9,11,12], name: "Ionian" },
-            dorian:      { intervals: [0,2,3,5,7,9,10,12], name: "Dorian" },
-            phrygian:    { intervals: [0,1,3,5,7,8,10,12], name: "Phrygian" },
-            lydian:      { intervals: [0,2,4,6,7,9,11,12], name: "Lydian" },
-            mixolydian:  { intervals: [0,2,4,5,7,9,10,12], name: "Mixolydian" },
-            aeolian:     { intervals: [0,2,3,5,7,8,10,12], name: "Aeolian" },
-            locrian:     { intervals: [0,1,3,5,6,8,10,12], name: "Locrian" }
-        };
-        
-        function getIntervalSteps(intervals) {
-            const steps = [];
-            for (let i = 1; i < intervals.length; i++) {
-                steps.push(intervals[i] - intervals[i-1]);
+        function getIntervalSteps(iv){const s=[];for(let i=1;i<iv.length;i++)s.push(iv[i]-iv[i-1]);return s;}
+        let currentTonic="C",playingMode=null,playInterval=null,playSpeed=500;
+        let isRecording=false,recordedNotes=[],recordingStartTime=0;
+        let audioContext=null;
+        function initAudio(){if(!audioContext)audioContext=new(window.AudioContext||window.webkitAudioContext)();}
+        function playNote(freq,dur=0.3){initAudio();const o=audioContext.createOscillator(),g=audioContext.createGain();o.connect(g);g.connect(audioContext.destination);o.frequency.value=freq;o.type="sine";g.gain.setValueAtTime(0.3,audioContext.currentTime);g.gain.exponentialRampToValueAtTime(0.01,audioContext.currentTime+dur);o.start(audioContext.currentTime);o.stop(audioContext.currentTime+dur);}
+        function midiToFreq(m){return 440*Math.pow(2,(m-69)/12);}
+        function playNoteByMidi(m,d=0.3){playNote(midiToFreq(m),d);}
+        function updateRecCounter(){const b=document.getElementById("rec-count");if(isRecording){b.classList.add("visible");const n=recordedNotes.length;b.textContent=n===1?"1 note":`${n} notes`;}else b.classList.remove("visible");}
+        function postToConsole(patch){try{window.parent.postMessage({type:'KCM_STATE_PATCH',payload:patch},'*');}catch(e){}}
+        function createModeColumn(modeKey,modeData){
+            const col=document.createElement("div");col.className="mode-column";col.dataset.mode=modeKey;
+            const lbl=document.createElement("div");lbl.className="mode-label";lbl.textContent=modeData.name;col.appendChild(lbl);
+            const stencil=document.createElement("div");stencil.className="stencil";
+            const ti=NOTES.indexOf(currentTonic),iv=modeData.intervals,steps=getIntervalSteps(iv);
+            for(let deg=1;deg<=8;deg++){
+                const cell=document.createElement("div");
+                const dn=document.createElement("span");dn.className="degree-number";dn.textContent=deg;
+                const nn=document.createElement("span");nn.className="note-name";
+                const ni=(ti+iv[deg-1])%12,note=NOTES[ni];nn.textContent=note;
+                const intv=document.createElement("span");intv.className="interval";if(deg<8)intv.textContent=steps[deg-1];
+                const midi=MIDI_BASE+iv[deg-1];cell.dataset.midi=midi;cell.dataset.note=note;
+                cell.className=`degree-cell note-${NOTE_COLORS[note]}`;
+                cell.addEventListener("click",(e)=>{e.stopPropagation();playNoteByMidi(midi);cell.classList.add("playing");setTimeout(()=>cell.classList.remove("playing"),300);if(isRecording){const ts=Date.now()-recordingStartTime;recordedNotes.push({midi,time:ts,note,degree:deg});updateRecCounter();}});
+                cell.appendChild(dn);cell.appendChild(nn);cell.appendChild(intv);stencil.appendChild(cell);
             }
-            return steps;
+            col.appendChild(stencil);return col;
         }
-        
-        /* ==================== STATE ==================== */
-        
-        let currentTonic = "C";
-        let playingMode = null;
-        let playInterval = null;
-        let playSpeed = 500;
-        let isRecording = false;
-        let recordedNotes = [];
-        let recordingStartTime = 0;
-        // Guard: audio ONLY starts after ▶ Start button click — never on bus sync or mode select
-        // isPlaying flag (declared below with startPlaying/stopPlaying) is the sole audio gate
-        
-        /* ==================== AUDIO / MIDI ==================== */
-        
-        let audioContext = null;
-        
-        function initAudio() {
-            if (!audioContext) {
-                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        function renderModes(){
+            const bank=document.getElementById("modes-bank");bank.innerHTML="";
+            for(const[mk,md]of Object.entries(MODES)){
+                const col=createModeColumn(mk,md);col.draggable=false;
+                if(playingMode===mk)col.classList.add("active-mode");
+                col.addEventListener("click",(e)=>{if(e.target.closest(".degree-cell"))return;if(isPlaying)stopPlaying();playingMode=(playingMode===mk)?null:mk;renderModes();renderPlayZone();postToConsole({mode:mk});});
+                bank.appendChild(col);
             }
         }
-        
-        function playNote(frequency, duration = 0.3) {
-            initAudio();
-            
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-            
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-            
-            oscillator.frequency.value = frequency;
-            oscillator.type = "sine";
-            
-            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
-            
-            oscillator.start(audioContext.currentTime);
-            oscillator.stop(audioContext.currentTime + duration);
-        }
-        
-        function midiToFrequency(midiNote) {
-            return 440 * Math.pow(2, (midiNote - 69) / 12);
-        }
-        
-        function playNoteByMidi(midiNote, duration = 0.3) {
-            const frequency = midiToFrequency(midiNote);
-            playNote(frequency, duration);
-        }
-
-        /* ==================== RECORDING COUNTER ==================== */
-
-        function updateRecCounter() {
-            const badge = document.getElementById("rec-count");
-            if (isRecording) {
-                badge.classList.add("visible");
-                const n = recordedNotes.length;
-                badge.textContent = n === 1 ? "1 note" : `${n} notes`;
-            } else {
-                badge.classList.remove("visible");
+        function renderPlayZone(){
+            const pz=document.querySelector(".play-zone"),pzc=document.querySelector(".play-zone-content");
+            const hint=document.querySelector(".play-zone-hint"),stop=document.getElementById("stop-button"),play=document.getElementById("play-button");
+            if(playingMode){
+                pz.classList.add("active");hint.style.display="none";stop.disabled=false;if(play)play.disabled=false;
+                const ex=pzc.querySelector(".mode-column");if(ex)ex.remove();
+                const col=createModeColumn(playingMode,MODES[playingMode]);col.classList.add("in-play-zone");
+                col.addEventListener("click",(e)=>{if(e.target.closest(".degree-cell"))return;if(isPlaying)stopPlaying();playingMode=null;renderModes();renderPlayZone();});
+                pzc.appendChild(col);
+            }else{
+                pz.classList.remove("active");hint.style.display="block";stop.disabled=true;
+                if(play){play.disabled=true;play.textContent="▶ Start";play.classList.remove("playing");}
+                if(isPlaying)stopPlaying();const ex=pzc.querySelector(".mode-column");if(ex)ex.remove();
             }
         }
-        
-        /* ==================== RENDER ==================== */
-        
-        function createModeColumn(modeKey, modeData) {
-            const column = document.createElement("div");
-            column.className = "mode-column";
-            column.draggable = true;
-            column.dataset.mode = modeKey;
-            
-            const label = document.createElement("div");
-            label.className = "mode-label";
-            label.textContent = modeData.name;
-            column.appendChild(label);
-            
-            const stencil = document.createElement("div");
-            stencil.className = "stencil";
-            
-            const tonicIndex = NOTES.indexOf(currentTonic);
-            const intervals = modeData.intervals;
-            const steps = getIntervalSteps(intervals);
-            
-            for (let deg = 1; deg <= 8; deg++) {
-                const cell = document.createElement("div");
-                cell.dataset.degree = deg;
-                
-                const degNum = document.createElement("span");
-                degNum.className = "degree-number";
-                degNum.textContent = deg;
-                
-                const noteName = document.createElement("span");
-                noteName.className = "note-name";
-                const noteIndex = (tonicIndex + intervals[deg - 1]) % 12;
-                const note = NOTES[noteIndex];
-                noteName.textContent = note;
-                
-                const interval = document.createElement("span");
-                interval.className = "interval";
-                if (deg < 8) {
-                    interval.textContent = steps[deg - 1];
-                }
-                
-                const midiNote = MIDI_BASE + intervals[deg - 1];
-                cell.dataset.midi = midiNote;
-                cell.dataset.note = note;
-                
-                const colorClass = NOTE_COLORS[note];
-                cell.className = `degree-cell note-${colorClass}`;
-                
-                // Manual click handler — records individual note clicks
-                cell.addEventListener("click", (e) => {
-                    e.stopPropagation();
-                    playNoteByMidi(midiNote);
-                    
-                    cell.classList.add("playing");
-                    setTimeout(() => cell.classList.remove("playing"), 300);
-                    
-                    if (isRecording) {
-                        const timestamp = Date.now() - recordingStartTime;
-                        recordedNotes.push({ midi: midiNote, time: timestamp, note: note, degree: deg });
-                        updateRecCounter();
-                    }
-                });
-                
-                cell.appendChild(degNum);
-                cell.appendChild(noteName);
-                cell.appendChild(interval);
-                
-                stencil.appendChild(cell);
-            }
-            
-            column.appendChild(stencil);
-            return column;
+        let isPlaying=false,playStep=0,playDir=1;
+        function startPlaying(){
+            if(playInterval)clearInterval(playInterval);if(!playingMode)return;
+            initAudio();isPlaying=true;playStep=0;playDir=1;
+            const col=document.querySelector(".play-zone .mode-column");
+            playInterval=setInterval(()=>{
+                if(!col){stopPlaying();return;}
+                const cells=col.querySelectorAll(".degree-cell"),count=cells.length;if(!count){stopPlaying();return;}
+                if(playStep>=count){playDir=-1;playStep=count-2;}if(playStep<0){playDir=1;playStep=1;}
+                cells.forEach(c=>c.classList.remove("active"));
+                const cell=cells[playStep];
+                if(cell){cell.classList.add("active");const midi=parseInt(cell.dataset.midi);playNoteByMidi(midi,playSpeed/1000*0.75);postToConsole({activeNotes:[midi]});if(isRecording){const ts=Date.now()-recordingStartTime;recordedNotes.push({midi,time:ts,note:cell.dataset.note,degree:parseInt(cell.dataset.degree)});updateRecCounter();}}
+                playStep+=playDir;
+            },playSpeed);
         }
-        
-        function renderModes() {
-            const modesBank = document.getElementById("modes-bank");
-            modesBank.innerHTML = "";
-            
-            for (const [modeKey, modeData] of Object.entries(MODES)) {
-                const column = createModeColumn(modeKey, modeData);
-                column.draggable = false; // disable drag — use click instead
-                
-                // Highlight active mode
-                if (playingMode === modeKey) {
-                    column.classList.add("active-mode");
-                }
-
-                // Click to SELECT mode visually — no audio, no animation
-                // ▶ Start button is the only way to begin playback
-                column.addEventListener("click", (e) => {
-                    if (e.target.closest(".degree-cell")) return;
-                    // Stop any current playback when switching modes
-                    if (isPlaying) stopPlaying();
-                    if (playingMode === modeKey) {
-                        playingMode = null;
-                    } else {
-                        playingMode = modeKey;
-                    }
-                    renderModes();
-                    renderPlayZone();
-                    postToConsole({ mode: modeKey });
-                });
-
-                modesBank.appendChild(column);
-            }
-        }
-        
-        function renderPlayZone() {
-            const playZone     = document.querySelector(".play-zone");
-            const playZoneContent = document.querySelector(".play-zone-content");
-            const hint         = document.querySelector(".play-zone-hint");
-            const stopButton   = document.getElementById("stop-button");
-            const playButton   = document.getElementById("play-button");
-
-            if (playingMode) {
-                playZone.classList.add("active");
-                hint.style.display = "none";
-                stopButton.disabled = false;
-                if (playButton) playButton.disabled = false;
-
-                const existingColumn = playZoneContent.querySelector(".mode-column");
-                if (existingColumn) existingColumn.remove();
-
-                const modeData = MODES[playingMode];
-                const column   = createModeColumn(playingMode, modeData);
-                column.classList.add("in-play-zone");
-                column.addEventListener("click", (e) => {
-                    if (e.target.closest(".degree-cell")) return;
-                    if (isPlaying) stopPlaying();
-                    playingMode = null;
-                    renderModes();
-                    renderPlayZone();
-                });
-                playZoneContent.appendChild(column);
-                // ✅ NEVER auto-start — ▶ Start button is the only trigger
-            } else {
-                playZone.classList.remove("active");
-                hint.style.display = "block";
-                stopButton.disabled = true;
-                if (playButton) { playButton.disabled = true; playButton.textContent = "▶ Start"; playButton.classList.remove("playing"); }
-                if (isPlaying) stopPlaying();
-                const existingColumn = playZoneContent.querySelector(".mode-column");
-                if (existingColumn) existingColumn.remove();
-            }
-        }
-        
-        /* ==================== BUS PUBLISH ==================== */
-        function postToConsole(patch) {
-            try { window.parent.postMessage({ type: 'KCM_STATE_PATCH', payload: patch }, '*'); }
-            catch(e) { /* silent if no parent */ }
-        }
-
-        /* ══════════════════════════════════════════════════════════
-           MSP PLAYBACK — self-contained, independent
-           ▶ Start button → startPlaying() → own setInterval
-           Each step: highlight cell locally + broadcast activeNotes
-           to bus so other panels light up the note (no audio there)
-        ══════════════════════════════════════════════════════════ */
-
-        let isPlaying  = false;
-        let playStep   = 0;
-        let playDir    = 1;
-
-        function startPlaying() {
-            if (playInterval) clearInterval(playInterval);
-            if (!playingMode) return;
-            initAudio();
-            isPlaying = true;
-            playStep  = 0;
-            playDir   = 1;
-
-            const column = document.querySelector(".play-zone .mode-column");
-
-            playInterval = setInterval(() => {
-                if (!column) { stopPlaying(); return; }
-                const cells = column.querySelectorAll(".degree-cell");
-                const count = cells.length; // 8 degrees
-                if (!count) { stopPlaying(); return; }
-
-                // Clamp
-                if (playStep >= count) { playDir = -1; playStep = count - 2; }
-                if (playStep < 0)      { playDir =  1; playStep = 1; }
-
-                // Clear previous highlight
-                cells.forEach(c => c.classList.remove("active"));
-
-                const cell = cells[playStep];
-                if (cell) {
-                    cell.classList.add("active");
-                    const midiNote = parseInt(cell.dataset.midi);
-
-                    // ── Play audio in THIS panel only ──
-                    playNoteByMidi(midiNote, playSpeed / 1000 * 0.75);
-
-                    // ── Broadcast activeNotes to bus → other panels HIGHLIGHT only, no audio ──
-                    postToConsole({ activeNotes: [midiNote] });
-
-                    if (isRecording) {
-                        const timestamp = Date.now() - recordingStartTime;
-                        recordedNotes.push({ midi: midiNote, time: timestamp, note: cell.dataset.note, degree: parseInt(cell.dataset.degree) });
-                        updateRecCounter();
-                    }
-                }
-
-                playStep += playDir;
-            }, playSpeed);
-        }
-
-        function stopPlaying() {
-            if (playInterval) { clearInterval(playInterval); playInterval = null; }
-            isPlaying = false;
-            playStep  = 0;
-            playDir   = 1;
-            // Clear local step highlight
-            document.querySelectorAll(".degree-cell").forEach(c => c.classList.remove("active"));
-            // Clear activeNotes on all other panels
-            postToConsole({ activeNotes: [] });
-        }
-        
-        /* ==================== RECORDING ==================== */
-        
-        const recordButton = document.getElementById("record-button");
-        const playRecordingButton = document.getElementById("play-recording-button");
-        const clearRecordingButton = document.getElementById("clear-recording-button");
-        
-        recordButton.addEventListener("click", () => {
-            if (!isRecording) {
-                // Start recording
-                isRecording = true;
-                recordedNotes = [];
-                recordingStartTime = Date.now();
-                recordButton.textContent = "⏸ Stop Recording";
-                recordButton.classList.add("recording");
-                updateRecCounter();
-            } else {
-                // Stop recording
-                isRecording = false;
-                recordButton.textContent = "🔴 Record";
-                recordButton.classList.remove("recording");
-                updateRecCounter();
-                
-                if (recordedNotes.length > 0) {
-                    playRecordingButton.disabled = false;
-                    clearRecordingButton.disabled = false;
-                }
-            }
-        });
-        
-        playRecordingButton.addEventListener("click", () => {
-            if (recordedNotes.length === 0) return;
-            
-            playRecordingButton.disabled = true;
-            
-            let playbackIndex = 0;
-            
-            function playNextNote() {
-                if (playbackIndex >= recordedNotes.length) {
-                    playRecordingButton.disabled = false;
-                    return;
-                }
-                
-                const currentNote = recordedNotes[playbackIndex];
-                const nextNote = recordedNotes[playbackIndex + 1];
-                
-                playNoteByMidi(currentNote.midi, 0.3);
-                
-                const allCells = document.querySelectorAll(`.degree-cell[data-midi="${currentNote.midi}"]`);
-                allCells.forEach(cell => {
-                    cell.classList.add("playing");
-                    setTimeout(() => cell.classList.remove("playing"), 300);
-                });
-                
-                playbackIndex++;
-                
-                if (nextNote) {
-                    const delay = nextNote.time - currentNote.time;
-                    setTimeout(playNextNote, delay);
-                } else {
-                    playRecordingButton.disabled = false;
-                }
-            }
-            
-            playNextNote();
-        });
-        
-        clearRecordingButton.addEventListener("click", () => {
-            recordedNotes = [];
-            playRecordingButton.disabled = true;
-            clearRecordingButton.disabled = true;
-        });
-        
-        /* ==================== EVENT LISTENERS ==================== */
-
-        // Helper: post a KCM_STATE_PATCH to the Console host when user
-        // changes root or mode directly inside this panel.
-        function postToConsole(patch) {
-            try {
-                window.parent.postMessage({ type: 'KCM_STATE_PATCH', payload: patch }, '*');
-            } catch(e) { /* silent if no parent */ }
-        }
-        
-        document.getElementById("tonicSelect").addEventListener("change", (e) => {
-            currentTonic = e.target.value;
-            renderModes();
-            renderPlayZone();
-            // Publish new root to the Console bus → all panels follow
-            postToConsole({ root: currentTonic });
-        });
-        
-        // ▶ Start button — sole trigger for playback
-        document.getElementById("play-button").addEventListener("click", () => {
-            if (!playingMode) return;
-            if (isPlaying) {
-                stopPlaying();
-                const pb = document.getElementById("play-button");
-                pb.textContent = "▶ Start";
-                pb.classList.remove("playing");
-            } else {
-                startPlaying();
-                const pb = document.getElementById("play-button");
-                pb.textContent = "⏸ Pause";
-                pb.classList.add("playing");
-            }
-        });
-
-        document.getElementById("speedSelect").addEventListener("change", (e) => {
-            playSpeed = parseInt(e.target.value);
-            if (isPlaying) startPlaying(); // restart at new speed
-        });
-
-        document.getElementById("stop-button").addEventListener("click", () => {
-            stopPlaying();
-            const pb = document.getElementById("play-button");
-            if (pb) { pb.textContent = "▶ Start"; pb.classList.remove("playing"); }
-        });
-        
-        /* ==================== INITIALIZE ==================== */
-        
-        renderModes();
-        renderPlayZone();
-
-        /* ══════════════════════════════════════════════════════════
-           KCM CONSOLE BRIDGE LISTENER
-           Receives: KCM_STATE → update root/mode display (visual only)
-                     KCM_STOP  → stop playback
-           Does NOT receive KCM_TICK — MSP runs its own clock.
-           Does NOT auto-play on any incoming message.
-        ══════════════════════════════════════════════════════════ */
-        (function mountKCMListener() {
-            var VALID_MODES = ['ionian','dorian','phrygian','lydian','mixolydian','aeolian','locrian'];
-
-            window.addEventListener('message', function(ev) {
-                try {
-                    if (!ev.data) return;
-
-                    // ── STOP ALL ──────────────────────────────────────
-                    if (ev.data.type === 'KCM_STOP') {
-                        stopPlaying();
-                        playingMode = null;
-                        renderModes();
-                        renderPlayZone();
-                        const pb = document.getElementById("play-button");
-                        if (pb) { pb.textContent = "▶ Start"; pb.classList.remove("playing"); }
-                        if (audioContext) audioContext.suspend();
-                        return;
-                    }
-
-                    // ── STATE (visual sync only) ──────────────────────
-                    if (ev.data.type !== 'KCM_STATE') return;
-                    var payload = ev.data.payload;
-                    if (!payload) return;
-
-                    var changed = false;
-
-                    // Update root → re-render notes in correct key
-                    if (payload.root && payload.root !== currentTonic) {
-                        currentTonic = payload.root;
-                        var sel = document.getElementById('tonicSelect');
-                        if (sel) sel.value = currentTonic;
-                        changed = true;
-                    }
-
-                    // Update mode display — VISUAL ONLY, never starts playback
-                    if (payload.mode && VALID_MODES.indexOf(payload.mode) !== -1) {
-                        if (payload.mode !== playingMode) {
-                            if (isPlaying) stopPlaying(); // stop if mode changes mid-play
-                            playingMode = payload.mode;
-                            const pb = document.getElementById("play-button");
-                            if (pb) { pb.textContent = "▶ Start"; pb.classList.remove("playing"); }
-                            changed = true;
-                        }
-                    }
-
-                    if (changed) {
-                        renderModes();
-                        renderPlayZone();
-                    }
-
-                } catch(e) {
-                    console.error('[KCM→MSP] listener error:', e);
-                }
+        function stopPlaying(){if(playInterval){clearInterval(playInterval);playInterval=null;}isPlaying=false;playStep=0;playDir=1;document.querySelectorAll(".degree-cell").forEach(c=>c.classList.remove("active"));postToConsole({activeNotes:[]});}
+        document.getElementById("record-button").addEventListener("click",()=>{if(!isRecording){isRecording=true;recordedNotes=[];recordingStartTime=Date.now();document.getElementById("record-button").textContent="⏸ Stop Recording";document.getElementById("record-button").classList.add("recording");updateRecCounter();}else{isRecording=false;document.getElementById("record-button").textContent="🔴 Record";document.getElementById("record-button").classList.remove("recording");updateRecCounter();if(recordedNotes.length>0){document.getElementById("play-recording-button").disabled=false;document.getElementById("clear-recording-button").disabled=false;}}});
+        document.getElementById("play-recording-button").addEventListener("click",()=>{if(!recordedNotes.length)return;document.getElementById("play-recording-button").disabled=true;let idx=0;function pn(){if(idx>=recordedNotes.length){document.getElementById("play-recording-button").disabled=false;return;}const cur=recordedNotes[idx],nxt=recordedNotes[idx+1];playNoteByMidi(cur.midi,0.3);document.querySelectorAll(`.degree-cell[data-midi="${cur.midi}"]`).forEach(c=>{c.classList.add("playing");setTimeout(()=>c.classList.remove("playing"),300);});idx++;if(nxt)setTimeout(pn,nxt.time-cur.time);else document.getElementById("play-recording-button").disabled=false;}pn();});
+        document.getElementById("clear-recording-button").addEventListener("click",()=>{recordedNotes=[];document.getElementById("play-recording-button").disabled=true;document.getElementById("clear-recording-button").disabled=true;});
+        document.getElementById("tonicSelect").addEventListener("change",(e)=>{currentTonic=e.target.value;renderModes();renderPlayZone();postToConsole({root:currentTonic});});
+        document.getElementById("play-button").addEventListener("click",()=>{if(!playingMode)return;if(isPlaying){stopPlaying();const pb=document.getElementById("play-button");pb.textContent="▶ Start";pb.classList.remove("playing");}else{startPlaying();const pb=document.getElementById("play-button");pb.textContent="⏸ Pause";pb.classList.add("playing");}});
+        document.getElementById("speedSelect").addEventListener("change",(e)=>{playSpeed=parseInt(e.target.value);if(isPlaying)startPlaying();});
+        document.getElementById("stop-button").addEventListener("click",()=>{stopPlaying();const pb=document.getElementById("play-button");if(pb){pb.textContent="▶ Start";pb.classList.remove("playing");}});
+        renderModes();renderPlayZone();
+        (function mountKCMListener(){
+            var VM=['ionian','dorian','phrygian','lydian','mixolydian','aeolian','locrian'];
+            window.addEventListener('message',function(ev){
+                try{if(!ev.data)return;
+                if(ev.data.type==='KCM_STOP'){stopPlaying();playingMode=null;renderModes();renderPlayZone();const pb=document.getElementById("play-button");if(pb){pb.textContent="▶ Start";pb.classList.remove("playing");}if(audioContext)audioContext.suspend();return;}
+                if(ev.data.type!=='KCM_STATE')return;
+                var p=ev.data.payload;if(!p)return;var changed=false;
+                if(p.root&&p.root!==currentTonic){currentTonic=p.root;var sel=document.getElementById('tonicSelect');if(sel)sel.value=currentTonic;changed=true;}
+                if(p.mode&&VM.indexOf(p.mode)!==-1&&p.mode!==playingMode){if(isPlaying)stopPlaying();playingMode=p.mode;const pb=document.getElementById("play-button");if(pb){pb.textContent="▶ Start";pb.classList.remove("playing");}changed=true;}
+                if(changed){renderModes();renderPlayZone();}
+                }catch(e){console.error('[KCM→MSP] listener error:',e);}
             });
-
             console.log('[KCM→MSP] bridge listener ready.');
         })();
     </script>
