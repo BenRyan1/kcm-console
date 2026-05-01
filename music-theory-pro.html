@@ -1458,7 +1458,7 @@ window.addEventListener('unhandledrejection', function(event) {
                     }
                     const status = document.getElementById('status');
                     if (status) status.textContent = '✨ Ready! Click notes or use controls';
-                    setTimeout(() => playNote(0, 4, 0.3), 100);
+                    // ✅ No auto-play on init — user must click a note explicitly
                     try { trackEvent('audio_started', {}); } catch(e) {}
                 });
             } catch(e) { console.error('Audio init error:', e); }
@@ -2414,68 +2414,108 @@ window.addEventListener('unhandledrejection', function(event) {
         if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
         else init();
 
-        // ── KCM Console bridge listener ───────────────────────────
-        // Receives KCM_STATE messages from the Console host (bridge.js).
-        // Maps bus root string → noteIndex and calls handleNoteClick().
-        // Maps bus mode string → currentModeSelection and drives the
-        // #modeSelect dropdown if it is currently in the DOM.
-        // Does NOT modify any other MTP behaviour.
-        // Added: Session 4 — 2026-04-25
+        /* ══════════════════════════════════════════════════════════
+           KCM CONSOLE BRIDGE LISTENER — Session 12 Sync
+           Listens for:
+             KCM_STATE     → update root/mode display
+             KCM_TICK      → highlight note on sphere/piano/fretboard/staff in sync
+             KCM_TICK_STOP → clear all highlights
+             KCM_STOP      → clear all highlights
+        ═══════════════════════════════════════════════════════════ */
         (function mountKCMListener() {
-            var KCM_NOTES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+            var lastHighlightedPC = -1;
 
-            // KCM bus mode names match MTP modes object keys exactly — no mapping needed.
-            // MTP modes: ionian, dorian, phrygian, lydian, mixolydian, aeolian, locrian
+            function clearTickHighlight(pc) {
+                if (pc < 0) return;
+                try {
+                    var sphere   = document.querySelector('.sphere[data-note="' + pc + '"]');
+                    var whiteKey = document.querySelector('.white-key[data-note="' + pc + '"]');
+                    var blackKey = document.querySelector('.black-key[data-note="' + pc + '"]');
+                    if (sphere)   { sphere.classList.remove('playing');   sphere.style.borderColor=''; sphere.style.borderWidth=''; sphere.style.boxShadow=''; }
+                    if (whiteKey) { whiteKey.classList.remove('playing'); whiteKey.style.boxShadow=''; }
+                    if (blackKey) { blackKey.classList.remove('playing'); blackKey.style.boxShadow=''; }
+                    document.querySelectorAll('.fb-cell[data-note="' + pc + '"]').forEach(function(cell) {
+                        var dot = cell.querySelector('.fb-dot');
+                        if (dot) { dot.style.borderColor=''; dot.style.borderWidth=''; dot.style.boxShadow=''; }
+                    });
+                    // Clear staff
+                    var svg = document.getElementById('staffSVG');
+                    if (svg) svg.querySelectorAll('ellipse').forEach(function(nh) {
+                        nh.setAttribute('stroke','#000'); nh.setAttribute('stroke-width','1'); nh.removeAttribute('filter');
+                    });
+                } catch(e) {}
+            }
+
+            function applyTickHighlight(pc, noteName, beatMs) {
+                try {
+                    var kcmColors = ['#FFFF00','#FFC400','#FF8000','#FF4000','#FF0000','#C4007F','#8000FF','#4000FF','#0000FF','#007FFF','#00FF80','#80FF00'];
+                    var col = kcmColors[pc] || '#fff';
+
+                    // Sphere
+                    var sphere = document.querySelector('.sphere[data-note="' + pc + '"]');
+                    if (sphere) { sphere.classList.add('playing'); sphere.style.borderColor='#fff'; sphere.style.borderWidth='5px'; sphere.style.boxShadow='0 0 35px '+col+', 0 0 60px '+col; }
+
+                    // Piano keys
+                    var whiteKey = document.querySelector('.white-key[data-note="' + pc + '"]');
+                    var blackKey = document.querySelector('.black-key[data-note="' + pc + '"]');
+                    if (whiteKey) { whiteKey.classList.add('playing'); whiteKey.style.boxShadow='0 0 22px '+col+', inset 0 4px 8px rgba(0,0,0,0.2)'; }
+                    if (blackKey) { blackKey.classList.add('playing'); blackKey.style.boxShadow='0 0 24px '+col+', inset 0 3px 6px rgba(0,0,0,0.7)'; }
+
+                    // Fretboard dots
+                    document.querySelectorAll('.fb-cell[data-note="' + pc + '"]').forEach(function(cell) {
+                        var dot = cell.querySelector('.fb-dot');
+                        if (dot) { dot.style.borderColor='#fff'; dot.style.borderWidth='3px'; dot.style.boxShadow='0 0 20px '+col+', 0 0 35px '+col; }
+                    });
+
+                    // Staff — highlight first note head
+                    if (typeof updateStaffNotation === 'function') updateStaffNotation([pc]);
+                    if (typeof highlightStaffNote   === 'function') highlightStaffNote(pc, 0);
+
+                    // Auto-clear after beat
+                    var dur = Math.max(beatMs * 0.75, 150);
+                    setTimeout(function() { clearTickHighlight(pc); }, dur);
+                } catch(e) { console.warn('[KCM→MTP] tick highlight error:', e); }
+            }
 
             window.addEventListener('message', function(ev) {
                 try {
                     if (!ev.data) return;
 
-                    // ── STOP ALL ─────────────────────────────────────
-                    if (ev.data.type === 'KCM_STOP') {
-                        if (audioContext) audioContext.suspend();
-                        console.log('[KCM→MTP] stop received.');
+                    // ── TICK ──────────────────────────────────────────
+                    if (ev.data.type === 'KCM_TICK') {
+                        var tk = ev.data.payload;
+                        clearTickHighlight(lastHighlightedPC);
+                        lastHighlightedPC = tk.notePC;
+                        applyTickHighlight(tk.notePC, tk.noteName, tk.beatMs);
                         return;
                     }
 
+                    // ── TICK STOP / STOP ALL ──────────────────────────
+                    if (ev.data.type === 'KCM_TICK_STOP' || ev.data.type === 'KCM_STOP') {
+                        clearTickHighlight(lastHighlightedPC);
+                        lastHighlightedPC = -1;
+                        return;
+                    }
+
+                    // ── STATE (root/mode change) ──────────────────────
                     if (ev.data.type !== 'KCM_STATE') return;
                     var payload = ev.data.payload;
                     if (!payload) return;
-
-                    // Map root string → noteIndex (0–11)
-                    var noteIndex = KCM_NOTES.indexOf(payload.root);
-                    if (noteIndex === -1) return;
-
-                    // Set mode if valid and different from current
-                    if (payload.mode && payload.mode in modes) {
-                        currentModeSelection = payload.mode;
-                        // If the mode dropdown is currently rendered, sync its value
-                        var modeEl = document.getElementById('modeSelect');
-                        if (modeEl) {
-                            modeEl.value = currentModeSelection;
+                    // Update root note if the app exposes rootNote
+                    if (payload.root && typeof rootNote !== 'undefined') {
+                        var NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+                        var idx = NOTE_NAMES.indexOf(payload.root);
+                        if (idx >= 0) {
+                            rootNote = idx;
+                            if (typeof updateDisplay === 'function') updateDisplay();
                         }
-                        // Switch to modes level so handleNoteClick renders mode scale
-                        currentLevel = 'modes';
                     }
-
-                    // Drive root — handleNoteClick sets rootNote + calls updateDisplay()
-                    // Skip the audioReady guard by setting rootNote directly, then updateDisplay
-                    rootNote = noteIndex;
-                    selectedNotes = new Set(
-                        modes[currentModeSelection].map(function(i) { return (rootNote + i) % 12; })
-                    );
-                    updateDisplay();
-
-                    console.log('[KCM→MTP] root=' + payload.root +
-                                ' (' + noteIndex + ') mode=' + currentModeSelection);
-                } catch(e) {
-                    console.error('[KCM→MTP] listener error:', e);
-                }
+                    console.log('[KCM→MTP] state received root=' + (payload.root||'?'));
+                } catch(e) { console.error('[KCM→MTP] listener error:', e); }
             });
 
-            console.log('[KCM→MTP] bridge listener ready (music-theory-pro).');
+            console.log('[KCM→MTP] sync listener ready (music-theory-pro).');
         })();
-        // ── end KCM Console bridge listener ──────────────────────
 
     } catch(e) {
         console.error('Global script error:', e);
