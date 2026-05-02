@@ -384,8 +384,8 @@
                             onClick:()=>playTriad(note, false)
                         }),
                         isOuterActive ? React.createElement('circle', {
-                            cx:outerX, cy:outerY, r:outerR+7,
-                            fill:'none', stroke:'#F4D03F', strokeWidth:2, opacity:0.5,
+                            cx:outerX, cy:outerY, r:outerR+3,
+                            fill:'none', stroke:'#F4D03F', strokeWidth:3, opacity:0.9,
                             style:{pointerEvents:'none'}
                         }) : null,
                         React.createElement('text', {
@@ -403,8 +403,8 @@
                             onClick:()=>playTriad(note, true)
                         }),
                         isInnerActive ? React.createElement('circle', {
-                            cx:innerX, cy:innerY, r:innerR+6,
-                            fill:'none', stroke:'#F4D03F', strokeWidth:2, opacity:0.5,
+                            cx:innerX, cy:innerY, r:innerR+3,
+                            fill:'none', stroke:'#F4D03F', strokeWidth:3, opacity:0.9,
                             style:{pointerEvents:'none'}
                         }) : null,
                         React.createElement('text', {
@@ -446,7 +446,7 @@
                     gridTemplateColumns:'minmax(0,2fr) minmax(0,1fr)',
                     gap:'2rem', alignItems:'start'
                 }},
-                    React.createElement('div', {style:{display:'flex', justifyContent:'center'}},
+                    React.createElement('div', {style:{display:'flex', flexDirection:'column', alignItems:'center', gap:'0.75rem'}},
                         React.createElement('div', {style:{
                             width:'100%', maxWidth:'520px',
                             background:'linear-gradient(135deg,rgba(0,128,128,0.08),rgba(139,107,163,0.08))',
@@ -478,7 +478,8 @@
                                 }),
                                 renderCircle()
                             )
-                        )
+                        ),
+                        React.createElement('div',{id:'kcm-recorder-mount',style:{width:'100%',maxWidth:'520px',display:'flex',justifyContent:'center'}})
                     ),
 
                     React.createElement('div', {style:{display:'flex', flexDirection:'column', gap:'1rem'}},
@@ -639,8 +640,16 @@
     <script>
         // Init recorder — floating transport bar appears at bottom of page
         window.addEventListener("load", function() {
-        if (window.KCMRecorder) KCMRecorder.init();
-    });
+            if(!window.KCMRecorder)return;
+            KCMRecorder.init();
+            function moveBar(){
+                var m=document.getElementById('kcm-recorder-mount');
+                var b=document.getElementById('kcm-recorder-bar');
+                if(m&&b){b.style.position='static';b.style.transform='none';b.style.width='100%';b.style.maxWidth='520px';b.style.margin='0 auto';m.appendChild(b);}
+                else setTimeout(moveBar,300);
+            }
+            setTimeout(moveBar,500);
+        });
     </script>
 
     <!-- KCM STANDARD FOOTER -->
