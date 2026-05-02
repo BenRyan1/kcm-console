@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -302,7 +303,15 @@
                     root: toSharp(note),
                     mode: isMinor ? 'aeolian' : 'ionian'
                 });
+                // ── KCM MIDI Recorder hook ──
+                // Fire noteOn for each note in the triad, noteOff after sustain
+                if (window.KCMRecorder) {
+                    triad.forEach(n => KCMRecorder.noteOnByName(n, 4, isMinor ? 80 : 100));
+                }
                 await new Promise(r => setTimeout(r, 700));
+                if (window.KCMRecorder) {
+                    triad.forEach(n => KCMRecorder.noteOffByName(n, 4));
+                }
                 setActiveNote(null); setActiveType(null);
                 isMinor ? setIsPlayingInner(false) : setIsPlayingOuter(false);
             };
@@ -318,11 +327,21 @@
                         for (let j = 0; j < triad.length; j++) {
                             playNotes(ctx, [triad[j]], 4, 0.25);
                             setActiveNote(triad[j]); setActiveType(isMinor ? 'inner' : 'outer');
+                            // ── KCM MIDI Recorder hook — arpeggio ──
+                            if (window.KCMRecorder) {
+                                KCMRecorder.noteOnByName(triad[j], 4, 90);
+                                setTimeout(() => KCMRecorder.noteOffByName(triad[j], 4), 200);
+                            }
                             await new Promise(r => setTimeout(r, 150));
                         }
                     } else {
                         playNotes(ctx, triad, 4, 0.7);
                         setActiveNote(note); setActiveType(isMinor ? 'inner' : 'outer');
+                        // ── KCM MIDI Recorder hook — chord ──
+                        if (window.KCMRecorder) {
+                            triad.forEach(n => KCMRecorder.noteOnByName(n, 4, isMinor ? 80 : 100));
+                            setTimeout(() => triad.forEach(n => KCMRecorder.noteOffByName(n, 4)), 550);
+                        }
                         await new Promise(r => setTimeout(r, 600));
                     }
                 }
@@ -612,6 +631,13 @@
         })();
         // ── end KCM Console bridge listener ──────────────────────────────────
     </script>
+    <!-- KCM MIDI Recorder — Phase 2 -->
+    <script src="/js/kcm-midi-recorder.js"></script>
+    <script>
+        // Init recorder — floating transport bar appears at bottom of page
+        if (window.KCMRecorder) KCMRecorder.init();
+    </script>
+
     <!-- KCM STANDARD FOOTER -->
     <footer class="app-footer" role="contentinfo">
         <div class="app-footer-content">
