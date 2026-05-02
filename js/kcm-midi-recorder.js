@@ -1,6 +1,6 @@
 /**
  * kcm-midi-recorder.js — Keys, Codes & Modes™
- * Phase 2: MIDI + Audio recording with Clear and Rewind
+ * Phase 2: MIDI + Audio recording with Clear, Rewind, and compact transport bar
  */
 (function(global) {
   'use strict';
@@ -77,7 +77,7 @@
     d.style.background=type==='on'?'#00c0c0':'#008080';
     setTimeout(()=>{if(isRecording)d.style.background='#FF3B3B';},80);
     const c=el('kr-count');
-    if(c){const n=events.filter(e=>e.type===0x90).length;c.textContent=n+' note'+(n!==1?'s':'');}
+    if(c){const n=events.filter(e=>e.type===0x90).length;c.textContent=n+' notes';}
   }
 
   function createTransport(){
@@ -85,34 +85,56 @@
     const bar=document.createElement('div');
     bar.id='kcm-recorder-bar';
     bar.innerHTML=`<style>
-#kcm-recorder-bar{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:99999;background:rgba(10,10,21,0.97);border:1px solid rgba(0,192,192,0.35);border-radius:40px;padding:10px 20px;display:flex;align-items:center;gap:12px;box-shadow:0 8px 40px rgba(0,0,0,0.6);font-family:'Cinzel','Georgia',serif;user-select:none;min-width:420px;}
-#kcm-recorder-bar .kr-dot{width:10px;height:10px;border-radius:50%;background:#555;flex-shrink:0;transition:all 0.3s;}
-#kcm-recorder-bar .kr-dot.rec{background:#FF3B3B;box-shadow:0 0 10px rgba(255,59,59,0.6);animation:kr-blink 1.2s ease-in-out infinite;}
+#kcm-recorder-bar{
+  position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+  z-index:99999;
+  background:rgba(10,10,21,0.97);
+  border:1px solid rgba(0,192,192,0.35);
+  border-radius:12px;
+  padding:8px 16px;
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  box-shadow:0 8px 40px rgba(0,0,0,0.6);
+  font-family:'Cinzel','Georgia',serif;
+  user-select:none;
+  max-width:95vw;
+}
+#kcm-recorder-bar .kr-row1,#kcm-recorder-bar .kr-row2{
+  display:flex;align-items:center;gap:8px;
+}
+#kcm-recorder-bar .kr-dot{width:9px;height:9px;border-radius:50%;background:#555;flex-shrink:0;transition:all 0.3s;}
+#kcm-recorder-bar .kr-dot.rec{background:#FF3B3B;box-shadow:0 0 8px rgba(255,59,59,0.6);animation:kr-blink 1.2s ease-in-out infinite;}
 @keyframes kr-blink{0%,100%{opacity:1}50%{opacity:0.2}}
-#kcm-recorder-bar .kr-time{font-family:'Courier New',monospace;font-size:13px;color:#F4D03F;min-width:64px;letter-spacing:0.1em;}
-#kcm-recorder-bar .kr-count{font-size:10px;color:rgba(0,192,192,0.7);min-width:50px;letter-spacing:0.06em;}
-#kcm-recorder-bar .kr-sep{width:1px;height:20px;background:rgba(0,192,192,0.2);flex-shrink:0;}
-#kcm-recorder-bar button{border:1px solid rgba(0,192,192,0.3);background:transparent;color:#b0b0cc;border-radius:20px;padding:5px 12px;font-family:'Cinzel','Georgia',serif;font-size:11px;letter-spacing:0.08em;cursor:pointer;transition:all 0.2s;}
+#kcm-recorder-bar .kr-time{font-family:'Courier New',monospace;font-size:12px;color:#F4D03F;min-width:58px;letter-spacing:0.08em;}
+#kcm-recorder-bar .kr-count{font-size:10px;color:rgba(0,192,192,0.7);min-width:46px;}
+#kcm-recorder-bar .kr-sep{width:1px;height:18px;background:rgba(0,192,192,0.2);flex-shrink:0;}
+#kcm-recorder-bar button{border:1px solid rgba(0,192,192,0.3);background:transparent;color:#b0b0cc;border-radius:16px;padding:4px 11px;font-family:'Cinzel','Georgia',serif;font-size:10px;letter-spacing:0.06em;cursor:pointer;transition:all 0.2s;white-space:nowrap;}
 #kcm-recorder-bar button:hover{color:#fff;border-color:rgba(0,192,192,0.7);}
 #kcm-recorder-bar .kr-rec-btn{border-color:rgba(255,59,59,0.5);color:#FF8080;}
 #kcm-recorder-bar .kr-rec-btn.active{border-color:#FF3B3B;color:#fff;background:rgba(255,59,59,0.15);}
-#kcm-recorder-bar .kr-export{border-color:rgba(244,208,63,0.4);color:#F4D03F;}
-#kcm-recorder-bar .kr-midi-export{border-color:rgba(139,107,163,0.4);color:#8B6BA3;}
+#kcm-recorder-bar .kr-wav{border-color:rgba(244,208,63,0.4);color:#F4D03F;}
+#kcm-recorder-bar .kr-midi{border-color:rgba(139,107,163,0.4);color:#8B6BA3;}
 #kcm-recorder-bar .kr-rewind{border-color:rgba(0,192,192,0.4);color:#00c0c0;}
 #kcm-recorder-bar .kr-clear{border-color:rgba(207,122,90,0.4);color:#CF7A5A;}
 </style>
-<div class="kr-dot" id="kr-dot"></div>
-<span class="kr-time" id="kr-time">00:00.0</span>
-<div class="kr-sep"></div>
-<button class="kr-rec-btn" id="kr-rec" onclick="KCMRecorder._toggleRecord()">⏺ Record</button>
-<button id="kr-stop" onclick="KCMRecorder._stop()" style="opacity:0.35;pointer-events:none;">■ Stop</button>
-<div class="kr-sep"></div>
-<span class="kr-count" id="kr-count">0 notes</span>
-<div class="kr-sep"></div>
-<button class="kr-rewind" id="kr-rewind" onclick="KCMRecorder._rewind()" style="opacity:0.35;pointer-events:none;">⏮ Rewind</button>
-<button class="kr-export" id="kr-wav" onclick="KCMRecorder._exportWav()" style="opacity:0.35;pointer-events:none;">⬇ WAV</button>
-<button class="kr-midi-export" id="kr-midi" onclick="KCMRecorder._exportMidi()" style="opacity:0.35;pointer-events:none;">⬇ MIDI</button>
-<button class="kr-clear" id="kr-clear" onclick="KCMRecorder._clear()" style="opacity:0.35;pointer-events:none;">✕ Clear</button>`;
+<div class="kr-row1">
+  <div class="kr-dot" id="kr-dot"></div>
+  <span class="kr-time" id="kr-time">00:00.0</span>
+  <div class="kr-sep"></div>
+  <button class="kr-rec-btn" id="kr-rec" onclick="KCMRecorder._toggleRecord()">⏺ REC</button>
+  <button id="kr-stop" onclick="KCMRecorder._stop()" style="opacity:0.35;pointer-events:none;">■ STOP</button>
+  <div class="kr-sep"></div>
+  <span class="kr-count" id="kr-count">0 notes</span>
+</div>
+<div class="kr-row2">
+  <button class="kr-rewind" id="kr-rewind" onclick="KCMRecorder._rewind()" style="opacity:0.35;pointer-events:none;">⏮ REWIND</button>
+  <button class="kr-wav" id="kr-wav" onclick="KCMRecorder._exportWav()" style="opacity:0.35;pointer-events:none;">⬇ WAV</button>
+  <button class="kr-midi" id="kr-midi" onclick="KCMRecorder._exportMidi()" style="opacity:0.35;pointer-events:none;">⬇ MIDI</button>
+  <button class="kr-clear" id="kr-clear" onclick="KCMRecorder._clear()" style="opacity:0.35;pointer-events:none;">✕ CLEAR</button>
+</div>`;
     document.body.appendChild(bar);
   }
 
@@ -124,7 +146,7 @@
     timerInterval=setInterval(()=>{const e=el('kr-time');if(e)e.textContent=formatTime(now());},100);
     const dot=el('kr-dot'),btn=el('kr-rec');
     if(dot)dot.className='kr-dot rec';
-    if(btn){btn.textContent='⏸ Pause';btn.classList.add('active');}
+    if(btn){btn.textContent='⏸ PAUSE';btn.classList.add('active');}
     setBtn('kr-stop',true);setBtn('kr-wav',false);setBtn('kr-midi',false);setBtn('kr-rewind',false);setBtn('kr-clear',false);
     el('kr-count').textContent='0 notes';
   }
@@ -134,7 +156,7 @@
     if(mediaRecorder&&mediaRecorder.state==='recording')mediaRecorder.pause();
     clearInterval(timerInterval);
     const btn=el('kr-rec'),dot=el('kr-dot');
-    if(btn)btn.textContent='⏺ Resume';
+    if(btn)btn.textContent='⏺ REC';
     if(dot){dot.className='kr-dot';dot.style.background='#F4D03F';}
   }
 
@@ -144,7 +166,7 @@
     if(mediaRecorder&&mediaRecorder.state==='paused')mediaRecorder.resume();
     timerInterval=setInterval(()=>{const e=el('kr-time');if(e)e.textContent=formatTime(now());},100);
     const btn=el('kr-rec'),dot=el('kr-dot');
-    if(btn)btn.textContent='⏸ Pause';
+    if(btn)btn.textContent='⏸ PAUSE';
     if(dot)dot.className='kr-dot rec';
   }
 
@@ -156,18 +178,17 @@
     takes.push({events:events.slice(),duration,audioBlob,name:'KCM-Take-'+(takes.length+1)});
     const dot=el('kr-dot'),btn=el('kr-rec');
     if(dot){dot.className='kr-dot';dot.style.background='#00c0c0';}
-    if(btn){btn.textContent='⏺ Record';btn.classList.remove('active');}
+    if(btn){btn.textContent='⏺ REC';btn.classList.remove('active');}
     setBtn('kr-stop',false);
     setBtn('kr-wav',!!audioBlob);
     setBtn('kr-midi',events.length>0);
     setBtn('kr-rewind',!!audioBlob);
     setBtn('kr-clear',true);
     const n=events.filter(e=>e.type===0x90).length;
-    el('kr-count').textContent=n+' notes captured';
+    el('kr-count').textContent=n+' notes';
     el('kr-time').textContent=formatTime(duration);
   }
 
-  // ── REWIND: replay the last WAV take ──
   function _rewind(){
     if(!takes.length)return;
     const take=takes[takes.length-1];
@@ -176,17 +197,16 @@
     const audio=new Audio(url);
     audio.play();
     const dot=el('kr-dot'),count=el('kr-count');
-    if(dot){dot.style.background='#00c0c0';}
-    if(count)count.textContent='▶ Playing back...';
+    if(dot)dot.style.background='#00c0c0';
+    if(count)count.textContent='▶ playing...';
     audio.onended=()=>{
       URL.revokeObjectURL(url);
       const n=take.events.filter(e=>e.type===0x90).length;
-      if(count)count.textContent=n+' notes captured';
+      if(count)count.textContent=n+' notes';
       if(dot)dot.style.background='#555';
     };
   }
 
-  // ── CLEAR: wipe all takes and reset ──
   function _clear(){
     takes.forEach(t=>{if(t.audioBlob)URL.revokeObjectURL(t.audioBlob);});
     takes=[];events=[];
@@ -194,7 +214,7 @@
     isRecording=false;isPaused=false;startTime=null;
     const dot=el('kr-dot'),btn=el('kr-rec');
     if(dot){dot.className='kr-dot';dot.style.background='#555';}
-    if(btn){btn.textContent='⏺ Record';btn.classList.remove('active');}
+    if(btn){btn.textContent='⏺ REC';btn.classList.remove('active');}
     el('kr-time').textContent='00:00.0';
     el('kr-count').textContent='0 notes';
     setBtn('kr-stop',false);setBtn('kr-wav',false);setBtn('kr-midi',false);setBtn('kr-rewind',false);setBtn('kr-clear',false);
@@ -215,7 +235,7 @@
   function _exportWav(){
     if(!takes.length)return;
     const take=takes[takes.length-1];
-    if(!take.audioBlob){alert('No audio captured. Allow microphone access and try again.');return;}
+    if(!take.audioBlob){alert('No audio captured — please allow microphone access and record again.');return;}
     const url=URL.createObjectURL(take.audioBlob);
     const a=document.createElement('a');a.href=url;a.download=take.name+'.webm';a.click();
     setTimeout(()=>URL.revokeObjectURL(url),5000);
@@ -223,7 +243,7 @@
 
   function init(){
     createTransport();
-    console.log('%cKCM Recorder ready — Record | Rewind | Clear | WAV | MIDI','color:#00c0c0;font-weight:bold;');
+    console.log('%cKCM Recorder — REC | STOP | REWIND | WAV | MIDI | CLEAR','color:#00c0c0;font-weight:bold;');
   }
 
   global.KCMRecorder={init,noteOn,noteOff,noteOnByName,noteOffByName,noteNameToMidi,
