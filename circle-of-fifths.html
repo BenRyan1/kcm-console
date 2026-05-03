@@ -107,7 +107,7 @@ const playNotes = (ctx, notes, octave, duration, delay=0, dest=null) => {
 const panelBtn = (bg,border,color) => ({
     flex:1,background:bg,border:`1px solid ${border}`,color,
     borderRadius:'8px',padding:'8px 4px',fontSize:'0.78rem',fontWeight:'700',
-    cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',
+    cursor:'pointer',display:'flex',alignItems:'start',justifyContent:'center',
     gap:'3px',fontFamily:"'Montserrat',sans-serif",transition:'opacity 0.2s',
     whiteSpace:'nowrap'
 });
@@ -333,7 +333,7 @@ const CircleOfFifths = () => {
             // Title
             React.createElement('h3',{style:{fontFamily:"'Cinzel',serif",color:textColor,fontSize:'0.85rem',textAlign:'center',letterSpacing:'1px',marginBottom:'2px'}},label),
             // ◀ selector ▶
-            React.createElement('div',{style:{display:'flex',alignItems:'center',gap:'4px'}},
+            React.createElement('div',{style:{display:'flex',alignItems:'start',gap:'4px'}},
                 React.createElement('button',{onClick:()=>stepAndFlash('down'),style:{background:isMinor?'rgba(139,107,163,0.25)':'rgba(0,128,128,0.3)',border:`1px solid ${accent}`,color:textColor,borderRadius:'8px',padding:'7px 9px',fontSize:'1rem',cursor:'pointer',flexShrink:0,fontWeight:'bold'}},'◀'),
                 React.createElement('select',{value:startNote,onChange:e=>onDropdown(e.target.value),
                     style:{flex:1,padding:'7px 2px',fontSize:'14px',borderRadius:'8px',border:`1.5px solid ${accent}`,background:isMinor?'#110a1a':'#061a1a',color:textColor,fontWeight:'700',cursor:'pointer',textAlign:'center',width:'100%'}},
@@ -364,21 +364,21 @@ const CircleOfFifths = () => {
         );
     };
 
-    return React.createElement('div',{style:{background:'radial-gradient(ellipse at center,#1a1a2e 0%,#0a0a15 100%)',minHeight:'100vh',padding:'1.5rem 1rem',fontFamily:"'Montserrat',sans-serif"}},
+    return React.createElement('div',{style:{background:'radial-gradient(ellipse at center,#1a1a2e 0%,#0a0a15 100%)',minHeight:'100vh',padding:'0.75rem 1rem',fontFamily:"'Montserrat',sans-serif"}},
         // Page title
-        React.createElement('div',{style:{textAlign:'center',marginBottom:'1.25rem'}},
+        React.createElement('div',{style:{textAlign:'center',marginBottom:'0.75rem'}},
             React.createElement('h2',{style:{fontFamily:"'Cinzel',serif",fontSize:'clamp(1.5rem,4vw,2.2rem)',background:'linear-gradient(135deg,#F4D03F,#008080)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent',backgroundClip:'text'}},'Circle of Fifths'),
             React.createElement('p',{style:{color:'rgba(232,232,232,0.6)',fontSize:'0.9rem',marginTop:'4px'}},'Outer = Major • Inner = Minor • Click any note to play')
         ),
 
         // ── THREE COLUMN LAYOUT: Panel | Circle | Panel ──────────────────
-        React.createElement('div',{style:{maxWidth:'1100px',margin:'0 auto',display:'grid',gridTemplateColumns:'220px 1fr 220px',gap:'1rem',alignItems:'center'}},
+        React.createElement('div',{style:{maxWidth:'1100px',margin:'0 auto',display:'grid',gridTemplateColumns:'220px 1fr 220px',gap:'1rem',alignItems:'start'}},
 
             // LEFT — OUTER MAJOR
             React.createElement(Panel,{isMinor:false}),
 
             // CENTER — Circle
-            React.createElement('div',{style:{display:'flex',flexDirection:'column',alignItems:'center',gap:'0.6rem'}},
+            React.createElement('div',{style:{display:'flex',flexDirection:'column',alignItems:'start',gap:'0.6rem'}},
                 React.createElement('div',{style:{width:'100%',background:'linear-gradient(135deg,rgba(0,128,128,0.08),rgba(139,107,163,0.08))',border:'2px solid rgba(0,128,128,0.3)',borderRadius:'20px',padding:'1rem',boxShadow:'0 8px 40px rgba(0,128,128,0.15)'}},
                     React.createElement('svg',{viewBox:'0 0 500 500',style:{width:'100%',height:'auto',borderRadius:'50%',background:'radial-gradient(circle,#e8f4fd 0%,#c8dff0 60%,#9bbbd8 100%)',boxShadow:'0 8px 32px rgba(0,0,0,0.5)',border:'4px solid rgba(0,128,128,0.45)'},role:'img','aria-label':'Circle of Fifths'},
                         React.createElement('circle',{cx:'250',cy:'250',r:'240',fill:'none',stroke:'rgba(0,128,128,0.3)',strokeWidth:'2'}),
@@ -393,7 +393,7 @@ const CircleOfFifths = () => {
                 // Loop toggle
                 React.createElement('div',{
                     onClick:toggleLoop,
-                    style:{width:'100%',display:'flex',alignItems:'center',justifyContent:'center',gap:'8px',padding:'8px 12px',background:'rgba(255,255,255,0.04)',border:`1px solid ${isLooping?'rgba(244,208,63,0.5)':'rgba(0,128,128,0.2)'}`,borderRadius:'10px',cursor:'pointer'}
+                    style:{width:'100%',display:'flex',alignItems:'start',justifyContent:'center',gap:'8px',padding:'8px 12px',background:'rgba(255,255,255,0.04)',border:`1px solid ${isLooping?'rgba(244,208,63,0.5)':'rgba(0,128,128,0.2)'}`,borderRadius:'10px',cursor:'pointer'}
                 },
                     React.createElement('span',{style:{fontSize:'1.1rem'}},isLooping?'🔁':'➡️'),
                     React.createElement('span',{style:{color:isLooping?'#F4D03F':'rgba(232,232,232,0.6)',fontWeight:'700',fontSize:'0.82rem'}},
