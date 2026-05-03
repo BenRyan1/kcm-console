@@ -167,7 +167,11 @@
       mediaRecorder.onstop = () => {
         const mimeType = mediaRecorder.mimeType || 'audio/webm';
         const blob = new Blob(audioChunks, {type: mimeType});
-        resolve(blob);
+        console.log('[KCMRecorder] Audio captured:', blob.size, 'bytes, type:', mimeType);
+        if (blob.size < 1000) {
+            console.warn('[KCMRecorder] ⚠️ Audio blob is very small — synth may not be connected. Try clicking a note before hitting REC.');
+        }
+        resolve(blob.size > 100 ? blob : null);
       };
       mediaRecorder.stop();
     });
@@ -360,7 +364,7 @@
     if (!takes.length) return;
     const take = takes[takes.length-1];
     if (!take.audioBlob) {
-      alert('No audio captured. Make sure you hit REC before playing notes.');
+      alert('No audio captured.\n\nTo record synth audio:\n1. Click any note on the circle first (this wakes up the audio engine)\n2. Hit REC\n3. Play notes\n4. Hit STOP\n5. Click WAV');
       return;
     }
 
