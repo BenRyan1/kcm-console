@@ -604,18 +604,23 @@
                                     style:{...panelBtn('linear-gradient(135deg,#004444,#002828)','rgba(0,192,192,0.4)','#e0ffff'),opacity:(isPlayingOuter||isPlayingInner)?0.4:1}
                                 }, React.createElement('span',{style:{fontSize:'1rem'}},'▼'), ' Arpeggio')
                             ),
-                            // Chords row
+                            // Chords row — Sub-Dom | Tonic | Dominant (single chords, correct CoF wiring)
                             React.createElement('div', {style:{display:'flex',gap:'5px',marginBottom:'5px'}},
                                 React.createElement('button', {
-                                    onClick:()=>playSequence(buildSeq(outerBase,startNoteOuter),false),
+                                    onClick:()=>playTriad(stepNote(startNoteOuter,'down',outerBase), false),
                                     disabled:isPlayingOuter||isPlayingInner,
-                                    style:{...panelBtn('linear-gradient(135deg,#1a4a4a,#0d2828)','rgba(0,192,192,0.3)','#a0e8e8'),opacity:(isPlayingOuter||isPlayingInner)?0.4:1}
-                                }, React.createElement('span',null,'↻'), ' Dominant →'),
+                                    style:{...panelBtn('linear-gradient(135deg,#1a4a4a,#0d2828)','rgba(0,192,192,0.3)','#a0e8e8'),opacity:(isPlayingOuter||isPlayingInner)?0.4:1,fontSize:'0.72rem'}
+                                }, '← Sub-Dom'),
                                 React.createElement('button', {
-                                    onClick:()=>playSequence([...buildSeq(outerBase,startNoteOuter)].reverse(),false),
+                                    onClick:()=>playTriad(startNoteOuter, false),
                                     disabled:isPlayingOuter||isPlayingInner,
-                                    style:{...panelBtn('linear-gradient(135deg,#1a4a4a,#0d2828)','rgba(0,192,192,0.3)','#a0e8e8'),opacity:(isPlayingOuter||isPlayingInner)?0.4:1}
-                                }, React.createElement('span',null,'↺'), '← Sub-Dom')
+                                    style:{...panelBtn('linear-gradient(135deg,#004466,#002233)','rgba(244,208,63,0.5)','#F4D03F'),opacity:(isPlayingOuter||isPlayingInner)?0.4:1,fontSize:'0.78rem',fontWeight:'900',border:'2px solid rgba(244,208,63,0.6)'}
+                                }, startNoteOuter),
+                                React.createElement('button', {
+                                    onClick:()=>playTriad(stepNote(startNoteOuter,'up',outerBase), false),
+                                    disabled:isPlayingOuter||isPlayingInner,
+                                    style:{...panelBtn('linear-gradient(135deg,#1a4a4a,#0d2828)','rgba(0,192,192,0.3)','#a0e8e8'),opacity:(isPlayingOuter||isPlayingInner)?0.4:1,fontSize:'0.72rem'}
+                                }, 'Dominant →')
                             ),
                             React.createElement('button', {onClick:stopPlayback, style:stopBtnStyle}, '■  STOP')
                         ),
@@ -666,17 +671,23 @@
                                     style:{...panelBtn('linear-gradient(135deg,#4a2a6a,#2a1040)','rgba(139,107,163,0.5)','#e0d0f8'),opacity:(isPlayingOuter||isPlayingInner)?0.4:1}
                                 }, React.createElement('span',{style:{fontSize:'1rem'}},'▼'), ' Arpeggio')
                             ),
+                            // Chords row — Sub-Dom | Tonic | Dominant (single chords, correct CoF wiring)
                             React.createElement('div', {style:{display:'flex',gap:'5px',marginBottom:'5px'}},
                                 React.createElement('button', {
-                                    onClick:()=>playSequence(buildSeq(innerBase,startNoteInner),true),
+                                    onClick:()=>playTriad(stepNote(startNoteInner,'down',innerBase), true),
                                     disabled:isPlayingOuter||isPlayingInner,
-                                    style:{...panelBtn('linear-gradient(135deg,#3a2a50,#221535)','rgba(139,107,163,0.4)','#c0a0e0'),opacity:(isPlayingOuter||isPlayingInner)?0.4:1}
-                                }, React.createElement('span',null,'↻'), ' Dominant →'),
+                                    style:{...panelBtn('linear-gradient(135deg,#3a2a50,#221535)','rgba(139,107,163,0.4)','#c0a0e0'),opacity:(isPlayingOuter||isPlayingInner)?0.4:1,fontSize:'0.72rem'}
+                                }, '← Sub-Dom'),
                                 React.createElement('button', {
-                                    onClick:()=>playSequence([...buildSeq(innerBase,startNoteInner)].reverse(),true),
+                                    onClick:()=>playTriad(startNoteInner, true),
                                     disabled:isPlayingOuter||isPlayingInner,
-                                    style:{...panelBtn('linear-gradient(135deg,#3a2a50,#221535)','rgba(139,107,163,0.4)','#c0a0e0'),opacity:(isPlayingOuter||isPlayingInner)?0.4:1}
-                                }, React.createElement('span',null,'↺'), '← Sub-Dom')
+                                    style:{...panelBtn('linear-gradient(135deg,#3a1050,#1a0830)','rgba(200,168,232,0.6)','#c8a8e8'),opacity:(isPlayingOuter||isPlayingInner)?0.4:1,fontSize:'0.78rem',fontWeight:'900',border:'2px solid rgba(200,168,232,0.6)'}
+                                }, startNoteInner+'m'),
+                                React.createElement('button', {
+                                    onClick:()=>playTriad(stepNote(startNoteInner,'up',innerBase), true),
+                                    disabled:isPlayingOuter||isPlayingInner,
+                                    style:{...panelBtn('linear-gradient(135deg,#3a2a50,#221535)','rgba(139,107,163,0.4)','#c0a0e0'),opacity:(isPlayingOuter||isPlayingInner)?0.4:1,fontSize:'0.72rem'}
+                                }, 'Dominant →')
                             ),
                             React.createElement('button', {onClick:stopPlayback, style:{...stopBtnStyle, background:'linear-gradient(135deg,#3a0820,#1a0410)'}}, '■  STOP')
                         ),
