@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -54,15 +53,12 @@
     function trackEvent(n,p){if(typeof gtag==='function')gtag('event',n,p);}
     </script>
 
-    <!-- React (no Tone.js — replaced with Web Audio API in Session 5) -->
+    <!-- React (Web Audio API — no Tone.js) -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
     <style>
-        /* ══════════════════════════════════
-           KCM DESIGN TOKENS
-           ══════════════════════════════════ */
         :root {
             --primary-teal:   #008080;
             --primary-gold:   #F4D03F;
@@ -76,22 +72,13 @@
         *{margin:0;padding:0;box-sizing:border-box;}
         body{font-family:var(--font-body);background:radial-gradient(ellipse at center,#1a1a2e 0%,#0a0a15 100%);color:var(--light-text);min-height:100vh;}
 
-        /* ── Accessibility ── */
         .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
         .skip-link{position:absolute;top:-44px;left:0;background:var(--primary-gold);color:#0a0a15;padding:10px 18px;font-weight:700;font-family:var(--font-body);text-decoration:none;z-index:10000;border-radius:0 0 6px 0;}
         .skip-link:focus{top:0;}
         :focus-visible{outline:3px solid var(--primary-gold);outline-offset:3px;}
-
-        /* ══ FIX: No rectangles on SVG circles ══
-           Browsers draw a default focus rectangle on ANY focusable element.
-           SVG circles must never have tabIndex or role=button.
-           We handle clicks only — no keyboard focus on circles. */
         svg circle{outline:none !important;}
         svg *:focus{outline:none !important;}
 
-        /* ══════════════════════════════════
-           HEADER (exact APP_HEADER_TEMPLATE)
-           ══════════════════════════════════ */
         .app-header{background:linear-gradient(135deg,rgba(15,15,30,0.95),rgba(26,26,46,0.95));backdrop-filter:blur(10px);border-bottom:3px solid var(--primary-teal);padding:1rem 2rem;position:sticky;top:0;z-index:1000;box-shadow:0 4px 20px rgba(0,128,128,0.2);}
         .app-header-content{max-width:1400px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;}
         .app-logo-section{display:flex;align-items:center;gap:1rem;}
@@ -106,17 +93,8 @@
 
         #root{width:100%;}
 
-        /* ══════════════════════════════════
-           FOOTER (exact APP_FOOTER_TEMPLATE)
-           ══════════════════════════════════ */
         .app-footer{background:linear-gradient(135deg,rgba(15,15,30,0.95),rgba(26,26,46,0.95));backdrop-filter:blur(10px);border-top:3px solid var(--primary-teal);padding:2.5rem 2rem 2rem;margin-top:4rem;}
         .app-footer-content{max-width:1400px;margin:0 auto;display:flex;flex-direction:column;align-items:center;gap:2rem;}
-        .app-social-section{display:flex;flex-direction:column;align-items:center;gap:1.5rem;}
-        .app-social-title{font-family:var(--font-display);color:var(--primary-gold);font-size:1.3rem;margin:0;letter-spacing:1px;}
-        .app-social-links{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;}
-        .app-social-links a{width:50px;height:50px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,rgba(0,128,128,0.2),rgba(139,107,163,0.2));border:2px solid rgba(0,128,128,0.3);border-radius:50%;color:var(--primary-gold);transition:all 0.3s ease;backdrop-filter:blur(5px);text-decoration:none;}
-        .app-social-links a:hover{background:linear-gradient(135deg,rgba(0,128,128,0.4),rgba(139,107,163,0.4));border-color:var(--primary-teal);transform:translateY(-5px) scale(1.1);box-shadow:0 8px 25px rgba(0,128,128,0.5);}
-        .app-social-links svg{width:22px;height:22px;fill:currentColor;}
         .app-footer-divider{width:100%;max-width:600px;height:2px;background:linear-gradient(90deg,transparent,rgba(0,128,128,0.3),transparent);}
         .app-copyright{text-align:center;color:rgba(232,232,232,0.6);font-size:0.95rem;line-height:1.8;}
         .app-copyright strong{color:var(--primary-gold);}
@@ -125,9 +103,6 @@
         .app-legal-links a{color:rgba(232,232,232,0.5);text-decoration:none;font-size:0.9rem;transition:color 0.3s ease;min-height:44px;display:inline-flex;align-items:center;}
         .app-legal-links a:hover{color:var(--primary-gold);}
 
-        /* ══════════════════════════════════
-           RESPONSIVE
-           ══════════════════════════════════ */
         @media(max-width:1023px)and (min-width:768px){.app-title{font-size:1.25rem;}}
         @media(max-width:767px){
             .app-header{padding:1rem;}
@@ -137,8 +112,6 @@
             .app-nav-links a{font-size:0.9rem;padding:0.5rem 0.75rem;}
             .upgrade-link{padding:0.6rem 1rem !important;}
             .app-footer{padding:2rem 1rem 1.5rem;}
-            .app-social-links{gap:0.75rem;}
-            .app-social-links a{width:45px;height:45px;}
             .app-legal-links{flex-direction:column;gap:0.5rem;text-align:center;}
             .app-copyright{font-size:0.85rem;}
         }
@@ -150,17 +123,15 @@
         @media(hover:none)and (pointer:coarse){
             .app-logo-section:hover .app-logo-svg{transform:none;}
             .upgrade-link:hover{transform:none !important;}
-            .app-social-links a:hover{transform:none;}
         }
         @media(prefers-reduced-motion:reduce){*{transition-duration:0.01ms !important;animation-duration:0.01ms !important;}}
-        @media(forced-colors:active){.upgrade-link{border:2px solid ButtonText;}.app-social-links a{border:2px solid ButtonText;}}
+        @media(forced-colors:active){.upgrade-link{border:2px solid ButtonText;}}
         @media print{.app-header,.app-footer{display:none;}body{background:white;color:black;}}
     </style>
 </head>
 <body>
     <a href="#main-content" class="skip-link">Skip to main content</a>
 
-    <!-- KCM STANDARD HEADER -->
     <header class="app-header" role="banner">
         <div class="app-header-content">
             <div class="app-logo-section">
@@ -192,13 +163,10 @@
         <div id="root"></div>
     </main>
 
-    <!-- REACT APP — Session 5: Tone.js → Web Audio API + KCM bridge listener -->
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
         // ── Web Audio helpers ────────────────────────────────────────────────
-        // Replaces Tone.js entirely. Uses a shared AudioContext ref.
-        // noteToFreq: converts note name + octave → Hz via equal temperament.
         const NOTE_SEMITONES = {
             'C':0,'Db':1,'D':2,'Eb':3,'E':4,'F':5,
             'Gb':6,'G':7,'Ab':8,'A':9,'Bb':10,'B':11
@@ -206,30 +174,52 @@
         function noteToHz(note, octave = 4) {
             const semi = NOTE_SEMITONES[note];
             if (semi === undefined) return 440;
-            // A4 = 440 Hz, MIDI note 69
             const midi = (octave + 1) * 12 + semi;
             return 440 * Math.pow(2, (midi - 69) / 12);
         }
-
-        function playNotes(ctx, notes, octave, duration, delay = 0) {
-            // Plays an array of note-name strings simultaneously as sine waves.
+        // playNotes routes through masterGain → recorder captures synth audio
+        function playNotes(ctx, notes, octave, duration, delay = 0, masterGain = null) {
+            const dest = masterGain || ctx.destination;
             notes.forEach(note => {
-                const osc   = ctx.createOscillator();
-                const gain  = ctx.createGain();
-                const freq  = noteToHz(note, octave);
-                osc.type    = 'sine';
+                const osc  = ctx.createOscillator();
+                const gain = ctx.createGain();
+                const freq = noteToHz(note, octave);
+                osc.type   = 'sine';
                 osc.frequency.setValueAtTime(freq, ctx.currentTime + delay);
-                // Envelope: quick attack, sustain, release
                 gain.gain.setValueAtTime(0, ctx.currentTime + delay);
                 gain.gain.linearRampToValueAtTime(0.18, ctx.currentTime + delay + 0.02);
                 gain.gain.setValueAtTime(0.18, ctx.currentTime + delay + duration - 0.1);
                 gain.gain.linearRampToValueAtTime(0, ctx.currentTime + delay + duration);
                 osc.connect(gain);
-                gain.connect(ctx.destination);
+                gain.connect(dest);  // → masterGain → destination + recorder
                 osc.start(ctx.currentTime + delay);
                 osc.stop(ctx.currentTime + delay + duration);
             });
         }
+
+        // ══════════════════════════════════════════════════════════════
+        // KCM ARPEGGIO LAW (PERMANENT):
+        // Major: 1-3-5 ascending (e.g. G→B→D), minor: 1-b3-5 ascending.
+        // Ascending: goes UP in pitch — octave increments when next note
+        // chroma <= previous (crosses C boundary). assignOctaves() tracks this.
+        // Descending: reverses ascending array → 5-3-1 going DOWN in pitch.
+        // Never play out of order. Apply to ALL KCM panels forever.
+        // ══════════════════════════════════════════════════════════════
+        const NOTE_CHROMA = {
+            'C':0,'Db':1,'D':2,'Eb':3,'E':4,'F':5,
+            'Gb':6,'G':7,'Ab':8,'A':9,'Bb':10,'B':11,
+            'C#':1,'D#':3,'F#':6,'G#':8,'A#':10
+        };
+        const assignOctaves = (notes, baseOctave) => {
+            const result = []; let oct = baseOctave, prevC = -1;
+            for (const n of notes) {
+                const c = NOTE_CHROMA[n] ?? 0;
+                if (c <= prevC) oct++;
+                result.push({ note: n, octave: oct });
+                prevC = c;
+            }
+            return result;
+        };
 
         // ── Main React component ─────────────────────────────────────────────
         const MusicCircle = () => {
@@ -239,9 +229,10 @@
             const [isPlayingInner, setIsPlayingInner] = useState(false);
             const [startNoteOuter, setStartNoteOuter] = useState('C');
             const [startNoteInner, setStartNoteInner] = useState('A');
+            const [isLooping,      setIsLooping]      = useState(false);
+            const loopRef   = useRef(false);
             const audioCtxRef = useRef(null);
 
-            // Expose state setters on window so the KCM bridge listener can drive them
             useEffect(() => {
                 window._kcmCoF = {
                     setStartNoteOuter,
@@ -259,52 +250,61 @@
                 'E':'#FF0000','F':'#C4007F','Gb':'#8000FF','G':'#4000FF',
                 'Ab':'#0000FF','A':'#007FFF','Bb':'#00FF80','B':'#80FF00'
             };
+            const FLAT_TO_SHARP = {'Db':'C#','Eb':'D#','Gb':'F#','Ab':'G#','Bb':'A#'};
+            const toSharp = note => FLAT_TO_SHARP[note] || note;
 
-            // Enharmonic map: KCM bus uses sharps; CoF uses flats for some notes
-            const sharpToFlat = {
-                'C#':'Db','D#':'Eb','F#':'Gb','G#':'Ab','A#':'Bb'
-            };
+            // masterGainRef: all synth output flows through this → recorder captures it
+            const masterGainRef = useRef(null);
 
             function getAudioCtx() {
                 if (!audioCtxRef.current || audioCtxRef.current.state === 'closed') {
                     audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
+                    // Create master gain and wire into recorder synth capture
+                    masterGainRef.current = audioCtxRef.current.createGain();
+                    masterGainRef.current.gain.value = 1.0;
+                    masterGainRef.current.connect(audioCtxRef.current.destination);
+                    if (window.KCMRecorder && window.KCMRecorder.connectSynthOutput) {
+                        window.KCMRecorder.connectSynthOutput(audioCtxRef.current, masterGainRef.current);
+                    }
                 }
-                if (audioCtxRef.current.state === 'suspended') {
-                    audioCtxRef.current.resume();
-                }
+                if (audioCtxRef.current.state === 'suspended') audioCtxRef.current.resume();
                 return audioCtxRef.current;
             }
 
-            // Publish root change to Console bus → all panels follow
+            // Helper: get master gain (all oscillators connect through this)
+            function getMasterGain() {
+                getAudioCtx(); // ensure ctx + gain exist
+                return masterGainRef.current;
+            }
+
             const postToConsole = (patch) => {
                 try { window.parent.postMessage({ type: 'KCM_STATE_PATCH', payload: patch }, '*'); }
-                catch(e) { /* silent if no parent */ }
+                catch(e) {}
             };
-
-            // CoF uses flat notation; KCM bus uses sharps — convert for bus
-            const FLAT_TO_SHARP = {
-                'Db':'C#','Eb':'D#','Gb':'F#','Ab':'G#','Bb':'A#'
-            };
-            const toSharp = note => FLAT_TO_SHARP[note] || note;
 
             const getTriad      = root => { const c=['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B']; const i=c.indexOf(root); return [root, c[(i+4)%12], c[(i+7)%12]]; };
             const getMinorTriad = root => { const c=['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B']; const i=c.indexOf(root); return [root, c[(i+3)%12], c[(i+7)%12]]; };
 
+            // Stop everything immediately
+            const stopPlayback = () => {
+                loopRef.current = false;
+                setIsLooping(false);
+                setIsPlayingOuter(false);
+                setIsPlayingInner(false);
+                setActiveNote(null);
+                setActiveType(null);
+            };
+
+            // Click a note on the wheel — play its triad
             const playTriad = async (note, isMinor = false) => {
                 if (isPlayingOuter || isPlayingInner) return;
                 const ctx   = getAudioCtx();
                 const triad = isMinor ? getMinorTriad(note) : getTriad(note);
                 isMinor ? setIsPlayingInner(true) : setIsPlayingOuter(true);
                 setActiveNote(note); setActiveType(isMinor ? 'inner' : 'outer');
-                playNotes(ctx, triad, 4, 0.9);
-                if (typeof trackEvent === 'function') trackEvent('note_click', { event_category:'circle_of_fifths', event_label: note + (isMinor?'_minor':'_major') });
-                // Publish to Console bus so MTP and MSP follow
-                postToConsole({
-                    root: toSharp(note),
-                    mode: isMinor ? 'aeolian' : 'ionian'
-                });
-                // ── KCM MIDI Recorder hook ──
-                // Fire noteOn for each note in the triad, noteOff after sustain
+                playNotes(ctx, triad, 4, 0.9, 0, getMasterGain());
+                if (typeof trackEvent === 'function') trackEvent('note_click', {event_category:'circle_of_fifths', event_label:note+(isMinor?'_minor':'_major')});
+                postToConsole({ root: toSharp(note), mode: isMinor ? 'aeolian' : 'ionian' });
                 if (window.KCMRecorder) {
                     triad.forEach(n => KCMRecorder.noteOnByName(n, 4, isMinor ? 80 : 100));
                 }
@@ -316,41 +316,20 @@
                 isMinor ? setIsPlayingInner(false) : setIsPlayingOuter(false);
             };
 
-            // ══════════════════════════════════════════════════════════════
-            // KCM ARPEGGIO LAW (PERMANENT):
-            // Major: 1-3-5 ascending (e.g. G→B→D), minor: 1-b3-5 ascending.
-            // Ascending: goes UP in pitch — octave increments when next note
-            // chroma <= previous (crosses C boundary). assignOctaves() tracks this.
-            // Descending: reverses ascending array → 5-3-1 going DOWN in pitch.
-            // Never play out of order. Apply to ALL KCM panels forever.
-            // ══════════════════════════════════════════════════════════════
-            const NOTE_CHROMA = {'C':0,'Db':1,'D':2,'Eb':3,'E':4,'F':5,'Gb':6,'G':7,'Ab':8,'A':9,'Bb':10,'B':11,'C#':1,'D#':3,'F#':6,'G#':8,'A#':10};
-            const assignOctaves = (notes, baseOctave) => {
-                const result = []; let oct = baseOctave, prevC = -1;
-                for (const n of notes) {
-                    const c = NOTE_CHROMA[n] ?? 0;
-                    if (c <= prevC) oct++; // crossed octave boundary going up
-                    result.push({ note: n, octave: oct });
-                    prevC = c;
-                }
-                return result;
-            };
-
-            // playArpeggio: plays ONLY the selected note's triad, octave-aware
+            // KCM ARPEGGIO LAW — plays only the selected note's triad, octave-aware
             const playArpeggio = async (note, isMinor, direction) => {
                 if (isPlayingOuter || isPlayingInner) return;
                 const ctx   = getAudioCtx();
                 const triad = isMinor ? getMinorTriad(note) : getTriad(note);
-                // Ascending: 1-3-5 with correct octave jumps
+                // Ascending: 1-3-5 with correct octave increments
                 const asc  = assignOctaves(triad, 4);
                 // Descending: reverse → 5-3-1 going DOWN
                 const desc = [...asc].reverse();
                 const ordered = direction === 'down' ? desc : asc;
                 isMinor ? setIsPlayingInner(true) : setIsPlayingOuter(true);
                 for (const { note: n, octave: oct } of ordered) {
-                    playNotes(ctx, [n], oct, 0.35);
+                    playNotes(ctx, [n], oct, 0.35, 0, getMasterGain());
                     setActiveNote(n); setActiveType(isMinor ? 'inner' : 'outer');
-                    // Broadcast to Console bus so other panels highlight
                     postToConsole({ root: toSharp(n), mode: isMinor ? 'aeolian' : 'ionian' });
                     if (window.KCMRecorder) {
                         KCMRecorder.noteOnByName(n, oct, 90);
@@ -362,7 +341,7 @@
                 isMinor ? setIsPlayingInner(false) : setIsPlayingOuter(false);
             };
 
-            // stepNote: step one position CW or CCW around the circle
+            // Step CW or CCW through the circle
             const stepNote = (current, dir, base) => {
                 const i = base.indexOf(current);
                 if (i === -1) return current;
@@ -371,49 +350,46 @@
                     : base[(i - 1 + base.length) % base.length];
             };
 
-            // playSequence: play chords CW or CCW around the circle
+            // Play chords CW or CCW around the circle
             const playSequence = async (notes, isMinor) => {
                 if (isPlayingOuter || isPlayingInner) return;
                 const ctx = getAudioCtx();
                 isMinor ? setIsPlayingInner(true) : setIsPlayingOuter(true);
-                for (let i = 0; i < notes.length; i++) {
-                    const note  = notes[i];
-                    const triad = isMinor ? getMinorTriad(note) : getTriad(note);
-                    playNotes(ctx, triad, 4, 0.7);
-                    setActiveNote(note); setActiveType(isMinor ? 'inner' : 'outer');
-                    postToConsole({ root: toSharp(note), mode: isMinor ? 'aeolian' : 'ionian' });
-                    if (window.KCMRecorder) {
-                        triad.forEach(n => KCMRecorder.noteOnByName(n, 4, isMinor ? 80 : 100));
-                        setTimeout(() => triad.forEach(n => KCMRecorder.noteOffByName(n, 4)), 550);
+                do {
+                    for (let i = 0; i < notes.length; i++) {
+                        if (!loopRef.current && isLooping) break; // loop was cancelled mid-sequence
+                        const note  = notes[i];
+                        const triad = isMinor ? getMinorTriad(note) : getTriad(note);
+                        playNotes(ctx, triad, 4, 0.7, 0, getMasterGain());
+                        setActiveNote(note); setActiveType(isMinor ? 'inner' : 'outer');
+                        postToConsole({ root: toSharp(note), mode: isMinor ? 'aeolian' : 'ionian' });
+                        if (window.KCMRecorder) {
+                            triad.forEach(n => KCMRecorder.noteOnByName(n, 4, isMinor ? 80 : 100));
+                            setTimeout(() => triad.forEach(n => KCMRecorder.noteOffByName(n, 4)), 550);
+                        }
+                        await new Promise(r => setTimeout(r, 650));
+                        if (!loopRef.current) break;
                     }
-                    await new Promise(r => setTimeout(r, 650));
-                }
+                } while (loopRef.current);
                 setActiveNote(null); setActiveType(null);
                 isMinor ? setIsPlayingInner(false) : setIsPlayingOuter(false);
+                loopRef.current = false;
+                setIsLooping(false);
             };
 
-            // stopPlayback: immediately halt all playback
-            const stopPlayback = () => {
-                setIsPlayingOuter(false);
-                setIsPlayingInner(false);
-                setActiveNote(null);
-                setActiveType(null);
+            // Toggle loop mode
+            const toggleLoop = () => {
+                setIsLooping(prev => {
+                    loopRef.current = !prev;
+                    return !prev;
+                });
             };
 
             const buildSeq  = (base, start) => { const i = base.indexOf(start); return [...base.slice(i), ...base.slice(0,i)]; };
             const outerBase = ['C','G','D','A','E','B','Gb','Db','Ab','Eb','Bb','F'];
             const innerBase = ['A','E','B','Gb','Db','Ab','Eb','Bb','F','C','G','D'];
 
-            const btn = (bg, mb='8px') => ({
-                width:'100%', padding:'12px', marginBottom:mb,
-                fontSize:'clamp(0.85rem,2.5vw,0.95rem)', fontWeight:'700',
-                fontFamily:"'Montserrat',sans-serif",
-                background:bg, color:'white', border:'none',
-                borderRadius:'50px', cursor:'pointer', minHeight:'48px',
-                boxShadow:'0 4px 12px rgba(0,0,0,0.3)',
-                transition:'all 0.3s ease', letterSpacing:'0.5px'
-            });
-
+            // ── Circle rendering — TIGHT highlight ring (+3), "m" suffix on inner ──
             const renderCircle = () => {
                 const outerRadius=190, innerRadius=135, cx=250, cy=250, outerR=28, innerR=20;
                 return noteOrder.map((note, index) => {
@@ -425,8 +401,11 @@
                     const innerY = cy + innerRadius*Math.sin(innerAngle);
                     const isOuterActive = activeNote===note && (activeType==='outer' || activeType==='tick');
                     const isInnerActive = activeNote===note && (activeType==='inner' || activeType==='tick');
+                    // Inner circle shows note + "m" for minor
+                    const innerLabel = note + 'm';
 
                     return React.createElement('g', {key:note},
+                        // ── Outer circle (Major) ──
                         React.createElement('circle', {
                             cx:outerX, cy:outerY, r:outerR,
                             fill:noteColors[note],
@@ -446,6 +425,7 @@
                             fontSize:'16', fontWeight:'bold', fill:'#000',
                             style:{pointerEvents:'none', userSelect:'none'}
                         }, note),
+                        // ── Inner circle (Minor) — note + "m" label ──
                         React.createElement('circle', {
                             cx:innerX, cy:innerY, r:innerR,
                             fill:noteColors[note],
@@ -460,11 +440,17 @@
                             fill:'none', stroke:'#F4D03F', strokeWidth:2.5, opacity:0.9,
                             style:{pointerEvents:'none'}
                         }) : null,
+                        // Two-line label: note name + "m"
                         React.createElement('text', {
-                            x:innerX, y:innerY+5, textAnchor:'middle',
-                            fontSize:'12', fontWeight:'bold', fill:'#000',
+                            x:innerX, y:innerY+2, textAnchor:'middle',
+                            fontSize:'9', fontWeight:'bold', fill:'#000',
                             style:{pointerEvents:'none', userSelect:'none'}
-                        }, note)
+                        }, note),
+                        React.createElement('text', {
+                            x:innerX, y:innerY+10, textAnchor:'middle',
+                            fontSize:'8', fontWeight:'bold', fill:'#1a1a3a',
+                            style:{pointerEvents:'none', userSelect:'none'}
+                        }, 'm')
                     );
                 });
             };
@@ -472,15 +458,32 @@
             const card = (borderColor, bgFrom, bgTo) => ({
                 background:`linear-gradient(135deg,${bgFrom},${bgTo})`,
                 border:`2px solid ${borderColor}`,
-                borderRadius:'16px', padding:'1.5rem',
+                borderRadius:'16px', padding:'1.25rem',
                 boxShadow:`0 4px 20px ${borderColor}33`
             });
+
+            // Shared button styles
+            const panelBtn = (bg, border, color) => ({
+                flex:1, background:bg, border:`1px solid ${border}`, color,
+                borderRadius:'8px', padding:'9px 4px', fontSize:'0.8rem', fontWeight:'700',
+                cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center',
+                gap:'4px', fontFamily:"'Montserrat',sans-serif",
+                transition:'opacity 0.2s'
+            });
+            const stopBtnStyle = {
+                width:'100%', background:'linear-gradient(135deg,#3a0808,#1a0404)',
+                border:'1.5px solid rgba(255,80,80,0.6)', color:'#FF9999',
+                borderRadius:'8px', padding:'8px', fontSize:'0.82rem', fontWeight:'800',
+                cursor:'pointer', letterSpacing:'2px', fontFamily:"'Montserrat',sans-serif",
+                marginTop:'6px'
+            };
 
             return React.createElement('div', {style:{
                 background:'radial-gradient(ellipse at center,#1a1a2e 0%,#0a0a15 100%)',
                 minHeight:'100vh', padding:'2rem 1rem',
                 fontFamily:"'Montserrat',sans-serif"
             }},
+                // Title
                 React.createElement('div', {style:{textAlign:'center', marginBottom:'2rem'}},
                     React.createElement('h2', {style:{
                         fontFamily:"'Cinzel',serif",
@@ -490,15 +493,17 @@
                         backgroundClip:'text', marginBottom:'0.5rem'
                     }}, 'Circle of Fifths'),
                     React.createElement('p', {style:{color:'rgba(232,232,232,0.65)', fontSize:'clamp(0.88rem,2.5vw,1rem)'}},
-                        'Outer ring = Major • Inner ring = Minor • Click any note to play instantly')
+                        'Outer ring = Major • Inner ring = Minor (note+m) • Click any note to play instantly')
                 ),
 
+                // Main grid
                 React.createElement('div', {style:{
                     maxWidth:'1100px', margin:'0 auto',
                     display:'grid',
                     gridTemplateColumns:'minmax(0,2fr) minmax(0,1fr)',
                     gap:'2rem', alignItems:'start'
                 }},
+                    // ── LEFT COLUMN: circle + recorder mount ──
                     React.createElement('div', {style:{display:'flex', flexDirection:'column', alignItems:'center', gap:'0.75rem'}},
                         React.createElement('div', {style:{
                             width:'100%', maxWidth:'520px',
@@ -539,12 +544,13 @@
                         })
                     ),
 
+                    // ── RIGHT COLUMN: controls ──
                     React.createElement('div', {style:{display:'flex', flexDirection:'column', gap:'0.85rem'}},
 
-                        // ── OUTER — MAJOR ──────────────────────────────
+                        // ── OUTER — MAJOR ──
                         React.createElement('div', {style:card('rgba(0,192,192,0.4)','rgba(0,128,128,0.12)','rgba(0,128,128,0.03)')},
                             React.createElement('h3', {style:{fontFamily:"'Cinzel',serif",color:'#F4D03F',fontSize:'0.9rem',marginBottom:'0.6rem',textAlign:'center',letterSpacing:'1px',textShadow:'0 0 10px rgba(244,208,63,0.3)'}}, '⬤ OUTER — MAJOR'),
-                            // ◀ note selector ▶ row
+                            // ◀ note selector ▶
                             React.createElement('div', {style:{display:'flex',alignItems:'center',gap:'4px',marginBottom:'8px',width:'100%'}},
                                 React.createElement('button', {
                                     onClick:()=>setStartNoteOuter(stepNote(startNoteOuter,'down',outerBase)),
@@ -567,12 +573,12 @@
                                 React.createElement('button', {
                                     onClick:()=>playArpeggio(startNoteOuter,false,'up'),
                                     disabled:isPlayingOuter||isPlayingInner,
-                                    style:{flex:1,background:'linear-gradient(135deg,#007070,#004444)',border:'1px solid rgba(0,192,192,0.4)',color:'#e0ffff',borderRadius:'8px',padding:'9px 4px',fontSize:'0.8rem',fontWeight:'700',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:'4px',opacity:(isPlayingOuter||isPlayingInner)?0.4:1}
+                                    style:{...panelBtn('linear-gradient(135deg,#007070,#004444)','rgba(0,192,192,0.4)','#e0ffff'),opacity:(isPlayingOuter||isPlayingInner)?0.4:1}
                                 }, React.createElement('span',{style:{fontSize:'1rem'}},'▲'), ' Arpeggio'),
                                 React.createElement('button', {
                                     onClick:()=>playArpeggio(startNoteOuter,false,'down'),
                                     disabled:isPlayingOuter||isPlayingInner,
-                                    style:{flex:1,background:'linear-gradient(135deg,#004444,#002828)',border:'1px solid rgba(0,192,192,0.4)',color:'#e0ffff',borderRadius:'8px',padding:'9px 4px',fontSize:'0.8rem',fontWeight:'700',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:'4px',opacity:(isPlayingOuter||isPlayingInner)?0.4:1}
+                                    style:{...panelBtn('linear-gradient(135deg,#004444,#002828)','rgba(0,192,192,0.4)','#e0ffff'),opacity:(isPlayingOuter||isPlayingInner)?0.4:1}
                                 }, React.createElement('span',{style:{fontSize:'1rem'}},'▼'), ' Arpeggio')
                             ),
                             // Chords row
@@ -580,22 +586,18 @@
                                 React.createElement('button', {
                                     onClick:()=>playSequence(buildSeq(outerBase,startNoteOuter),false),
                                     disabled:isPlayingOuter||isPlayingInner,
-                                    style:{flex:1,background:'linear-gradient(135deg,#1a4a4a,#0d2828)',border:'1px solid rgba(0,192,192,0.3)',color:'#a0e8e8',borderRadius:'8px',padding:'9px 4px',fontSize:'0.8rem',fontWeight:'700',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:'4px',opacity:(isPlayingOuter||isPlayingInner)?0.4:1}
+                                    style:{...panelBtn('linear-gradient(135deg,#1a4a4a,#0d2828)','rgba(0,192,192,0.3)','#a0e8e8'),opacity:(isPlayingOuter||isPlayingInner)?0.4:1}
                                 }, React.createElement('span',null,'↻'), ' Chords CW'),
                                 React.createElement('button', {
                                     onClick:()=>playSequence([...buildSeq(outerBase,startNoteOuter)].reverse(),false),
                                     disabled:isPlayingOuter||isPlayingInner,
-                                    style:{flex:1,background:'linear-gradient(135deg,#1a4a4a,#0d2828)',border:'1px solid rgba(0,192,192,0.3)',color:'#a0e8e8',borderRadius:'8px',padding:'9px 4px',fontSize:'0.8rem',fontWeight:'700',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:'4px',opacity:(isPlayingOuter||isPlayingInner)?0.4:1}
+                                    style:{...panelBtn('linear-gradient(135deg,#1a4a4a,#0d2828)','rgba(0,192,192,0.3)','#a0e8e8'),opacity:(isPlayingOuter||isPlayingInner)?0.4:1}
                                 }, React.createElement('span',null,'↺'), ' Chords CCW')
                             ),
-                            // Stop
-                            React.createElement('button', {
-                                onClick:stopPlayback,
-                                style:{width:'100%',background:'linear-gradient(135deg,#3a0808,#1a0404)',border:'1.5px solid rgba(255,80,80,0.6)',color:'#FF9999',borderRadius:'8px',padding:'8px',fontSize:'0.82rem',fontWeight:'800',cursor:'pointer',letterSpacing:'2px'}
-                            }, '■  STOP')
+                            React.createElement('button', {onClick:stopPlayback, style:stopBtnStyle}, '■  STOP')
                         ),
 
-                        // ── INNER — MINOR ──────────────────────────────
+                        // ── INNER — MINOR ──
                         React.createElement('div', {style:card('rgba(139,107,163,0.4)','rgba(139,107,163,0.12)','rgba(139,107,163,0.03)')},
                             React.createElement('h3', {style:{fontFamily:"'Cinzel',serif",color:'#c8a8e8',fontSize:'0.9rem',marginBottom:'0.6rem',textAlign:'center',letterSpacing:'1px',textShadow:'0 0 10px rgba(139,107,163,0.4)'}}, '◉ INNER — MINOR'),
                             React.createElement('div', {style:{display:'flex',alignItems:'center',gap:'4px',marginBottom:'8px',width:'100%'}},
@@ -619,39 +621,46 @@
                                 React.createElement('button', {
                                     onClick:()=>playArpeggio(startNoteInner,true,'up'),
                                     disabled:isPlayingOuter||isPlayingInner,
-                                    style:{flex:1,background:'linear-gradient(135deg,#6a4a8a,#4a2a6a)',border:'1px solid rgba(139,107,163,0.5)',color:'#e0d0f8',borderRadius:'8px',padding:'9px 4px',fontSize:'0.8rem',fontWeight:'700',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:'4px',opacity:(isPlayingOuter||isPlayingInner)?0.4:1}
+                                    style:{...panelBtn('linear-gradient(135deg,#6a4a8a,#4a2a6a)','rgba(139,107,163,0.5)','#e0d0f8'),opacity:(isPlayingOuter||isPlayingInner)?0.4:1}
                                 }, React.createElement('span',{style:{fontSize:'1rem'}},'▲'), ' Arpeggio'),
                                 React.createElement('button', {
                                     onClick:()=>playArpeggio(startNoteInner,true,'down'),
                                     disabled:isPlayingOuter||isPlayingInner,
-                                    style:{flex:1,background:'linear-gradient(135deg,#4a2a6a,#2a1040)',border:'1px solid rgba(139,107,163,0.5)',color:'#e0d0f8',borderRadius:'8px',padding:'9px 4px',fontSize:'0.8rem',fontWeight:'700',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:'4px',opacity:(isPlayingOuter||isPlayingInner)?0.4:1}
+                                    style:{...panelBtn('linear-gradient(135deg,#4a2a6a,#2a1040)','rgba(139,107,163,0.5)','#e0d0f8'),opacity:(isPlayingOuter||isPlayingInner)?0.4:1}
                                 }, React.createElement('span',{style:{fontSize:'1rem'}},'▼'), ' Arpeggio')
                             ),
                             React.createElement('div', {style:{display:'flex',gap:'5px',marginBottom:'5px'}},
                                 React.createElement('button', {
                                     onClick:()=>playSequence(buildSeq(innerBase,startNoteInner),true),
                                     disabled:isPlayingOuter||isPlayingInner,
-                                    style:{flex:1,background:'linear-gradient(135deg,#3a2a50,#221535)',border:'1px solid rgba(139,107,163,0.4)',color:'#c0a0e0',borderRadius:'8px',padding:'9px 4px',fontSize:'0.8rem',fontWeight:'700',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:'4px',opacity:(isPlayingOuter||isPlayingInner)?0.4:1}
+                                    style:{...panelBtn('linear-gradient(135deg,#3a2a50,#221535)','rgba(139,107,163,0.4)','#c0a0e0'),opacity:(isPlayingOuter||isPlayingInner)?0.4:1}
                                 }, React.createElement('span',null,'↻'), ' Chords CW'),
                                 React.createElement('button', {
                                     onClick:()=>playSequence([...buildSeq(innerBase,startNoteInner)].reverse(),true),
                                     disabled:isPlayingOuter||isPlayingInner,
-                                    style:{flex:1,background:'linear-gradient(135deg,#3a2a50,#221535)',border:'1px solid rgba(139,107,163,0.4)',color:'#c0a0e0',borderRadius:'8px',padding:'9px 4px',fontSize:'0.8rem',fontWeight:'700',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:'4px',opacity:(isPlayingOuter||isPlayingInner)?0.4:1}
+                                    style:{...panelBtn('linear-gradient(135deg,#3a2a50,#221535)','rgba(139,107,163,0.4)','#c0a0e0'),opacity:(isPlayingOuter||isPlayingInner)?0.4:1}
                                 }, React.createElement('span',null,'↺'), ' Chords CCW')
                             ),
-                            React.createElement('button', {
-                                onClick:stopPlayback,
-                                style:{width:'100%',background:'linear-gradient(135deg,#3a0820,#1a0410)',border:'1.5px solid rgba(255,80,80,0.6)',color:'#FF9999',borderRadius:'8px',padding:'8px',fontSize:'0.82rem',fontWeight:'800',cursor:'pointer',letterSpacing:'2px'}
-                            }, '■  STOP')
+                            React.createElement('button', {onClick:stopPlayback, style:{...stopBtnStyle, background:'linear-gradient(135deg,#3a0820,#1a0410)'}}, '■  STOP')
                         ),
 
-                        // ── HOW TO USE ─────────────────────────────────
+                        // ── LOOP TOGGLE ──
+                        React.createElement('div', {style:{display:'flex',alignItems:'center',justifyContent:'center',gap:'10px',padding:'10px',background:'rgba(255,255,255,0.04)',border:`1px solid ${isLooping?'rgba(244,208,63,0.5)':'rgba(0,128,128,0.2)'}`,borderRadius:'12px',cursor:'pointer',transition:'all 0.3s'},
+                            onClick:toggleLoop
+                        },
+                            React.createElement('span', {style:{fontSize:'1.3rem'}}, isLooping ? '🔁' : '➡️'),
+                            React.createElement('span', {style:{color:isLooping?'#F4D03F':'rgba(232,232,232,0.65)',fontWeight:'700',fontSize:'0.88rem',letterSpacing:'1px'}},
+                                isLooping ? 'LOOP ON — click to cancel' : 'LOOP OFF — click to enable')
+                        ),
+
+                        // ── HOW TO USE ──
                         React.createElement('div', {style:{background:'rgba(255,255,255,0.04)',border:'1px solid rgba(0,128,128,0.2)',borderRadius:'12px',padding:'1rem',color:'rgba(232,232,232,0.75)',fontSize:'0.8rem',lineHeight:'1.7'}},
                             React.createElement('p', {style:{fontWeight:'700',color:'#F4D03F',marginBottom:'6px',fontFamily:"'Cinzel',serif",fontSize:'0.85rem'}}, '🎓 HOW TO USE'),
                             React.createElement('p', {style:{marginBottom:'4px'}}, 'Click any note on the wheel to hear its chord.'),
                             React.createElement('p', {style:{marginBottom:'4px'}}, '◀ ▶ step through keys • ↻ ↺ play around the circle'),
                             React.createElement('p', {style:{marginBottom:'4px'}}, '▲ Arpeggio = 1-3-5 ascending • ▼ = 5-3-1 descending'),
-                            React.createElement('p', null, 'Hit ⏺ REC below the circle to capture your performance.')
+                            React.createElement('p', {style:{marginBottom:'4px'}}, 'Inner ring: note+m = minor (e.g. Am, Em, Bm...)'),
+                            React.createElement('p', null, 'Enable LOOP then hit Chords CW/CCW to cycle forever.')
                         )
                     )
                 )
@@ -660,128 +669,76 @@
 
         ReactDOM.render(React.createElement(MusicCircle), document.getElementById('root'));
 
-        // ── KCM Console bridge listener ───────────────────────────────────────
-        // Receives KCM_STATE from Console host (bridge.js).
-        // Maps bus root (sharp notation) → CoF note (flat notation where needed).
-        // Sets startNoteOuter to the root's major key.
-        // Sets startNoteInner to the relative minor (root - 3 semitones in CoF order).
-        // Added: Session 5 — 2026-04-25
+        // ── KCM Console bridge listener ──────────────────────────────────────
         (function mountKCMListener() {
-            // KCM bus uses sharps; CoF uses flats for black keys
-            var SHARP_TO_FLAT = {
-                'C#':'Db','D#':'Eb','F#':'Gb','G#':'Ab','A#':'Bb'
-            };
-            // Circle of Fifths order — used to find relative minor
+            var SHARP_TO_FLAT = {'C#':'Db','D#':'Eb','F#':'Gb','G#':'Ab','A#':'Bb'};
             var COF_ORDER = ['C','G','D','A','E','B','Gb','Db','Ab','Eb','Bb','F'];
-            // Relative minor for each major (3 semitones down = 5 positions back in CoF)
             var RELATIVE_MINOR = {
                 'C':'A','G':'E','D':'B','A':'Gb','E':'Db','B':'Ab',
                 'Gb':'Eb','Db':'Bb','Ab':'F','Eb':'C','Bb':'G','F':'D'
             };
-
             window.addEventListener('message', function(ev) {
                 try {
                     if (!ev.data) return;
-
-                    // ── TICK (master clock beat) ──────────────────────
-                    // Fired by bridge.js on every beat — highlight the
-                    // wedge/note on the CoF wheel that matches the tick.
                     if (ev.data.type === 'KCM_TICK') {
                         var tk = ev.data.payload;
                         if (!window._kcmCoF) return;
-
-                        // Map MIDI notePC (0-11 chromatic) → CoF flat notation
                         var PC_TO_COF = ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
                         var cofNote = PC_TO_COF[tk.notePC];
                         if (!cofNote) return;
-
-                        // Flash the note on the wheel
                         window._kcmCoF.setActiveNote(cofNote);
                         window._kcmCoF.setActiveType('tick');
-
-                        // Clear after 75% of the beat duration so it pulses cleanly
                         var clearAfter = Math.max(tk.beatMs * 0.7, 120);
                         setTimeout(function() {
-                            if (window._kcmCoF) {
-                                window._kcmCoF.setActiveNote(null);
-                                window._kcmCoF.setActiveType(null);
-                            }
+                            if (window._kcmCoF) { window._kcmCoF.setActiveNote(null); window._kcmCoF.setActiveType(null); }
                         }, clearAfter);
                         return;
                     }
-
-                    // ── TICK STOP ─────────────────────────────────────
                     if (ev.data.type === 'KCM_TICK_STOP') {
-                        if (window._kcmCoF) {
-                            window._kcmCoF.setActiveNote(null);
-                            window._kcmCoF.setActiveType(null);
-                        }
+                        if (window._kcmCoF) { window._kcmCoF.setActiveNote(null); window._kcmCoF.setActiveType(null); }
                         return;
                     }
-
-                    // ── STOP ALL ─────────────────────────────────────
                     if (ev.data.type === 'KCM_STOP') {
-                        if (audioCtxRef && audioCtxRef.current) {
-                            audioCtxRef.current.suspend();
-                        }
-                        if (window._kcmCoF) {
-                            window._kcmCoF.setActiveNote(null);
-                            window._kcmCoF.setActiveType(null);
-                        }
-                        console.log('[KCM→CoF] stop received.');
+                        if (window._kcmCoF) { window._kcmCoF.setActiveNote(null); window._kcmCoF.setActiveType(null); }
                         return;
                     }
-
                     if (ev.data.type !== 'KCM_STATE') return;
                     var payload = ev.data.payload;
                     if (!payload || !payload.root) return;
-
-                    // Normalise root to CoF notation (sharps → flats)
                     var root = SHARP_TO_FLAT[payload.root] || payload.root;
-
-                    // Verify root exists in CoF wheel
                     if (COF_ORDER.indexOf(root) === -1) return;
-
-                    // Drive React state via the exposed _kcmCoF handle
                     if (window._kcmCoF) {
                         window._kcmCoF.setStartNoteOuter(root);
                         var relMinor = RELATIVE_MINOR[root];
                         if (relMinor) window._kcmCoF.setStartNoteInner(relMinor);
-                        // Flash active note briefly so user sees the update
                         window._kcmCoF.setActiveNote(root);
                         window._kcmCoF.setActiveType('outer');
                         setTimeout(function() {
-                            if (window._kcmCoF) {
-                                window._kcmCoF.setActiveNote(null);
-                                window._kcmCoF.setActiveType(null);
-                            }
+                            if (window._kcmCoF) { window._kcmCoF.setActiveNote(null); window._kcmCoF.setActiveType(null); }
                         }, 800);
                     }
-
-                    console.log('[KCM→CoF] root=' + payload.root + '→' + root +
-                                ' relMinor=' + RELATIVE_MINOR[root]);
-                } catch(e) {
-                    console.error('[KCM→CoF] listener error:', e);
-                }
+                    console.log('[KCM→CoF] root=' + payload.root + '→' + root + ' relMinor=' + RELATIVE_MINOR[root]);
+                } catch(e) { console.error('[KCM→CoF] listener error:', e); }
             });
-
             console.log('[KCM→CoF] bridge listener ready (circle-of-fifths).');
         })();
-        // ── end KCM Console bridge listener ──────────────────────────────────
     </script>
+
     <!-- KCM MIDI Recorder — Phase 2 -->
     <script src="/js/kcm-midi-recorder.js"></script>
     <script>
         window.addEventListener('load', function() {
             if (!window.KCMRecorder) return;
             KCMRecorder.init();
+            // If AudioContext was already created before load, wire it now
+            // (normally it is created lazily on first click — connectSynthOutput
+            //  handles that path inside getAudioCtx above)
             // Move recorder bar into the mount point under the circle
             var tries = 0;
             function mountBar() {
                 var mount = document.getElementById('kcm-recorder-mount');
                 var bar   = document.getElementById('kcm-recorder-bar');
                 if (mount && bar) {
-                    // Override fixed positioning so it sits in-flow
                     bar.style.cssText = [
                         'position:static !important',
                         'transform:none !important',
@@ -802,7 +759,6 @@
         });
     </script>
 
-    <!-- KCM STANDARD FOOTER -->
     <footer class="app-footer" role="contentinfo">
         <div class="app-footer-content">
             <div class="app-footer-divider"></div>
