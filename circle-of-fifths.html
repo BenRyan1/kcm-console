@@ -525,16 +525,22 @@
                         'Outer ring = Major • Inner ring = Minor (note+m) • Click any note to play instantly')
                 ),
 
-                // ── NEW LAYOUT: large centered circle top, panels side-by-side below ──
-                React.createElement('div', {style:{maxWidth:'900px', margin:'0 auto', display:'flex', flexDirection:'column', alignItems:'center', gap:'1.5rem'}},
+                // ── LAYOUT: panels flank circle left/right, recorder below circle ──
+                React.createElement('div', {style:{maxWidth:'1200px', margin:'0 auto', display:'flex', flexDirection:'column', alignItems:'center', gap:'0.75rem'}},
 
-                    // ── TOP: big centered circle ──
-                    React.createElement('div', {style:{display:'flex', flexDirection:'column', alignItems:'center', gap:'0.75rem', width:'100%'}},
+                    // ── THREE COLUMN ROW: OUTER | CIRCLE | INNER ──
+                    React.createElement('div', {style:{display:'grid', gridTemplateColumns:'240px 1fr 240px', gap:'1rem', width:'100%', alignItems:'center'}},
+
+                        // placeholder — OUTER panel comes after circle in DOM but renders left via grid
+                        // We use grid-column ordering below
+
+                        // ── CENTER: circle ──
                         React.createElement('div', {style:{
-                            width:'100%', maxWidth:'680px',
+                            gridColumn:'2', gridRow:'1',
+                            width:'100%',
                             background:'linear-gradient(135deg,rgba(0,128,128,0.08),rgba(139,107,163,0.08))',
                             border:'2px solid rgba(0,128,128,0.3)',
-                            borderRadius:'20px', padding:'1.25rem',
+                            borderRadius:'20px', padding:'1rem',
                             boxShadow:'0 8px 40px rgba(0,128,128,0.15)'
                         }},
                             React.createElement('svg', {
@@ -563,14 +569,11 @@
                             )
                         ),
                         // ── Recorder bar mounts here (under circle, centered) ──
-                        React.createElement('div', {
-                            id:'kcm-recorder-mount',
-                            style:{width:'100%',maxWidth:'680px',minHeight:'4px'}
-                        })
-                    ),
+                        // recorder mount is outside the SVG wrapper — placed after circle col
+                    ),  // end circle center col
 
-                    // ── BOTTOM: two panels side by side ──
-                    React.createElement('div', {style:{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'1rem', width:'100%', maxWidth:'900px'}},
+                    // ── LEFT: OUTER MAJOR panel ──
+                    React.createElement('div', {style:{gridColumn:'1', gridRow:'1', display:'flex', flexDirection:'column', gap:'0.6rem'}},
 
                         // ── OUTER — MAJOR ──
                         React.createElement('div', {style:card('rgba(0,192,192,0.4)','rgba(0,128,128,0.12)','rgba(0,128,128,0.03)')},
@@ -641,6 +644,10 @@
                             React.createElement('button', {onClick:stopPlayback, style:stopBtnStyle}, '■  STOP')
                         ),
 
+                    ),  // end LEFT outer panel col
+
+                    // ── RIGHT: INNER MINOR panel ──
+                    React.createElement('div', {style:{gridColumn:'3', gridRow:'1', display:'flex', flexDirection:'column', gap:'0.6rem'}},
                         // ── INNER — MINOR ──
                         React.createElement('div', {style:card('rgba(139,107,163,0.4)','rgba(139,107,163,0.12)','rgba(139,107,163,0.03)')},
                             React.createElement('h3', {style:{fontFamily:"'Cinzel',serif",color:'#c8a8e8',fontSize:'0.9rem',marginBottom:'0.6rem',textAlign:'center',letterSpacing:'1px',textShadow:'0 0 10px rgba(139,107,163,0.4)'}}, '◉ INNER — MINOR'),
@@ -708,8 +715,18 @@
                             React.createElement('button', {onClick:stopPlayback, style:{...stopBtnStyle, background:'linear-gradient(135deg,#3a0820,#1a0410)'}}, '■  STOP')
                         ),
 
-                        // ── LOOP TOGGLE — spans both cols via CSS grid trick ──
-                        React.createElement('div', {style:{display:'flex',alignItems:'center',justifyContent:'center',gap:'10px',padding:'10px',background:'rgba(255,255,255,0.04)',border:`1px solid ${isLooping?'rgba(244,208,63,0.5)':'rgba(0,128,128,0.2)'}`,borderRadius:'12px',cursor:'pointer',transition:'all 0.3s', gridColumn:'1 / -1'},
+                    ),  // end RIGHT inner panel col
+
+                    ),  // end THREE COLUMN ROW grid
+
+                    // ── RECORDER MOUNT — centered under circle ──
+                    React.createElement('div', {
+                        id:'kcm-recorder-mount',
+                        style:{width:'100%', maxWidth:'500px', minHeight:'4px'}
+                    }),
+
+                    // ── LOOP TOGGLE — full width below recorder ──
+                    React.createElement('div', {style:{display:'flex',alignItems:'center',justifyContent:'center',gap:'10px',padding:'10px',background:'rgba(255,255,255,0.04)',border:`1px solid ${isLooping?'rgba(244,208,63,0.5)':'rgba(0,128,128,0.2)'}`,borderRadius:'12px',cursor:'pointer',transition:'all 0.3s', width:'100%', maxWidth:'500px'},
                             onClick:toggleLoop
                         },
                             React.createElement('span', {style:{fontSize:'1.3rem'}}, isLooping ? '🔁' : '➡️'),
@@ -718,13 +735,13 @@
                         ),
 
                         // ── HOW TO USE — spans both cols ──
-                        React.createElement('div', {style:{background:'rgba(255,255,255,0.04)',border:'1px solid rgba(0,128,128,0.2)',borderRadius:'12px',padding:'1rem',color:'rgba(232,232,232,0.75)',fontSize:'0.8rem',lineHeight:'1.7', gridColumn:'1 / -1'}},
+                        React.createElement('div', {style:{background:'rgba(255,255,255,0.04)',border:'1px solid rgba(0,128,128,0.2)',borderRadius:'12px',padding:'1rem',color:'rgba(232,232,232,0.75)',fontSize:'0.8rem',lineHeight:'1.7', width:'100%', maxWidth:'700px'}},
                             React.createElement('p', {style:{fontWeight:'700',color:'#F4D03F',marginBottom:'6px',fontFamily:"'Cinzel',serif",fontSize:'0.85rem'}}, '🎓 HOW TO USE'),
                             React.createElement('p', {style:{marginBottom:'4px'}}, 'Click any note on the wheel to hear its chord.'),
                             React.createElement('p', {style:{marginBottom:'4px'}}, '◀ ▶ step through keys • ↻ ↺ play around the circle'),
                             React.createElement('p', {style:{marginBottom:'4px'}}, '▲ Arpeggio = 1-3-5 ascending • ▼ = 5-3-1 descending'),
                             React.createElement('p', {style:{marginBottom:'4px'}}, 'Inner ring: note+m = minor (e.g. Am, Em, Bm...)'),
-                            React.createElement('p', null, 'Enable LOOP then hit Dominant/Sub-Dominant to cycle forever.')
+                            React.createElement('p', null, 'Enable LOOP then hit Sub-Dom/Dominant to cycle. Hit REC then play to record WAV + MIDI.')
                         )
                     )
                 )
@@ -830,7 +847,7 @@
                         'position:static !important',
                         'transform:none !important',
                         'width:100% !important',
-                        'max-width:680px !important',
+                        'max-width:500px !important',
                         'margin:0 auto !important',
                         'box-sizing:border-box !important',
                         'border-radius:12px !important',
