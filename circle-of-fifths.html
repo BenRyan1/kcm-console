@@ -231,6 +231,7 @@
             const [startNoteInner, setStartNoteInner] = useState('A');
             const [isLooping,      setIsLooping]      = useState(false);
             const loopRef   = useRef(false);
+            const stopRef   = useRef(false); // set true by stopPlayback to cancel sequences
             const audioCtxRef = useRef(null);
 
             useEffect(() => {
@@ -288,11 +289,14 @@
             // Stop everything immediately
             const stopPlayback = () => {
                 loopRef.current = false;
+                stopRef.current = true;  // signal all sequences to halt
                 setIsLooping(false);
                 setIsPlayingOuter(false);
                 setIsPlayingInner(false);
                 setActiveNote(null);
                 setActiveType(null);
+                // reset stop flag after a tick so next play works
+                setTimeout(() => { stopRef.current = false; }, 100);
             };
 
             // Click a note on the wheel — play its triad
@@ -356,23 +360,26 @@
                 if (isPlayingOuter || isPlayingInner) return;
                 const ctx = getAudioCtx();
                 isMinor ? setIsPlayingInner(true) : setIsPlayingOuter(true);
+                let cancelled = false;
                 do {
                     for (let i = 0; i < notes.length; i++) {
-                        if (!loopRef.current && isLooping) break; // loop was cancelled mid-sequence
+                        // Check if STOP was hit
+                        if (stopRef.current) { cancelled = true; break; }
                         const note  = notes[i];
                         const triad = isMinor ? getMinorTriad(note) : getTriad(note);
+                        // Highlight BEFORE playing
                         setActiveNote(note); setActiveType(isMinor ? 'inner' : 'outer');
-                        await new Promise(r => setTimeout(r, 0)); // flush React render
-                        playNotes(ctx, triad, 4, 0.7, 0, getMasterGain());
+                        await new Promise(r => setTimeout(r, 16)); // one frame — let React render
+                        playNotes(ctx, triad, 4, 0.65, 0, getMasterGain());
                         postToConsole({ root: toSharp(note), mode: isMinor ? 'aeolian' : 'ionian' });
                         if (window.KCMRecorder) {
                             triad.forEach(n => KCMRecorder.noteOnByName(n, 4, isMinor ? 80 : 100));
-                            setTimeout(() => triad.forEach(n => KCMRecorder.noteOffByName(n, 4)), 550);
+                            setTimeout(() => triad.forEach(n => KCMRecorder.noteOffByName(n, 4)), 520);
                         }
                         await new Promise(r => setTimeout(r, 650));
-                        if (!loopRef.current) break;
+                        if (!loopRef.current) { cancelled = true; break; }
                     }
-                } while (loopRef.current);
+                } while (loopRef.current && !cancelled && !stopRef.current);
                 setActiveNote(null); setActiveType(null);
                 isMinor ? setIsPlayingInner(false) : setIsPlayingOuter(false);
                 loopRef.current = false;
