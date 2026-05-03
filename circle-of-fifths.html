@@ -254,18 +254,28 @@
             const FLAT_TO_SHARP = {'Db':'C#','Eb':'D#','Gb':'F#','Ab':'G#','Bb':'A#'};
             const toSharp = note => FLAT_TO_SHARP[note] || note;
 
+            // Relative minor of each major key (same position on CoF)
+            const REL_MINOR = {'C':'A','G':'E','D':'B','A':'Gb','E':'Db','B':'Ab','Gb':'Eb','Db':'Bb','Ab':'F','Eb':'C','Bb':'G','F':'D'};
+            // Relative major of each minor key
+            const REL_MAJOR = {'A':'C','E':'G','B':'D','Gb':'A','Db':'E','Ab':'B','Eb':'Gb','Bb':'Db','F':'Ab','C':'Eb','G':'Bb','D':'F'};
+
             // masterGainRef: all synth output flows through this → recorder captures it
             const masterGainRef = useRef(null);
 
             function getAudioCtx() {
                 if (!audioCtxRef.current || audioCtxRef.current.state === 'closed') {
-                    audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
-                    // Create master gain and wire into recorder synth capture
-                    masterGainRef.current = audioCtxRef.current.createGain();
-                    masterGainRef.current.gain.value = 1.0;
-                    masterGainRef.current.connect(audioCtxRef.current.destination);
-                    if (window.KCMRecorder && window.KCMRecorder.connectSynthOutput) {
-                        window.KCMRecorder.connectSynthOutput(audioCtxRef.current, masterGainRef.current);
+                    // Reuse primed context if available (already wired to recorder)
+                    if (window._kcmPrimedCtx && window._kcmPrimedCtx.state !== 'closed') {
+                        audioCtxRef.current  = window._kcmPrimedCtx;
+                        masterGainRef.current = window._kcmPrimedGain;
+                    } else {
+                        audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
+                        masterGainRef.current = audioCtxRef.current.createGain();
+                        masterGainRef.current.gain.value = 1.0;
+                        masterGainRef.current.connect(audioCtxRef.current.destination);
+                        if (window.KCMRecorder && window.KCMRecorder.connectSynthOutput) {
+                            window.KCMRecorder.connectSynthOutput(audioCtxRef.current, masterGainRef.current);
+                        }
                     }
                 }
                 if (audioCtxRef.current.state === 'suspended') audioCtxRef.current.resume();
@@ -422,7 +432,12 @@
                             strokeWidth:isOuterActive?4:2,
                             opacity:isOuterActive?1:0.88,
                             style:{cursor:'pointer'},
-                            onClick:()=>playTriad(note, false)
+                            onClick:()=>{
+                                    setStartNoteOuter(note);
+                                    const relMin = REL_MINOR[note];
+                                    if (relMin) setStartNoteInner(relMin);
+                                    playTriad(note, false);
+                                }
                         }),
                         isOuterActive ? React.createElement('circle', {
                             cx:outerX, cy:outerY, r:outerR+3,
@@ -442,7 +457,12 @@
                             strokeWidth:isInnerActive?3:1.5,
                             opacity:isInnerActive?1:0.88,
                             style:{cursor:'pointer'},
-                            onClick:()=>playTriad(note, true)
+                            onClick:()=>{
+                                    setStartNoteInner(note);
+                                    const relMaj = REL_MAJOR[note];
+                                    if (relMaj) setStartNoteOuter(relMaj);
+                                    playTriad(note, true);
+                                }
                         }),
                         isInnerActive ? React.createElement('circle', {
                             cx:innerX, cy:innerY, r:innerR+3,
@@ -778,9 +798,32 @@
         window.addEventListener('load', function() {
             if (!window.KCMRecorder) return;
             KCMRecorder.init();
-            // If AudioContext was already created before load, wire it now
-            // (normally it is created lazily on first click — connectSynthOutput
-            //  handles that path inside getAudioCtx above)
+
+            // Prime AudioContext on first user gesture anywhere on page
+            // so that REC button works even before any note is clicked
+            function primeAudio() {
+                if (window._kcmAudioPrimed) return;
+                window._kcmAudioPrimed = true;
+                try {
+                    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    const gain = ctx.createGain();
+                    gain.gain.value = 1.0;
+                    gain.connect(ctx.destination);
+                    if (window.KCMRecorder && window.KCMRecorder.connectSynthOutput) {
+                        window.KCMRecorder.connectSynthOutput(ctx, gain);
+                    }
+                    // Store so React component can reuse this context
+                    window._kcmPrimedCtx  = ctx;
+                    window._kcmPrimedGain = gain;
+                    console.log('[KCM] AudioContext primed for recording.');
+                } catch(e) {
+                    console.warn('[KCM] Could not prime AudioContext:', e.message);
+                }
+                document.removeEventListener('click', primeAudio);
+                document.removeEventListener('touchstart', primeAudio);
+            }
+            document.addEventListener('click', primeAudio);
+            document.addEventListener('touchstart', primeAudio);
             // Move recorder bar into the mount point under the circle
             var tries = 0;
             function mountBar() {
