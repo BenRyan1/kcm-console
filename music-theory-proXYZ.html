@@ -1037,31 +1037,6 @@ input[type="range"]::-webkit-slider-thumb {
      ============================================================ -->
 <div class="app-container" id="main-content" role="main">
 
-    <button id="startAudio" aria-label="Start audio engine">🔊 START AUDIO ENGINE</button>
-
-    <!-- VIEW TOGGLE -->
-    <div class="view-toggle" role="group" aria-label="View selector">
-        <button class="view-btn active" data-view="circle">⭕ Chromatic Circle</button>
-        <button class="view-btn" data-view="guitar">🎸 Guitar Fretboard</button>
-        <button class="view-btn" data-view="keyboard">🎹 Piano Keyboard</button>
-        <button class="view-btn" data-view="ear">👂 Ear Training</button>
-    </div>
-
-    <!-- LEVEL SELECTOR -->
-    <div class="level-selector" role="group" aria-label="Learning mode selector">
-        <button class="level-btn active" data-level="1">Single Note</button>
-        <button class="level-btn" data-level="2">Intervals</button>
-        <button class="level-btn" data-level="3">Triads</button>
-        <button class="level-btn" data-level="4">7th Chords</button>
-        <button class="level-btn" data-level="5">Pentatonic</button>
-        <button class="level-btn" data-level="7">Major Scale</button>
-        <button class="level-btn" data-level="minor">Minor Scales</button>
-        <button class="level-btn" data-level="modes">Modes</button>
-        <button class="level-btn" data-level="harmMajor">Harmonized Major</button>
-        <button class="level-btn" data-level="harmMinor">Harmonized Minor</button>
-        <button class="level-btn" data-level="freeplay">Free Play</button>
-    </div>
-
     <!-- PROGRESSION CONTROLS -->
     <div class="progression-controls" id="progressionControls" aria-live="polite">
         <h4>🎼 Chord Progressions in Key of <span id="progressionKey">C</span></h4>
@@ -1081,37 +1056,6 @@ input[type="range"]::-webkit-slider-thumb {
             🎨 FREE PLAY MODE — Click multiple notes to select them, then use the buttons below to play as CHORD (simultaneous) or SEQUENCE (one by one)!
         </div>
 
-        <!-- OCTAVE & TEMPO -->
-        <div style="display:flex; gap:12px; justify-content:center; margin-bottom:1.1rem; flex-wrap:wrap; align-items:center;">
-            <button class="octave-btn" id="octaveDown" aria-label="Lower octave">◀ Lower</button>
-            <div class="octave-display" aria-live="polite">
-                <div style="font-size:0.65rem; opacity:0.7; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Octave / Register</div>
-                <div id="octaveLabel" style="font-size:0.9rem; color:var(--primary-gold);">Octave 4 (Middle C)</div>
-            </div>
-            <button class="octave-btn" id="octaveUp" aria-label="Raise octave">Higher ▶</button>
-        </div>
-
-        <!-- TEMPO SLIDER -->
-        <div style="display:flex; gap:12px; justify-content:center; margin-bottom:1.1rem; flex-wrap:wrap;">
-            <div style="background:rgba(0,128,128,0.1); padding:1rem 1.25rem; border-radius:10px; border:2px solid rgba(0,128,128,0.2); min-width:300px;">
-                <div style="font-size:0.65rem; opacity:0.8; text-align:center; margin-bottom:0.5rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--primary-gold);">⏱ Playback Speed</div>
-                <div style="display:flex; align-items:center; gap:10px;">
-                    <span style="font-size:0.7rem; font-weight:700; min-width:38px;">SLOW</span>
-                    <input type="range" id="tempoSlider" min="40" max="240" value="120" step="10" style="flex:1;" aria-label="Tempo in BPM">
-                    <span style="font-size:0.7rem; font-weight:700; min-width:38px; text-align:right;">FAST</span>
-                </div>
-                <div style="text-align:center; margin-top:4px; font-size:1.1rem; font-weight:800; color:var(--primary-gold);"><span id="bpmDisplay">120</span> BPM</div>
-            </div>
-        </div>
-
-        <!-- PLAY BUTTONS -->
-        <div style="display:flex; gap:10px; justify-content:center; margin-bottom:1.25rem; flex-wrap:wrap;">
-            <button class="play-btn" id="playUpBtn" style="flex:1; max-width:160px;">↑ Ascending</button>
-            <button class="play-btn" id="playDownBtn" style="flex:1; max-width:160px;">↓ Descending</button>
-            <button class="play-btn" id="playScaleBtn" style="flex:1; max-width:160px;">♫ Full Scale</button>
-            <button class="play-btn" id="playChordBtn" style="flex:1; max-width:160px;">♪ Play Chord</button>
-        </div>
-
         <!-- VIEWS CONTAINER -->
         <div style="display:flex; flex-direction:column; gap:1.25rem; background:rgba(0,0,0,0.35); padding:1.75rem; border-radius:14px; border:1px solid rgba(0,128,128,0.15);">
 
@@ -1123,6 +1067,63 @@ input[type="range"]::-webkit-slider-thumb {
                     🎼 STAFF NOTATION
                 </div>
                 <svg id="staffSVG" viewBox="0 0 220 100" preserveAspectRatio="xMidYMid meet" aria-hidden="true"></svg>
+            </div>
+
+            <!-- START AUDIO / VIEW TOGGLE / LEVEL SELECTOR — moved below Staff Notation -->
+            <button id="startAudio" aria-label="Start audio engine">🔊 START AUDIO ENGINE</button>
+
+            <!-- VIEW TOGGLE -->
+            <div class="view-toggle" role="group" aria-label="View selector">
+                <button class="view-btn active" data-view="circle">⭕ Chromatic Circle</button>
+                <button class="view-btn" data-view="guitar">🎸 Guitar Fretboard</button>
+                <button class="view-btn" data-view="keyboard">🎹 Piano Keyboard</button>
+                <button class="view-btn" data-view="ear">👂 Ear Training</button>
+            </div>
+
+            <!-- LEVEL SELECTOR -->
+            <div class="level-selector" role="group" aria-label="Learning mode selector">
+                <button class="level-btn active" data-level="1">Single Note</button>
+                <button class="level-btn" data-level="2">Intervals</button>
+                <button class="level-btn" data-level="3">Triads</button>
+                <button class="level-btn" data-level="4">7th Chords</button>
+                <button class="level-btn" data-level="5">Pentatonic</button>
+                <button class="level-btn" data-level="7">Major Scale</button>
+                <button class="level-btn" data-level="minor">Minor Scales</button>
+                <button class="level-btn" data-level="modes">Modes</button>
+                <button class="level-btn" data-level="harmMajor">Harmonized Major</button>
+                <button class="level-btn" data-level="harmMinor">Harmonized Minor</button>
+                <button class="level-btn" data-level="freeplay">Free Play</button>
+            </div>
+
+            <!-- PLAY BUTTONS — between level selector and octave controls -->
+            <div style="display:flex; gap:10px; justify-content:center; margin-bottom:1.25rem; flex-wrap:wrap;">
+                <button class="play-btn" id="playUpBtn" style="flex:1; max-width:160px;">↑ Ascending</button>
+                <button class="play-btn" id="playDownBtn" style="flex:1; max-width:160px;">↓ Descending</button>
+                <button class="play-btn" id="playScaleBtn" style="flex:1; max-width:160px;">♫ Full Scale</button>
+                <button class="play-btn" id="playChordBtn" style="flex:1; max-width:160px;">♪ Play Chord</button>
+            </div>
+
+            <!-- OCTAVE & TEMPO — below level selector -->
+            <div style="display:flex; gap:12px; justify-content:center; margin-bottom:1.1rem; flex-wrap:wrap; align-items:center;">
+                <button class="octave-btn" id="octaveDown" aria-label="Lower octave">◀ Lower</button>
+                <div class="octave-display" aria-live="polite">
+                    <div style="font-size:0.65rem; opacity:0.7; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Octave / Register</div>
+                    <div id="octaveLabel" style="font-size:0.9rem; color:var(--primary-gold);">Octave 4 (Middle C)</div>
+                </div>
+                <button class="octave-btn" id="octaveUp" aria-label="Raise octave">Higher ▶</button>
+            </div>
+
+            <!-- TEMPO SLIDER -->
+            <div style="display:flex; gap:12px; justify-content:center; margin-bottom:1.1rem; flex-wrap:wrap;">
+                <div style="background:rgba(0,128,128,0.1); padding:1rem 1.25rem; border-radius:10px; border:2px solid rgba(0,128,128,0.2); min-width:300px;">
+                    <div style="font-size:0.65rem; opacity:0.8; text-align:center; margin-bottom:0.5rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--primary-gold);">⏱ Playback Speed</div>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <span style="font-size:0.7rem; font-weight:700; min-width:38px;">SLOW</span>
+                        <input type="range" id="tempoSlider" min="40" max="240" value="120" step="10" style="flex:1;" aria-label="Tempo in BPM">
+                        <span style="font-size:0.7rem; font-weight:700; min-width:38px; text-align:right;">FAST</span>
+                    </div>
+                    <div style="text-align:center; margin-top:4px; font-size:1.1rem; font-weight:800; color:var(--primary-gold);"><span id="bpmDisplay">120</span> BPM</div>
+                </div>
             </div>
 
             <!-- PIANO KEYBOARD -->
