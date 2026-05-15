@@ -1,0 +1,2287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+<!-- ── PRIMARY SEO ─────────────────────────────────────────────────── -->
+<title>Sound Observatory v29 — Real-Time Audio Visualizer | Keys, Codes &amp; Modes™</title>
+<meta name="description" content="Real-time polyphonic audio visualizer with 8 synchronized displays: chromatic wheel, oscilloscope, Lissajous figures, Chladni cymatics, spectral waterfall, piano keyboard, staff notation, and guitar fretboard. Powered by the KCM 12-Color Chromatic Spectrum™.">
+<meta name="keywords" content="sound visualizer, audio visualizer, music theory, chromatic wheel, oscilloscope, Lissajous, cymatics, Chladni pattern, spectral waterfall, piano keyboard, guitar fretboard, staff notation, KCM, Keys Codes Modes, real-time audio, music education">
+<meta name="author" content="Benjamin Ryan — Keys, Codes &amp; Modes™">
+<meta name="robots" content="index, follow">
+<meta name="theme-color" content="#030508">
+<link rel="canonical" href="https://keyscodesandmodes.com/apps/kcm-sound-observatory.html">
+
+<!-- ── OPEN GRAPH (Facebook, LinkedIn) ───────────────────────────── -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="Sound Observatory — Real-Time Audio Visualizer | KCM™">
+<meta property="og:description" content="8 synchronized real-time audio displays: chromatic wheel, oscilloscope, Lissajous, cymatics, waterfall, piano, staff notation & guitar neck. KCM 12-Color Spectrum™.">
+<meta property="og:url" content="https://keyscodesandmodes.com/apps/kcm-sound-observatory.html">
+<meta property="og:image" content="https://keyscodesandmodes.com/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:site_name" content="Keys, Codes &amp; Modes™">
+<meta property="og:locale" content="en_US">
+
+<!-- ── TWITTER CARD ───────────────────────────────────────────────── -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Sound Observatory — Real-Time Audio Visualizer | KCM™">
+<meta name="twitter:description" content="8 synchronized real-time audio displays powered by the KCM 12-Color Chromatic Spectrum™.">
+<meta name="twitter:image" content="https://keyscodesandmodes.com/og-image.png">
+
+<!-- ── STRUCTURED DATA (Schema.org WebApplication) ───────────────── -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "KCM Sound Observatory",
+  "description": "Real-time polyphonic audio visualizer with 8 synchronized displays powered by the KCM 12-Color Chromatic Spectrum™.",
+  "url": "https://keyscodesandmodes.com/apps/kcm-sound-observatory.html",
+  "applicationCategory": "EducationalApplication",
+  "operatingSystem": "Web Browser",
+  "author": {
+    "@type": "Person",
+    "name": "Benjamin Ryan",
+    "url": "https://keyscodesandmodes.com"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Keys, Codes & Modes™",
+    "url": "https://keyscodesandmodes.com"
+  },
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "educationalUse": "Music Theory Education",
+  "accessibilityFeature": ["highContrastDisplay","keyboardControl","largePrint","readingOrder"],
+  "accessibilityHazard": "none",
+  "inLanguage": "en-US"
+}
+</script>
+
+<!-- ── GOOGLE ANALYTICS 4 ─────────────────────────────────────────── -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-6EGC5ZNZPF"></script>
+<script>
+  window.dataLayer=window.dataLayer||[];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js',new Date());
+  gtag('config','G-6EGC5ZNZPF',{anonymize_ip:true,cookie_flags:'SameSite=None;Secure'});
+  function trackEvent(name,params){if(typeof gtag!=='undefined')gtag('event',name,params);}
+</script>
+
+<!-- ── FONTS ──────────────────────────────────────────────────────── -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Montserrat:wght@300;400;600;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* ─── RESET ──────────────────────────────────────────────────────────── */
+*{box-sizing:border-box;margin:0;padding:0}
+
+/* ─── ACCESSIBILITY ──────────────────────────────────────────────────── */
+/* Skip-to-content for keyboard/screen-reader users */
+.skip-link{
+  position:absolute;top:-100px;left:0;z-index:9999;
+  padding:10px 18px;background:var(--gold);color:#000;
+  font-family:'Space Mono',monospace;font-size:13px;font-weight:700;
+  border-radius:0 0 6px 0;text-decoration:none;
+  transition:top .15s;
+}
+.skip-link:focus{top:0}
+/* Focus-visible ring on all interactive elements */
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+/* Minimum touch target 44×44px (WCAG 2.5.5) */
+button,a,[role="button"]{min-height:44px;min-width:44px;}
+.vtab,.btn-main{min-height:36px} /* smaller tabs — exempt from 44px in this context */
+
+/* ─── KCM BRAND STANDARDS — Keys, Codes & Modes™ ─────────────────── */
+/* Source: KCM Graphics Standards + about.html reference               */
+:root{
+  /* Brand palette from Graphics Standards doc */
+  --primary-teal:   #008080;
+  --primary-gold:   #F4D03F;
+  --primary-purple: #8B6BA3;
+  --primary-coral:  #CF7A5A;
+  --dark-bg:        #0a0a15;
+  --darker-bg:      #050508;
+  --light-text:     #E8E8E8;
+  /* KCM 12-Color Chromatic Spectrum™ — see individual NOTES[] array */
+  /* Observatory-specific */
+  --bg:    var(--dark-bg);
+  --panel: rgba(26,26,46,0.85);
+  --border:rgba(0,128,128,0.25);
+  --gold:  var(--primary-gold);
+  --gold2: #f9e87f;
+  --text:  var(--light-text);
+  --dim:   rgba(232,232,232,0.38);
+  /* Typography */
+  --font-display: 'Cinzel', serif;
+  --font-body:    'Montserrat', sans-serif;
+  --font-mono:    'Space Mono', monospace;
+}
+html{height:100%}
+body{
+  height:100%;display:flex;flex-direction:column;
+  background:radial-gradient(ellipse at center,#1a1a2e 0%,#0a0a15 100%);
+  color:var(--light-text);font-family:var(--font-body);
+  overflow:hidden;
+}
+body::before{content:'';position:fixed;inset:0;
+  background:
+    radial-gradient(ellipse at 20% 50%,rgba(0,128,128,.06) 0%,transparent 60%),
+    radial-gradient(ellipse at 80% 20%,rgba(139,107,163,.06) 0%,transparent 60%),
+    radial-gradient(ellipse at 60% 80%,rgba(244,208,63,.04) 0%,transparent 60%);
+  pointer-events:none;z-index:0}
+
+/* ─── CHROME (header + controls) ─────────────────────────────────────── */
+#chrome{flex:0 0 auto;position:relative;z-index:10}
+
+/* ─── KCM SITE HEADER — matches about.html exactly ───────────────── */
+#kcm-header{
+  background:linear-gradient(135deg,rgba(0,128,128,0.18) 0%,rgba(139,107,163,0.18) 100%);
+  border-bottom:2px solid var(--primary-teal);
+  box-shadow:0 4px 28px rgba(0,217,255,0.15);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  padding:.9rem 2rem;
+  position:relative;z-index:20;flex-shrink:0;
+}
+.kcm-header-content{
+  max-width:1200px;margin:0 auto;
+  display:flex;justify-content:space-between;align-items:center;
+  flex-wrap:wrap;gap:.75rem;
+}
+.kcm-logo-text h1{
+  font-family:var(--font-display);font-size:clamp(14px,2vw,22px);font-weight:900;
+  background:linear-gradient(135deg,var(--primary-teal) 0%,var(--primary-gold) 50%,var(--primary-purple) 100%);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  letter-spacing:2px;margin:0;
+}
+.kcm-logo-text small{
+  display:block;font-family:var(--font-mono);font-size:8px;
+  letter-spacing:.25em;color:rgba(232,232,232,.45);text-transform:uppercase;
+  margin-top:1px;
+}
+#kcm-header nav ul{list-style:none;display:flex;gap:1.4rem;margin:0;padding:0}
+#kcm-header nav a{
+  color:var(--light-text);text-decoration:none;font-weight:600;
+  font-size:.82rem;font-family:var(--font-body);
+  transition:color .25s ease;letter-spacing:.03em;
+}
+#kcm-header nav a:hover{color:var(--primary-gold)}
+#kcm-header nav a[aria-current="page"]{color:var(--primary-teal)}
+
+/* Observatory sub-header (controls bar) */
+.obs-sub{
+  background:rgba(5,5,8,.6);border-bottom:1px solid rgba(0,128,128,.2);
+  padding:.35rem 1.2rem;flex-shrink:0;position:relative;z-index:10;
+}
+
+.ctrl-bar{display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;padding:.4rem 1rem}
+.btn-main{
+  font-family:var(--font-display);font-size:9px;letter-spacing:.14em;
+  padding:7px 20px;border-radius:4px;border:1px solid;cursor:pointer;
+  transition:all .22s;text-transform:uppercase;font-weight:700;
+}
+.btn-main.idle{background:transparent;border-color:var(--primary-gold);color:var(--primary-gold)}
+.btn-main.idle:hover{
+  background:rgba(244,208,63,.1);
+  box-shadow:0 0 16px rgba(244,208,63,.3);
+}
+.btn-clear{
+  font-family:var(--font-display);font-size:8px;letter-spacing:.1em;
+  padding:6px 12px;border-radius:4px;border:1px solid rgba(255,60,60,.4);
+  background:rgba(255,30,30,.08);color:rgba(255,100,100,.8);
+  cursor:pointer;transition:all .18s;text-transform:uppercase;font-weight:700;
+}
+.btn-clear:hover{background:rgba(255,30,30,.18);border-color:rgba(255,60,60,.7);color:#ff6060;}
+.btn-clear:active{transform:scale(.96)}
+.btn-main.on{
+  background:rgba(0,128,128,.15);border-color:var(--primary-teal);
+  color:#00d9d9;animation:bb 1.3s ease-in-out infinite;
+}
+@keyframes bb{0%,100%{box-shadow:0 0 8px rgba(0,128,128,.4)}50%{box-shadow:0 0 22px rgba(0,217,255,.7)}}
+.ctrl-group{display:flex;align-items:center;gap:5px;font-size:9px;color:var(--dim);
+  letter-spacing:.08em;font-family:var(--font-mono)}
+input[type=range]{-webkit-appearance:none;width:65px;height:3px;border-radius:2px;
+  background:rgba(0,128,128,.3);outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:10px;height:10px;
+  border-radius:50%;background:var(--primary-gold);cursor:pointer}
+.status-led{font-family:var(--font-mono);font-size:9px;padding:4px 9px;border-radius:3px;
+  background:rgba(0,128,128,.07);border:1px solid rgba(0,128,128,.3);
+  color:var(--dim);letter-spacing:.08em}
+.status-led.live{color:#00FF80;border-color:rgba(0,255,128,.4);background:rgba(0,255,128,.06)}
+
+/* Note pills */
+.note-row{display:flex;gap:4px;justify-content:center;flex-wrap:wrap;padding:.25rem 1rem .3rem;min-height:30px;align-items:center}
+.npill{font-family:var(--font-mono);font-size:9px;font-weight:700;padding:2px 8px;border-radius:3px;border:1px solid;transition:all .12s;display:flex;align-items:center;gap:3px}
+.npill .nfreq{font-size:7px;opacity:.6;font-weight:400}
+.sync-bar{display:flex;gap:6px;justify-content:center;align-items:center;padding:.2rem 1rem .25rem;font-size:8px;color:var(--dim);font-family:var(--font-mono);letter-spacing:.08em}
+.sync-dot{width:5px;height:5px;border-radius:50%;background:rgba(0,128,128,.2);transition:background .08s}
+.sync-dot.active{background:var(--primary-gold);box-shadow:0 0 6px var(--primary-gold)}
+.view-tabs{display:flex;gap:0;justify-content:center;flex-wrap:wrap;padding:.25rem .5rem .3rem}
+.vtab{font-family:var(--font-mono);font-size:7.5px;letter-spacing:.08em;padding:5px 10px;border:1px solid rgba(0,128,128,.25);background:rgba(0,128,128,.04);color:var(--dim);cursor:pointer;transition:all .12s;text-transform:uppercase;user-select:none}
+.vtab:first-child{border-radius:4px 0 0 4px}.vtab:last-child{border-radius:0 4px 4px 0}.vtab+.vtab{border-left:none}
+.vtab:hover{background:rgba(244,208,63,.08);color:var(--primary-gold);border-color:rgba(244,208,63,.3)}
+.vtab.active{background:rgba(0,128,128,.18);color:#00d9d9;border-color:var(--primary-teal)}
+
+/* ─── VIZ GRID — fills ALL remaining viewport height ─────────────────── */
+#vizGrid{
+  flex:1 1 0;           /* take all remaining height */
+  min-height:0;         /* allow shrink below content size */
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  grid-template-rows:repeat(2,1fr);
+  gap:5px;
+  padding:5px;
+  position:relative;z-index:2;
+}
+
+/* ALL-8 mode: equal square cells */
+.vcard{
+  background:var(--panel);
+  border:1px solid rgba(0,128,128,.22);
+  border-radius:6px;
+  overflow:hidden;
+  position:relative;
+  min-height:0;
+  cursor:pointer;
+  transition:border-color .22s, box-shadow .22s;
+}
+.vcard:hover{border-color:var(--primary-teal);box-shadow:0 0 16px rgba(0,217,255,.12)}
+.vcard canvas{
+  position:absolute;    /* fill card completely */
+  inset:0;
+  width:100%;height:100%;
+  display:block;
+}
+
+/* FULLSCREEN mode — single card fills entire grid */
+#vizGrid.fs-mode{
+  grid-template-columns:1fr;
+  grid-template-rows:1fr;
+}
+#vizGrid.fs-mode .vcard{display:none}
+#vizGrid.fs-mode .vcard.fs-active{
+  display:flex;        /* flex works for both canvas and DOM cards */
+  flex-direction:column;
+  width:100%;height:100%;
+}
+/* Canvas cards: canvas still fills via position:absolute/inset:0 */
+#vizGrid.fs-mode .vcard.fs-active canvas{
+  position:absolute;inset:0;width:100%;height:100%;
+}
+/* Neck fullscreen — widen and stretch */
+#vizGrid.fs-mode #card-neck.fs-active{
+  align-items:center;justify-content:center;
+}
+#vizGrid.fs-mode #card-neck.fs-active #neck-inner{
+  max-width:360px;width:min(360px,100%);overflow-y:auto;
+}
+/* Keyboard fullscreen */
+#vizGrid.fs-mode #card-keyboard.fs-active #kb-inner{
+  width:100%;height:100%;
+}
+
+/* Neck card — DOM content fills card */
+#card-neck{overflow:hidden;display:flex;align-items:center;justify-content:center}
+#neck-inner{
+  /* Hard cap: no wider than 192px (~2 inches at 96dpi) */
+  width:min(192px,100%);
+  max-width:192px;
+  height:100%;
+  overflow-y:auto;
+  overflow-x:hidden;
+  padding:2px 0;
+  flex-shrink:0;
+}
+
+/* ─── RESPONSIVE ─────────────────────────────────────────────────────── */
+/* ─── RESPONSIVE ──────────────────────────────────────────────────────── */
+@media(max-width:1200px){
+  .ctrl-bar{gap:7px}
+}
+@media(max-width:900px){
+  #vizGrid:not(.fs-mode){grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(4,1fr)}
+  .hdr h1{font-size:16px}
+}
+@media(max-width:600px){
+  #vizGrid:not(.fs-mode){grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(4,1fr)}
+  .ctrl-bar{padding:.3rem .5rem;gap:5px}
+  .ctrl-group span:not([id]){display:none} /* hide GAIN/SMOOTH labels on small screens */
+  .hdr-sub{display:none}
+  .view-tabs{padding:.15rem .25rem .25rem}
+  .vtab{font-size:7px;padding:4px 6px}
+}
+@media(max-width:420px){
+  #vizGrid:not(.fs-mode){grid-template-columns:1fr;grid-template-rows:repeat(8,1fr)}
+  .vtab{font-size:6.5px;padding:3px 5px}
+}
+/* Touch devices: larger tap targets */
+@media(hover:none) and (pointer:coarse){
+  .vtab{padding:8px 11px}
+  .btn-main{padding:10px 22px}
+  .fb-cell{min-height:40px}
+}
+/* High contrast mode support */
+@media(forced-colors:active){
+  .vcard{border:2px solid ButtonText}
+  .vtab.active{border:2px solid Highlight}
+}
+/* Reduced motion */
+@media(prefers-reduced-motion:reduce){
+  *{animation-duration:.01ms !important;transition-duration:.01ms !important}
+}
+/* Print */
+@media print{
+  body{background:#fff;color:#000}
+  #chrome,footer{display:none}
+  #vizGrid{height:auto}
+}
+
+/* ─── MIC PERMISSION MODAL ───────────────────────────────────────────── */
+#mic-modal{
+  display:none;position:fixed;inset:0;z-index:9000;
+  background:rgba(3,5,8,.88);backdrop-filter:blur(8px);
+  align-items:center;justify-content:center;
+}
+#mic-modal.visible{display:flex}
+.mic-modal-box{
+  background:linear-gradient(135deg,rgba(26,26,46,.97) 0%,rgba(10,10,21,.97) 100%);
+  border:1px solid rgba(0,128,128,.55);
+  border-radius:12px;padding:2rem 2.2rem;max-width:380px;width:90%;
+  box-shadow:0 0 60px rgba(0,128,128,.18),0 8px 40px rgba(0,0,0,.7);
+  text-align:center;
+}
+.mic-modal-box h2{
+  font-family:var(--font-display);font-size:1rem;letter-spacing:.18em;
+  color:var(--primary-gold);margin-bottom:.6rem;text-transform:uppercase;
+}
+.mic-modal-box p, .mic-modal-box .mic-modal-p{
+  font-family:var(--font-mono);font-size:9px;line-height:1.7;
+  color:rgba(232,232,232,.65);letter-spacing:.05em;margin-bottom:1rem;
+}
+.mic-modal-box .mic-icon{font-size:2.4rem;margin-bottom:.8rem;display:block}
+.mic-modal-box .steps{
+  background:rgba(0,0,0,.35);border-radius:6px;padding:.7rem 1rem;
+  margin-bottom:1rem;text-align:left;
+}
+.mic-modal-box .steps li{
+  font-family:var(--font-mono);font-size:8px;color:rgba(232,232,232,.55);
+  letter-spacing:.05em;margin-bottom:.35rem;list-style:none;
+  padding-left:.1rem;
+}
+.mic-modal-box .steps li::before{content:'→ ';color:var(--primary-teal);}
+.mic-modal-btns{display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap}
+.mic-modal-btn{
+  font-family:var(--font-display);font-size:8px;letter-spacing:.14em;
+  padding:8px 20px;border-radius:4px;border:1px solid;cursor:pointer;
+  transition:all .2s;text-transform:uppercase;font-weight:700;
+}
+.mic-modal-btn.primary{
+  background:rgba(0,128,128,.18);border-color:var(--primary-teal);color:#00d9d9;
+}
+.mic-modal-btn.primary:hover{background:rgba(0,128,128,.32);box-shadow:0 0 16px rgba(0,217,255,.3)}
+.mic-modal-btn.secondary{
+  background:transparent;border-color:rgba(232,232,232,.22);color:rgba(232,232,232,.5);
+}
+.mic-modal-btn.secondary:hover{border-color:rgba(232,232,232,.45);color:rgba(232,232,232,.8)}
+
+
+
+/* ─── Card hover labels (CSS-only, no canvas interference) ────────────── */
+.card-lbl{
+  position:absolute;top:0;left:0;right:0;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:5px 7px;
+  background:linear-gradient(180deg,rgba(3,5,8,.75) 0%,transparent 100%);
+  pointer-events:none;z-index:5;
+  opacity:1;
+}
+.card-lbl-main{
+  font-family:var(--font-display);font-size:6.5px;letter-spacing:.18em;
+  color:rgba(244,208,63,.72);text-transform:uppercase;
+}
+.card-lbl-sub{
+  font-family:var(--font-mono);font-size:5.5px;
+  color:rgba(0,128,128,.65);letter-spacing:.1em;text-transform:uppercase;
+}
+/* Expand button — bottom-right corner of each card */
+.card-expand{
+  position:absolute;bottom:4px;right:5px;
+  width:20px;height:20px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;color:rgba(255,255,255,.18);
+  cursor:pointer;z-index:6;
+  background:rgba(0,0,0,.35);border-radius:3px;
+  border:1px solid rgba(255,255,255,.07);
+  transition:color .18s, background .18s, border-color .18s;
+  pointer-events:all;
+  user-select:none;
+  line-height:1;
+}
+.card-expand:hover{
+  color:rgba(244,208,63,.8);
+  background:rgba(0,0,0,.6);
+  border-color:rgba(244,208,63,.3);
+}
+.vcard.fs-active .card-expand{content:'⤡';}
+/* Remove old ::after pseudo-element expand hint */
+.vcard::after{display:none}
+
+.fb-table{
+  display:table;width:100%;
+  border-collapse:collapse;
+  background:linear-gradient(135deg,#1a0a04 0%,#2d1508 50%,#1a0a04 100%);
+  border-radius:4px;border:1.5px solid #7a4010;
+  box-shadow:inset 0 0 14px rgba(0,0,0,.7);
+}
+.fb-row{display:table-row}
+.fb-row.nut-row .fb-cell{
+  border-bottom:4px solid #999 !important;
+  background:linear-gradient(180deg,#ece4b8,#d4c090,#ece4b8);
+  height:5px;
+}
+.fb-cell{
+  display:table-cell;vertical-align:middle;text-align:center;
+  border-bottom:2px solid rgba(160,160,160,.6);
+  border-right:1px solid rgba(255,255,255,.04);
+  position:relative;cursor:pointer;
+  height:34px;               /* compact */
+  transition:background .1s;
+}
+.fb-cell:hover{background:rgba(0,180,180,.22)}
+.fb-cell:active{background:rgba(244,208,63,.2)!important}
+.fb-str-label{cursor:pointer}
+.fb-str-label:hover{color:var(--primary-gold)!important;text-shadow:0 0 12px var(--primary-gold)}
+#c-wheel{cursor:pointer}
+.fb-fnum-cell{
+  display:table-cell;vertical-align:middle;text-align:center;
+  width:13px;font-size:.48rem;font-weight:700;
+  color:rgba(244,208,63,.5);
+  font-family:'Space Mono',monospace;
+  border-right:1.5px solid rgba(255,255,255,.1);
+  background:rgba(0,0,0,.4);padding:0 1px;
+}
+.fb-str-label{
+  display:table-cell;text-align:center;padding:3px 1px;
+  font-size:.78rem;font-weight:900;cursor:pointer;
+  color:rgba(255,255,255,.28);
+  font-family:'Space Mono',monospace;
+  border-bottom:1px solid rgba(255,255,255,.08);
+  transition:color .18s,text-shadow .18s;
+}
+.fb-str-label.fb-lit{color:inherit}
+.fb-dot{
+  position:relative;z-index:2;
+  width:22px;height:22px;border-radius:50%;
+  border:1.5px solid rgba(255,255,255,.3);
+  display:flex;align-items:center;justify-content:center;
+  font-size:6px;font-weight:900;
+  font-family:'Space Mono',monospace;
+  /* Visible at rest — shows KCM color identity always */
+  opacity:.42;filter:brightness(.75);
+  transform:scale(.7);transition:all .15s ease;
+  pointer-events:none;margin:auto;
+}
+.fb-cell.fb-on .fb-dot{
+  opacity:1;filter:none;transform:scale(1.12);
+  border-color:#fff;border-width:2px;
+  /* box-shadow set dynamically in JS with actual KCM note color */
+}
+.fb-cell.fb-off .fb-dot{
+  opacity:.32;filter:brightness(.65);transform:scale(.65);
+}
+.fb-inlay{display:flex;gap:2px;justify-content:center}
+.fb-inlay-dot{width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,.15)}
+#neck-controls{
+  display:flex;gap:3px;justify-content:center;
+  padding:2px 2px;flex-wrap:wrap;
+  border-bottom:1px solid rgba(255,255,255,.06);
+}
+#neck-controls button{
+  font-family:'Space Mono',monospace;font-size:6.5px;letter-spacing:.05em;
+  padding:2px 5px;border-radius:2px;
+  border:1px solid rgba(244,208,63,.32);
+  background:rgba(0,0,0,.5);color:rgba(244,208,63,.6);
+  cursor:pointer;text-transform:uppercase;
+}
+#neck-controls button.active{
+  background:rgba(244,208,63,.17);color:rgba(244,208,63,1);
+  border-color:rgba(244,208,63,.8);
+}
+#neck-title{
+  font-family:'Cinzel',monospace;font-size:5px;letter-spacing:.1em;
+  color:rgba(244,208,63,.4);text-align:center;
+  padding:1px 2px;text-transform:uppercase;
+}
+</style>
+</head>
+<body>
+
+<!-- Skip to main content (WCAG 2.4.1) -->
+<a class="skip-link" href="#vizGrid">Skip to visualizations</a>
+
+<!-- ════════════════════════════════════════════════════
+     KCM SITE HEADER — matches about.html / brand standards
+     ════════════════════════════════════════════════════ -->
+<header id="kcm-header" role="banner">
+  <div class="kcm-header-content">
+    <div class="kcm-logo-text">
+      <h1>KEYS, CODES &amp; MODES</h1>
+      <small>Sound Observatory</small>
+    </div>
+    <nav aria-label="Main navigation">
+      <ul>
+        <li><a href="/index.html">Home</a></li>
+        <li><a href="/insights.html">All Apps</a></li>
+        <li><a href="/about.html">About</a></li>
+        <li><a href="/contact.html">Contact</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<!-- ── OBSERVATORY CONTROLS SUB-HEADER ── -->
+<div class="obs-sub" id="chrome">
+
+  <div class="ctrl-bar">
+    <button class="btn-main idle" id="listenBtn"
+      aria-label="Activate microphone for real-time audio visualization"
+      aria-pressed="false">▶ Activate</button>
+    <div class="ctrl-group">GAIN
+      <input type="range" id="gainSlider" min="1" max="8" step=".1" value="3"
+        aria-label="Input gain">
+      <span id="gainVal">3.0</span>
+    </div>
+    <div class="ctrl-group">SMOOTH
+      <input type="range" id="smoothSlider" min="0.5" max="0.98" step=".01" value="0.82"
+        aria-label="Smoothing amount">
+      <span id="smoothVal">0.82</span>
+    </div>
+    <div class="status-led" id="statusLed" aria-live="polite" aria-label="Microphone status">STANDBY</div>
+    <button class="btn-clear" id="clearBtn" onclick="clearManualNotes()"
+      aria-label="Clear all held notes" title="Clear all held notes">✕ CLEAR</button>
+    <span style="font-family:var(--font-mono);font-size:7px;color:rgba(232,232,232,.28);letter-spacing:.06em;">
+      Click wheel/keys/frets · <span style="color:rgba(244,208,63,.45)">A S D F G H J K L ; ' \</span> = C C♯ D D♯ E F F♯ G G♯ A A♯ B · click again to release
+    </span>
+  </div>
+
+  <div class="note-row" id="noteRow" aria-live="polite" aria-label="Detected notes">
+    <span style="font-size:9px;color:var(--dim);letter-spacing:.12em;font-family:var(--font-mono)">AWAITING SIGNAL</span>
+  </div>
+  <!-- MIDI readout strip -->
+  <div id="midi-strip" style="
+    display:flex;gap:12px;justify-content:center;align-items:center;
+    padding:.15rem 1rem .2rem;font-family:'Space Mono',monospace;
+    font-size:9px;color:rgba(232,232,232,.35);letter-spacing:.08em;
+    min-height:18px;
+  " aria-live="polite" aria-label="MIDI information">
+    <span id="ms-note">—</span>
+    <span id="ms-midi">MIDI —</span>
+    <span id="ms-freq">— Hz</span>
+    <span id="ms-oct">Oct —</span>
+    <span id="ms-color" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#333;vertical-align:middle;"></span>
+    <span id="ms-cname" style="font-size:7px;color:rgba(232,232,232,.22);">—</span>
+  </div>
+
+  <div class="sync-bar">
+    <span style="font-family:var(--font-mono)">ALL 8 SYNCED</span>
+    <div class="sync-dot" id="sd0"></div><div class="sync-dot" id="sd1"></div>
+    <div class="sync-dot" id="sd2"></div><div class="sync-dot" id="sd3"></div>
+    <div class="sync-dot" id="sd4"></div><div class="sync-dot" id="sd5"></div>
+  </div>
+
+  <div class="view-tabs" role="tablist" aria-label="Observatory display views">
+    <div class="vtab active" data-layout="all"  role="tab" tabindex="0">ALL 8</div>
+    <div class="vtab" data-layout="wheel"        role="tab" tabindex="0">WHEEL</div>
+    <div class="vtab" data-layout="wave"         role="tab" tabindex="0">SCOPE</div>
+    <div class="vtab" data-layout="lissajous"    role="tab" tabindex="0">LISSAJOUS</div>
+    <div class="vtab" data-layout="cymatics"     role="tab" tabindex="0">CYMATICS</div>
+    <div class="vtab" data-layout="waterfall"    role="tab" tabindex="0">WATERFALL</div>
+    <div class="vtab" data-layout="keyboard"     role="tab" tabindex="0">KEYBOARD</div>
+    <div class="vtab" data-layout="staff"        role="tab" tabindex="0">STAFF</div>
+    <div class="vtab" data-layout="neck"         role="tab" tabindex="0">GUITAR</div>
+  </div>
+
+</div><!-- end .obs-sub #chrome -->
+
+<!-- ── MIC PERMISSION MODAL ── -->
+<div id="mic-modal" role="dialog" aria-modal="true" aria-label="Microphone access">
+  <div class="mic-modal-box">
+    <span class="mic-icon" aria-hidden="true">🎙️</span>
+    <h2>Microphone Access</h2>
+    <p class="mic-modal-p">Something went wrong accessing your microphone.</p>
+    <div class="steps">
+      <ul>
+        <li>Click the 🔒 icon in your address bar → Site settings → set Microphone to Allow</li>
+        <li>Check System Settings → Privacy & Security → Microphone → Chrome ON</li>
+        <li>Click Try Again below</li>
+      </ul>
+    </div>
+    <p style="font-size:7.5px;margin:0 0 1rem;color:rgba(232,232,232,.35)">
+      No mic? Use the piano keys, chromatic wheel, or guitar neck to play manually.
+    </p>
+    <div class="mic-modal-btns">
+      <button class="mic-modal-btn primary" id="micRetryBtn">🎙 Try Again</button>
+      <button class="mic-modal-btn primary" id="micFlagBtn" style="display:none;background:rgba(0,128,128,.25);font-size:7px;">📋 Copy Chrome Flag URL</button>
+      <button class="mic-modal-btn secondary" id="micDismissBtn">Play Manually</button>
+    </div>
+    <div style="margin-top:.8rem;text-align:center">
+      <a id="micSettingsLink" href="chrome://settings/content/microphone"
+         style="display:none;font-family:var(--font-mono);font-size:8px;color:var(--primary-teal);
+                letter-spacing:.06em;text-decoration:none;opacity:.8"
+         target="_blank">⚙ Open Chrome Mic Settings</a>
+    </div>
+  </div>
+</div>
+
+<!-- ── VIZ GRID: fills all remaining height ── -->
+<div id="vizGrid" role="main" aria-label="Sound Observatory visualization grid">
+  <div class="vcard" id="card-wheel"><div class="card-lbl"><span class="card-lbl-main">Chromatic Wheel</span><span class="card-lbl-sub">12-COLOR™</span></div><canvas id="c-wheel"></canvas><button class="card-expand" aria-label="Expand Chromatic Wheel">⤢</button></div>
+  <div class="vcard" id="card-wave"><div class="card-lbl"><span class="card-lbl-main">Oscilloscope</span><span class="card-lbl-sub">TIME DOMAIN</span></div><canvas id="c-wave"></canvas><button class="card-expand" aria-label="Expand Oscilloscope">⤢</button></div>
+  <div class="vcard" id="card-lissajous"><div class="card-lbl"><span class="card-lbl-main">Lissajous</span><span class="card-lbl-sub">XY PHASE</span></div><canvas id="c-lissajous"></canvas><button class="card-expand" aria-label="Expand Lissajous">⤢</button></div>
+  <div class="vcard" id="card-cymatics"><div class="card-lbl"><span class="card-lbl-main">Cymatics</span><span class="card-lbl-sub">CHLADNI</span></div><canvas id="c-cymatics"></canvas><button class="card-expand" aria-label="Expand Cymatics">⤢</button></div>
+  <div class="vcard" id="card-waterfall"><div class="card-lbl"><span class="card-lbl-main">Spectral Waterfall</span><span class="card-lbl-sub">FREQ vs TIME</span></div><canvas id="c-waterfall"></canvas><button class="card-expand" aria-label="Expand Spectral Waterfall">⤢</button></div>
+  <div class="vcard" id="card-keyboard" style="overflow:hidden;background:#0A0A0A;"><div class="card-lbl"><span class="card-lbl-main">Piano Keyboard</span><span class="card-lbl-sub">KCM COLORS · CLICK TO PLAY</span></div><div id="kb-inner" style="width:100%;height:100%;overflow:auto;display:flex;align-items:center;justify-content:center;"></div><button class="card-expand" aria-label="Expand Piano Keyboard">⤢</button></div>
+  <div class="vcard" id="card-staff"><div class="card-lbl"><span class="card-lbl-main">Staff Notation</span><span class="card-lbl-sub">TREBLE CLEF</span></div><canvas id="c-staff"></canvas><button class="card-expand" aria-label="Expand Staff Notation">⤢</button></div>
+  <div class="vcard" id="card-neck">
+    <div id="neck-inner" style="width:100%;height:100%;overflow:auto;"></div>
+    <button class="card-expand" aria-label="Expand Guitar Neck">⤢</button>
+  </div>
+</div>
+
+<script>
+// ═══ KCM 12-Color Chromatic Spectrum™ — SINGLE SOURCE OF TRUTH ══════════════
+// All 8 panels read color/name/tc/freq/cname from this array only. No duplicates.
+const NOTES=[
+  {name:'C',  color:'#FFE800', tc:'#222', freq:261.63, cname:'Yellow'},
+  {name:'C♯', color:'#FFC400', tc:'#222', freq:277.18, cname:'Yellow-Orange'},
+  {name:'D',  color:'#FF8000', tc:'#fff', freq:293.66, cname:'Orange'},
+  {name:'D♯', color:'#FF4400', tc:'#fff', freq:311.13, cname:'Red-Orange'},
+  {name:'E',  color:'#FF0000', tc:'#fff', freq:329.63, cname:'Red'},
+  {name:'F',  color:'#CC0077', tc:'#fff', freq:349.23, cname:'Red-Purple'},
+  {name:'F♯', color:'#8800FF', tc:'#fff', freq:369.99, cname:'Purple'},
+  {name:'G',  color:'#4400FF', tc:'#fff', freq:392.00, cname:'Blue-Purple'},
+  {name:'G♯', color:'#0000FF', tc:'#fff', freq:415.30, cname:'Blue'},
+  {name:'A',  color:'#0088FF', tc:'#fff', freq:440.00, cname:'Blue-Green'},
+  {name:'A♯', color:'#00FF88', tc:'#222', freq:466.16, cname:'Green'},
+  {name:'B',  color:'#88FF00', tc:'#222', freq:493.88, cname:'Yellow-Green'},
+];
+// Convenience arrays derived from NOTES — no separate duplicates needed
+const NOTE_FREQS = NOTES.map(n=>n.freq);
+// Idle/fallback note when nothing is detected — C (index 0, Yellow)
+const IDLE_NOTE = 0;
+// Guitar open string midi: E2=40 A2=45 D3=50 G3=55 B3=59 e4=64
+const OPEN_MIDI=[40,45,50,55,59,64];
+const OPEN_NI=OPEN_MIDI.map(m=>((m%12)+12)%12);  // noteIndex of each open string
+const STRING_NAMES=['E','A','D','G','B','e'];
+const NUM_FRETS=12;
+// Diatonic steps within octave (semitone 0-11 → diatonic 0-6)
+function freqToMidi(f){return 69+12*Math.log2(f/440)}
+function hexRgba(h,a){const r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);return`rgba(${r},${g},${b},${a})`}
+function hexRgb(h){return{r:parseInt(h.slice(1,3),16),g:parseInt(h.slice(3,5),16),b:parseInt(h.slice(5,7),16)}}
+
+// ═══ SHARED STATE — single source of truth for all 8 displays ════════════════
+const S={detectedNotes:[],dominantNote:null,rms:0,t:0,activeNoteIndices:new Set()};
+
+// ─── MANUAL PLAY ENGINE ────────────────────────────────────────────────────
+// Single shared audio context for all interactive elements
+// TOGGLE BEHAVIOR: first click lights a note and holds it.
+// Second click on same note turns it off.
+// Audio plays on every press. All 8 displays sync immediately.
+let _interactCtx = null;
+let _manualNotes  = new Set();   // Set of active pitch classes (held on)
+
+function _getCtx(){
+  if(!_interactCtx || _interactCtx.state==='closed')
+    _interactCtx = new(window.AudioContext||window.webkitAudioContext)();
+  if(_interactCtx.state==='suspended') _interactCtx.resume();
+  return _interactCtx;
+}
+
+function _playAudio(pc, oct, dur){
+  const ctx  = _getCtx();
+  const freq = NOTE_FREQS[pc] * Math.pow(2, oct - 4);
+  const master = ctx.createGain();
+  master.gain.setValueAtTime(0, ctx.currentTime);
+  master.gain.linearRampToValueAtTime(0.28, ctx.currentTime + 0.012);
+  master.gain.setValueAtTime(0.28, ctx.currentTime + dur * 0.25);
+  master.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+  master.connect(ctx.destination);
+  [[freq,0.6,'triangle'],[freq*2,0.18,'sine']].forEach(([f,g,t])=>{
+    const osc = ctx.createOscillator();
+    const gn  = ctx.createGain();
+    osc.type = t; osc.frequency.value = f;
+    gn.gain.value = g;
+    osc.connect(gn); gn.connect(master);
+    osc.start(ctx.currentTime); osc.stop(ctx.currentTime + dur + 0.05);
+  });
+}
+
+function playAndActivate(pc, oct, dur=0.9){
+  pc  = ((pc%12)+12)%12;
+  oct = oct||4;
+
+  // Always play the audio sound on every press
+  _playAudio(pc, oct, dur);
+
+  // TOGGLE: if note is already held on, turn it off — otherwise turn it on
+  if(_manualNotes.has(pc)){
+    _manualNotes.delete(pc);
+  } else {
+    _manualNotes.add(pc);
+  }
+
+  _syncManualToState();
+  if(typeof trackEvent!=='undefined') trackEvent('observatory_note_played',{pc,oct,on:_manualNotes.has(pc)});
+}
+
+// Clear all held notes (e.g. when mic activates)
+function clearManualNotes(){
+  _manualNotes.clear();
+  _syncManualToState();
+}
+
+function _syncManualToState(){
+  // Build detectedNotes array from held manual notes + mic-detected notes
+  const manualArr = [..._manualNotes].map(pc=>({
+    noteIndex: pc,
+    strength:  0.9,
+    freq:      0,
+    midi:      60 + pc,
+    color:     NOTES[pc].color
+  }));
+
+  // Combine: manual takes priority, mic-detected fills in others
+  const allPcs = new Set([
+    ...manualArr.map(n=>n.noteIndex),
+    ...S.detectedNotes.map(n=>n.noteIndex)
+  ]);
+  const merged = [];
+  allPcs.forEach(pc=>{
+    const man = manualArr.find(n=>n.noteIndex===pc);
+    const mic = S.detectedNotes.find(n=>n.noteIndex===pc);
+    merged.push(man || mic);
+  });
+  merged.sort((a,b)=>b.strength-a.strength);
+
+  S.detectedNotes    = merged.slice(0,6);
+  S.dominantNote     = S.detectedNotes[0]||null;
+  S.activeNoteIndices= new Set(S.detectedNotes.map(n=>n.noteIndex));
+
+  // Trigger one visual frame immediately (don't wait for next RAF)
+  drawWheel();
+  drawStaff();
+  updateKeyboardDisplay();
+  updateNeckDisplay();
+  updateMidiStrip();
+
+  // When mic is off, run the synthetic visual loop so ALL 8 screens animate
+  if(!isOn){
+    if(_manualNotes.size > 0){
+      _startSyntheticLoop();
+    } else {
+      _stopSyntheticLoop();
+    }
+  }
+}
+
+// ── SYNTHETIC VISUAL LOOP ─────────────────────────────────────────────────────
+// When mic is off and notes are manually held, synthesise tdb/fdb buffers
+// so drawWave, drawLissajous, drawCymatics, drawWaterfall all respond.
+let _synRaf   = null;
+let _synTdb   = null;
+let _synFdb   = null;
+const _SYN_FFT = 4096;
+const _SYN_SR  = 44100;
+// NOTE_FREQS already defined from NOTES array above
+
+function _buildSyntheticBuffers(){
+  if(!_synTdb) _synTdb = new Float32Array(_SYN_FFT);
+  if(!_synFdb) _synFdb = new Float32Array(_SYN_FFT / 2);
+
+  const notes = S.detectedNotes;
+  const t     = S.t;
+  const amp   = notes.length > 0 ? 0.38 / Math.sqrt(notes.length) : 0;
+
+  // Time-domain: sum of sines (guitar octave 3)
+  for(let i = 0; i < _SYN_FFT; i++){
+    let v = 0;
+    const ts = (t * _SYN_SR + i) / _SYN_SR;
+    notes.forEach(n => {
+      const f = NOTE_FREQS[n.noteIndex] * 0.5; // octave 3
+      v += Math.sin(2*Math.PI*f*ts) * amp;
+      v += Math.sin(2*Math.PI*f*2*ts) * amp * 0.28; // 2nd harmonic
+    });
+    _synTdb[i] = Math.max(-1, Math.min(1, v));
+  }
+
+  // Frequency-domain: inject peaks at each note's bin
+  _synFdb.fill(-90);
+  notes.forEach(n => {
+    const f   = NOTE_FREQS[n.noteIndex] * 0.5;
+    const bin = Math.round(f / (_SYN_SR / _SYN_FFT));
+    const bin2= Math.round(f*2 / (_SYN_SR / _SYN_FFT));
+    if(bin>0 && bin<_synFdb.length)   _synFdb[bin]=-5;
+    if(bin2>0 && bin2<_synFdb.length) _synFdb[bin2]=-18;
+    for(let d=1;d<=4;d++){
+      if(bin-d>0) _synFdb[bin-d]=Math.max(_synFdb[bin-d],-5-d*9);
+      if(bin+d<_synFdb.length) _synFdb[bin+d]=Math.max(_synFdb[bin+d],-5-d*9);
+    }
+  });
+
+  tdb = _synTdb;
+  fdb = _synFdb;
+}
+
+function _synLoop(){
+  if(isOn){ _stopSyntheticLoop(); return; } // mic took over
+  _synRaf = requestAnimationFrame(_synLoop);
+  S.t += 1/60;
+  S.rms = _manualNotes.size > 0 ? 0.55 : 0;
+
+  if(_manualNotes.size > 0){
+    _buildSyntheticBuffers();
+    const binHz = _SYN_SR / _SYN_FFT;
+    const gain  = parseFloat(gainEl.value);
+    drawWheel();
+    drawWave(gain);
+    drawLissajous();
+    drawCymatics();
+    drawWaterfall(binHz, gain);
+    drawStaff();
+    updateKeyboardDisplay();
+    updateNeckDisplay();
+    updateMidiStrip();
+  } else {
+    _stopSyntheticLoop();
+  }
+}
+
+function _startSyntheticLoop(){
+  if(_synRaf) return; // already running
+  _synRaf = requestAnimationFrame(_synLoop);
+}
+
+function _stopSyntheticLoop(){
+  if(_synRaf){ cancelAnimationFrame(_synRaf); _synRaf=null; }
+  // Restart idle animation now that no notes are held
+  if(!isOn) idle();
+}
+
+// ═══ CANVAS SETUP ════════════════════════════════════════════════════════════
+const CV={};const CX={};
+['wheel','wave','lissajous','cymatics','waterfall','staff'].forEach(k=>{
+  CV[k]=document.getElementById('c-'+k);CX[k]=CV[k].getContext('2d');
+});
+
+// ── CHROMATIC WHEEL: click/touch to play ──────────────────────────────────
+// Hit-test: convert pointer to angle → note index → playAndActivate
+function wheelHitTest(canvas, clientX, clientY){
+  const rect = canvas.getBoundingClientRect();
+  const px = clientX - rect.left;
+  const py = clientY - rect.top;
+  // Scale to canvas pixel coords
+  const cx = canvas.width/2,  cy = canvas.height/2;
+  const sx = px * (canvas.width  / rect.width);
+  const sy = py * (canvas.height / rect.height);
+  const dx = sx - cx, dy = sy - cy;
+  const dist = Math.sqrt(dx*dx + dy*dy);
+  const R = Math.min(canvas.width, canvas.height) * 0.43;
+  // Only hits within the ring (not the center circle)
+  if(dist < R * 0.38 || dist > R) return -1;
+  // Angle from 12 o'clock, clockwise, with -15° wheel rotation offset
+  const ROT_OFFSET = -15 * Math.PI / 180;
+  let angle = Math.atan2(dy, dx) - (-Math.PI/2) - ROT_OFFSET;
+  if(angle < 0) angle += Math.PI * 2;
+  const noteIndex = Math.floor(angle / (Math.PI * 2) * 12) % 12;
+  return noteIndex;
+}
+
+(function wireWheel(){
+  const c = document.getElementById('c-wheel');
+  if(!c) return;
+  function onWheelInteract(e){
+    e.preventDefault();
+    const pos = e.touches ? e.touches[0] : e;
+    const ni = wheelHitTest(c, pos.clientX, pos.clientY);
+    if(ni < 0) return;
+    playAndActivate(ni, 4, 1.0);
+    // Visual ripple on the wheel segment
+    c.style.filter = 'brightness(1.3)';
+    setTimeout(()=>{ c.style.filter = ''; }, 120);
+  }
+  c.style.cursor = 'pointer';
+  c.addEventListener('click',       onWheelInteract, {passive:false});
+  c.addEventListener('touchstart',  onWheelInteract, {passive:false});
+})();
+function resize(c){
+  if(!c||!c.parentElement)return;
+  const r=c.parentElement.getBoundingClientRect();
+  const w=Math.max(1,Math.floor(r.width));
+  const h=Math.max(1,Math.floor(r.height));
+  if(c.width!==w||c.height!==h){c.width=w;c.height=h;}
+}
+
+// ═══ AUDIO ════════════════════════════════════════════════════════════════════
+const FFT=4096;
+let audioCtx=null,analyser=null,micStream=null,tdb=null,fdb=null,isOn=false,raf=null;
+const gainEl=document.getElementById('gainSlider'),smEl=document.getElementById('smoothSlider');
+gainEl.oninput=e=>document.getElementById('gainVal').textContent=parseFloat(e.target.value).toFixed(1);
+smEl.oninput=e=>{document.getElementById('smoothVal').textContent=parseFloat(e.target.value).toFixed(2);if(analyser)analyser.smoothingTimeConstant=parseFloat(e.target.value)};
+
+// ── Mic button ──
+const listenBtn=document.getElementById('listenBtn');
+listenBtn.onclick=async()=>{isOn?stop():await start()};
+
+// ── LED / button state helpers ──
+function setMicUI(state){
+  const led=document.getElementById('statusLed');
+  if(state==='live'){
+    listenBtn.textContent='■ Deactivate'; listenBtn.className='btn-main on';
+    listenBtn.setAttribute('aria-pressed','true');
+    listenBtn.setAttribute('aria-label','Deactivate microphone');
+    led.textContent='● LIVE'; led.className='status-led live';
+  } else if(state==='waiting'){
+    listenBtn.textContent='… Connecting'; listenBtn.className='btn-main idle';
+    listenBtn.disabled=true;
+    led.textContent='CONNECTING…'; led.className='status-led';
+  } else if(state==='error'){
+    listenBtn.textContent='▶ Activate'; listenBtn.className='btn-main idle';
+    listenBtn.disabled=false;
+    led.textContent='⚠ MIC ERROR'; led.className='status-led';
+  } else {
+    // standby
+    listenBtn.textContent='▶ Activate'; listenBtn.className='btn-main idle';
+    listenBtn.disabled=false;
+    listenBtn.setAttribute('aria-pressed','false');
+    listenBtn.setAttribute('aria-label','Activate microphone for real-time audio visualization');
+    led.textContent='STANDBY'; led.className='status-led';
+  }
+}
+
+async function start(){
+  setMicUI('waiting');
+  try{
+    if(micStream) micStream.getTracks().forEach(t=>t.stop());
+    micStream = await navigator.mediaDevices.getUserMedia({audio:true});
+    audioCtx  = new AudioContext();
+    analyser  = audioCtx.createAnalyser();
+    analyser.fftSize = FFT;
+    analyser.smoothingTimeConstant = parseFloat(smEl.value);
+    audioCtx.createMediaStreamSource(micStream).connect(analyser);
+    tdb = new Float32Array(FFT);
+    fdb = new Float32Array(analyser.frequencyBinCount);
+    isOn = true;
+    setMicUI('live');
+    hideMicModal();
+    clearManualNotes();
+    _stopSyntheticLoop();
+    loop();
+  }catch(e){
+    console.error('MIC FAILED:', e.name, e.message);
+    isOn = false;
+    setMicUI('error');
+    // Show exact error so we know what's happening
+    const m = document.getElementById('mic-modal');
+    document.querySelector('.mic-modal-p').innerHTML =
+      `<strong style="color:#ff6060">${e.name}</strong>: ${e.message}<br><br>`+
+      `macOS: Chrome ON ✅ &nbsp; Chrome site: Allow ✅<br>`+
+      `<em style="opacity:.5">Check browser console (⌘⌥J) for details</em>`;
+    document.querySelector('.steps ul').innerHTML =
+      '<li>Press <strong style="color:var(--primary-gold)">⌘⌥J</strong> to open Console</li>'+
+      '<li>Look for red errors near "MIC FAILED"</li>'+
+      '<li>Screenshot and share with Ben\'s developer</li>';
+    document.getElementById('micRetryBtn').style.display = '';
+    document.getElementById('micFlagBtn').style.display  = 'none';
+    m.classList.add('visible');
+  }
+}
+
+function stop(){
+  isOn=false;
+  if(raf){cancelAnimationFrame(raf);raf=null;}
+  if(micStream) micStream.getTracks().forEach(t=>t.stop());
+  if(audioCtx && audioCtx.state!=='closed') audioCtx.close();
+  micStream=null; audioCtx=null; analyser=null;
+  S.detectedNotes=[]; S.dominantNote=null; S.activeNoteIndices=new Set();
+  setMicUI('standby');
+  idle();
+}
+
+// ── MIC PERMISSION MODAL ─────────────────────────────────────────────────────
+const _micMessages = {
+  filescheme: {
+    title: '📁 Local File — Mic Blocked',
+    body:  'Chrome blocks microphone on file:// URLs. Upload to your server or use Live Server in VS Code.',
+    steps: [
+      'Deploy to <strong style="color:var(--primary-gold)">keyscodesandmodes.com/apps/</strong> — mic works instantly on https://',
+      'OR in VS Code: right-click the file → <strong style="color:var(--primary-gold)">Open with Live Server</strong>',
+    ],
+    retry: false
+  },
+  denied: {
+    title: '🔒 Microphone Blocked by Chrome',
+    body:  'Chrome has blocked mic access for this site. Here\'s how to unblock it:',
+    steps: [
+      'Click the <strong style="color:var(--primary-gold)">🔒 lock icon</strong> in the address bar (left of the URL)',
+      'Click <strong style="color:var(--primary-gold)">Site settings</strong>',
+      'Find <strong style="color:var(--primary-gold)">Microphone</strong> → change from "Block" to <strong style="color:var(--primary-gold)">Allow</strong>',
+      'Come back here and click <strong style="color:var(--primary-gold)">Try Again</strong>',
+    ],
+    retry: true,
+    link: { label:'Open Chrome Mic Settings', url:'chrome://settings/content/microphone' }
+  },
+  notfound: {
+    title: '🎙 No Microphone Detected',
+    body:  'Chrome can\'t find a microphone on this Mac.',
+    steps: [
+      'Go to <strong style="color:var(--primary-gold)">Apple Menu → System Settings → Privacy & Security → Microphone</strong>',
+      'Make sure <strong style="color:var(--primary-gold)">Google Chrome</strong> is toggled ON',
+      'Restart Chrome, then click Try Again',
+    ],
+    retry: true
+  },
+  other: {
+    title: '⚠ Microphone Error',
+    body:  'Chrome threw an error accessing the microphone.',
+    steps: [
+      'Go to <strong style="color:var(--primary-gold)">Apple Menu → System Settings → Privacy & Security → Microphone</strong> → make sure Chrome is ON',
+      'Click the <strong style="color:var(--primary-gold)">🔒 lock</strong> in the address bar → Site settings → set Microphone to <strong style="color:var(--primary-gold)">Allow</strong>',
+      'Close all other apps using the mic (Zoom, FaceTime, GarageBand, etc.)',
+      'Hard-reload: <strong style="color:var(--primary-gold)">⌘⇧R</strong>, then click Activate again',
+    ],
+    retry: true
+  },
+  nosupport: {
+    title: '⚠ Browser Not Supported',
+    body:  'This browser can\'t access the microphone.',
+    steps: [
+      'Use <strong style="color:var(--primary-gold)">Google Chrome</strong> or Safari on Mac',
+      'Make sure you\'re on https:// (not http://)',
+    ],
+    retry: false
+  }
+};
+
+function showMicModal(type='other', errorCode=''){
+  const msg = _micMessages[type] || _micMessages.other;
+  const m = document.getElementById('mic-modal');
+  if(!m) return;
+
+  m.querySelector('h2').textContent = msg.title;
+  m.querySelector('.mic-modal-p').innerHTML = msg.body +
+    (errorCode ? ` <span style="font-size:7px;opacity:.45;font-family:var(--font-mono)">[${errorCode}]</span>` : '');
+
+  const ul = m.querySelector('.steps ul');
+  ul.innerHTML = msg.steps.map(s=>`<li>${s}</li>`).join('');
+
+  // Show/hide retry button
+  document.getElementById('micRetryBtn').style.display = msg.retry ? '' : 'none';
+
+  // Show/hide flag button (file:// only)
+  const flagBtn = document.getElementById('micFlagBtn');
+  if(flagBtn) flagBtn.style.display = (type==='filescheme') ? '' : 'none';
+
+  // Show/hide settings link
+  const linkBtn = document.getElementById('micSettingsLink');
+  if(linkBtn){
+    if(msg.link){
+      linkBtn.textContent = msg.link.label;
+      linkBtn.href = msg.link.url;
+      linkBtn.style.display = '';
+    } else {
+      linkBtn.style.display = 'none';
+    }
+  }
+
+  m.classList.add('visible');
+}
+
+function hideMicModal(){
+  const m=document.getElementById('mic-modal');
+  if(m) m.classList.remove('visible');
+}
+
+document.getElementById('micRetryBtn').addEventListener('click', async()=>{
+  hideMicModal();
+  await start();
+});
+document.getElementById('micDismissBtn').addEventListener('click', ()=>{
+  hideMicModal();
+  setMicUI('standby');
+});
+// Copy Chrome flag URL for file:// users
+document.getElementById('micFlagBtn').addEventListener('click', ()=>{
+  const flagUrl = 'chrome://flags/#unsafely-treat-insecure-origin-as-secure';
+  navigator.clipboard.writeText(flagUrl).then(()=>{
+    const btn = document.getElementById('micFlagBtn');
+    btn.textContent = '✓ Copied! Paste in Chrome address bar';
+    btn.style.background='rgba(0,255,128,.2)';
+    setTimeout(()=>{
+      btn.textContent='📋 Copy Chrome Flag URL';
+      btn.style.background='rgba(0,128,128,.25)';
+    }, 3000);
+  }).catch(()=>{
+    // Clipboard not available — show the URL as text
+    const ul = document.querySelector('#mic-modal .steps ul');
+    const li = document.createElement('li');
+    li.innerHTML = '<strong style="color:#00FF88">Paste this in Chrome:</strong> chrome://flags/#unsafely-treat-insecure-origin-as-secure';
+    ul.appendChild(li);
+  });
+});
+
+// ═══ MAIN LOOP ════════════════════════════════════════════════════════════════
+function updateMidiStrip(){
+  const dn = S.dominantNote;
+  const msNote  = document.getElementById('ms-note');
+  const msMidi  = document.getElementById('ms-midi');
+  const msFreq  = document.getElementById('ms-freq');
+  const msOct   = document.getElementById('ms-oct');
+  const msColor = document.getElementById('ms-color');
+  const msCname = document.getElementById('ms-cname');
+  if(!msNote) return;
+  if(!dn){
+    msNote.textContent='—'; msMidi.textContent='MIDI —';
+    msFreq.textContent='— Hz'; msOct.textContent='Oct —';
+    msColor.style.background='#333'; msCname.textContent='—';
+    msNote.style.color='rgba(232,232,232,.35)';
+    return;
+  }
+  const note = NOTES[dn.noteIndex];
+  const midi = dn.midi || (60+dn.noteIndex);
+  const oct  = Math.floor(midi/12)-1;
+  const freq = dn.freq>0 ? dn.freq.toFixed(1) : NOTE_FREQS[dn.noteIndex].toFixed(1);
+  msNote.textContent  = note.name;
+  msNote.style.color  = note.color;
+  msMidi.textContent  = `MIDI ${midi}`;
+  msFreq.textContent  = `${freq} Hz`;
+  msOct.textContent   = `Oct ${oct}`;
+  msColor.style.background    = note.color;
+  msColor.style.boxShadow     = `0 0 6px ${note.color}`;
+  msCname.textContent = note.cname;
+  msCname.style.color = note.color;
+}
+
+function loop(){
+  if(!isOn)return;raf=requestAnimationFrame(loop);S.t+=1/60;
+  analyser.getFloatTimeDomainData(tdb);analyser.getFloatFrequencyData(fdb);
+  const gain=parseFloat(gainEl.value),binHz=audioCtx.sampleRate/FFT;
+  // RMS
+  let sq=0;for(let i=0;i<tdb.length;i++)sq+=tdb[i]**2;S.rms=Math.min(1,Math.sqrt(sq/tdb.length)*gain*3);
+  // ── NOISE FLOOR BASELINE ────────────────────────────────────────────────────
+  // Measure average spectral energy (silence baseline)
+  // Only fire a note if its peak is well above the floor AND above RMS threshold
+  let specSum=0,specCount=0;
+  for(let i=2;i<fdb.length-2;i++){if(fdb[i]>-120){specSum+=Math.pow(10,fdb[i]/10);specCount++;}}
+  const specFloorDB=specCount>0?10*Math.log10(specSum/specCount):-90;
+  // Dynamic threshold: floor + 18 dB headroom, minimum -62 dB
+  const PEAK_THRESH=Math.max(-62, specFloorDB+18);
+  // Silence gate: if overall RMS too low, emit nothing
+  const SILENCE_GATE=0.012; // below this RMS = silence
+  if(S.rms<SILENCE_GATE){
+    // Hard-decay smoothed strengths toward zero quickly on silence
+    if(S._smooth) for(let i=0;i<12;i++) S._smooth[i]*=0.5;
+    S.detectedNotes=[];S.dominantNote=null;S.activeNoteIndices=new Set();
+  } else {
+    // Peak detect — only peaks clearly above noise floor
+    const nE=new Array(12).fill(0),nM=new Array(12).fill(0),nFq=new Array(12).fill(0);
+    for(let i=3;i<fdb.length-3;i++){
+      const freq=i*binHz;if(freq<60||freq>5200)continue;
+      const db=fdb[i];if(db<PEAK_THRESH)continue;
+      // True local peak (check 3 neighbors each side)
+      if(db>fdb[i-1]&&db>fdb[i-2]&&db>fdb[i+1]&&db>fdb[i+2]){
+        const mi=Math.round(freqToMidi(freq)),ni=((mi%12)+12)%12;
+        const str=Math.max(0,(db-PEAK_THRESH)/40); // normalize above floor
+        if(str>nE[ni]){nE[ni]=str;nM[ni]=mi;nFq[ni]=freq}
+      }
+    }
+    // Smoothed note strengths (temporal averaging to stop jumping)
+    if(!S._smooth)S._smooth=new Array(12).fill(0);
+    for(let i=0;i<12;i++) S._smooth[i]=S._smooth[i]*0.65+nE[i]*0.35;
+    // Only notes with smoothed strength above 0.08 count
+    S.detectedNotes=S._smooth.map((s,i)=>({noteIndex:i,strength:s,freq:nFq[i],midi:nM[i],color:NOTES[i].color}))
+      .filter(n=>n.strength>0.08).sort((a,b)=>b.strength-a.strength).slice(0,6);
+    S.dominantNote=S.detectedNotes[0]||null;
+    S.activeNoteIndices=new Set(S.detectedNotes.map(n=>n.noteIndex));
+  }
+  // Pulse sync dots
+  S.detectedNotes.forEach((n,i)=>{const sd=document.getElementById(`sd${i}`);if(sd){sd.classList.add('active');setTimeout(()=>sd&&sd.classList.remove('active'),120)}});
+  updatePills();
+  // Render all 8
+  drawWheel();drawWave(gain);drawLissajous();drawCymatics();drawWaterfall(binHz,gain);drawStaff();updateKeyboardDisplay();updateNeckDisplay();updateMidiStrip();
+}
+
+function updatePills(){
+  const row=document.getElementById('noteRow');
+  if(S.detectedNotes.length===0){
+    row.innerHTML='<span style="font-size:10px;color:var(--dim);letter-spacing:.15em">'+(isOn?'LISTENING…':'AWAITING SIGNAL')+'</span>';
+    return;
+  }
+  row.innerHTML='';
+  S.detectedNotes.forEach(n=>{
+    const note=NOTES[n.noteIndex],p=document.createElement('div');p.className='npill';
+    p.style.cssText=`border-color:${note.color};color:${note.color};background:${hexRgba(note.color,.1)}`;
+    const isManual=_manualNotes.has(n.noteIndex);
+    const hz=n.freq>0?n.freq.toFixed(0):NOTE_FREQS[n.noteIndex].toFixed(0);
+    const badge=isManual?'<span class="nfreq" style="color:rgba(255,255,255,.5)">HELD</span>':'';
+    p.innerHTML=`${note.name}<span class="nfreq">${hz}Hz</span>${badge}`;
+    row.appendChild(p);
+  });
+}
+
+// ═══ 1. CHROMATIC WHEEL ══════════════════════════════════════════════════════
+function drawWheel(){
+  const c=CV.wheel;resize(c);const x=CX.wheel,W=c.width,H=c.height,cx=W/2,cy=H/2,R=Math.min(W,H)*.43;
+  x.fillStyle='#030508';x.fillRect(0,0,W,H);
+
+  // ── Rotate entire wheel -15° so segment centers land on clock positions ──
+  const ROT=-15*Math.PI/180;
+  x.save();
+  x.translate(cx,cy);
+  x.rotate(ROT);
+  x.translate(-cx,-cy);
+
+  for(let i=0;i<12;i++){
+    const note=NOTES[i],a0=(i/12)*Math.PI*2-Math.PI/2,a1=((i+1)/12)*Math.PI*2-Math.PI/2,am=a0+Math.PI/12;
+    const isActive=S.activeNoteIndices.has(i),str=S.detectedNotes.find(n=>n.noteIndex===i)?.strength||0;
+    x.beginPath();x.moveTo(cx,cy);x.arc(cx,cy,R,a0,a1);x.closePath();
+    if(isActive){x.fillStyle=note.color;x.shadowColor=note.color;x.shadowBlur=18+str*24}else{x.fillStyle=hexRgba(note.color,.55);x.shadowBlur=0}
+    x.fill();x.shadowBlur=0;
+    x.beginPath();x.moveTo(cx,cy);x.arc(cx,cy,R,a0,a1);x.closePath();
+    x.strokeStyle=isActive?'rgba(255,255,255,.7)':'rgba(255,255,255,.2)';x.lineWidth=isActive?2:.8;x.stroke();
+    if(isActive){
+      const pulse=Math.max(0.1,.85+.15*Math.sin(S.t*8+i)),dotR=R+Math.max(1,9*pulse);
+      x.beginPath();x.arc(cx+dotR*Math.cos(am),cy+dotR*Math.sin(am),Math.max(.5,3*pulse),0,Math.PI*2);
+      x.fillStyle=note.color;x.shadowColor=note.color;x.shadowBlur=9;x.fill();x.shadowBlur=0;
+    }
+    // Note label — counter-rotate so text stays upright
+    const lr=R*.78,lx=cx+lr*Math.cos(am),ly=cy+lr*Math.sin(am);
+    x.save();x.translate(lx,ly);x.rotate(-ROT);
+    x.font=`${isActive?'bold ':''} ${isActive?11:9}px 'Space Mono'`;
+    x.fillStyle=isActive?note.color:'rgba(255,255,255,.8)';x.textAlign='center';x.textBaseline='middle';
+    x.fillText(note.name,0,0);x.restore();
+  }
+
+  // Center circle
+  x.beginPath();x.arc(cx,cy,R*.38,0,Math.PI*2);
+  const cg=x.createRadialGradient(cx,cy,0,cx,cy,R*.38);cg.addColorStop(0,'#0A0718');cg.addColorStop(1,'#030508');
+  x.fillStyle=cg;x.fill();x.strokeStyle='rgba(244,208,63,.25)';x.lineWidth=1;x.stroke();
+
+  // 12-o'clock tick (rotated with wheel)
+  x.beginPath();x.moveTo(cx,cy-R-1);x.lineTo(cx,cy-R-11);x.strokeStyle='rgba(244,208,63,.5)';x.lineWidth=1.5;x.stroke();
+
+  // Restore rotation for center text and label
+  x.restore();
+
+  // Center labels — drawn after restore so they are upright
+  x.font="700 9px 'Cinzel'";x.fillStyle='rgba(244,208,63,.75)';x.textAlign='center';x.textBaseline='middle';x.fillText('KCM™',cx,cy-6);
+  if(S.dominantNote){const dn=NOTES[S.dominantNote.noteIndex];x.font="12px 'Space Mono'";x.fillStyle=dn.color;x.fillText(dn.name,cx,cy+9)}
+}
+
+// ═══ 2. OSCILLOSCOPE ═════════════════════════════════════════════════════════
+function drawWave(gain){
+  const c=CV.wave;resize(c);const x=CX.wave,W=c.width,H=c.height;
+  x.fillStyle='rgba(3,5,8,.3)';x.fillRect(0,0,W,H);
+  // Allow rendering with synthetic buffers when manual notes are held
+  if(!isOn && _manualNotes.size===0) return;
+  if(!tdb) return; // buffers not yet initialized
+  const midY=H/2,scaleY=H*.44*gain;
+  x.strokeStyle='rgba(255,255,255,.04)';x.lineWidth=.4;
+  for(let i=1;i<4;i++){x.beginPath();x.moveTo(0,H*i/4);x.lineTo(W,H*i/4);x.stroke()}
+  x.beginPath();x.moveTo(0,midY);x.lineTo(W,midY);x.strokeStyle='rgba(255,255,255,.07)';x.stroke();
+  const bc=S.dominantNote?S.dominantNote.color:NOTES[IDLE_NOTE].color;
+  x.beginPath();
+  for(let i=0;i<W;i++){const bi=Math.min(Math.floor(i*tdb.length/W),tdb.length-1);i===0?x.moveTo(i,midY-tdb[bi]*scaleY):x.lineTo(i,midY-tdb[bi]*scaleY)}
+  x.strokeStyle=bc;x.lineWidth=1.3;x.shadowColor=bc;x.shadowBlur=5+S.rms*14;x.stroke();x.shadowBlur=0;
+  if(S.dominantNote){
+    const _hz=S.dominantNote.freq>0?S.dominantNote.freq.toFixed(1):NOTE_FREQS[S.dominantNote.noteIndex].toFixed(1);
+    x.font="8px 'Space Mono'";x.fillStyle=S.dominantNote.color;x.textAlign='right';x.fillText(`${_hz} Hz`,W-6,H-7);
+  }
+}
+
+// ═══ 3. LISSAJOUS ════════════════════════════════════════════════════════════
+// Lissajous state
+let lissMax=0.001;
+
+function drawLissajous(){
+  const c=CV.lissajous; resize(c);
+  const x=CX.lissajous, W=c.width, H=c.height, cx=W/2, cy=H/2;
+  const R=Math.min(W,H)*0.44;
+
+  // ── SILENCE / NO SIGNAL: solid black, nothing drawn ──────────────────────
+  // hasSignal: true when mic is active with audio OR when manually holding notes
+  // (manual notes provide synthetic tdb/fdb via _buildSyntheticBuffers)
+  const hasSignal = (S.detectedNotes.length > 0 && S.rms > 0.02) ||
+                    (_manualNotes.size > 0 && !isOn);
+
+  if(!hasSignal){
+    // Reset scale so next note starts full-size immediately
+    lissMax = 0.001;
+    // Solid fill — no trails, no static
+    x.fillStyle='#030508'; x.fillRect(0,0,W,H);
+    // Faint circle guide and label only
+    x.beginPath(); x.arc(cx,cy,R,0,Math.PI*2);
+    x.strokeStyle='rgba(255,255,255,.04)'; x.lineWidth=0.5; x.stroke();
+    if(isOn){
+      // Listening but no note yet
+      x.font=`${Math.max(8,Math.min(11,W*0.04))}px 'Space Mono'`;
+      x.fillStyle='rgba(255,255,255,.12)'; x.textAlign='center'; x.textBaseline='middle';
+      x.fillText('play a note…', cx, cy);
+    }
+    return;
+  }
+
+  // ── ACTIVE: trail fade then draw ─────────────────────────────────────────
+  // High opacity fade (0.55) so trails clear within ~5 frames — no lingering static
+  x.fillStyle='rgba(3,5,8,0.55)'; x.fillRect(0,0,W,H);
+
+  if(!tdb){ return; }
+  const buf=tdb, half=Math.floor(buf.length/2);
+  const c1=S.dominantNote?S.dominantNote.color:NOTES[IDLE_NOTE].color;
+  const c2=S.detectedNotes[1]?.color||c1;
+
+  // Auto-normalize: peak amplitude → scale figure to fill R
+  let peakThisFrame=0.0001;
+  for(let i=0;i<half;i++){
+    const ax=Math.abs(buf[i]), ay=Math.abs(buf[i+half]||0);
+    if(ax>peakThisFrame) peakThisFrame=ax;
+    if(ay>peakThisFrame) peakThisFrame=ay;
+  }
+  // Decay slowly so figure doesn't collapse instantly on softer notes
+  lissMax = Math.max(peakThisFrame, lissMax*0.94);
+  const scale = R / lissMax;
+
+  // Faint axes
+  x.strokeStyle='rgba(255,255,255,.05)'; x.lineWidth=0.5;
+  x.beginPath(); x.moveTo(cx,0); x.lineTo(cx,H); x.stroke();
+  x.beginPath(); x.moveTo(0,cy); x.lineTo(W,cy); x.stroke();
+  // Circle boundary
+  x.beginPath(); x.arc(cx,cy,R,0,Math.PI*2);
+  x.strokeStyle='rgba(255,255,255,.05)'; x.stroke();
+
+  // Draw Lissajous — gradient between the two strongest detected notes
+  const r1=hexRgb(c1), r2=hexRgb(c2);
+  const step=Math.max(1,Math.floor(half/600));
+  for(let i=0;i<half-step;i+=step){
+    const xv =buf[i       ]*scale, yv =buf[i+half      ]*scale;
+    const xv2=buf[i+step  ]*scale, yv2=buf[i+step+half ]*scale;
+    const f=i/half;
+    x.strokeStyle=`rgba(${Math.round(r1.r+(r2.r-r1.r)*f)},${Math.round(r1.g+(r2.g-r1.g)*f)},${Math.round(r1.b+(r2.b-r1.b)*f)},0.78)`;
+    x.lineWidth=1.3;
+    x.beginPath(); x.moveTo(cx+xv,cy+yv); x.lineTo(cx+xv2,cy+yv2); x.stroke();
+  }
+}
+
+// ═══ 4. CYMATICS ═════════════════════════════════════════════════════════════
+const CHLADNI=[[2,1],[3,1],[3,2],[4,1],[4,2],[4,3],[5,1],[5,2],[5,3],[5,4],[6,1],[6,2]];
+
+// Cymatics zoom — 0.5 = whole pattern visible, 1 = natural fill, 3 = deep zoom
+let cymaZoom = 1.0;
+
+// Inject zoom slider into cymatics card
+(function injectCymaSlider(){
+  // Use a short delay so the card exists in DOM
+  function tryInject(){
+    const card = document.getElementById('card-cymatics');
+    if(!card){ setTimeout(tryInject,100); return; }
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'position:absolute;bottom:22px;left:50%;transform:translateX(-50%);' +
+      'z-index:10;display:flex;align-items:center;gap:5px;' +
+      'background:rgba(3,5,8,.75);padding:3px 9px;border-radius:20px;' +
+      'border:1px solid rgba(255,255,255,.1);pointer-events:all';
+    const lbl = document.createElement('span');
+    lbl.style.cssText = 'font-family:"Space Mono",monospace;font-size:7px;' +
+      'color:rgba(244,208,63,.7);letter-spacing:.1em';
+    lbl.textContent = '−';
+    const sl = document.createElement('input');
+    sl.type='range'; sl.min='0.5'; sl.max='3.0'; sl.step='0.05'; sl.value='1.0';
+    sl.title = 'Cymatics zoom';
+    sl.style.cssText = 'width:72px;height:3px;cursor:pointer;accent-color:#C9963A';
+    const lbl2 = document.createElement('span');
+    lbl2.style.cssText = lbl.style.cssText; lbl2.textContent = '+';
+    const val = document.createElement('span');
+    val.style.cssText = 'font-family:"Space Mono",monospace;font-size:7px;' +
+      'color:rgba(255,255,255,.45);min-width:26px;text-align:right';
+    val.textContent = '1.0×';
+    sl.oninput = e => {
+      cymaZoom = parseFloat(e.target.value);
+      val.textContent = cymaZoom.toFixed(1) + '×';
+    };
+    wrap.appendChild(lbl); wrap.appendChild(sl);
+    wrap.appendChild(lbl2); wrap.appendChild(val);
+    card.appendChild(wrap);
+  }
+  tryInject();
+})();
+
+function drawCymatics(){
+  const c=CV.cymatics; resize(c);
+  const x=CX.cymatics, W=c.width, H=c.height;
+  x.fillStyle='#030810'; x.fillRect(0,0,W,H);
+  const ni=S.dominantNote?S.dominantNote.noteIndex:IDLE_NOTE;
+  const [m,n]=CHLADNI[ni%CHLADNI.length];
+  const note=NOTES[ni], col=note.color;
+  const rgb=hexRgb(col), ph=S.t*.3;
+  const zoom=cymaZoom; // 1.0 = whole design fills panel; >1 = zoom into centre
+
+  // At zoom=1: nx runs exactly [0,1] → complete Chladni pattern, edge to edge
+  // At zoom=0.7: nx runs [-0.21, 1.21] → pattern smaller, black border visible
+  // At zoom=2: nx runs [0.25, 0.75] → zoomed into centre quadrant
+  // The pattern domain is [0,1]×[0,1] for both axes — the equation produces
+  // the full standing-wave geometry across this range.
+
+  for(let py=0;py<H;py++){
+    for(let px=0;px<W;px++){
+      // Map pixel to [0,1] pattern space, scaled by zoom around centre
+      const nx = (px/W - 0.5)/zoom + 0.5;
+      const ny = (py/H - 0.5)/zoom + 0.5;
+      // Outside [0,1]: black border (only when zoom<1)
+      if(nx<0||nx>1||ny<0||ny>1){ continue; }
+      // Full Chladni equation: v=0 = nodal line (sand collects here)
+      // Using full [0,1] domain so the COMPLETE pattern is always visible
+      const v = Math.sin(m*Math.PI*nx + ph) * Math.sin(n*Math.PI*ny)
+              - Math.sin(n*Math.PI*nx)       * Math.sin(m*Math.PI*ny + ph);
+      const absV = Math.abs(v);
+      if(absV < 0.12){
+        // Nodal line — sharp bright glow
+        const sharpness = 1 - absV/0.12;
+        const alpha = Math.pow(sharpness, 1.4) * (0.85 + S.rms*0.15);
+        x.fillStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},${alpha})`;
+        x.fillRect(px,py,1,1);
+      } else {
+        // Antinode region — subtle background glow driven by audio
+        const it = Math.pow(Math.max(0,1-absV), 4) * S.rms * 1.2;
+        if(it>0.015){ x.fillStyle=hexRgba(col,it*0.2); x.fillRect(px,py,1,1); }
+      }
+    }
+  }
+  // Mode info at bottom (never overlaps card-lbl at top)
+  const fs=Math.max(7,Math.min(9,W*0.028));
+  x.font=`${fs}px 'Space Mono'`;
+  x.textAlign='center'; x.textBaseline='bottom';
+  x.fillStyle='rgba(0,0,0,.55)'; x.fillRect(W/2-58,H-fs-7,116,fs+5);
+  x.fillStyle=hexRgba(col,.85);
+  x.fillText(`MODE (${m},${n}) · ${note.name} · zoom ${zoom.toFixed(1)}×`,W/2,H-3);
+}
+
+// ═══ 5. SPECTRAL WATERFALL ═══════════════════════════════════════════════════
+const wfOS=document.createElement('canvas');wfOS.width=1;wfOS.height=1;const wfC=wfOS.getContext('2d');
+let wfRows=[];const MAX_WF=180;
+function drawWaterfall(binHz,gain){
+  const c=CV.waterfall;resize(c);const x=CX.waterfall,W=c.width,H=c.height;
+  // Allow synthetic rendering when manual notes are held
+  if(!isOn && _manualNotes.size===0){x.fillStyle='#030508';x.fillRect(0,0,W,H);return}
+  if(!fdb) return;
+  const minF=55,maxF=4000,row=new Uint8ClampedArray(W*4);
+  for(let px=0;px<W;px++){
+    const freq=minF*Math.pow(maxF/minF,px/W),bin=Math.round(freq/binHz);
+    const str=Math.max(0,Math.min(1,(fdb[Math.min(bin,fdb.length-1)]+100)/100*gain*.55));
+    if(str<0.02){row[px*4]=3;row[px*4+1]=5;row[px*4+2]=8;row[px*4+3]=255;continue}
+    const ni=((Math.round(freqToMidi(freq))%12)+12)%12,rgb=hexRgb(NOTES[ni].color);
+    row[px*4]=Math.round(rgb.r*str);row[px*4+1]=Math.round(rgb.g*str);row[px*4+2]=Math.round(rgb.b*str);row[px*4+3]=255;
+  }
+  wfRows.push(row);if(wfRows.length>MAX_WF)wfRows.shift();
+  x.fillStyle='#030508';x.fillRect(0,0,W,H);
+  if(wfOS.width!==W)wfOS.width=W;wfOS.height=1;
+  const rh=Math.max(1,H/MAX_WF);
+  wfRows.forEach((r,i)=>{wfC.putImageData(new ImageData(r,W,1),0,0);x.drawImage(wfOS,0,(wfRows.length-1-i)*rh,W,rh+1)});
+  x.font="7px 'Space Mono'";x.fillStyle='rgba(255,255,255,.22)';x.textAlign='center';
+  [110,220,440,880,1760,3520].forEach(f=>{if(f>=minF&&f<=maxF){const px=W*Math.log(f/minF)/Math.log(maxF/minF);x.fillText(f>=1000?`${f/1000}k`:`${f}`,px,H-4)}});
+}
+
+// ═══ 6. PARTICLE FIELD ═══════════════════════════════════════════════════════
+// ═══ 6. PIANO KEYBOARD — DOM, KCM colors, interactive, synced ═══════════════
+// Replaces particle field.
+// 2 octaves (C4–B5). White keys show KCM color on active notes.
+// Black keys glow with KCM color.  Click any key to play its note via Web Audio.
+// updateKeyboardDisplay() called every frame from loop() — in sync with all displays.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// Keyboard play — uses central playAndActivate engine
+function kbPlayNote(pc,oct){
+  playAndActivate(pc, oct||4, 1.0);
+}
+
+function buildKeyboard(){
+  const container=document.getElementById('kb-inner');
+  if(!container)return;
+  container.innerHTML='';
+
+  // Layout constants — sized to fit the card
+  const card=document.getElementById('card-keyboard');
+  const cardW=card?card.getBoundingClientRect().width:220;
+  const cardH=card?card.getBoundingClientRect().height:220;
+
+  // 2 octaves × 7 white keys = 14 white keys
+  const totalWhite=14;
+  const wkW=Math.max(18,Math.min(32,Math.floor((cardW-8)/totalWhite)));
+  const wkH=Math.max(70,Math.min(130,Math.floor(cardH*0.72)));
+  const bkW=Math.round(wkW*0.62);
+  const bkH=Math.round(wkH*0.62);
+
+  const wrap=document.createElement('div');
+  wrap.id='kb-wrap';
+  wrap.style.cssText=`position:relative;height:${wkH}px;width:${wkW*totalWhite}px;flex-shrink:0;`;
+
+  // White key positions: C D E F G A B — pitch classes 0,2,4,5,7,9,11
+  const WHITE_PC=[0,2,4,5,7,9,11];
+  // Black key defs: {pc, afterWhiteIdx}
+  const BLACK_DEFS=[{pc:1,ai:0},{pc:3,ai:1},{pc:6,ai:3},{pc:8,ai:4},{pc:10,ai:5}];
+
+  [4,5].forEach((oct,oi)=>{
+    const octOffsetPx=oi*7*wkW;
+
+    // Octave label
+    const lbl=document.createElement('div');
+    lbl.style.cssText=`position:absolute;top:-16px;left:${octOffsetPx}px;width:${7*wkW}px;`+
+      `text-align:center;font-family:'Space Mono',monospace;font-size:7px;`+
+      `color:rgba(244,208,63,.6);letter-spacing:.1em;pointer-events:none;`;
+    lbl.textContent=`OCT ${oct}`;
+    wrap.appendChild(lbl);
+
+    // White keys
+    WHITE_PC.forEach((pc,wi)=>{
+      const k=document.createElement('div');
+      k.className='kb-white';
+      k.dataset.pc=pc;k.dataset.oct=oct;
+      k.style.cssText=
+        `position:absolute;left:${octOffsetPx+wi*wkW}px;top:0;`+
+        `width:${wkW-2}px;height:${wkH}px;`+
+        `background:linear-gradient(to bottom,#f8f8f8,#e0e0e0);`+
+        `border:1px solid #444;border-radius:0 0 3px 3px;`+
+        `cursor:pointer;box-sizing:border-box;`+
+        `transition:background .1s,box-shadow .1s;z-index:1;`;
+      // Note name at bottom
+      const nl=document.createElement('span');
+      nl.style.cssText=`position:absolute;bottom:3px;width:100%;text-align:center;`+
+        `font-size:${Math.max(6,wkW*0.28)}px;font-weight:700;color:#555;`+
+        `font-family:'Space Mono',monospace;pointer-events:none;`;
+      nl.textContent=wi===0?NOTES[pc].name+oct:NOTES[pc].name;
+      k.appendChild(nl);
+      // KCM color swatch at base of white key (always visible)
+      const sw=document.createElement('div');
+      sw.className='kb-swatch';
+      sw.style.cssText=`position:absolute;bottom:0;left:0;right:0;height:6px;border-radius:0 0 3px 3px;background:${NOTES[pc].color};opacity:.7;pointer-events:none;`;
+      k.appendChild(sw);
+      k.addEventListener('click',()=>{
+        kbPlayNote(pc,oct);
+        k.style.transform='scaleY(0.97)';k.style.transformOrigin='top';
+        setTimeout(()=>{k.style.transform='';},150);
+      });
+      k.addEventListener('touchstart',e=>{
+        e.preventDefault();kbPlayNote(pc,oct);
+        k.style.transform='scaleY(0.97)';k.style.transformOrigin='top';
+        setTimeout(()=>{k.style.transform='';},150);
+      },{passive:false});
+      wrap.appendChild(k);
+    });
+
+    // Black keys
+    BLACK_DEFS.forEach(({pc,ai})=>{
+      const k=document.createElement('div');
+      k.className='kb-black';
+      k.dataset.pc=pc;k.dataset.oct=oct;
+      const leftPx=octOffsetPx+(ai+1)*wkW-Math.round(bkW/2);
+      k.style.cssText=
+        `position:absolute;left:${leftPx}px;top:0;`+
+        `width:${bkW}px;height:${bkH}px;`+
+        `background:linear-gradient(180deg,#222,#000);`+
+        `border:1px solid #000;border-radius:0 0 3px 3px;`+
+        `cursor:pointer;box-sizing:border-box;`+
+        `transition:background .1s,box-shadow .1s;z-index:3;`+
+        `box-shadow:0 3px 6px rgba(0,0,0,.6);`;
+      const nl=document.createElement('span');
+      nl.style.cssText=`position:absolute;bottom:3px;width:100%;text-align:center;`+
+        `font-size:${Math.max(5,bkW*0.28)}px;font-weight:700;color:#999;`+
+        `font-family:'Space Mono',monospace;pointer-events:none;`;
+      nl.textContent=NOTES[pc].name.replace('♯','#');
+      k.appendChild(nl);
+      k.addEventListener('click',()=>{
+        kbPlayNote(pc,oct);
+        k.style.transform='scaleY(0.95)';k.style.transformOrigin='top';
+        setTimeout(()=>{k.style.transform='';},150);
+      });
+      k.addEventListener('touchstart',e=>{
+        e.preventDefault();kbPlayNote(pc,oct);
+        k.style.transform='scaleY(0.95)';k.style.transformOrigin='top';
+        setTimeout(()=>{k.style.transform='';},150);
+      },{passive:false});
+      wrap.appendChild(k);
+    });
+  });
+
+  container.appendChild(wrap);
+}
+
+// Called every frame — lights keys that match S.activeNoteIndices
+function updateKeyboardDisplay(){
+  // White keys
+  document.querySelectorAll('.kb-white').forEach(k=>{
+    const pc=parseInt(k.dataset.pc);
+    const note=NOTES[pc];
+    const active=S.activeNoteIndices.has(pc);
+    if(active){
+      k.style.background=note.color;
+      k.style.boxShadow=`0 0 18px ${note.color}, 0 0 8px ${note.color}, inset 0 2px 6px rgba(0,0,0,.2)`;
+      k.style.borderColor=note.color;
+      k.style.borderWidth='2px';
+      const nl=k.querySelector('span');
+      if(nl){nl.style.color=note.tc;nl.style.textShadow='none';}
+      const sw=k.querySelector('.kb-swatch');
+      if(sw) sw.style.opacity='0';
+    } else {
+      k.style.background='linear-gradient(to bottom,#f5f5f5,#ddd)';
+      k.style.boxShadow='';
+      k.style.borderColor='#555';
+      k.style.borderWidth='1px';
+      const nl=k.querySelector('span');
+      if(nl){nl.style.color='#444';nl.style.textShadow='none';}
+      const sw=k.querySelector('.kb-swatch');
+      if(sw){sw.style.background=note.color;sw.style.opacity='.7';}
+    }
+  });
+  // Black keys
+  document.querySelectorAll('.kb-black').forEach(k=>{
+    const pc=parseInt(k.dataset.pc);
+    const note=NOTES[pc];
+    const rgb=hexRgb(note.color);
+    const active=S.activeNoteIndices.has(pc);
+    if(active){
+      k.style.background=note.color;
+      k.style.boxShadow=`0 0 22px ${note.color}, 0 0 10px ${note.color}`;
+      k.style.borderColor=note.color;
+    } else {
+      // Subtle KCM color tint always visible on black keys
+      k.style.background=`linear-gradient(180deg,rgba(${rgb.r},${rgb.g},${rgb.b},0.28),#111)`;
+      k.style.boxShadow='0 3px 6px rgba(0,0,0,.6)';
+      k.style.borderColor='#000';
+    }
+  });
+}
+
+// ═══ 7. STAFF NOTATION — TREBLE CLEF ════════════════════════════════════════
+// Detected notes placed on staff with KCM colors, ledger lines auto-generated
+// Notes spread horizontally; stem direction auto by register; note name below
+// ═══ 7. STAFF NOTATION — real-time, MIDI-accurate, treble clef ═════════════
+// Uses S.detectedNotes from shared STATE (same frame as all other displays)
+// Each detected note maps to its true diatonic staff position via MIDI
+// Correct ledger lines generated for C4 (middle C) through C6 and below
+// KCM colors, stems, note names — no canvas-drawn title (CSS card-lbl handles it)
+// ════════════════════════════════════════════════════════════════════════════
+
+// Semitone → diatonic step within octave (C=0, D=1, E=2, F=3, G=4, A=5, B=6)
+const SEMI_DIA=[0,0,1,1,2,3,3,4,4,5,5,6];
+
+// Convert MIDI note number to staff position integer
+// Position 0 = middle C (C4, MIDI 60), each step = one diatonic degree
+// Positive = higher, negative = lower
+function staffPos(midi){
+  const oct=Math.floor(midi/12)-1;  // octave (C4 = oct 4)
+  const semi=((midi%12)+12)%12;
+  return (oct-4)*7 + SEMI_DIA[semi];
+}
+
+function drawStaff(){
+  const c=CV.staff; resize(c);
+  const x=CX.staff, W=c.width, H=c.height;
+  x.fillStyle='#080C14'; x.fillRect(0,0,W,H);
+
+  // ── Geometry ─────────────────────────────────────────────────────────────
+  // Treble clef, 5 lines:
+  //   Line 1 (bottom) = E4  staffPos=2
+  //   Line 2          = G4  staffPos=4
+  //   Line 3 (mid)    = B4  staffPos=6
+  //   Line 4          = D5  staffPos=8
+  //   Line 5 (top)    = F5  staffPos=10
+  // Middle C (C4) = staffPos 0, one ledger below line 1
+  //
+  // spToY anchored so staffPos=6 (B4, middle line) = staffCY
+  const marginL = W * 0.20;
+  const marginR = W * 0.04;
+  const staffCY = H * 0.46;          // centre of staff — slightly above mid
+  const ls = Math.max(7, Math.min(H * 0.082, 20));  // line spacing
+
+  const spToY = sp => staffCY - (sp - 6) * (ls / 2);
+
+  const line1Y = spToY(2);   // E4
+  const line5Y = spToY(10);  // F5
+  const staffLeft  = marginL * 0.52;
+  const staffRight = W - marginR;
+
+  // Draw 5 staff lines
+  for(let i=0;i<5;i++){
+    const ly = spToY(2 + i*2);
+    x.beginPath(); x.moveTo(staffLeft,ly); x.lineTo(staffRight,ly);
+    x.strokeStyle='rgba(255,255,255,.42)'; x.lineWidth=0.8; x.stroke();
+  }
+  // Bar lines
+  x.strokeStyle='rgba(255,255,255,.5)'; x.lineWidth=1;
+  x.beginPath(); x.moveTo(staffLeft,line1Y); x.lineTo(staffLeft,line5Y); x.stroke();
+  x.beginPath(); x.moveTo(staffRight,line1Y); x.lineTo(staffRight,line5Y); x.stroke();
+
+  // Treble clef
+  drawClef(x, staffLeft - ls*0.12, staffCY, ls);
+
+  // ── Notes ────────────────────────────────────────────────────────────────
+  const notes = S.detectedNotes.slice(0,6);
+  if(notes.length===0){
+    x.font=`${Math.max(8,ls*0.6)}px 'Space Mono'`;
+    x.fillStyle='rgba(255,255,255,.13)'; x.textAlign='center'; x.textBaseline='middle';
+    x.fillText('play or sing…', W/2, H*0.82);
+    return;
+  }
+
+  // Filter to valid MIDI only
+  const valid = notes.filter(n => n.midi >= 28 && n.midi <= 100);
+  if(valid.length===0) return;
+
+  // Sort low → high
+  const sorted = [...valid].sort((a,b)=>a.midi-b.midi);
+
+  const noteAreaX0 = marginL * 1.05;
+  const noteAreaX1 = W - marginR * 2;
+  const noteR = Math.max(4, ls * 0.44);
+
+  sorted.forEach((n, idx) => {
+    const note = NOTES[n.noteIndex];
+
+    // ── Octave-shift to display range ──────────────────────────────────
+    // Shift detected MIDI by octaves until the diatonic staff position
+    // lands within a displayable range (sp -4 to +14).
+    // This means guitar's E2 displays as written E4, A2 as A3, etc.
+    // The pitch CLASS (note name) is preserved; only the written octave shifts.
+    let dm = n.midi;
+    let sp = staffPos(dm);
+    while(sp < -4 && dm < 108) { dm += 12; sp = staffPos(dm); }
+    while(sp > 14 && dm > 12)  { dm -= 12; sp = staffPos(dm); }
+
+    const noteY = spToY(sp);
+    const noteX = sorted.length===1
+      ? W/2
+      : noteAreaX0 + idx*(noteAreaX1-noteAreaX0)/Math.max(1,sorted.length-1);
+
+    // ── Ledger lines ──────────────────────────────────────────────────────
+    const ledgerW = noteR * 1.8;
+    x.strokeStyle = hexRgba(note.color, 0.75); x.lineWidth = 1.1;
+
+    // Below staff: every even sp from 0 down to sp (inclusive)
+    if(sp <= 1){
+      for(let lsp=0; lsp>=sp; lsp-=2){
+        const lY = spToY(lsp);
+        x.beginPath(); x.moveTo(noteX-ledgerW,lY); x.lineTo(noteX+ledgerW,lY); x.stroke();
+      }
+    }
+    // Above staff: every even sp from 12 up to sp (inclusive)
+    if(sp >= 11){
+      for(let lsp=12; lsp<=sp; lsp+=2){
+        const lY = spToY(lsp);
+        x.beginPath(); x.moveTo(noteX-ledgerW,lY); x.lineTo(noteX+ledgerW,lY); x.stroke();
+      }
+    }
+
+    // ── Note head ─────────────────────────────────────────────────────────
+    x.beginPath(); x.ellipse(noteX, noteY, noteR, noteR*0.68, -0.2, 0, Math.PI*2);
+    x.fillStyle   = note.color;
+    x.shadowColor = note.color;
+    x.shadowBlur  = 6 + n.strength * 12;
+    x.fill(); x.shadowBlur = 0;
+
+    // ── Stem ──────────────────────────────────────────────────────────────
+    const stemDir = sp >= 6 ? -1 : 1;   // above B4 → stem down
+    const stemLen = ls * 3.2;
+    const stemX   = noteX + noteR * 0.85 * stemDir;
+    x.beginPath(); x.moveTo(stemX, noteY); x.lineTo(stemX, noteY - stemLen*stemDir);
+    x.strokeStyle = hexRgba(note.color, 0.8); x.lineWidth = 1.1; x.stroke();
+
+    // ── Note name below head ──────────────────────────────────────────────
+    const fz = Math.max(6, Math.min(11, ls*0.52));
+    x.font = `bold ${fz}px 'Space Mono'`;
+    x.fillStyle = note.color;
+    x.textAlign = 'center'; x.textBaseline = 'top';
+    x.fillText(note.name, noteX, noteY + noteR * 2.1);
+  });
+}
+
+function drawClef(x,cx,cy,ls){
+  x.save(); x.translate(cx,cy); const s=ls*.28;
+  x.strokeStyle='rgba(255,255,255,.55)'; x.lineWidth=s*.2;
+  x.lineCap='round'; x.lineJoin='round';
+  x.beginPath();
+  x.moveTo(0,-s*5.2); x.bezierCurveTo(s*1.6,-s*5.2,s*2.1,-s*3.4,s*.5,-s*2.3);
+  x.bezierCurveTo(-s,-s*1.3,-s*1.4,s*.6,0,s*1.6);
+  x.bezierCurveTo(s*1.5,s*2.6,s*1.4,s*1.1,0,s*.9);
+  x.moveTo(0,-s*5.2); x.lineTo(0,s*3.4);
+  x.moveTo(0,s*2.6); x.bezierCurveTo(-s*1.6,s*2.6,-s*2,s*4.2,-s*.4,s*4.6);
+  x.stroke(); x.restore();
+}
+
+
+// ═══ 8. VERTICAL GUITAR NECK ════════════════════════════════════════════════
+// Orientation: low E (string 0) at bottom, high e (string 5) at top
+// Strings run left-to-right (horizontal); frets run 0(left)→12(right)
+// Active detected notes highlighted in KCM colors on every matching position
+// ═══ 8. GUITAR NECK — horizontal, headstock LEFT (bass), bridge RIGHT (treble)
+// Strings top-to-bottom: low E(6) A(5) D(4) G(3) B(2) high e(1)
+// String names shown at LEFT (headstock side)
+// Fret view: 4, 5, or 12 frets — toggle button
+// ══════════════════════════════════════════════════════════════════════════════
+// ── GUITAR NECK — DOM table (port of music-theory-pro.html) ──────────────────
+// KCM colors, string labels top, fret numbers left, low E top → high e bottom
+// Dots dim at baseline, glow in KCM color only when note detected
+
+let neckFretCount  = 5;   // 4 | 5 | 12
+let neckFretHeight = 34;  // px per fret row: 26=4fret 34=5fret 46=12fret
+// Preset map: fret count → row height
+const FRET_PRESETS = {4: 26, 5: 34, 12: 46};
+
+function buildNeckUI() {
+  const card = document.getElementById('card-neck');
+  if (!card) return;
+  card.style.overflow = 'hidden';
+  card.style.display  = 'flex';
+  card.style.flexDirection = 'column';
+
+  // Single unified fret preset row: 4 | 5 | 12 frets
+  // Each preset sets both count AND row height together
+  const ctrl = document.createElement('div');
+  ctrl.id = 'neck-controls';
+  const presetLabels = {4:'4 FRETS', 5:'5 FRETS', 12:'12 FRETS'};
+  [4,5,12].forEach(n => {
+    const b = document.createElement('button');
+    b.textContent = presetLabels[n];
+    b.setAttribute('aria-label', `Show ${n} frets`);
+    if (n === neckFretCount) b.classList.add('active');
+    b.onclick = () => {
+      neckFretCount  = n;
+      neckFretHeight = FRET_PRESETS[n];
+      document.querySelectorAll('#neck-controls button').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      buildNeckTable();
+    };
+    ctrl.appendChild(b);
+  });
+  card.insertBefore(ctrl, document.getElementById('neck-inner'));
+
+  const title = document.createElement('div');
+  title.id = 'neck-title';
+  title.textContent = 'GUITAR · STD TUNING · LOW E ← BASS    TREBLE → HIGH e';
+  card.insertBefore(title, document.getElementById('neck-inner'));
+
+  buildNeckTable();
+}
+
+function buildNeckTable() {
+  const container = document.getElementById('neck-inner');
+  if (!container) return;
+  container.innerHTML = '';
+
+  // Standard tuning E A D G B e — index 0=low E (top row), 5=high e (bottom)
+  const tuning  = [4,  9,  2,  7, 11,  4];  // pitch class
+  const names   = ['E','A','D','G','B','e'];
+  const openMid = [40, 45, 50, 55, 59, 64];  // MIDI of open string
+  const strW    = ['3px','2.5px','2px','1.5px','1px','.7px']; // compact for 2" neck
+  const strGrad = [
+    'linear-gradient(180deg,#c8a870,#907040)',
+    'linear-gradient(180deg,#c0c0c0,#888)',
+    'linear-gradient(180deg,#d0d0d0,#a0a0a0)',
+    'linear-gradient(180deg,#dcdcdc,#b8b8b8)',
+    'linear-gradient(180deg,#e8e8e8,#c8c8c8)',
+    'linear-gradient(180deg,#f4f4f4,#d8d8d8)'
+  ];
+  const nF = neckFretCount;
+  const markerFrets = nF===12?[3,5,7,9,12]:nF===5?[3,5]:[3];
+
+  const table = document.createElement('div');
+  table.className = 'fb-table';
+
+  // ── Header row: corner + string name labels ──
+  const hdr = document.createElement('div');
+  hdr.className = 'fb-row';
+  const corner = document.createElement('div');
+  corner.className = 'fb-fnum-cell';
+  corner.style.cssText = 'font-size:.5rem;color:rgba(244,208,63,.3);border-bottom:1px solid rgba(255,255,255,.08)';
+  corner.textContent = 'fret';
+  hdr.appendChild(corner);
+  for (let s = 0; s < 6; s++) {
+    const lbl = document.createElement('div');
+    lbl.className = 'fb-str-label';
+    lbl.id = `neck-str-${s}`;
+    lbl.dataset.ni = tuning[s];
+    lbl.textContent = names[s];
+    lbl.title = `${names[s]} open string`;
+    lbl.style.cursor = 'pointer';
+    const _strS = s;
+    lbl.addEventListener('click', ()=>playAndActivate(tuning[_strS], Math.floor(openMid[_strS]/12)-1, 1.0));
+    lbl.addEventListener('touchstart', e=>{e.preventDefault();playAndActivate(tuning[_strS], Math.floor(openMid[_strS]/12)-1, 1.0);}, {passive:false});
+    hdr.appendChild(lbl);
+  }
+  table.appendChild(hdr);
+
+  // ── Nut row (fret 0) ──
+  const nutRow = document.createElement('div');
+  nutRow.className = 'fb-row nut-row';
+  const nutFnum = document.createElement('div');
+  nutFnum.className = 'fb-fnum-cell';
+  nutFnum.style.cssText = 'height:8px;font-size:.55rem';
+  nutFnum.textContent = '0';
+  nutRow.appendChild(nutFnum);
+  for (let s = 0; s < 6; s++) {
+    const pc = tuning[s];
+    const cell = document.createElement('div');
+    cell.className = 'fb-cell fb-off';
+    cell.style.height = neckFretHeight + 'px';
+    cell.style.cursor = 'pointer';
+    cell.dataset.note = pc;
+    cell.dataset.s = s;
+    cell.dataset.f = 0;
+    const _nutS = s;
+    cell.addEventListener('click', ()=>playAndActivate(tuning[_nutS], Math.floor(openMid[_nutS]/12)-1, 1.0));
+    cell.addEventListener('touchstart', e=>{e.preventDefault();playAndActivate(tuning[_nutS], Math.floor(openMid[_nutS]/12)-1, 1.0);}, {passive:false});
+    const wire = document.createElement('div');
+    wire.style.cssText = `position:absolute;top:0;bottom:0;left:50%;transform:translateX(-50%);width:${strW[s]};background:${strGrad[s]};border-radius:99px;pointer-events:none;z-index:0`;
+    cell.appendChild(wire);
+    const dot = document.createElement('div');
+    dot.className = 'fb-dot';
+    dot.style.background = NOTES[pc].color;
+    dot.style.color = NOTES[pc].tc;
+    dot.textContent = NOTES[pc].name;
+    cell.appendChild(dot);
+    nutRow.appendChild(cell);
+  }
+  table.appendChild(nutRow);
+
+  // ── Fret rows 1..nF ──
+  for (let f = 1; f <= nF; f++) {
+    const row = document.createElement('div');
+    row.className = 'fb-row';
+    row.dataset.fret = f;
+
+    const fnumCell = document.createElement('div');
+    fnumCell.className = 'fb-fnum-cell';
+    if (markerFrets.includes(f)) {
+      const inlay = document.createElement('div');
+      inlay.className = 'fb-inlay';
+      inlay.innerHTML = f===12
+        ? '<div class="fb-inlay-dot"></div><div class="fb-inlay-dot"></div>'
+        : '<div class="fb-inlay-dot"></div>';
+      fnumCell.appendChild(inlay);
+    } else {
+      fnumCell.textContent = f;
+    }
+    row.appendChild(fnumCell);
+
+    for (let s = 0; s < 6; s++) {
+      const pc  = (tuning[s] + f) % 12;
+      const cell = document.createElement('div');
+      cell.className = 'fb-cell fb-off';
+      cell.style.cursor = 'pointer';
+      cell.dataset.note = pc;
+      cell.dataset.s = s;
+      cell.dataset.f = f;
+      const _fretMidi = openMid[s] + f;
+      const _fretOct  = Math.floor(_fretMidi/12) - 1;
+      cell.addEventListener('click', ()=>playAndActivate(pc, _fretOct, 1.0));
+      cell.addEventListener('touchstart', e=>{e.preventDefault();playAndActivate(pc, _fretOct, 1.0);}, {passive:false});
+
+      const wire = document.createElement('div');
+      wire.style.cssText = `position:absolute;top:0;bottom:0;left:50%;transform:translateX(-50%);width:${strW[s]};background:${strGrad[s]};border-radius:99px;pointer-events:none;z-index:0`;
+      cell.appendChild(wire);
+
+      const dot = document.createElement('div');
+      dot.className = 'fb-dot';
+      dot.style.background = NOTES[pc].color;
+      dot.style.color = NOTES[pc].tc;
+      dot.textContent = NOTES[pc].name;
+      cell.appendChild(dot);
+      row.appendChild(cell);
+    }
+    table.appendChild(row);
+  }
+  container.appendChild(table);
+  updateNeckDisplay();
+}
+
+// Called every frame from loop() — synced to shared STATE
+function updateNeckDisplay() {
+  // Update all fret cells — full KCM color glow when active
+  document.querySelectorAll('.fb-cell').forEach(cell => {
+    const ni = parseInt(cell.dataset.note);
+    if (isNaN(ni)) return;
+    const isActive = S.activeNoteIndices.has(ni);
+    const note = NOTES[ni];
+    const dot  = cell.querySelector('.fb-dot');
+    if (isActive) {
+      cell.classList.add('fb-on'); cell.classList.remove('fb-off');
+      const str = S.detectedNotes.find(n=>n.noteIndex===ni)?.strength || 0.9;
+      if (dot) {
+        // KCM color glow — full saturation, no white wash
+        const glow  = Math.round(10 + str * 18);
+        const glow2 = Math.round(4  + str * 10);
+        dot.style.boxShadow = `0 0 ${glow}px ${note.color}, 0 0 ${glow2}px ${note.color}`;
+        dot.style.borderColor = note.color;
+        dot.style.background  = note.color;
+        dot.style.color        = note.tc;
+      }
+    } else {
+      cell.classList.remove('fb-on'); cell.classList.add('fb-off');
+      if (dot) {
+        dot.style.boxShadow  = '';
+        dot.style.borderColor = 'rgba(255,255,255,.3)';
+        dot.style.background  = note.color;    // keep KCM color always
+        dot.style.color        = note.tc;
+      }
+    }
+  });
+  // String labels — KCM color glow when open string is active
+  for (let s = 0; s < 6; s++) {
+    const lbl = document.getElementById(`neck-str-${s}`);
+    if (!lbl) continue;
+    const ni = parseInt(lbl.dataset.ni);
+    const isActive = S.activeNoteIndices.has(ni);
+    const col = NOTES[ni].color;
+    if (isActive) {
+      lbl.classList.add('fb-lit');
+      lbl.style.color       = col;
+      lbl.style.textShadow  = `0 0 20px ${col}, 0 0 8px ${col}`;
+      lbl.style.transform   = 'scale(1.15)';
+    } else {
+      lbl.classList.remove('fb-lit');
+      lbl.style.color       = 'rgba(255,255,255,.38)';
+      lbl.style.textShadow  = '';
+      lbl.style.transform   = '';
+    }
+  }
+}
+
+// drawNeck is now a no-op for the canvas (neck uses DOM); keep for compat
+function drawNeck(){ updateNeckDisplay(); }
+
+
+
+// ═══════════════════════════════════════════════════════════════════════════
+// VIEW SWITCHER — clean, ergonomic, no interference
+// ALL-8: grid shows all cards, canvas fills each cell via position:absolute
+// FULLSCREEN: #vizGrid gets .fs-mode class, only target card gets .fs-active
+// Canvas resize triggered after layout settles
+// ═══════════════════════════════════════════════════════════════════════════
+
+// Sync expand button icons to match current view state
+function updateExpandIcons(activeLayout){
+  document.querySelectorAll('.card-expand').forEach(btn=>{
+    const card = btn.closest('.vcard');
+    const layout = card.id.replace('card-','');
+    btn.textContent = (activeLayout !== 'all' && layout === activeLayout) ? '⤡' : '⤢';
+  });
+}
+
+function switchView(layout){
+  // GA4 tracking
+  if(typeof trackEvent!=='undefined') trackEvent('observatory_view_switch',{view:layout});
+  const grid  = document.getElementById('vizGrid');
+  const cards = document.querySelectorAll('.vcard');
+
+  // Update tab highlight
+  document.querySelectorAll('.vtab').forEach(v=>{
+    v.classList.toggle('active', v.dataset.layout===layout);
+  });
+
+  if(layout==='all'){
+    // ── ALL 8 mode ──────────────────────────────────────────────────────
+    grid.classList.remove('fs-mode');
+    cards.forEach(c=>c.classList.remove('fs-active'));
+    // Restore grid columns based on viewport
+    const cols = window.innerWidth>=900?4:window.innerWidth>=500?2:1;
+    const rows = window.innerWidth>=900?2:window.innerWidth>=500?4:8;
+    grid.style.gridTemplateColumns=`repeat(${cols},1fr)`;
+    grid.style.gridTemplateRows=`repeat(${rows},1fr)`;
+  } else {
+    // ── FULLSCREEN single view ───────────────────────────────────────────
+    grid.classList.add('fs-mode');
+    cards.forEach(c=>c.classList.remove('fs-active'));
+    const target = document.getElementById(`card-${layout}`);
+    if(target) target.classList.add('fs-active');
+    grid.style.gridTemplateColumns='1fr';
+    grid.style.gridTemplateRows='1fr';
+  }
+
+  // Resize all canvases + rebuild DOM panels after layout settles
+  setTimeout(()=>{
+    Object.values(CV).forEach(resize);
+    // Rebuild DOM-based panels so they fit their new container size
+    buildKeyboard();
+    buildNeckTable();
+    // Force one visual refresh so active note colors re-render immediately
+    drawWheel();
+    drawStaff();
+    updateKeyboardDisplay();
+    updateNeckDisplay();
+    if(_manualNotes.size > 0 || isOn){
+      drawCymatics();
+    }
+  }, 80);
+  updateExpandIcons(layout);
+}
+
+// Wire tabs
+document.querySelectorAll('.vtab').forEach(t=>{
+  t.setAttribute('role','tab');
+  t.setAttribute('tabindex','0');
+  t.setAttribute('aria-label',`View ${t.textContent} display`);
+  t.onclick=()=>switchView(t.dataset.layout);
+  t.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();switchView(t.dataset.layout);}};
+});
+
+// Wire expand buttons on each card
+document.querySelectorAll('.card-expand').forEach(btn=>{
+  btn.addEventListener('click', e=>{
+    e.stopPropagation(); // prevent canvas click events from firing
+    const card = btn.closest('.vcard');
+    const layout = card.id.replace('card-','');
+    const grid = document.getElementById('vizGrid');
+    if(grid.classList.contains('fs-mode') && card.classList.contains('fs-active')){
+      btn.textContent = '⤢';
+      switchView('all');
+    } else {
+      btn.textContent = '⤡';
+      switchView(layout);
+    }
+  });
+});
+
+// Double-click any card as backup (but stop propagation so it doesn't fire on canvas clicks)
+document.querySelectorAll('.vcard').forEach(card=>{
+  card.addEventListener('dblclick', e=>{
+    // Only act if the dblclick is directly on the card border/label area — not on canvas or DOM elements
+    if(e.target === card || e.target.classList.contains('card-lbl') ||
+       e.target.classList.contains('card-lbl-main') || e.target.classList.contains('card-lbl-sub')){
+      const layout = card.id.replace('card-','');
+      const grid = document.getElementById('vizGrid');
+      if(grid.classList.contains('fs-mode') && card.classList.contains('fs-active')){
+        switchView('all');
+      } else {
+        switchView(layout);
+      }
+    }
+  });
+});
+
+// ═══ IDLE ANIMATION ════════════════════════════════════════════════════════
+function idle(){
+  if(isOn)return;
+  // If manual notes are held, the synthetic loop handles everything
+  if(_manualNotes.size > 0) return;
+  requestAnimationFrame(idle);
+  S.t+=1/60;
+  // On idle (no mic, no manual notes): animate cymatics and wheel only
+  drawCymatics();
+  drawWheel();
+  // Update keyboard on idle too
+  updateKeyboardDisplay();
+  // Clear staff on idle
+  const cs=CV.staff;if(cs){resize(cs);const xs=CX.staff;xs.fillStyle='#080C14';xs.fillRect(0,0,cs.width,cs.height);}
+  updateNeckDisplay();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// COMPUTER KEYBOARD → CHROMATIC NOTE TRIGGER
+// Two rows mapped to 12 chromatic pitch classes (C=0 … B=11)
+// Row 1: A S D F G H J K L ; ' \   →  C  C♯ D  D♯ E  F  F♯ G  G♯ A  A♯ B
+// Row 2: Q W E R T Y U I O P [ ]   →  same 12, one octave higher (oct 5)
+// SPACE = clear all held notes
+// ESC   = clear all held notes
+// Hold-toggle: first press lights the note; second press extinguishes it.
+// ═══════════════════════════════════════════════════════════════════════════
+(function wireComputerKeyboard(){
+
+  // Lower row → oct 4, upper row → oct 5
+  const ROW_LOW  = { KeyA:0, KeyS:1, KeyD:2, KeyF:3, KeyG:4, KeyH:5,
+                     KeyJ:6, KeyK:7, KeyL:8, Semicolon:9, Quote:10, Backslash:11 };
+  const ROW_HIGH = { KeyQ:0, KeyW:1, KeyE:2, KeyR:3, KeyT:4, KeyY:5,
+                     KeyU:6, KeyI:7, KeyO:8, KeyP:9, BracketLeft:10, BracketRight:11 };
+
+  // Keys currently held down (physical key) — prevents repeat-fire on hold
+  const _keysDown = new Set();
+
+  window.addEventListener('keydown', e => {
+    // Don't intercept when typing in an input / textarea
+    if(e.target && (e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.isContentEditable)) return;
+
+    // Clear all notes
+    if(e.code==='Space' || e.code==='Escape'){
+      e.preventDefault();
+      clearManualNotes();
+      return;
+    }
+
+    // Prevent repeat-fire while key is physically held
+    if(_keysDown.has(e.code)) return;
+    _keysDown.add(e.code);
+
+    let pc = -1, oct = 4;
+    if(ROW_LOW[e.code]  !== undefined){ pc = ROW_LOW[e.code];  oct = 4; }
+    if(ROW_HIGH[e.code] !== undefined){ pc = ROW_HIGH[e.code]; oct = 5; }
+    if(pc < 0) return;
+
+    e.preventDefault();
+    playAndActivate(pc, oct, 1.2);
+
+    // Brief visual flash on the chromatic wheel
+    const wc = document.getElementById('c-wheel');
+    if(wc){ wc.style.filter='brightness(1.25)'; setTimeout(()=>{ wc.style.filter=''; },100); }
+  });
+
+  window.addEventListener('keyup', e => {
+    _keysDown.delete(e.code);
+  });
+
+})();
+
+
+// ── INIT ───────────────────────────────────────────────────────────────────
+buildNeckUI();
+setTimeout(buildKeyboard, 80);
+idle();
+
+// Auto-warn on file:// protocol — mic won't work without action
+if(location.protocol === 'file:'){
+  setTimeout(()=> showMicModal('filescheme'), 800);
+}
+
+// Resize all canvases on window resize, rebuild neck table
+window.addEventListener('resize',()=>{
+  setTimeout(()=>{
+    Object.values(CV).forEach(resize);
+    buildNeckTable();
+    buildKeyboard();
+  },100);
+});
+</script>
+
+<!-- ── FOOTER: copyright + legal ── -->
+<footer role="contentinfo" style="
+  text-align:center;padding:.5rem 2rem;font-size:9px;
+  color:rgba(232,232,232,.45);font-family:var(--font-body);letter-spacing:.04em;
+  border-top:1px solid rgba(0,128,128,.2);flex-shrink:0;
+  background:linear-gradient(180deg,transparent 0%,rgba(0,0,0,.3) 100%);
+">
+  <span style="font-family:'Cinzel',serif;font-size:10px;color:rgba(244,208,63,.7);letter-spacing:.15em;">KEYS, CODES &amp; MODES™</span>
+  &nbsp;·&nbsp;
+  © 2026 Benjamin Ryan — All rights reserved.
+  &nbsp;|&nbsp;
+  <a href="/privacy.html" style="color:var(--primary-teal);text-decoration:none;">Privacy</a>
+  &nbsp;|&nbsp;
+  <a href="/terms.html" style="color:var(--primary-teal);text-decoration:none;">Terms</a>
+  &nbsp;|&nbsp;
+  <a href="/about.html" style="color:var(--primary-teal);text-decoration:none;">About</a>
+  &nbsp;|&nbsp;
+  <a href="/contact.html" style="color:var(--primary-teal);text-decoration:none;">Contact</a>
+  &nbsp;·&nbsp;
+  <span style="color:rgba(232,232,232,.3);">No audio stored or transmitted · COPPA: not directed at children under 13</span>
+</footer>
+</body>
+</html>
