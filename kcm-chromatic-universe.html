@@ -147,6 +147,91 @@ body::before {
 }
 .nav-link.cta:hover { opacity: 0.88; }
 
+/* ── GCIS Save / Load buttons ── */
+.gcis-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0.32rem 0.85rem;
+  border-radius: 20px;
+  border: 1px solid rgba(0,128,128,0.4);
+  background: rgba(10,10,21,0.6);
+  color: var(--text-dim);
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s, box-shadow 0.2s;
+  white-space: nowrap;
+}
+.gcis-btn:hover {
+  background: rgba(0,128,128,0.12);
+  border-color: var(--teal);
+  color: var(--text);
+}
+/* Save flashes gold */
+.gcis-btn--save { border-color: rgba(244,208,63,0.35); }
+.gcis-btn--saved {
+  background: rgba(244,208,63,0.12) !important;
+  border-color: var(--gold) !important;
+  color: var(--gold) !important;
+  animation: gcis-pulse-gold 0.4s ease-out;
+}
+@keyframes gcis-pulse-gold {
+  0%   { box-shadow: 0 0 0 0   rgba(244,208,63,0.7); }
+  50%  { box-shadow: 0 0 14px 4px rgba(244,208,63,0.3); }
+  100% { box-shadow: 0 0 0 0   rgba(244,208,63,0); }
+}
+/* Load flashes teal */
+.gcis-btn--load { border-color: rgba(0,192,192,0.35); }
+.gcis-btn--loaded {
+  background: rgba(0,192,192,0.12) !important;
+  border-color: #00c0c0 !important;
+  color: #00c0c0 !important;
+  animation: gcis-pulse-teal 0.4s ease-out;
+}
+@keyframes gcis-pulse-teal {
+  0%   { box-shadow: 0 0 0 0   rgba(0,192,192,0.7); }
+  50%  { box-shadow: 0 0 14px 4px rgba(0,192,192,0.3); }
+  100% { box-shadow: 0 0 0 0   rgba(0,192,192,0); }
+}
+/* Session title input */
+.gcis-title {
+  background: transparent;
+  border: 1px solid rgba(0,128,128,0.25);
+  border-radius: 16px;
+  color: var(--text-dim);
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  padding: 0.32rem 0.75rem;
+  width: 130px;
+  outline: none;
+  transition: border-color 0.2s, color 0.2s;
+}
+.gcis-title:focus {
+  border-color: var(--teal);
+  color: var(--text);
+}
+/* Toast */
+#cu-gcis-toast {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 10px 22px;
+  border-radius: 6px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  letter-spacing: 0.03em;
+  z-index: 9999;
+  pointer-events: none;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.7);
+}
+
 /* ══════════════════════════════════════════
    MODE TABS (top of main)
    ══════════════════════════════════════════ */
@@ -955,6 +1040,23 @@ input[type="range"] {
     </div>
   </a>
   <nav class="header-nav">
+    <!-- GCIS session title -->
+    <input
+      type="text"
+      id="cu-session-title"
+      class="gcis-title"
+      value="CU Session"
+      maxlength="48"
+      aria-label="Session title"
+      spellcheck="false"
+    />
+    <!-- Save / Load -->
+    <button class="gcis-btn gcis-btn--save" id="cu-gcis-save" aria-label="Save session as .gcis file">
+      ⬇ Save .gcis
+    </button>
+    <button class="gcis-btn gcis-btn--load" id="cu-gcis-load" aria-label="Load .gcis session file">
+      ⬆ Load .gcis
+    </button>
     <a class="nav-link" href="https://keyscodesandmodes.com">Home</a>
     <a class="nav-link" href="https://keyscodesandmodes.com/offerings.html">Apps</a>
     <a class="nav-link cta" href="https://keyscodesandmodes.com/offerings.html">Get Full Access</a>
@@ -2809,6 +2911,206 @@ function etRestart() {
   document.getElementById('etResults').style.display='none';
   document.getElementById('etSettings').style.display='block';
 }
+
+// ── Standalone GCIS Save / Load ────────────────────────────────────────────
+// Works both inside the KCM Console (postMessages state up) and
+// as a standalone page (reads/writes its own clock state directly).
+// ──────────────────────────────────────────────────────────────────────────
+(function () {
+
+  var NOTE_NAMES_EXPORT = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+
+  /* ── Read current clock state ─────────────────────────────────── */
+  function readClockState() {
+    var rootIdx = getRootSpokeIndex() % 12;
+    var stencilPattern = (typeof STENCILS !== 'undefined' && STENCILS[currentStencil])
+      ? STENCILS[currentStencil] : [0,2,4,5,7,9,11];
+
+    return {
+      root        : NOTE_NAMES_EXPORT[rootIdx],
+      rootMidi    : 60 + rootIdx,
+      mode        : currentStencil || 'major',
+      scale       : stencilPattern,
+      activeNotes : [],
+      bpm         : (typeof currentTempo !== 'undefined') ? currentTempo : 120,
+      octave      : 4
+    };
+  }
+
+  /* ── Apply state to clock ─────────────────────────────────────── */
+  function applyClockState(state) {
+    // Root
+    var NOTE_MAP_LOCAL = {
+      'C':0,'C#':1,'Db':1,'D':2,'D#':3,'Eb':3,
+      'E':4,'F':5,'F#':6,'Gb':6,'G':7,'G#':8,
+      'Ab':8,'A':9,'A#':10,'Bb':10,'B':11
+    };
+    if (state.root !== undefined) {
+      var idx = NOTE_MAP_LOCAL[state.root];
+      if (idx !== undefined) {
+        rotationAngle = -idx * (Math.PI * 2) / 12;
+        var ks = document.getElementById('keySelect');
+        if (ks) ks.value = String(idx);
+      }
+    }
+    // Mode/stencil by name
+    if (state.mode !== undefined) {
+      var key = state.mode.toLowerCase().replace(/[\s\-]/g, '_');
+      var alias = {
+        'natural_minor':'minor','aeolian':'minor','ionian':'major',
+        'maj':'major','min':'minor','dom7':'dominant_7th',
+        'maj7':'major_7th','min7':'minor_7th'
+      };
+      if (STENCILS[key]) {
+        currentStencil = key;
+      } else if (alias[key] && STENCILS[alias[key]]) {
+        currentStencil = alias[key];
+      }
+      var ss = document.getElementById('stencilSelect');
+      if (ss && STENCILS[currentStencil]) ss.value = currentStencil;
+    }
+    // Scale intervals fallback
+    if (state.scale && Array.isArray(state.scale)) {
+      var sig = state.scale.slice().sort(function(a,b){return a-b;}).join(',');
+      Object.keys(STENCILS).forEach(function(k) {
+        var s = STENCILS[k].slice().sort(function(a,b){return a-b;}).join(',');
+        if (s === sig) currentStencil = k;
+      });
+      var ss2 = document.getElementById('stencilSelect');
+      if (ss2 && STENCILS[currentStencil]) ss2.value = currentStencil;
+    }
+    // Tempo
+    if (state.bpm !== undefined && typeof currentTempo !== 'undefined') {
+      currentTempo = state.bpm;
+      var ts = document.getElementById('tempoSlider');
+      var tv = document.getElementById('tempoValue');
+      if (ts) ts.value = state.bpm;
+      if (tv) tv.textContent = state.bpm;
+    }
+    drawClock();
+    if (typeof updateWedgePanel === 'function') updateWedgePanel();
+  }
+
+  /* ── Flash helper ─────────────────────────────────────────────── */
+  function flashBtn(btn, label, cls) {
+    var origHTML = btn.innerHTML;
+    var origCls  = btn.className;
+    btn.innerHTML = label;
+    btn.classList.add(cls);
+    setTimeout(function() {
+      btn.innerHTML = origHTML;
+      btn.className = origCls;
+    }, 2000);
+  }
+
+  /* ── Toast ────────────────────────────────────────────────────── */
+  function showToast(msg, type) {
+    var t = document.getElementById('cu-gcis-toast');
+    if (t) t.remove();
+    t = document.createElement('div');
+    t.id = 'cu-gcis-toast';
+    t.textContent = msg;
+    var isErr = type === 'error';
+    t.style.cssText =
+      'background:#12121f;border:1px solid ' + (isErr ? '#CF7A5A' : '#008080') +
+      ';color:' + (isErr ? '#CF7A5A' : '#00c0c0') + ';' +
+      'position:fixed;bottom:28px;left:50%;transform:translateX(-50%);' +
+      'padding:10px 22px;border-radius:6px;font:13px/1.5 Montserrat,sans-serif;' +
+      'letter-spacing:.03em;z-index:9999;pointer-events:none;' +
+      'box-shadow:0 4px 24px rgba(0,0,0,.7);';
+    document.body.appendChild(t);
+    setTimeout(function() { t.remove(); }, 3500);
+  }
+
+  /* ── Filename sanitiser ───────────────────────────────────────── */
+  function sanitise(name) {
+    return name.replace(/[^a-zA-Z0-9_\- ]/g,'').replace(/\s+/g,'_').toLowerCase() || 'cu-session';
+  }
+
+  /* ── Init (after DOM ready) ───────────────────────────────────── */
+  function initGcis() {
+    var saveBtn  = document.getElementById('cu-gcis-save');
+    var loadBtn  = document.getElementById('cu-gcis-load');
+    var titleEl  = document.getElementById('cu-session-title');
+    if (!saveBtn || !loadBtn) return;
+
+    // Hidden file input
+    var fi = document.createElement('input');
+    fi.type = 'file';
+    fi.accept = '.gcis,application/json';
+    fi.style.display = 'none';
+    fi.id = 'cu-gcis-file-input';
+    document.body.appendChild(fi);
+
+    /* ── SAVE ─────────────────────────────────────────────────── */
+    saveBtn.addEventListener('click', function() {
+      var state = readClockState();
+      var title = (titleEl ? titleEl.value.trim() : '') || 'CU Session';
+      var doc = {
+        gcis  : 1,
+        kcm   : '1.0',
+        saved : new Date().toISOString(),
+        title : title,
+        state : state
+      };
+      var blob = new Blob([JSON.stringify(doc, null, 2)], { type: 'application/json' });
+      var url  = URL.createObjectURL(blob);
+      var a    = document.createElement('a');
+      a.href     = url;
+      a.download = sanitise(title) + '.gcis';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      flashBtn(saveBtn, '✓ Saved!', 'gcis-btn--saved');
+      // If embedded in Console, notify parent too
+      try {
+        window.parent.postMessage({ type: 'KCM_STATE_PATCH', payload: state }, '*');
+      } catch(e) {}
+      console.info('[CU gcis] Saved:', doc);
+    });
+
+    /* ── LOAD ─────────────────────────────────────────────────── */
+    loadBtn.addEventListener('click', function() {
+      fi.value = '';
+      fi.click();
+    });
+
+    fi.addEventListener('change', function() {
+      var file = fi.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        var doc;
+        try { doc = JSON.parse(e.target.result); }
+        catch(err) {
+          showToast('⚠ Could not parse .gcis file', 'error');
+          return;
+        }
+        if (!doc || doc.gcis !== 1 || !doc.state || !doc.state.root) {
+          showToast('⚠ Not a valid .gcis session file', 'error');
+          return;
+        }
+        if (titleEl && doc.title) titleEl.value = doc.title;
+        applyClockState(doc.state);
+        // Broadcast to Console parent if embedded
+        try {
+          window.parent.postMessage({ type: 'KCM_STATE', payload: doc.state }, '*');
+        } catch(e) {}
+        flashBtn(loadBtn, '✓ Loaded!', 'gcis-btn--loaded');
+        console.info('[CU gcis] Loaded:', doc);
+      };
+      reader.readAsText(file);
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initGcis);
+  } else {
+    initGcis();
+  }
+
+})();
 
 // ── KCM Console Bridge ─────────────────────────────────────────────────────
 // Listens for KCM_STATE messages from the Console's gcis.js and bridge.js.
