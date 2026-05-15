@@ -2811,37 +2811,137 @@ function etRestart() {
 }
 
 // ── KCM Console Bridge ─────────────────────────────────────────────────────
-// Listens for KCM_STATE messages from the Console's bridge.js.
-// When root changes → rotates the spoke clock to that root note.
-// When activeNotes change → highlights those notes on the clock face.
-(function() {
-  const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+// Listens for KCM_STATE messages from the Console's gcis.js and bridge.js.
+// Fully wired to the clock's live internals — no stubs.
+//
+// setRootNote(idx)      → rotates clock + syncs keySelect dropdown
+// setActiveNotes(arr)   → highlights MIDI notes on the clock face
+// applyPatternByName(n) → applies stencil + syncs stencilSelect dropdown
+// ──────────────────────────────────────────────────────────────────────────
+(function () {
 
-  window.addEventListener('message', function(e) {
-    if (!e.data || e.data.type !== 'KCM_STATE') return;
-    const payload = e.data.payload;
+  // Map incoming root names (C# style) to clock index (0–11)
+  const NOTE_MAP = {
+    'C':0, 'C#':1, 'Db':1, 'D':2, 'D#':3, 'Eb':3,
+    'E':4, 'F':5, 'F#':6, 'Gb':6, 'G':7, 'G#':8,
+    'Ab':8, 'A':9, 'A#':10, 'Bb':10, 'B':11
+  };
 
-    // Root change → rotate spoke clock
-    if (payload.root !== undefined) {
-      const idx = NOTE_NAMES.indexOf(payload.root);
-      if (idx >= 0 && typeof setRootNote === 'function') {
-        setRootNote(idx);
+  /* ── setRootNote ──────────────────────────────────────────────────
+     Rotates the clock to place the given chromatic index (0–11) at
+     12 o'clock, then syncs the keySelect dropdown.                  */
+  function setRootNote(idx) {
+    idx = ((idx % 12) + 12) % 12;
+    // Match the existing keySelect handler: rotationAngle = -idx * step
+    rotationAngle = -idx * (Math.PI * 2) / 12;
+    // Sync dropdown
+    var ks = document.getElementById('keySelect');
+    if (ks) ks.value = String(idx);
+    drawClock();
+    updateWedgePanel();
+  }
+
+  /* ── setActiveNotes ───────────────────────────────────────────────
+     Highlights an array of MIDI note numbers on the clock face by
+     passing them into drawClock as the highlightNotes argument.     */
+  function setActiveNotes(midiArr) {
+    // drawClock accepts an array of MIDI numbers as highlightNotes
+    drawClock(Array.isArray(midiArr) ? midiArr : []);
+  }
+
+  /* ── applyPatternByName ───────────────────────────────────────────
+     Looks up the mode/scale name in STENCILS, applies it, and syncs
+     the stencilSelect dropdown.  Falls back gracefully if not found. */
+  function applyPatternByName(name) {
+    if (!name) return;
+    var key = name.toLowerCase().replace(/[\s\-]/g, '_');
+
+    // Direct key match
+    if (STENCILS[key]) {
+      currentStencil = key;
+    } else {
+      // Try common aliases
+      var alias = {
+        'natural_minor': 'minor',
+        'aeolian':       'minor',
+        'ionian':        'major',
+        'maj':           'major',
+        'min':           'minor',
+        'dom7':          'dominant_7th',
+        'maj7':          'major_7th',
+        'min7':          'minor_7th',
+        'pent_maj':      'pentatonic_major',
+        'pent_min':      'pentatonic_minor',
+        'harm_minor':    'harmonic_minor',
+        'mel_minor':     'melodic_minor'
+      };
+      if (alias[key] && STENCILS[alias[key]]) {
+        currentStencil = alias[key];
       }
+      // If still no match, leave currentStencil as-is
     }
 
-    // Active notes → highlight on clock (if spoke clock supports it)
-    if (payload.activeNotes !== undefined && typeof setActiveNotes === 'function') {
-      setActiveNotes(payload.activeNotes);
+    // Sync dropdown
+    var ss = document.getElementById('stencilSelect');
+    if (ss && STENCILS[currentStencil]) {
+      ss.value = currentStencil;
     }
 
-    // Scale/mode change → apply stencil pattern if matching name exists
-    if (payload.mode !== undefined && typeof applyPatternByName === 'function') {
-      applyPatternByName(payload.mode);
+    drawClock();
+    updateWedgePanel();
+  }
+
+  /* ── applyScaleIntervals ──────────────────────────────────────────
+     Fallback: if a .gcis file sends scale intervals directly (no
+     mode name), find the matching stencil by interval array.        */
+  function applyScaleIntervals(intervals) {
+    if (!Array.isArray(intervals) || intervals.length === 0) return;
+    var sig = intervals.slice().sort(function(a,b){return a-b;}).join(',');
+    var match = null;
+    Object.keys(STENCILS).forEach(function(k) {
+      var s = STENCILS[k].slice().sort(function(a,b){return a-b;}).join(',');
+      if (s === sig) match = k;
+    });
+    if (match) {
+      currentStencil = match;
+      var ss = document.getElementById('stencilSelect');
+      if (ss) ss.value = match;
+      drawClock();
+      updateWedgePanel();
+    }
+  }
+
+  /* ── Message listener ─────────────────────────────────────────────  */
+  window.addEventListener('message', function (e) {
+    if (!e.data || e.data.type !== 'KCM_STATE') return;
+    var p = e.data.payload;
+    if (!p) return;
+
+    // 1. Root note → rotate clock
+    if (p.root !== undefined) {
+      var idx = NOTE_MAP[p.root];
+      if (idx !== undefined) setRootNote(idx);
+    }
+
+    // 2. Mode/scale name → apply stencil
+    if (p.mode !== undefined) {
+      applyPatternByName(p.mode);
+    }
+
+    // 3. Scale intervals → match stencil (if mode name didn't resolve)
+    if (p.scale !== undefined && Array.isArray(p.scale)) {
+      applyScaleIntervals(p.scale);
+    }
+
+    // 4. Active MIDI notes → highlight on clock
+    if (p.activeNotes !== undefined) {
+      setActiveNotes(p.activeNotes);
     }
   });
 
-  // Announce presence to Console bridge
+  // Announce presence to Console bridge so it sends the current state immediately
   window.parent.postMessage({ type: 'KCM_PANEL_READY', panel: 'chromatic-universe' }, '*');
+
 })();
 
 </script>
