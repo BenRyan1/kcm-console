@@ -1,0 +1,2445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Cookie Consent CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cookieconsent@3/build/cookieconsent.min.css">
+
+<style>
+/* Custom styling for cookie consent banner */
+.cc-window {
+    font-family: 'Montserrat', sans-serif !important;
+    background: #0a0a15 !important;
+    border: 2px solid #008080 !important;
+    box-shadow: 0 8px 30px rgba(0, 217, 255, 0.3) !important;
+}
+.cc-btn {
+    background: linear-gradient(135deg, #008080 0%, #8B6BA3 100%) !important;
+    border: none !important;
+    padding: 0.75rem 2rem !important;
+    font-weight: 600 !important;
+    transition: all 0.3s ease !important;
+}
+.cc-btn:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 5px 15px rgba(0, 128, 128, 0.4) !important;
+}
+.cc-link { color: #F4D03F !important; }
+.cc-link:hover { color: #008080 !important; }
+</style>
+
+<!-- Cookie Consent Script -->
+<script src="https://cdn.jsdelivr.net/npm/cookieconsent@3/build/cookieconsent.min.js"></script>
+<script>
+window.addEventListener('load', function() {
+  window.cookieconsent.initialise({
+    palette: { popup: { background: "#0a0a15", text: "#E8E8E8" }, button: { background: "#008080", text: "#ffffff" } },
+    theme: "classic", position: "bottom", type: "opt-in", revokable: true, animateRevokable: false,
+    content: { message: "We use cookies to enhance your experience. By clicking Accept, you consent to our use of cookies.", dismiss: "Accept", deny: "Decline", link: "Privacy", href: "/privacy-policy.html" },
+    onStatusChange: function(status) { if (this.hasConsented()) loadGoogleAnalytics(); },
+    onInitialise: function(status) { if (this.hasConsented()) loadGoogleAnalytics(); }
+  });
+});
+function loadGoogleAnalytics() {
+  if (window.gaLoaded) return; window.gaLoaded = true;
+  var s = document.createElement('script'); s.async = true; s.src = 'https://www.googletagmanager.com/gtag/js?id=G-6EGC5ZNZPF'; document.head.appendChild(s);
+  window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date()); gtag('config', 'G-6EGC5ZNZPF', {'anonymize_ip': true, 'allow_google_signals': false, 'allow_ad_personalization_signals': false, 'cookie_expires': 63072000, 'cookie_flags': 'SameSite=None;Secure'});
+  gtag('consent', 'default', {'ad_storage': 'denied', 'analytics_storage': 'granted', 'functionality_storage': 'granted', 'personalization_storage': 'denied', 'security_storage': 'granted'});
+}
+function trackEvent(n,p){if(window.cookieconsent&&window.cookieconsent.hasConsented()&&typeof gtag==='function')gtag('event',n,p);}
+</script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Keys, Codes & Modes - Revolutionary interactive music theory applications. Master guitar, piano, and music theory through visual learning.">
+    <meta name="keywords" content="music theory, guitar lessons, piano lessons, music education, interactive learning, Keys Codes Modes, circle of fifths, CAGED system">
+    <meta name="author" content="Ben Ryan">
+    <meta name="theme-color" content="#4A7BA7">
+    <title>Keys, Codes & Modes | Interactive Music Theory Suite</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="kcm-official-logo-32.png">
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Cormorant+Garamond:wght@300;400;600;700&family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- ACCESS CONTROL - CRITICAL SECURITY -->
+    <script>
+    // Check authorization before page loads
+    (function() {
+        // Get URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const accessCode = urlParams.get('code');
+        const paidTier = urlParams.get('tier');
+        
+        // Check if user has valid access
+        const hasAccessCode = localStorage.getItem('validAccessCode') === 'true';
+        const hasPaidAccess = localStorage.getItem('paidMember') === 'true';
+        const userTier = localStorage.getItem('userTier');
+        
+        // Validate access code if provided in URL
+        if (accessCode) {
+            // Valid access codes - can be updated as needed
+            const validCodes = [
+                'KCM2026PREMIUM!',
+                'KCM2026FOUNDER!', 
+                'BETATESTER2026!',
+                'PRESSACCESS2026!',
+                'FRIENDOFBEN2026!',
+                'DEMOACCESS2026!'
+            ];
+            
+            if (validCodes.includes(accessCode.toUpperCase())) {
+                localStorage.setItem('validAccessCode', 'true');
+                localStorage.setItem('accessCodeUsed', accessCode.toUpperCase());
+                localStorage.setItem('paidMember', 'true');
+                
+                // Set tier based on code
+                if (accessCode.toUpperCase().includes('FOUNDER')) {
+                    localStorage.setItem('userTier', 'founder');
+                } else {
+                    localStorage.setItem('userTier', 'premium');
+                }
+            }
+        }
+        
+        // Check if user has any valid access method
+        const hasValidAccess = (
+            hasAccessCode || 
+            hasPaidAccess || 
+            paidTier === 'premium' || 
+            paidTier === 'founder' ||
+            userTier === 'premium' ||
+            userTier === 'founder'
+        );
+        
+        // Redirect if no valid access
+        if (!hasValidAccess) {
+            alert('🔒 Access Restricted: This page requires a Premium membership or valid access code.\n\nPlease upgrade or enter your access code on the pricing page.');
+            window.location.href = 'pricing.html';
+        }
+    })();
+    </script>
+    
+    <style>
+        :root {
+            /* OFFICIAL BRAND COLORS - Graphics Standards */
+            --ocean-blue: #4A7BA7;
+            --deep-navy: #2a4d6f;
+            --primary-teal: #008080;
+            --primary-gold: #F4D03F;
+            --primary-purple: #8B6BA3;
+            --primary-coral: #CF7A5A;
+            --dark-bg: #1a1a2e;
+            --darker-bg: #0f0f1e;
+            --light-text: #E8E8E8;
+            --font-display: 'Cinzel', serif;
+            --font-body: 'Montserrat', sans-serif;
+            --font-accent: 'Cormorant Garamond', serif;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        /* Skip to Main Content Link - Accessibility Required */
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: var(--primary-gold);
+            color: var(--dark-bg);
+            padding: 8px 16px;
+            text-decoration: none;
+            font-weight: bold;
+            z-index: 10000;
+        }
+        
+        .skip-link:focus {
+            top: 0;
+        }
+        
+        /* Screen Reader Only */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
+        }
+        
+        body {
+            font-family: var(--font-body);
+            background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 50%, #0f0f1e 100%);
+            color: var(--light-text);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+        
+        /* Animated Background */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.1;
+            background: 
+                radial-gradient(circle at 20% 50%, var(--primary-teal) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, var(--primary-gold) 0%, transparent 50%),
+                radial-gradient(circle at 40% 20%, var(--primary-purple) 0%, transparent 50%);
+            animation: bgShift 20s ease infinite;
+        }
+        
+        @keyframes bgShift {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(50px, 30px) scale(1.1); }
+        }
+        
+        /* Header */
+        header {
+            background: linear-gradient(135deg, 
+                        rgba(74, 123, 167, 0.95) 0%,
+                        rgba(42, 77, 111, 0.95) 100%);
+            border-bottom: 3px solid var(--ocean-blue);
+            box-shadow: 0 4px 20px rgba(74, 123, 167, 0.4);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+        
+        .main-nav {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+        
+        .header-logo {
+            width: 120px;
+            height: 120px;
+            filter: drop-shadow(0 4px 12px rgba(0, 217, 255, 0.4));
+            animation: gentleFloat 4s ease-in-out infinite;
+        }
+        
+        @keyframes gentleFloat {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-6px); }
+        }
+        
+        .logo-text h1 {
+            font-family: var(--font-display);
+            font-size: 1.6rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary-gold), var(--primary-teal));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 2px;
+            margin: 0;
+        }
+        
+        .logo-tagline {
+            font-family: var(--font-accent);
+            font-size: 1.1rem;
+            color: #999;
+            font-style: italic;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+            list-style: none;
+        }
+        
+        .nav-links a {
+            color: var(--light-text);
+            text-decoration: none;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            transition: all 0.3s;
+            position: relative;
+        }
+        
+        .nav-links a:hover {
+            color: var(--primary-gold);
+            background: rgba(0, 128, 128, 0.2);
+        }
+        
+        .cta-btn {
+            background: linear-gradient(135deg, var(--primary-gold) 0%, #e6c62f 100%);
+            color: var(--dark-bg) !important;
+            padding: 0.75rem 1.5rem !important;
+            font-weight: 700;
+            box-shadow: 0 4px 15px rgba(244, 208, 63, 0.3);
+        }
+        
+        .cta-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(244, 208, 63, 0.5);
+        }
+        
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            padding: 4rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .hero h2 {
+            font-family: var(--font-display);
+            font-size: 3.5rem;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, var(--primary-gold), var(--primary-teal), var(--primary-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.2;
+        }
+        
+        .hero p {
+            font-size: 1.3rem;
+            color: #ccc;
+            margin-bottom: 2rem;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .hero-cta {
+            display: inline-flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-teal), #006666);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 1.1rem;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0, 128, 128, 0.4);
+            border: 2px solid transparent;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 25px rgba(0, 128, 128, 0.6);
+            border-color: var(--primary-gold);
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            color: var(--light-text);
+            padding: 1rem 2rem;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 1.1rem;
+            border: 2px solid var(--primary-gold);
+            transition: all 0.3s;
+        }
+        
+        .btn-secondary:hover {
+            background: var(--primary-gold);
+            color: var(--dark-bg);
+        }
+        
+        /* Email Capture Bar */
+        .email-capture {
+            background: linear-gradient(135deg, rgba(0, 128, 128, 0.2), rgba(139, 107, 163, 0.2));
+            border: 2px solid var(--primary-teal);
+            border-radius: 15px;
+            padding: 2rem;
+            margin: 3rem auto;
+            max-width: 800px;
+            text-align: center;
+        }
+        
+        .email-capture h3 {
+            font-family: var(--font-display);
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+            color: var(--primary-gold);
+        }
+        
+        .email-form {
+            display: flex;
+            gap: 1rem;
+            max-width: 600px;
+            margin: 1.5rem auto 0;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .email-form input {
+            flex: 1;
+            min-width: 250px;
+            padding: 1rem 1.5rem;
+            border-radius: 30px;
+            border: 2px solid var(--primary-teal);
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1rem;
+        }
+        
+        .email-form input::placeholder {
+            color: #999;
+        }
+        
+        .email-form button {
+            padding: 1rem 2rem;
+            border-radius: 30px;
+            border: none;
+            background: linear-gradient(135deg, var(--primary-gold), #e6c62f);
+            color: var(--dark-bg);
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .email-form button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(244, 208, 63, 0.5);
+        }
+        
+        /* Apps Section */
+        .apps-section {
+            max-width: 1400px;
+            margin: 4rem auto;
+            padding: 0 2rem;
+        }
+        
+        .section-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        
+        .section-header h2 {
+            font-family: var(--font-display);
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--primary-gold), var(--primary-teal));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .category-section {
+            margin-bottom: 4rem;
+        }
+        
+        .category-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--primary-teal);
+        }
+        
+        .category-icon {
+            font-size: 2.5rem;
+        }
+        
+        .category-header h3 {
+            font-family: var(--font-display);
+            font-size: 2rem;
+            color: var(--primary-gold);
+        }
+        
+        .apps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 2rem;
+        }
+        
+        .app-card {
+            background: linear-gradient(135deg, rgba(26, 26, 46, 0.8), rgba(26, 61, 95, 0.6));
+            border: 2px solid rgba(0, 128, 128, 0.3);
+            border-radius: 20px;
+            padding: 2rem;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .app-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-teal), var(--primary-gold), var(--primary-purple));
+        }
+        
+        .app-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary-teal);
+            box-shadow: 0 10px 30px rgba(0, 128, 128, 0.3);
+        }
+        
+        .app-badge {
+            display: inline-block;
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .badge-free {
+            background: #4caf50;
+            color: white;
+        }
+        
+        .badge-premium {
+            background: linear-gradient(135deg, var(--primary-gold), #e6c62f);
+            color: var(--dark-bg);
+        }
+        
+        .badge-pro {
+            background: linear-gradient(135deg, var(--primary-purple), #7a5a93);
+            color: white;
+        }
+        
+        .app-card h4 {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--primary-gold);
+        }
+        
+        .app-icon {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .app-icon svg {
+            width: 120px;
+            height: 120px;
+            filter: drop-shadow(0 8px 20px rgba(244, 208, 63, 0.4));
+            transition: transform 0.3s ease;
+        }
+        
+        .app-card:hover .app-icon svg {
+            transform: scale(1.05);
+        }
+        
+        .app-card p {
+            color: #ccc;
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+        
+        .app-features {
+            list-style: none;
+            margin-bottom: 1.5rem;
+        }
+        
+        .app-features li {
+            padding: 0.5rem 0;
+            color: #aaa;
+            font-size: 0.95rem;
+        }
+        
+        .app-features li::before {
+            content: '♪';
+            color: var(--primary-gold);
+            font-weight: bold;
+            margin-right: 0.5rem;
+        }
+        
+        .app-actions {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .btn-launch {
+            flex: 1;
+            padding: 0.75rem 1.5rem;
+            border-radius: 25px;
+            border: none;
+            background: linear-gradient(135deg, var(--primary-teal), #006666);
+            color: white;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            text-align: center;
+        }
+        
+        .btn-launch:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 128, 128, 0.5);
+        }
+        
+        .btn-locked {
+            background: linear-gradient(135deg, #666, #555);
+            cursor: not-allowed;
+            position: relative;
+        }
+        
+        .btn-locked::before {
+            content: '🔒 ';
+        }
+        
+        .btn-demo {
+            padding: 0.75rem 1.5rem;
+            border-radius: 25px;
+            border: 2px solid var(--primary-gold);
+            background: transparent;
+            color: var(--primary-gold);
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+        
+        .btn-demo:hover {
+            background: var(--primary-gold);
+            color: var(--dark-bg);
+        }
+        
+        /* Pricing Section */
+        .pricing-section {
+            max-width: 1200px;
+            margin: 4rem auto;
+            padding: 4rem 2rem;
+            text-align: center;
+        }
+        
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+        
+        .pricing-card {
+            background: linear-gradient(135deg, rgba(26, 26, 46, 0.9), rgba(26, 61, 95, 0.7));
+            border: 2px solid rgba(0, 128, 128, 0.3);
+            border-radius: 20px;
+            padding: 2.5rem 2rem;
+            transition: all 0.3s;
+        }
+        
+        .pricing-card.featured {
+            border-color: var(--primary-gold);
+            transform: scale(1.05);
+            box-shadow: 0 10px 40px rgba(244, 208, 63, 0.3);
+        }
+        
+        .pricing-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            border-color: var(--primary-teal);
+        }
+        
+        .pricing-card.featured:hover {
+            transform: translateY(-5px) scale(1.07);
+        }
+        
+        .pricing-header {
+            margin-bottom: 2rem;
+        }
+        
+        .pricing-tier {
+            font-family: var(--font-display);
+            font-size: 1.8rem;
+            color: var(--primary-gold);
+            margin-bottom: 0.5rem;
+        }
+        
+        .pricing-price {
+            font-size: 3rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 0.5rem;
+        }
+        
+        .pricing-price small {
+            font-size: 1.2rem;
+            color: #999;
+        }
+        
+        .pricing-features {
+            list-style: none;
+            margin: 2rem 0;
+            text-align: left;
+        }
+        
+        .pricing-features li {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            color: #ccc;
+        }
+        
+        .pricing-features li::before {
+            content: '✓ ';
+            color: var(--primary-teal);
+            font-weight: bold;
+            margin-right: 0.5rem;
+        }
+        
+        .pricing-cta {
+            margin-top: 2rem;
+        }
+        
+        /* Footer */
+        footer {
+            background: linear-gradient(135deg, rgba(15, 15, 30, 0.95), rgba(26, 26, 46, 0.95));
+            border-top: 3px solid var(--primary-teal);
+            padding: 3rem 2rem;
+            margin-top: 4rem;
+        }
+        
+        .footer-content {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .footer-brand {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .footer-brand h3 {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            background: linear-gradient(135deg, var(--primary-gold), var(--primary-teal));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+            margin: 2rem 0;
+        }
+        
+        .footer-links a {
+            color: var(--light-text);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        
+        .footer-links a:hover {
+            color: var(--primary-gold);
+        }
+        
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+        
+        .social-links a {
+            width: 50px;
+            height: 50px;
+            background: rgba(0, 128, 128, 0.2);
+            border: 2px solid var(--primary-teal);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--light-text);
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        
+        .social-links a:hover {
+            background: var(--primary-teal);
+            transform: translateY(-3px);
+        }
+        
+        .copyright {
+            text-align: center;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(0, 128, 128, 0.3);
+            color: #999;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h2 {
+                font-size: 2.5rem;
+            }
+            
+            .apps-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .email-form {
+                flex-direction: column;
+            }
+            
+            .email-form input {
+                min-width: 100%;
+            }
+            
+            .nav-links {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Skip to Main Content - Accessibility Required -->
+    <a href="#apps" class="skip-link">Skip to main content</a>
+    
+    <div class="bg-animation" aria-hidden="true"></div>
+    
+    <!-- Header -->
+    <header role="banner">
+        <nav class="main-nav" role="navigation" aria-label="Main navigation">
+            <a href="../index.html" class="logo-container">
+                <svg width="70" height="70" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="header-logo" style="filter: drop-shadow(0 6px 15px rgba(74, 123, 167, 0.6));">
+                    <circle cx="100" cy="100" r="98" fill="#4A7BA7" stroke="#008080" stroke-width="2"/>
+                    <polygon points="100,15 185,185 15,185" fill="#F4D03F" opacity="0.9"/>
+                    <polygon points="100,15 15,185 15,55" fill="#8B6BA3" opacity="0.75"/>
+                    <polygon points="100,15 185,55 185,185" fill="#6FA5A5" opacity="0.75"/>
+                    <polygon points="15,55 100,100 15,185" fill="#CF7A5A" opacity="0.65"/>
+                    <polygon points="185,55 100,100 185,185" fill="#9AAF7A" opacity="0.65"/>
+                    <polygon points="100,55 145,100 100,145 55,100" fill="#E8D77F" opacity="0.6"/>
+                    <circle cx="100" cy="100" r="50" fill="none" stroke="#008080" stroke-width="3"/>
+                    <circle cx="100" cy="100" r="7" fill="#F4D03F"/>
+                    <line x1="40" y1="40" x2="160" y2="160" stroke="#008080" stroke-width="2" opacity="0.3"/>
+                    <line x1="160" y1="40" x2="40" y2="160" stroke="#008080" stroke-width="2" opacity="0.3"/>
+                </svg>
+                <div class="logo-text">
+                    <h1>KEYS, CODES & MODES</h1>
+                    <p class="logo-tagline">A Visual Approach to Understanding Music</p>
+                </div>
+            </a>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="insights.html">Applications</a></li>
+                <li><a href="pricing.html">Pricing</a></li>
+                <li><a href="signup.html" class="cta-btn">Start Free Trial</a></li>
+            </ul>
+        </nav>
+    </header>
+    
+    <!-- Hero Section -->
+    <section class="hero">
+        <h2>Master Music Theory Through<br>Interactive Visual Learning</h2>
+        <p>15+ Revolutionary Applications to Transform Your Musical Understanding</p>
+        <div class="hero-cta">
+            <a href="insights.html" class="btn-primary">Explore Applications</a>
+            <a href="#pricing" class="btn-secondary">View Pricing</a>
+        </div>
+    </section>
+    
+    <!-- Email Capture -->
+    <section class="email-capture">
+        <h3>🎁 Get 3 Premium Apps FREE</h3>
+        <p>Join 10,000+ musicians who are transforming their skills. Start your free trial today!</p>
+        <form class="email-form" onsubmit="handleEmailSubmit(event)">
+            <input type="email" placeholder="Enter your email address" required>
+            <button type="submit">Start Free Trial</button>
+        </form>
+        <p style="font-size: 0.9rem; color: #999; margin-top: 1rem;">No credit card required • Cancel anytime</p>
+    </section>
+    
+    <!-- Applications Section -->
+    <main id="apps" class="apps-section" role="main">
+        <div class="section-header">
+            <h2>Interactive Music Theory Applications</h2>
+            <p style="font-size: 1.2rem; color: #ccc;">Choose from our comprehensive suite of professional-grade tools</p>
+        </div>
+        
+        <!-- Guitar Tools Category -->
+        <div class="category-section">
+            <div class="category-header">
+                <span class="category-icon">🎸</span>
+                <h3>Guitar Mastery Tools</h3>
+            </div>
+            <div class="apps-grid">
+                <!-- Guitar Fretboard Explorer Pro -->
+                <div class="app-card">
+                    <span class="app-badge badge-pro">PRO</span>
+                    <div class="app-icon">
+                        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Background with Pro Badge -->
+                            <rect width="200" height="200" fill="#1a3d5f" rx="10"/>
+                            
+                            <!-- Advanced Fretboard (vertical orientation) -->
+                            <rect x="30" y="20" width="140" height="160" fill="#654321" stroke="#F4D03F" stroke-width="3" rx="5"/>
+                            
+                            <!-- Frets (horizontal lines - more detailed) -->
+                            <line x1="30" y1="40" x2="170" y2="40" stroke="#E0E0E0" stroke-width="2.5"/>
+                            <line x1="30" y1="60" x2="170" y2="60" stroke="#E0E0E0" stroke-width="2.5"/>
+                            <line x1="30" y1="80" x2="170" y2="80" stroke="#E0E0E0" stroke-width="2.5"/>
+                            <line x1="30" y1="100" x2="170" y2="100" stroke="#E0E0E0" stroke-width="3" opacity="0.9"/>
+                            <line x1="30" y1="120" x2="170" y2="120" stroke="#E0E0E0" stroke-width="2.5"/>
+                            <line x1="30" y1="140" x2="170" y2="140" stroke="#E0E0E0" stroke-width="2.5"/>
+                            <line x1="30" y1="160" x2="170" y2="160" stroke="#E0E0E0" stroke-width="2.5"/>
+                            
+                            <!-- Strings (vertical lines - 6 strings) -->
+                            <line x1="50" y1="20" x2="50" y2="180" stroke="#FFD700" stroke-width="1"/>
+                            <line x1="70" y1="20" x2="70" y2="180" stroke="#FFD700" stroke-width="1.5"/>
+                            <line x1="90" y1="20" x2="90" y2="180" stroke="#FFD700" stroke-width="2"/>
+                            <line x1="110" y1="20" x2="110" y2="180" stroke="#FFD700" stroke-width="2.5"/>
+                            <line x1="130" y1="20" x2="130" y2="180" stroke="#FFD700" stroke-width="3"/>
+                            <line x1="150" y1="20" x2="150" y2="180" stroke="#FFD700" stroke-width="3.5"/>
+                            
+                            <!-- Premium Fret Markers (double dots at 12th fret) -->
+                            <circle cx="85" cy="100" r="4" fill="#F4D03F" opacity="0.8"/>
+                            <circle cx="115" cy="100" r="4" fill="#F4D03F" opacity="0.8"/>
+                            <circle cx="100" cy="50" r="4" fill="#008080" opacity="0.6"/>
+                            <circle cx="100" cy="150" r="4" fill="#008080" opacity="0.6"/>
+                            
+                            <!-- Advanced Note Pattern (full scale visualization) -->
+                            <circle cx="50" cy="30" r="7" fill="#FFFF00" stroke="#008080" stroke-width="2.5"/>
+                            <circle cx="70" cy="50" r="7" fill="#FF8000" stroke="#008080" stroke-width="2.5"/>
+                            <circle cx="90" cy="70" r="7" fill="#FF0000" stroke="#008080" stroke-width="2.5"/>
+                            <circle cx="110" cy="90" r="7" fill="#8000FF" stroke="#008080" stroke-width="2.5"/>
+                            <circle cx="130" cy="110" r="7" fill="#0080FF" stroke="#008080" stroke-width="2.5"/>
+                            <circle cx="150" cy="130" r="7" fill="#00FF80" stroke="#008080" stroke-width="2.5"/>
+                            
+                            <!-- PRO Badge on SVG -->
+                            <rect x="140" y="10" width="50" height="20" fill="#F4D03F" rx="3"/>
+                            <text x="165" y="23" font-family="Arial" font-size="12" font-weight="bold" fill="#1a3d5f" text-anchor="middle">PRO</text>
+                        </svg>
+                    </div>
+                    <h4>Guitar Fretboard Explorer Pro</h4>
+                    <p>Master the entire fretboard with advanced visualization and pattern recognition.</p>
+                    <ul class="app-features">
+                        <li>Full fretboard visualization</li>
+                        <li>Scale pattern overlays</li>
+                        <li>Multi-position modes</li>
+                        <li>Custom tuning support</li>
+                    </ul>
+                    <div class="app-actions">
+                        <a href="apps/keys-codes-modes-guitar fretboard.html" class="btn-launch">Launch App</a>
+                    </div>
+                </div>
+                
+                <!-- Guitar Chromatic Scale Visualizer Pro -->
+                <div class="app-card">
+                    <span class="app-badge badge-premium">PREMIUM</span>
+                    <div class="app-icon">
+                        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Dark background -->
+                            <circle cx="100" cy="100" r="98" fill="#2c3e50"/>
+                            
+                            <!-- Outer circle ring -->
+                            <circle cx="100" cy="100" r="85" fill="none" stroke="#3a4f63" stroke-width="3"/>
+                            
+                            <!-- Pure Chromatic Circle - 12 positions with active notes highlighted -->
+                            <g id="chromatic-notes">
+                                <!-- C - Yellow (active) - Top 12 o'clock -->
+                                <circle cx="100" cy="20" r="12" fill="#FFFF00" stroke="#fff" stroke-width="2"/>
+                                <text x="100" y="25" font-family="Arial" font-size="14" font-weight="bold" fill="#000" text-anchor="middle">C</text>
+                                
+                                <!-- C#/Db - Dimmed - 1 o'clock -->
+                                <circle cx="143" cy="31" r="10" fill="#4a5568" stroke="#3a4f63" stroke-width="1"/>
+                                
+                                <!-- D - Orange (active) - 2 o'clock -->
+                                <circle cx="174" cy="62" r="12" fill="#FF8C00" stroke="#fff" stroke-width="2"/>
+                                <text x="174" y="67" font-family="Arial" font-size="14" font-weight="bold" fill="#fff" text-anchor="middle">D</text>
+                                
+                                <!-- D#/Eb - Dimmed - 3 o'clock -->
+                                <circle cx="185" cy="100" r="10" fill="#4a5568" stroke="#3a4f63" stroke-width="1"/>
+                                
+                                <!-- E - Red (active) - 4 o'clock -->
+                                <circle cx="174" cy="138" r="12" fill="#FF0000" stroke="#fff" stroke-width="2"/>
+                                <text x="174" y="143" font-family="Arial" font-size="14" font-weight="bold" fill="#fff" text-anchor="middle">E</text>
+                                
+                                <!-- F - Dimmed - 5 o'clock -->
+                                <circle cx="143" cy="169" r="10" fill="#4a5568" stroke="#3a4f63" stroke-width="1"/>
+                                
+                                <!-- F#/Gb - Dimmed - 6 o'clock -->
+                                <circle cx="100" cy="180" r="10" fill="#4a5568" stroke="#3a4f63" stroke-width="1"/>
+                                
+                                <!-- G - Purple (active) - 7 o'clock -->
+                                <circle cx="57" cy="169" r="12" fill="#8B00FF" stroke="#fff" stroke-width="2"/>
+                                <text x="57" y="174" font-family="Arial" font-size="14" font-weight="bold" fill="#fff" text-anchor="middle">G</text>
+                                
+                                <!-- G#/Ab - Dimmed - 8 o'clock -->
+                                <circle cx="26" cy="138" r="10" fill="#4a5568" stroke="#3a4f63" stroke-width="1"/>
+                                
+                                <!-- A - Blue (active) - 9 o'clock -->
+                                <circle cx="15" cy="100" r="12" fill="#0080FF" stroke="#fff" stroke-width="2"/>
+                                <text x="15" y="105" font-family="Arial" font-size="14" font-weight="bold" fill="#fff" text-anchor="middle">A</text>
+                                
+                                <!-- A#/Bb - Dimmed - 10 o'clock -->
+                                <circle cx="26" cy="62" r="10" fill="#4a5568" stroke="#3a4f63" stroke-width="1"/>
+                                
+                                <!-- B - Dimmed - 11 o'clock -->
+                                <circle cx="57" cy="31" r="10" fill="#4a5568" stroke="#3a4f63" stroke-width="1"/>
+                            </g>
+                            
+                            <!-- Center staff notation representation -->
+                            <rect x="60" y="80" width="80" height="40" fill="#fff" stroke="#FF6B6B" stroke-width="2" rx="4"/>
+                            <rect x="60" y="80" width="80" height="12" fill="#FF6B6B"/>
+                            <text x="100" y="89" font-family="Arial" font-size="8" font-weight="bold" fill="#fff" text-anchor="middle">STAFF</text>
+                            
+                            <!-- Mini staff lines -->
+                            <line x1="65" y1="100" x2="135" y2="100" stroke="#333" stroke-width="0.5"/>
+                            <line x1="65" y1="105" x2="135" y2="105" stroke="#333" stroke-width="0.5"/>
+                            <line x1="65" y1="110" x2="135" y2="110" stroke="#333" stroke-width="0.5"/>
+                            
+                            <!-- Musical notes representation -->
+                            <circle cx="75" cy="105" r="2" fill="#FFFF00"/>
+                            <circle cx="85" cy="100" r="2" fill="#FF8C00"/>
+                            <circle cx="95" cy="105" r="2" fill="#FF0000"/>
+                            <circle cx="105" cy="110" r="2" fill="#8B00FF"/>
+                            <circle cx="115" cy="105" r="2" fill="#0080FF"/>
+                        </svg>
+                    </div>
+                    <h4>Chromatic Scale Visualizer Pro</h4>
+                    <p>Advanced chromatic scale visualization with audio playback and theory integration.</p>
+                    <ul class="app-features">
+                        <li>Interactive chromatic display</li>
+                        <li>Real-time audio feedback</li>
+                        <li>Interval analysis</li>
+                        <li>Pattern exploration</li>
+                    </ul>
+                    <div class="app-actions">
+                        <a href="apps/chromatic-circle.html" class="btn-launch">Launch App</a>
+                    </div>
+                </div>
+                
+                <!-- CAGED-145 Explorer -->
+                <div class="app-card">
+                    <span class="app-badge badge-pro">PRO</span>
+                    <div class="app-icon">
+                        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                            <rect width="200" height="200" fill="#2a4d6f" rx="10"/>
+                            <text x="100" y="60" text-anchor="middle" fill="#F4D03F" font-size="48" font-weight="bold" font-family="Arial">C</text>
+                            <text x="50" y="120" text-anchor="middle" fill="#8B6BA3" font-size="32" font-weight="bold" font-family="Arial">A</text>
+                            <text x="100" y="120" text-anchor="middle" fill="#008080" font-size="32" font-weight="bold" font-family="Arial">G</text>
+                            <text x="150" y="120" text-anchor="middle" fill="#CF7A5A" font-size="32" font-weight="bold" font-family="Arial">E</text>
+                            <text x="100" y="170" text-anchor="middle" fill="#9AAF7A" font-size="32" font-weight="bold" font-family="Arial">D</text>
+                        </svg>
+                    </div>
+                    <h4>CAGED-145 Explorer</h4>
+                    <p>Deep dive into the CAGED system with integrated scale degrees and triadic harmony.</p>
+                    <ul class="app-features">
+                        <li>Complete CAGED system mapping</li>
+                        <li>Triad position visualization</li>
+                        <li>Scale degree integration</li>
+                        <li>Chord voicing mastery</li>
+                    </ul>
+                    <div class="app-actions">
+                        <a href="apps/caged-145-master.html" class="btn-launch">Launch App</a>
+                    </div>
+                </div>
+                
+                <!-- Guitar Fretboard Explorer -->
+                <div class="app-card">
+                    <span class="app-badge badge-free">FREE</span>
+                    <div class="app-icon">
+                        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" style="transform: rotate(180deg);">
+                            <!-- Background -->
+                            <rect width="200" height="200" fill="#1a3d5f" rx="10"/>
+                            <!-- Fretboard (flipped horizontally) -->
+                            <rect x="30" y="20" width="140" height="160" fill="#8B4513" stroke="#2a4d6f" stroke-width="2" rx="5"/>
+                            <!-- Frets (horizontal lines) -->
+                            <line x1="30" y1="50" x2="170" y2="50" stroke="#C0C0C0" stroke-width="2"/>
+                            <line x1="30" y1="80" x2="170" y2="80" stroke="#C0C0C0" stroke-width="2"/>
+                            <line x1="30" y1="110" x2="170" y2="110" stroke="#C0C0C0" stroke-width="2"/>
+                            <line x1="30" y1="140" x2="170" y2="140" stroke="#C0C0C0" stroke-width="2"/>
+                            <!-- Strings (vertical lines - now on right side, reversed order) -->
+                            <line x1="150" y1="20" x2="150" y2="180" stroke="#FFD700" stroke-width="3.5"/>
+                            <line x1="130" y1="20" x2="130" y2="180" stroke="#FFD700" stroke-width="3"/>
+                            <line x1="110" y1="20" x2="110" y2="180" stroke="#FFD700" stroke-width="2.5"/>
+                            <line x1="90" y1="20" x2="90" y2="180" stroke="#FFD700" stroke-width="2"/>
+                            <line x1="70" y1="20" x2="70" y2="180" stroke="#FFD700" stroke-width="1.5"/>
+                            <line x1="50" y1="20" x2="50" y2="180" stroke="#FFD700" stroke-width="1"/>
+                            <!-- Fret Markers -->
+                            <circle cx="100" cy="65" r="5" fill="#F4D03F" opacity="0.6"/>
+                            <circle cx="100" cy="125" r="5" fill="#F4D03F" opacity="0.6"/>
+                            <!-- Note Dots (chromatic colors - flipped positions) -->
+                            <circle cx="130" cy="35" r="6" fill="#FFFF00" stroke="#008080" stroke-width="2"/>
+                            <circle cx="110" cy="65" r="6" fill="#FF0000" stroke="#008080" stroke-width="2"/>
+                            <circle cx="90" cy="95" r="6" fill="#0000FF" stroke="#008080" stroke-width="2"/>
+                            <circle cx="70" cy="125" r="6" fill="#00FF80" stroke="#008080" stroke-width="2"/>
+                        </svg>
+                    </div>
+                    <h4>Guitar Fretboard Explorer</h4>
+                    <p>Essential fretboard visualization tool for beginners and intermediate players.</p>
+                    <ul class="app-features">
+                        <li>Clear note visualization</li>
+                        <li>Scale highlighting</li>
+                        <li>Easy-to-use interface</li>
+                        <li>Practice mode</li>
+                    </ul>
+                    <div class="app-actions">
+                        <a href="apps/guitar-fretboard-explorer.html" class="btn-launch">Launch App</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Circle & Theory Visualizations -->
+        <div class="category-section">
+            <div class="category-header">
+                <span class="category-icon">🎹</span>
+                <h3>Circle & Theory Visualizations</h3>
+            </div>
+            <div class="apps-grid">
+                <!-- Circle of Fifths Explorer -->
+                <div class="app-card">
+                    <span class="app-badge badge-free">FREE</span>
+                    <div class="app-icon">
+                        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Background Circle -->
+                            <circle cx="100" cy="100" r="95" fill="#1a3d5f" stroke="#F4D03F" stroke-width="3"/>
+                            <!-- Major Keys Circle (outer) -->
+                            <circle cx="100" cy="100" r="85" fill="none" stroke="#008080" stroke-width="2" stroke-dasharray="5,3"/>
+                            <!-- Minor Keys Circle (inner) -->
+                            <circle cx="100" cy="100" r="60" fill="none" stroke="#8B6BA3" stroke-width="2" stroke-dasharray="5,3"/>
+                            <!-- Key Labels -->
+                            <text x="100" y="20" text-anchor="middle" fill="#F4D03F" font-size="14" font-weight="bold">C</text>
+                            <text x="150" y="35" text-anchor="middle" fill="#F4D03F" font-size="14" font-weight="bold">G</text>
+                            <text x="180" y="70" text-anchor="middle" fill="#F4D03F" font-size="14" font-weight="bold">D</text>
+                            <text x="185" y="110" text-anchor="middle" fill="#F4D03F" font-size="14" font-weight="bold">A</text>
+                            <text x="170" y="150" text-anchor="middle" fill="#F4D03F" font-size="14" font-weight="bold">E</text>
+                            <text x="130" y="180" text-anchor="middle" fill="#F4D03F" font-size="14" font-weight="bold">B</text>
+                            <text x="100" y="190" text-anchor="middle" fill="#F4D03F" font-size="14" font-weight="bold">F#</text>
+                            <text x="70" y="180" text-anchor="middle" fill="#F4D03F" font-size="14" font-weight="bold">Db</text>
+                            <text x="30" y="150" text-anchor="middle" fill="#F4D03F" font-size="14" font-weight="bold">Ab</text>
+                            <text x="15" y="110" text-anchor="middle" fill="#F4D03F" font-size="14" font-weight="bold">Eb</text>
+                            <text x="20" y="70" text-anchor="middle" fill="#F4D03F" font-size="14" font-weight="bold">Bb</text>
+                            <text x="50" y="35" text-anchor="middle" fill="#F4D03F" font-size="14" font-weight="bold">F</text>
+                            <!-- Center Circle -->
+                            <circle cx="100" cy="100" r="35" fill="#2a4d6f" stroke="#008080" stroke-width="2"/>
+                            <text x="100" y="105" text-anchor="middle" fill="#00BFFF" font-size="16" font-weight="bold">5ths</text>
+                        </svg>
+                    </div>
+                    <h4>Circle of Fifths Explorer</h4>
+                    <p>Interactive circle of fifths with key relationships and harmonic analysis.</p>
+                    <ul class="app-features">
+                        <li>360° rotatable interface</li>
+                        <li>Key signature display</li>
+                        <li>Related keys highlighting</li>
+                        <li>Modal exploration</li>
+                    </ul>
+                    <div class="app-actions">
+                        <a href="apps/circle-of-fifths.html" class="btn-launch">Launch App</a>
+                    </div>
+                </div>
+                
+                <!-- Circle of Modes -->
+                <div class="app-card">
+                    <span class="app-badge badge-premium">PREMIUM</span>
+                    <div class="app-icon">
+                        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="100" cy="100" r="95" fill="#2a4d6f" stroke="#8B6BA3" stroke-width="3"/>
+                            <circle cx="100" cy="100" r="70" fill="none" stroke="#F4D03F" stroke-width="2"/>
+                            <circle cx="100" cy="30" r="10" fill="#FFFF00"/>
+                            <circle cx="160" cy="60" r="10" fill="#FF8C00"/>
+                            <circle cx="180" cy="120" r="10" fill="#FF0000"/>
+                            <circle cx="140" cy="170" r="10" fill="#8B00FF"/>
+                            <circle cx="60" cy="170" r="10" fill="#0080FF"/>
+                            <circle cx="20" cy="120" r="10" fill="#00FF80"/>
+                            <circle cx="40" cy="60" r="10" fill="#FFD700"/>
+                        </svg>
+                    </div>
+                    <h4>Circle of Modes</h4>
+                    <p>Explore modal relationships through circular visualization and audio examples.</p>
+                    <ul class="app-features">
+                        <li>All 7 modes visualized</li>
+                        <li>Modal interchange</li>
+                        <li>Audio playback</li>
+                        <li>Characteristic tones</li>
+                    </ul>
+                    <div class="app-actions">
+                        <a href="apps/circle-of-modes.html" class="btn-launch">Launch App</a>
+                    </div>
+                </div>
+                
+                <!-- Chromatic Roulette Wheel -->
+                <div class="app-card">
+                    <span class="app-badge badge-premium">PREMIUM</span>
+                    <div class="app-icon">
+                        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="100" cy="100" r="95" fill="#2c3e50" stroke="#F4D03F" stroke-width="3"/>
+                            <circle cx="100" cy="100" r="80" fill="none" stroke="#008080" stroke-width="2" stroke-dasharray="10,5"/>
+                            <circle cx="100" cy="20" r="8" fill="#FFFF00"/>
+                            <circle cx="160" cy="40" r="8" fill="#FF8C00"/>
+                            <circle cx="185" cy="100" r="8" fill="#FF0000"/>
+                            <circle cx="160" cy="160" r="8" fill="#8B00FF"/>
+                            <circle cx="100" cy="180" r="8" fill="#0080FF"/>
+                            <circle cx="40" cy="160" r="8" fill="#00FF80"/>
+                            <circle cx="15" cy="100" r="8" fill="#FFD700"/>
+                            <circle cx="40" cy="40" r="8" fill="#FF69B4"/>
+                            <circle cx="100" cy="100" r="20" fill="#F4D03F"/>
+                        </svg>
+                    </div>
+                    <h4>Chromatic Roulette Wheel</h4>
+                    <p>Gamified chromatic exploration with randomization and pattern discovery.</p>
+                    <ul class="app-features">
+                        <li>Interactive wheel interface</li>
+                        <li>Random note generation</li>
+                        <li>Pattern challenges</li>
+                        <li>Visual learning games</li>
+                    </ul>
+                    <div class="app-actions">
+                        <a href="apps/chromatic-roulette.html" class="btn-launch">Launch App</a>
+                    </div>
+                </div>
+                
+                <!-- Chromatic to Major Scale -->
+                <div class="app-card">
+                    <span class="app-badge badge-free">FREE</span>
+                    <div class="app-icon">
+                        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Background -->
+                            <rect width="200" height="200" fill="#1a3d5f" rx="10"/>
+                            
+                            <!-- Left: Chromatic Circle (smaller) -->
+                            <g transform="translate(50, 70)">
+                                <circle r="35" fill="none" stroke="#777777" stroke-width="2" stroke-dasharray="1,1"/>
+                                <!-- 12 chromatic notes - small dots -->
+                                <circle cx="0" cy="-35" r="3" fill="#FFFF00" opacity="0.6"/>
+                                <circle cx="17.5" cy="-30.31" r="3" fill="#FFBF00" opacity="0.4"/>
+                                <circle cx="30.31" cy="-17.5" r="3" fill="#FF8000" opacity="0.6"/>
+                                <circle cx="35" cy="0" r="3" fill="#FF4000" opacity="0.4"/>
+                                <circle cx="30.31" cy="17.5" r="3" fill="#FF0000" opacity="0.6"/>
+                                <circle cx="17.5" cy="30.31" r="3" fill="#C4007F" opacity="0.4"/>
+                                <circle cx="0" cy="35" r="3" fill="#8000FF" opacity="0.4"/>
+                                <circle cx="-17.5" cy="30.31" r="3" fill="#4000FF" opacity="0.6"/>
+                                <circle cx="-30.31" cy="17.5" r="3" fill="#0000FF" opacity="0.4"/>
+                                <circle cx="-35" cy="0" r="3" fill="#007FFF" opacity="0.6"/>
+                                <circle cx="-30.31" cy="-17.5" r="3" fill="#00FF80" opacity="0.4"/>
+                                <circle cx="-17.5" cy="-30.31" r="3" fill="#80FF00" opacity="0.6"/>
+                                <text y="3" text-anchor="middle" fill="#777777" font-size="10" font-weight="bold">12</text>
+                            </g>
+                            
+                            <!-- Arrow pointing to fretboard -->
+                            <path d="M 85,65 L 105,65 L 105,60 L 115,70 L 105,80 L 105,75 L 85,75 Z" fill="#CF7A5A"/>
+                            
+                            <!-- Right: Guitar Fretboard with chromatic mapping -->
+                            <g transform="translate(120, 20)">
+                                <!-- Fretboard -->
+                                <rect x="0" y="0" width="70" height="140" fill="#654321" stroke="#CF7A5A" stroke-width="2" rx="3"/>
+                                
+                                <!-- Frets -->
+                                <line x1="0" y1="28" x2="70" y2="28" stroke="#D3D3D3" stroke-width="2"/>
+                                <line x1="0" y1="56" x2="70" y2="56" stroke="#D3D3D3" stroke-width="2"/>
+                                <line x1="0" y1="84" x2="70" y2="84" stroke="#D3D3D3" stroke-width="2"/>
+                                <line x1="0" y1="112" x2="70" y2="112" stroke="#D3D3D3" stroke-width="2"/>
+                                
+                                <!-- Strings -->
+                                <line x1="12" y1="0" x2="12" y2="140" stroke="#FFD700" stroke-width="1"/>
+                                <line x1="24" y1="0" x2="24" y2="140" stroke="#FFD700" stroke-width="1.5"/>
+                                <line x1="36" y1="0" x2="36" y2="140" stroke="#FFD700" stroke-width="2"/>
+                                <line x1="48" y1="0" x2="48" y2="140" stroke="#FFD700" stroke-width="2.5"/>
+                                <line x1="60" y1="0" x2="60" y2="140" stroke="#FFD700" stroke-width="3"/>
+                                
+                                <!-- Chromatic notes mapped to fretboard -->
+                                <circle cx="12" cy="14" r="4" fill="#FFFF00" stroke="#CF7A5A" stroke-width="2"/>
+                                <circle cx="24" cy="42" r="4" fill="#FF8000" stroke="#CF7A5A" stroke-width="2"/>
+                                <circle cx="36" cy="70" r="4" fill="#FF0000" stroke="#CF7A5A" stroke-width="2"/>
+                                <circle cx="48" cy="98" r="4" fill="#8000FF" stroke="#CF7A5A" stroke-width="2"/>
+                                <circle cx="60" cy="126" r="4" fill="#0080FF" stroke="#CF7A5A" stroke-width="2"/>
+                            </g>
+                            
+                            <!-- Title Label -->
+                            <rect x="10" y="160" width="180" height="30" fill="rgba(207, 122, 90, 0.9)" rx="5"/>
+                            <text x="100" y="180" font-family="Arial" font-size="11" font-weight="bold" fill="#fff" text-anchor="middle">CHROMATIC MAPPING</text>
+                        </svg>
+                    </div>
+                    <h4>Chromatic to Major Scale</h4>
+                    <p>Understand the relationship between chromatic and diatonic systems.</p>
+                    <ul class="app-features">
+                        <li>Side-by-side comparison</li>
+                        <li>Visual transformation</li>
+                        <li>Scale degree mapping</li>
+                        <li>Interactive learning</li>
+                    </ul>
+                    <div class="app-actions">
+                        <a href="apps/harmonized-chromatic-scale.html" class="btn-launch">Launch App</a>
+                    </div>
+                </div>
+                
+                <!-- Music Theory Pro COMPLETE -->
+                <div class="app-card">
+                    <span class="app-badge badge-pro">PRO</span>
+                    <div class="app-icon">
+                        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Dark Background -->
+                            <circle cx="100" cy="100" r="98" fill="#2c3e50"/>
+                            
+                            <!-- Outer Ring - Complete System -->
+                            <circle cx="100" cy="100" r="88" fill="none" stroke="#F4D03F" stroke-width="4" opacity="0.8"/>
+                            
+                            <!-- Inner Circles - Integrated Theory -->
+                            <circle cx="100" cy="100" r="72" fill="none" stroke="#008080" stroke-width="3" stroke-dasharray="8,4"/>
+                            <circle cx="100" cy="100" r="56" fill="none" stroke="#8B6BA3" stroke-width="3" stroke-dasharray="8,4"/>
+                            <circle cx="100" cy="100" r="40" fill="none" stroke="#CF7A5A" stroke-width="2" stroke-dasharray="5,3"/>
+                            
+                            <!-- Center Core -->
+                            <circle cx="100" cy="100" r="25" fill="#1a3d5f" stroke="#F4D03F" stroke-width="3"/>
+                            
+                            <!-- Radial Lines - representing connections -->
+                            <line x1="100" y1="100" x2="100" y2="20" stroke="#F4D03F" stroke-width="2.5" opacity="0.7"/>
+                            <line x1="100" y1="100" x2="176" y2="76" stroke="#008080" stroke-width="2" opacity="0.6"/>
+                            <line x1="100" y1="100" x2="176" y2="124" stroke="#8B6BA3" stroke-width="2" opacity="0.6"/>
+                            <line x1="100" y1="100" x2="24" y2="124" stroke="#CF7A5A" stroke-width="2" opacity="0.6"/>
+                            
+                            <!-- Center Text -->
+                            <text x="100" y="107" text-anchor="middle" fill="#F4D03F" font-size="18" font-weight="bold" font-family="Arial">PRO</text>
+                            
+                            <!-- PRO Badge -->
+                            <rect x="140" y="10" width="50" height="20" fill="#F4D03F" rx="3"/>
+                            <text x="165" y="23" font-family="Arial" font-size="11" font-weight="bold" fill="#1a3d5f" text-anchor="middle">COMPLETE</text>
+                        </svg>
+                    </div>
+                    <h4>Music Theory Explorer Pro</h4>
+                    <p>The ultimate comprehensive music theory learning platform with all features unlocked.</p>
+                    <ul class="app-features">
+                        <li>Complete theory curriculum</li>
+                        <li>Advanced exercises</li>
+                        <li>Progress tracking</li>
+                        <li>Certificate program</li>
+                    </ul>
+                    <div class="app-actions">
+                        <a href="apps/music-theory-pro.html" class="btn-launch">Launch App</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Advanced Theory Tools -->
+        <div class="category-section">
+            <div class="category-header">
+                <span class="category-icon">🎵</span>
+                <h3>Advanced Theory & Analysis</h3>
+            </div>
+            <div class="apps-grid">
+                <!-- Tonic Subdominant Dominant -->
+                <div class="app-card">
+                    <span class="app-badge badge-premium">PREMIUM</span>
+                    <div class="app-icon">
+                        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Background -->
+                            <rect width="200" height="200" fill="#1a3d5f" rx="10"/>
+                            
+                            <!-- Functional Harmony Triangle -->
+                            <!-- Tonic (Top - Yellow/Gold) -->
+                            <circle cx="100" cy="40" r="25" fill="#F4D03F" stroke="#fff" stroke-width="3"/>
+                            <text x="100" y="48" text-anchor="middle" fill="#1a3d5f" font-size="24" font-weight="bold" font-family="Arial">T</text>
+                            <text x="100" y="25" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">TONIC</text>
+                            
+                            <!-- Subdominant (Bottom Left - Teal) -->
+                            <circle cx="50" cy="140" r="22" fill="#008080" stroke="#fff" stroke-width="3"/>
+                            <text x="50" y="147" text-anchor="middle" fill="#fff" font-size="22" font-weight="bold" font-family="Arial">S</text>
+                            <text x="50" y="175" text-anchor="middle" fill="#008080" font-size="9" font-weight="bold">SUBDOMINANT</text>
+                            
+                            <!-- Dominant (Bottom Right - Coral) -->
+                            <circle cx="150" cy="140" r="22" fill="#CF7A5A" stroke="#fff" stroke-width="3"/>
+                            <text x="150" y="147" text-anchor="middle" fill="#fff" font-size="22" font-weight="bold" font-family="Arial">D</text>
+                            <text x="150" y="175" text-anchor="middle" fill="#CF7A5A" font-size="9" font-weight="bold">DOMINANT</text>
+                            
+                            <!-- Connection Lines showing functional relationships -->
+                            <line x1="100" y1="65" x2="60" y2="120" stroke="#F4D03F" stroke-width="3" opacity="0.6"/>
+                            <line x1="100" y1="65" x2="140" y2="120" stroke="#F4D03F" stroke-width="3" opacity="0.6"/>
+                            <line x1="70" y1="135" x2="130" y2="135" stroke="#8B6BA3" stroke-width="2.5" opacity="0.5" stroke-dasharray="5,3"/>
+                            
+                            <!-- Roman Numerals -->
+                            <text x="100" y="95" text-anchor="middle" fill="#F4D03F" font-size="11" font-weight="bold">I</text>
+                            <text x="60" y="110" text-anchor="middle" fill="#008080" font-size="10" font-weight="bold">IV</text>
+                            <text x="140" y="110" text-anchor="middle" fill="#CF7A5A" font-size="10" font-weight="bold">V</text>
+                        </svg>
+                    </div>
+                    <h4>Tonic Subdominant Dominant</h4>
+                    <p>Master functional harmony through interactive chord function visualization.</p>
+                    <ul class="app-features">
+                        <li>Functional harmony theory</li>
+                        <li>Chord progression analysis</li>
+                        <li>Voice leading practice</li>
+                        <li>Cadence exploration</li>
+                    </ul>
+                    <div class="app-actions">
+                        <a href="apps/tonic-subdominant-dominant.html" class="btn-launch">Launch App</a>
+                    </div>
+                </div>
+                
+                <!-- Holy Grail Final -->
+                <div class="app-card">
+                    <span class="app-badge badge-pro">PRO</span>
+                    <div class="app-icon">
+                        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Dark mystical background -->
+                            <circle cx="100" cy="100" r="98" fill="#1a1a2e"/>
+                            <circle cx="100" cy="100" r="95" fill="none" stroke="#F4D03F" stroke-width="4"/>
+                            
+                            <!-- Sacred geometry pattern -->
+                            <!-- Outer golden star -->
+                            <polygon points="100,25 120,75 175,82 130,120 142,175 100,145 58,175 70,120 25,82 80,75" 
+                                     fill="none" stroke="#F4D03F" stroke-width="2.5" opacity="0.8"/>
+                            <polygon points="100,35 117,70 165,77 127,112 137,162 100,138 63,162 73,112 35,77 83,70" 
+                                     fill="rgba(244, 208, 63, 0.15)" stroke="#F4D03F" stroke-width="1.5"/>
+                            
+                            <!-- Inner circles - representing unified theory -->
+                            <circle cx="100" cy="100" r="60" fill="none" stroke="#008080" stroke-width="2" stroke-dasharray="5,3" opacity="0.7"/>
+                            <circle cx="100" cy="100" r="45" fill="none" stroke="#8B6BA3" stroke-width="2" stroke-dasharray="5,3" opacity="0.7"/>
+                            <circle cx="100" cy="100" r="30" fill="none" stroke="#CF7A5A" stroke-width="2" opacity="0.6"/>
+                            
+                            <!-- Center core - the "grail" -->
+                            <circle cx="100" cy="100" r="18" fill="#F4D03F" opacity="0.3"/>
+                            <circle cx="100" cy="100" r="15" fill="none" stroke="#F4D03F" stroke-width="3"/>
+                            <circle cx="100" cy="100" r="8" fill="#F4D03F"/>
+                            
+                            <!-- Radiating lines -->
+                            <line x1="100" y1="85" x2="100" y2="30" stroke="#F4D03F" stroke-width="1.5" opacity="0.5"/>
+                            <line x1="115" y1="85" x2="150" y2="50" stroke="#008080" stroke-width="1.5" opacity="0.5"/>
+                            <line x1="115" y1="115" x2="150" y2="150" stroke="#8B6BA3" stroke-width="1.5" opacity="0.5"/>
+                            <line x1="85" y1="115" x2="50" y2="150" stroke="#CF7A5A" stroke-width="1.5" opacity="0.5"/>
+                            <line x1="85" y1="85" x2="50" y2="50" stroke="#F4D03F" stroke-width="1.5" opacity="0.4"/>
+                        </svg>
+                    </div>
+                    <h4>Holy Grail Final</h4>
+                    <p>The ultimate integration of all music theory concepts in one powerful tool.</p>
+                    <ul class="app-features">
+                        <li>Unified theory system</li>
+                        <li>Cross-reference tools</li>
+                        <li>Advanced analytics</li>
+                        <li>Professional insights</li>
+                    </ul>
+                    <div class="app-actions">
+                        <a href="apps/holy-mole-grail.html" class="btn-launch">Launch App</a>
+                    </div>
+                </div>
+                
+                <!-- Octave Wave Visualizer -->
+                <div class="app-card">
+                    <span class="app-badge badge-premium">PREMIUM</span>
+                    <div class="app-icon">
+                        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Dark background -->
+                            <rect width="200" height="200" fill="#0a0a0a" rx="10"/>
+                            
+                            <!-- Gradient background for depth -->
+                            <defs>
+                                <linearGradient id="bgGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                    <stop offset="0%" style="stop-color:#0a0a0a;stop-opacity:1" />
+                                    <stop offset="100%" style="stop-color:#1a1a2e;stop-opacity:1" />
+                                </linearGradient>
+                            </defs>
+                            <rect x="5" y="5" width="190" height="190" fill="url(#bgGrad)" rx="8"/>
+                            
+                            <!-- 9 Octave Waves Overlapping (C0-C8) -->
+                            <!-- C0 - Red - Lowest frequency -->
+                            <path d="M 10 100 Q 30 70, 50 100 T 90 100 T 130 100 T 170 100 T 190 100" 
+                                  stroke="#ff0000" stroke-width="1.2" fill="none" opacity="0.9"/>
+                            
+                            <!-- C1 - Orange -->
+                            <path d="M 10 100 Q 27.5 75, 45 100 T 80 100 T 115 100 T 150 100 T 185 100 T 190 100" 
+                                  stroke="#ff7700" stroke-width="1.2" fill="none" opacity="0.85"/>
+                            
+                            <!-- C2 - Yellow-Orange -->
+                            <path d="M 10 100 Q 25 80, 40 100 T 70 100 T 100 100 T 130 100 T 160 100 T 190 100" 
+                                  stroke="#ffaa00" stroke-width="1.2" fill="none" opacity="0.8"/>
+                            
+                            <!-- C3 - Yellow-Green -->
+                            <path d="M 10 100 Q 22.5 82, 35 100 T 60 100 T 85 100 T 110 100 T 135 100 T 160 100 T 185 100 T 190 100" 
+                                  stroke="#ccff00" stroke-width="1.2" fill="none" opacity="0.75"/>
+                            
+                            <!-- C4 - Cyan (Middle C - Thicker) -->
+                            <path d="M 10 100 Q 20 85, 30 100 T 50 100 T 70 100 T 90 100 T 110 100 T 130 100 T 150 100 T 170 100 T 190 100" 
+                                  stroke="#00ffff" stroke-width="2" fill="none" opacity="0.95"/>
+                            
+                            <!-- C5 - Blue -->
+                            <path d="M 10 100 Q 18 87, 26 100 T 42 100 T 58 100 T 74 100 T 90 100 T 106 100 T 122 100 T 138 100 T 154 100 T 170 100 T 186 100 T 190 100" 
+                                  stroke="#0077ff" stroke-width="1.2" fill="none" opacity="0.7"/>
+                            
+                            <!-- C6 - Dark Blue -->
+                            <path d="M 10 100 Q 16 88, 22 100 T 34 100 T 46 100 T 58 100 T 70 100 T 82 100 T 94 100 T 106 100 T 118 100 T 130 100 T 142 100 T 154 100 T 166 100 T 178 100 T 190 100" 
+                                  stroke="#0033ff" stroke-width="1.2" fill="none" opacity="0.65"/>
+                            
+                            <!-- C7 - Purple -->
+                            <path d="M 10 100 Q 14 89, 18 100 T 26 100 T 34 100 T 42 100 T 50 100 T 58 100 T 66 100 T 74 100 T 82 100 T 90 100 T 98 100 T 106 100 T 114 100 T 122 100 T 130 100 T 138 100 T 146 100 T 154 100 T 162 100 T 170 100 T 178 100 T 186 100 T 190 100" 
+                                  stroke="#7700ff" stroke-width="1.2" fill="none" opacity="0.6"/>
+                            
+                            <!-- C8 - Magenta - Highest frequency -->
+                            <path d="M 10 100 Q 12 90, 14 100 T 18 100 T 22 100 T 26 100 T 30 100 T 34 100 T 38 100 T 42 100 T 46 100 T 50 100 T 54 100 T 58 100 T 62 100 T 66 100 T 70 100 T 74 100 T 78 100 T 82 100 T 86 100 T 90 100 T 94 100 T 98 100 T 102 100 T 106 100 T 110 100 T 114 100 T 118 100 T 122 100 T 126 100 T 130 100 T 134 100 T 138 100 T 142 100 T 146 100 T 150 100 T 154 100 T 158 100 T 162 100 T 166 100 T 170 100 T 174 100 T 178 100 T 182 100 T 186 100 T 190 100" 
+                                  stroke="#ff00ff" stroke-width="1.2" fill="none" opacity="0.55"/>
+                            
+                            <!-- Center frequency marker for C4 (Middle C) -->
+                            <circle cx="100" cy="100" r="8" fill="rgba(0, 255, 255, 0.2)" stroke="#00ffff" stroke-width="2"/>
+                            <circle cx="100" cy="100" r="3" fill="#00ffff"/>
+                            
+                            <!-- Octave labels at bottom -->
+                            <text x="22" y="185" fill="#ff0000" font-size="8" font-weight="bold" text-anchor="middle">C0</text>
+                            <text x="44" y="185" fill="#ff7700" font-size="8" font-weight="bold" text-anchor="middle">C1</text>
+                            <text x="66" y="185" fill="#ffaa00" font-size="8" font-weight="bold" text-anchor="middle">C2</text>
+                            <text x="88" y="185" fill="#ccff00" font-size="8" font-weight="bold" text-anchor="middle">C3</text>
+                            <text x="110" y="185" fill="#00ffff" font-size="9" font-weight="bold" text-anchor="middle">C4</text>
+                            <text x="132" y="185" fill="#0077ff" font-size="8" font-weight="bold" text-anchor="middle">C5</text>
+                            <text x="154" y="185" fill="#0033ff" font-size="8" font-weight="bold" text-anchor="middle">C6</text>
+                            <text x="176" y="185" fill="#7700ff" font-size="8" font-weight="bold" text-anchor="middle">C7</text>
+                            <text x="190" y="185" fill="#ff00ff" font-size="8" font-weight="bold" text-anchor="middle">C8</text>
+                            
+                            <!-- Title label -->
+                            <rect x="10" y="10" width="180" height="20" fill="rgba(0, 212, 255, 0.15)" rx="3"/>
+                            <text x="100" y="23" font-family="Arial" font-size="10" font-weight="bold" fill="#00d4ff" text-anchor="middle">Z-PLANE OCTAVES</text>
+                        </svg>
+                    </div>
+                    <h4>Octave Wave Visualizer</h4>
+                    <p>Visualize harmonic relationships through wave forms and frequency analysis.</p>
+                    <ul class="app-features">
+                        <li>Waveform visualization</li>
+                        <li>Frequency analysis</li>
+                        <li>Harmonic series display</li>
+                        <li>Audio synthesis</li>
+                    </ul>
+                    <div class="app-actions">
+                        <a href="apps/octave-wave-visualizer.html" class="btn-launch">Launch App</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Rhythm & Time -->
+        <div class="category-section">
+            <div class="category-header">
+                <span class="category-icon">⏱️</span>
+                <h3>Rhythm & Timing</h3>
+            </div>
+            <div class="apps-grid">
+                <!-- Rhythm Clock -->
+                <div class="app-card">
+                    <span class="app-badge badge-free">FREE</span>
+                    <div class="app-icon">
+                        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Background -->
+                            <rect width="200" height="200" fill="#1a3d5f" rx="10"/>
+                            
+                            <!-- Clock face -->
+                            <circle cx="100" cy="100" r="85" fill="#2a4d6f" stroke="#F4D03F" stroke-width="4"/>
+                            
+                            <!-- Beat markers circle -->
+                            <circle cx="100" cy="100" r="75" fill="none" stroke="#008080" stroke-width="2" stroke-dasharray="5,5" opacity="0.6"/>
+                            
+                            <!-- 4/4 Time signature markers -->
+                            <circle cx="100" cy="25" r="10" fill="#FFFF00" stroke="#fff" stroke-width="2"/>
+                            <text x="100" y="31" text-anchor="middle" fill="#1a3d5f" font-size="12" font-weight="bold">1</text>
+                            
+                            <circle cx="175" cy="100" r="10" fill="#FF0000" stroke="#fff" stroke-width="2"/>
+                            <text x="175" y="106" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">2</text>
+                            
+                            <circle cx="100" cy="175" r="10" fill="#0080FF" stroke="#fff" stroke-width="2"/>
+                            <text x="100" y="181" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">3</text>
+                            
+                            <circle cx="25" cy="100" r="10" fill="#00FF00" stroke="#fff" stroke-width="2"/>
+                            <text x="25" y="106" text-anchor="middle" fill="#1a3d5f" font-size="12" font-weight="bold">4</text>
+                            
+                            <!-- Clock hands -->
+                            <line x1="100" y1="100" x2="100" y2="35" stroke="#F4D03F" stroke-width="5" stroke-linecap="round"/>
+                            <line x1="100" y1="100" x2="155" y2="130" stroke="#008080" stroke-width="4" stroke-linecap="round"/>
+                            
+                            <!-- Center hub -->
+                            <circle cx="100" cy="100" r="12" fill="#F4D03F"/>
+                            <circle cx="100" cy="100" r="6" fill="#1a3d5f"/>
+                            
+                            <!-- Time signature -->
+                            <text x="100" y="145" text-anchor="middle" fill="#F4D03F" font-size="16" font-weight="bold">4/4</text>
+                        </svg>
+                    </div>
+                    <h4>Rhythmic Clock</h4>
+                    <p>Visualize rhythmic patterns through circular clock-face representation.</p>
+                    <ul class="app-features">
+                        <li>Visual rhythm display</li>
+                        <li>Time signature exploration</li>
+                        <li>Polyrhythm visualization</li>
+                        <li>Interactive metronome</li>
+                    </ul>
+                    <div class="app-actions">
+                        <a href="apps/Rhythm_Clock.html" class="btn-launch">Launch App</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Rhythm Harmony Simple (Additional App) -->
+        <div class="category-section">
+            <div class="category-header">
+                <span class="category-icon">🎼</span>
+                <h3>Rhythm & Harmony Tools</h3>
+            </div>
+            <div class="apps-grid">
+                <!-- Rhythm Harmony Simple -->
+                <div class="app-card">
+                    <span class="app-badge badge-free">FREE</span>
+                    <div class="app-icon">
+                        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Background -->
+                            <rect width="200" height="200" fill="#2a4d6f" rx="10"/>
+                            
+                            <!-- Base line -->
+                            <line x1="15" y1="165" x2="185" y2="165" stroke="#F4D03F" stroke-width="3"/>
+                            
+                            <!-- Bar 1 - Beat 1 (Tonic) -->
+                            <rect x="25" y="55" width="28" height="110" fill="#F4D03F" rx="4"/>
+                            <text x="39" y="50" text-anchor="middle" fill="#F4D03F" font-size="11" font-weight="bold">1</text>
+                            
+                            <!-- Bar 2 - Beat 2 -->
+                            <rect x="63" y="35" width="28" height="130" fill="#008080" rx="4"/>
+                            <text x="77" y="30" text-anchor="middle" fill="#008080" font-size="11" font-weight="bold">2</text>
+                            
+                            <!-- Bar 3 - Beat 3 -->
+                            <rect x="101" y="65" width="28" height="100" fill="#8B6BA3" rx="4"/>
+                            <text x="115" y="60" text-anchor="middle" fill="#8B6BA3" font-size="11" font-weight="bold">3</text>
+                            
+                            <!-- Bar 4 - Beat 4 -->
+                            <rect x="139" y="45" width="28" height="120" fill="#CF7A5A" rx="4"/>
+                            <text x="153" y="40" text-anchor="middle" fill="#CF7A5A" font-size="11" font-weight="bold">4</text>
+                            
+                            <!-- Rhythm pattern indicators -->
+                            <circle cx="39" cy="80" r="4" fill="#1a3d5f"/>
+                            <circle cx="77" cy="60" r="4" fill="#1a3d5f"/>
+                            <circle cx="115" cy="90" r="4" fill="#1a3d5f"/>
+                            <circle cx="153" cy="70" r="4" fill="#1a3d5f"/>
+                            
+                            <!-- Harmony wave overlay -->
+                            <path d="M 25 150 Q 53 140, 81 150 T 137 150 T 193 150" 
+                                  stroke="#F4D03F" stroke-width="2" fill="none" opacity="0.5" stroke-dasharray="4,4"/>
+                        </svg>
+                    </div>
+                    <h4>Rhythm & Harmony Made Simple</h4>
+                    <p>Simple, intuitive approach to understanding rhythm and harmony relationships.</p>
+                    <ul class="app-features">
+                        <li>Basic rhythm patterns</li>
+                        <li>Harmonic progressions</li>
+                        <li>Interactive exercises</li>
+                        <li>Beginner-friendly interface</li>
+                    </ul>
+                    <div class="app-actions">
+                        <a href="apps/rhythm-harmony.html" class="btn-launch">Launch App</a>
+                    </div>
+                </div>
+                
+                <!-- Modal Stencil Player -->
+                <div class="app-card">
+                    <span class="app-badge badge-free">FREE</span>
+                    <div class="app-icon">
+                        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Background -->
+                            <rect width="200" height="200" fill="#1a3d5f" rx="10"/>
+                            
+                            <!-- Seven vertical stencils representing the seven modes -->
+                            <g id="modal-stencils">
+                                <!-- Stencil 1 - Ionian -->
+                                <rect x="10" y="50" width="22" height="120" fill="rgba(244, 208, 63, 0.2)" stroke="#F4D03F" stroke-width="2" rx="3"/>
+                                <circle cx="21" cy="60" r="3" fill="#FFFF00"/>
+                                <circle cx="21" cy="80" r="3" fill="#FFC400"/>
+                                <circle cx="21" cy="100" r="3" fill="#FF8000"/>
+                                <circle cx="21" cy="120" r="3" fill="#FF0000"/>
+                                <circle cx="21" cy="140" r="3" fill="#8000FF"/>
+                                <circle cx="21" cy="160" r="3" fill="#0000FF"/>
+                                
+                                <!-- Stencil 2 - Dorian -->
+                                <rect x="38" y="50" width="22" height="120" fill="rgba(0, 128, 128, 0.2)" stroke="#008080" stroke-width="2" rx="3"/>
+                                <circle cx="49" cy="65" r="3" fill="#FFFF00"/>
+                                <circle cx="49" cy="85" r="3" fill="#FF8000"/>
+                                <circle cx="49" cy="105" r="3" fill="#FF0000"/>
+                                <circle cx="49" cy="125" r="3" fill="#0000FF"/>
+                                <circle cx="49" cy="145" r="3" fill="#00FF80"/>
+                                <circle cx="49" cy="165" r="3" fill="#80FF00"/>
+                                
+                                <!-- Stencil 3 - Phrygian -->
+                                <rect x="66" y="50" width="22" height="120" fill="rgba(139, 107, 163, 0.2)" stroke="#8B6BA3" stroke-width="2" rx="3"/>
+                                <circle cx="77" cy="70" r="3" fill="#FFC400"/>
+                                <circle cx="77" cy="90" r="3" fill="#FF4000"/>
+                                <circle cx="77" cy="110" r="3" fill="#C4007F"/>
+                                <circle cx="77" cy="130" r="3" fill="#4000FF"/>
+                                <circle cx="77" cy="150" r="3" fill="#007FFF"/>
+                                
+                                <!-- Stencil 4 - Lydian (Center - highlighted) -->
+                                <rect x="94" y="45" width="24" height="130" fill="rgba(0, 128, 128, 0.3)" stroke="#008080" stroke-width="3" rx="3"/>
+                                <circle cx="106" cy="60" r="4" fill="#FFFF00" stroke="#fff" stroke-width="1.5"/>
+                                <circle cx="106" cy="85" r="4" fill="#FF8000" stroke="#fff" stroke-width="1.5"/>
+                                <circle cx="106" cy="110" r="4" fill="#FF0000" stroke="#fff" stroke-width="1.5"/>
+                                <circle cx="106" cy="135" r="4" fill="#8000FF" stroke="#fff" stroke-width="1.5"/>
+                                <circle cx="106" cy="160" r="4" fill="#0080FF" stroke="#fff" stroke-width="1.5"/>
+                                <text x="106" y="35" text-anchor="middle" fill="#F4D03F" font-size="9" font-weight="bold">▶ PLAY</text>
+                                
+                                <!-- Stencil 5 - Mixolydian -->
+                                <rect x="124" y="50" width="22" height="120" fill="rgba(207, 122, 90, 0.2)" stroke="#CF7A5A" stroke-width="2" rx="3"/>
+                                <circle cx="135" cy="75" r="3" fill="#FFC400"/>
+                                <circle cx="135" cy="95" r="3" fill="#FF0000"/>
+                                <circle cx="135" cy="115" r="3" fill="#8000FF"/>
+                                <circle cx="135" cy="135" r="3" fill="#00FF80"/>
+                                <circle cx="135" cy="155" r="3" fill="#80FF00"/>
+                                
+                                <!-- Stencil 6 - Aeolian -->
+                                <rect x="152" y="50" width="22" height="120" fill="rgba(244, 208, 63, 0.15)" stroke="#F4D03F" stroke-width="2" rx="3"/>
+                                <circle cx="163" cy="68" r="3" fill="#FF8000"/>
+                                <circle cx="163" cy="88" r="3" fill="#FF4000"/>
+                                <circle cx="163" cy="108" r="3" fill="#C4007F"/>
+                                <circle cx="163" cy="128" r="3" fill="#0000FF"/>
+                                <circle cx="163" cy="148" r="3" fill="#007FFF"/>
+                                
+                                <!-- Stencil 7 - Locrian -->
+                                <rect x="180" y="50" width="18" height="120" fill="rgba(0, 128, 128, 0.15)" stroke="#008080" stroke-width="2" rx="3"/>
+                                <circle cx="189" cy="72" r="2.5" fill="#FFC400"/>
+                                <circle cx="189" cy="92" r="2.5" fill="#FF0000"/>
+                                <circle cx="189" cy="112" r="2.5" fill="#4000FF"/>
+                                <circle cx="189" cy="132" r="2.5" fill="#007FFF"/>
+                                <circle cx="189" cy="152" r="2.5" fill="#00FF80"/>
+                            </g>
+                            
+                            <!-- Title at bottom -->
+                            <text x="100" y="190" text-anchor="middle" fill="#F4D03F" font-size="12" font-weight="bold">SEVEN MODES</text>
+                        </svg>
+                    </div>
+                    <h4>Interactive Modal Stencil Player</h4>
+                    <p>Explore the seven musical modes with chromatic color coding and real-time MIDI playback.</p>
+                    <ul class="app-features">
+                        <li>Seven modal stencils (Ionian-Locrian)</li>
+                        <li>Drag & drop to play zone</li>
+                        <li>Real-time MIDI audio feedback</li>
+                        <li>Recording & playback controls</li>
+                    </ul>
+                    <div class="app-actions">
+                        <a href="apps/modal-stencil-player.html" class="btn-launch">Launch App</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sacred Geometry Section -->
+        <div class="category-section">
+            <div class="category-header">
+                <span class="category-icon">🔮</span>
+                <h3>Sacred Geometry & Visualization</h3>
+            </div>
+            <div class="apps-grid">
+                <!-- S-Geo Enhanced -->
+                <div class="app-card">
+                    <span class="app-badge badge-pro">PRO</span>
+                    <div class="app-icon">
+                        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Dark mystical background -->
+                            <circle cx="100" cy="100" r="98" fill="#0a0a0f"/>
+                            <circle cx="100" cy="100" r="95" fill="none" stroke="#F4D03F" stroke-width="3"/>
+                            
+                            <!-- 3D perspective sacred geometry -->
+                            <!-- Outer hexagon -->
+                            <polygon points="100,20 170,60 170,140 100,180 30,140 30,60" 
+                                     fill="none" stroke="#FFFF00" stroke-width="2.5" opacity="0.8"/>
+                            
+                            <!-- Inner hexagon rotated -->
+                            <polygon points="100,40 160,70 160,130 100,160 40,130 40,70" 
+                                     fill="rgba(255, 215, 0, 0.1)" stroke="#FFC400" stroke-width="2" opacity="0.7"/>
+                            
+                            <!-- Center sacred pattern -->
+                            <circle cx="100" cy="100" r="50" fill="none" stroke="#008080" stroke-width="2" stroke-dasharray="5,3"/>
+                            <circle cx="100" cy="100" r="35" fill="none" stroke="#8B6BA3" stroke-width="2" stroke-dasharray="5,3"/>
+                            <circle cx="100" cy="100" r="20" fill="none" stroke="#CF7A5A" stroke-width="2"/>
+                            
+                            <!-- Radiating lines creating 3D depth -->
+                            <line x1="100" y1="100" x2="100" y2="20" stroke="#F4D03F" stroke-width="1.5" opacity="0.4"/>
+                            <line x1="100" y1="100" x2="170" y2="60" stroke="#F4D03F" stroke-width="1.5" opacity="0.4"/>
+                            <line x1="100" y1="100" x2="170" y2="140" stroke="#F4D03F" stroke-width="1.5" opacity="0.4"/>
+                            <line x1="100" y1="100" x2="100" y2="180" stroke="#F4D03F" stroke-width="1.5" opacity="0.4"/>
+                            <line x1="100" y1="100" x2="30" y2="140" stroke="#F4D03F" stroke-width="1.5" opacity="0.4"/>
+                            <line x1="100" y1="100" x2="30" y2="60" stroke="#F4D03F" stroke-width="1.5" opacity="0.4"/>
+                            
+                            <!-- Central core -->
+                            <circle cx="100" cy="100" r="8" fill="#F4D03F"/>
+                            
+                            <!-- Musical notes integrated -->
+                            <circle cx="100" cy="50" r="4" fill="#FFFF00" opacity="0.9"/>
+                            <circle cx="140" cy="75" r="4" fill="#FF8C00" opacity="0.9"/>
+                            <circle cx="140" cy="125" r="4" fill="#FF0000" opacity="0.9"/>
+                            <circle cx="100" cy="150" r="4" fill="#8B00FF" opacity="0.9"/>
+                            <circle cx="60" cy="125" r="4" fill="#0080FF" opacity="0.9"/>
+                            <circle cx="60" cy="75" r="4" fill="#00FF80" opacity="0.9"/>
+                        </svg>
+                    </div>
+                    <h4>3D Sacred Geometry Visualizer</h4>
+                    <p>Complete 3D sacred geometry music visualization with advanced controls and interactive exploration.</p>
+                    <ul class="app-features">
+                        <li>Full 3D sacred geometry rendering</li>
+                        <li>Interactive rotation controls</li>
+                        <li>Real-time music visualization</li>
+                        <li>Advanced pattern exploration</li>
+                    </ul>
+                    <div class="app-actions">
+                        <a href="apps/sacred-geometry-enhanced-final.html" class="btn-launch">Launch App</a>
+                    </div>
+                </div>
+                
+                <!-- S-Geo Mouse Control -->
+                <div class="app-card">
+                    <span class="app-badge badge-premium">PREMIUM</span>
+                    <div class="app-icon">
+                        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Background -->
+                            <circle cx="100" cy="100" r="98" fill="#1a1a2e"/>
+                            <circle cx="100" cy="100" r="95" fill="none" stroke="#008080" stroke-width="3"/>
+                            
+                            <!-- Flower of Life pattern -->
+                            <circle cx="100" cy="100" r="60" fill="none" stroke="#F4D03F" stroke-width="2" opacity="0.7"/>
+                            <circle cx="70" cy="100" r="30" fill="none" stroke="#F4D03F" stroke-width="1.5" opacity="0.6"/>
+                            <circle cx="130" cy="100" r="30" fill="none" stroke="#F4D03F" stroke-width="1.5" opacity="0.6"/>
+                            <circle cx="85" cy="126" r="30" fill="none" stroke="#008080" stroke-width="1.5" opacity="0.6"/>
+                            <circle cx="115" cy="126" r="30" fill="none" stroke="#008080" stroke-width="1.5" opacity="0.6"/>
+                            <circle cx="85" cy="74" r="30" fill="none" stroke="#8B6BA3" stroke-width="1.5" opacity="0.6"/>
+                            <circle cx="115" cy="74" r="30" fill="none" stroke="#8B6BA3" stroke-width="1.5" opacity="0.6"/>
+                            
+                            <!-- Central pattern -->
+                            <circle cx="100" cy="100" r="25" fill="rgba(244, 208, 63, 0.2)" stroke="#F4D03F" stroke-width="2"/>
+                            <circle cx="100" cy="100" r="12" fill="#F4D03F"/>
+                            
+                            <!-- Mouse cursor indicator -->
+                            <path d="M 160 40 L 165 50 L 175 48 Z" fill="#FF0000" stroke="#fff" stroke-width="1"/>
+                            <line x1="162" y1="43" x2="100" y2="100" stroke="#FF0000" stroke-width="1" stroke-dasharray="3,3" opacity="0.5"/>
+                        </svg>
+                    </div>
+                    <h4>Sacred Geometry</h4>
+                    <p>Interactive sacred geometry exploration with intuitive mouse-based controls.</p>
+                    <ul class="app-features">
+                        <li>Mouse-driven interaction</li>
+                        <li>Flower of Life patterns</li>
+                        <li>Dynamic geometry generation</li>
+                        <li>Smooth animation controls</li>
+                    </ul>
+                    <div class="app-actions">
+                        <a href="apps/Sacred-Geometry-Musical-face.html" class="btn-launch">Launch App</a>
+                    </div>
+                </div>
+                
+                <!-- S-Geo Music Theory Explorer -->
+                <div class="app-card">
+                    <span class="app-badge badge-pro">PRO</span>
+                    <div class="app-icon">
+                        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Background -->
+                            <rect width="200" height="200" fill="#0a0a0f" rx="10"/>
+                            
+                            <!-- Geometric musical integration -->
+                            <!-- Triangle (triad harmony) -->
+                            <polygon points="100,30 170,140 30,140" 
+                                     fill="none" stroke="#F4D03F" stroke-width="3" opacity="0.7"/>
+                            <polygon points="100,50 155,125 45,125" 
+                                     fill="rgba(244, 208, 63, 0.1)" stroke="#FFC400" stroke-width="2"/>
+                            
+                            <!-- Circle inscribed in triangle -->
+                            <circle cx="100" cy="105" r="50" fill="none" stroke="#008080" stroke-width="2.5" opacity="0.8"/>
+                            
+                            <!-- Musical note positions on geometry -->
+                            <circle cx="100" cy="30" r="8" fill="#FFFF00" stroke="#fff" stroke-width="2"/>
+                            <text x="100" y="37" text-anchor="middle" fill="#000" font-size="11" font-weight="bold">C</text>
+                            
+                            <circle cx="170" cy="140" r="8" fill="#FF0000" stroke="#fff" stroke-width="2"/>
+                            <text x="170" y="147" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">E</text>
+                            
+                            <circle cx="30" cy="140" r="8" fill="#0080FF" stroke="#fff" stroke-width="2"/>
+                            <text x="30" y="147" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">G</text>
+                            
+                            <!-- Inner geometric pattern -->
+                            <circle cx="100" cy="105" r="30" fill="none" stroke="#8B6BA3" stroke-width="2" stroke-dasharray="5,3"/>
+                            <circle cx="100" cy="105" r="15" fill="#F4D03F" opacity="0.3"/>
+                            
+                            <!-- Scale degrees -->
+                            <text x="100" y="20" text-anchor="middle" fill="#F4D03F" font-size="10" font-weight="bold">Theory Explorer</text>
+                        </svg>
+                    </div>
+                    <h4>Sacred Geometry Music Theory Explorer</h4>
+                    <p>Explore music theory through sacred geometric patterns and relationships.</p>
+                    <ul class="app-features">
+                        <li>Geometric theory mapping</li>
+                        <li>Harmonic pattern visualization</li>
+                        <li>Interval relationship display</li>
+                        <li>Sacred ratio exploration</li>
+                    </ul>
+                    <div class="app-actions">
+                        <a href="apps/S-Geo-Music Theory Explorer.html" class="btn-launch">Launch App</a>
+                    </div>
+                </div>
+                
+                <!-- S-Geo Music Theory Visualizer -->
+                <div class="app-card">
+                    <span class="app-badge badge-premium">PREMIUM</span>
+                    <div class="app-icon">
+                        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Background -->
+                            <circle cx="100" cy="100" r="98" fill="#1a3d5f"/>
+                            <circle cx="100" cy="100" r="95" fill="none" stroke="#8B6BA3" stroke-width="3"/>
+                            
+                            <!-- Metatron's Cube inspired -->
+                            <!-- Outer circle -->
+                            <circle cx="100" cy="100" r="80" fill="none" stroke="#F4D03F" stroke-width="2" opacity="0.6"/>
+                            
+                            <!-- Inner circles at vertices -->
+                            <circle cx="100" cy="30" r="12" fill="none" stroke="#FFFF00" stroke-width="2"/>
+                            <circle cx="169" cy="70" r="12" fill="none" stroke="#FF8C00" stroke-width="2"/>
+                            <circle cx="169" cy="130" r="12" fill="none" stroke="#FF0000" stroke-width="2"/>
+                            <circle cx="100" cy="170" r="12" fill="none" stroke="#8B00FF" stroke-width="2"/>
+                            <circle cx="31" cy="130" r="12" fill="none" stroke="#0080FF" stroke-width="2"/>
+                            <circle cx="31" cy="70" r="12" fill="none" stroke="#00FF80" stroke-width="2"/>
+                            
+                            <!-- Connecting lines -->
+                            <line x1="100" y1="30" x2="169" y2="70" stroke="#F4D03F" stroke-width="1" opacity="0.4"/>
+                            <line x1="169" y1="70" x2="169" y2="130" stroke="#F4D03F" stroke-width="1" opacity="0.4"/>
+                            <line x1="169" y1="130" x2="100" y2="170" stroke="#F4D03F" stroke-width="1" opacity="0.4"/>
+                            <line x1="100" y1="170" x2="31" y2="130" stroke="#F4D03F" stroke-width="1" opacity="0.4"/>
+                            <line x1="31" y1="130" x2="31" y2="70" stroke="#F4D03F" stroke-width="1" opacity="0.4"/>
+                            <line x1="31" y1="70" x2="100" y2="30" stroke="#F4D03F" stroke-width="1" opacity="0.4"/>
+                            
+                            <!-- Center sphere -->
+                            <circle cx="100" cy="100" r="25" fill="rgba(139, 107, 163, 0.3)" stroke="#8B6BA3" stroke-width="2"/>
+                            <circle cx="100" cy="100" r="10" fill="#F4D03F"/>
+                        </svg>
+                    </div>
+                    <h4>Sacred Geometry Music Visualizer</h4>
+                    <p>Advanced visualization combining sacred geometry with music theory principles.</p>
+                    <ul class="app-features">
+                        <li>Metatron's Cube integration</li>
+                        <li>Multi-dimensional theory display</li>
+                        <li>Harmonic resonance patterns</li>
+                        <li>Sacred proportion analysis</li>
+                    </ul>
+                    <div class="app-actions">
+                        <a href="apps/S-Geo-Enhanced.html" class="btn-launch">Launch App</a>
+                    </div>
+                </div>
+                
+                <!-- S-Geo Music Clean -->
+                <div class="app-card">
+                    <span class="app-badge badge-free">FREE</span>
+                    <div class="app-icon">
+                        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Clean minimalist background -->
+                            <rect width="200" height="200" fill="#2a4d6f" rx="10"/>
+                            
+                            <!-- Simple sacred circle -->
+                            <circle cx="100" cy="100" r="85" fill="none" stroke="#F4D03F" stroke-width="3"/>
+                            
+                            <!-- Vesica Piscis (two overlapping circles) -->
+                            <circle cx="75" cy="100" r="45" fill="none" stroke="#008080" stroke-width="2" opacity="0.7"/>
+                            <circle cx="125" cy="100" r="45" fill="none" stroke="#008080" stroke-width="2" opacity="0.7"/>
+                            
+                            <!-- Central overlap glow -->
+                            <ellipse cx="100" cy="100" rx="25" ry="45" fill="rgba(244, 208, 63, 0.2)"/>
+                            
+                            <!-- Musical notes in clean arrangement -->
+                            <circle cx="100" cy="40" r="6" fill="#FFFF00"/>
+                            <circle cx="150" cy="100" r="6" fill="#FF0000"/>
+                            <circle cx="100" cy="160" r="6" fill="#0080FF"/>
+                            <circle cx="50" cy="100" r="6" fill="#00FF80"/>
+                            
+                            <!-- Center point -->
+                            <circle cx="100" cy="100" r="8" fill="#F4D03F"/>
+                            <circle cx="100" cy="100" r="4" fill="#fff"/>
+                            
+                            <!-- Clean label -->
+                            <text x="100" y="190" text-anchor="middle" fill="#F4D03F" font-size="14" font-weight="bold">CLEAN</text>
+                        </svg>
+                    </div>
+                    <h4>Sacred Geometry Music</h4>
+                    <p>Simplified, elegant sacred geometry visualization for music exploration.</p>
+                    <ul class="app-features">
+                        <li>Clean minimal interface</li>
+                        <li>Essential geometric patterns</li>
+                        <li>Beginner-friendly design</li>
+                        <li>Quick music visualization</li>
+                    </ul>
+                    <div class="app-actions">
+                        <a href="apps/S-Geo-Music.html" class="btn-launch">Launch App</a>
+                    </div>
+                </div>
+                
+                <!-- App Card 15: Chromatic Wheel of Sound -->
+                <div class="app-card">
+                    <span class="app-badge badge-free">FREE</span>
+                    <div class="app-icon">
+                        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Outer wheel ring -->
+                            <circle cx="100" cy="100" r="85" fill="none" stroke="#008080" stroke-width="4" opacity="0.8"/>
+                            
+                            <!-- 12 chromatic segments -->
+                            <g transform="translate(100,100)">
+                                <circle r="5" cx="0" cy="-75" fill="#F4D03F" opacity="0.9"/>
+                                <circle r="5" cx="38" cy="-66" fill="#8B6BA3" opacity="0.9"/>
+                                <circle r="5" cx="66" cy="-38" fill="#CF7A5A" opacity="0.9"/>
+                                <circle r="5" cx="75" cy="0" fill="#F4D03F" opacity="0.9"/>
+                                <circle r="5" cx="66" cy="38" fill="#8B6BA3" opacity="0.9"/>
+                                <circle r="5" cx="38" cy="66" fill="#CF7A5A" opacity="0.9"/>
+                                <circle r="5" cx="0" cy="75" fill="#F4D03F" opacity="0.9"/>
+                                <circle r="5" cx="-38" cy="66" fill="#8B6BA3" opacity="0.9"/>
+                                <circle r="5" cx="-66" cy="38" fill="#CF7A5A" opacity="0.9"/>
+                                <circle r="5" cx="-75" cy="0" fill="#F4D03F" opacity="0.9"/>
+                                <circle r="5" cx="-66" cy="-38" fill="#8B6BA3" opacity="0.9"/>
+                                <circle r="5" cx="-38" cy="-66" fill="#CF7A5A" opacity="0.9"/>
+                            </g>
+                            
+                            <!-- Connecting lines -->
+                            <circle cx="100" cy="100" r="60" fill="none" stroke="#F4D03F" stroke-width="1" stroke-dasharray="3,3" opacity="0.4"/>
+                            <circle cx="100" cy="100" r="45" fill="none" stroke="#8B6BA3" stroke-width="1" stroke-dasharray="2,2" opacity="0.3"/>
+                            
+                            <!-- Center hub -->
+                            <circle cx="100" cy="100" r="25" fill="rgba(0, 128, 128, 0.3)" stroke="#008080" stroke-width="3"/>
+                            <circle cx="100" cy="100" r="10" fill="#F4D03F"/>
+                            
+                            <!-- Label -->
+                            <text x="100" y="195" text-anchor="middle" fill="#F4D03F" font-size="9" font-weight="bold">CHROMATIC WHEEL</text>
+                        </svg>
+                    </div>
+                    <h4>Chromatic Wheel of Sound™</h4>
+                    <p>See music in living color. Touch, hear, and understand note relationships through an interactive chromatic wheel.</p>
+                    <ul class="app-features">
+                        <li>Interactive 12-note chromatic circle</li>
+                        <li>Touch-responsive sound playback</li>
+                        <li>Visual frequency relationships</li>
+                        <li>Real-time interval exploration</li>
+                    </ul>
+                    <div class="app-actions">
+                        <a href="apps/chromatic-wheel-of-sound.html" class="btn-launch">Launch App</a>
+                    </div>
+                </div>
+
+                <!-- App Card 16: Simple Chord Builder Extended -->
+                <div class="app-card">
+                    <span class="app-badge badge-premium">PREMIUM</span>
+                    <div class="app-icon">
+                        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Piano-style chord blocks -->
+                            <rect x="30" y="140" width="30" height="50" fill="#008080" stroke="#F4D03F" stroke-width="2" rx="3"/>
+                            <rect x="70" y="110" width="30" height="80" fill="#8B6BA3" stroke="#F4D03F" stroke-width="2" rx="3"/>
+                            <rect x="110" y="85" width="30" height="105" fill="#CF7A5A" stroke="#F4D03F" stroke-width="2" rx="3"/>
+                            <rect x="150" y="60" width="30" height="130" fill="#F4D03F" stroke="#008080" stroke-width="2" rx="3"/>
+                            
+                            <!-- Connection lines showing chord progression -->
+                            <path d="M 45,140 L 85,110 L 125,85 L 165,60" 
+                                  fill="none" stroke="#F4D03F" stroke-width="2" stroke-dasharray="5,3" opacity="0.6"/>
+                            
+                            <!-- Musical note symbols -->
+                            <circle cx="45" cy="135" r="6" fill="#F4D03F" opacity="0.8"/>
+                            <circle cx="85" cy="105" r="6" fill="#F4D03F" opacity="0.8"/>
+                            <circle cx="125" cy="80" r="6" fill="#F4D03F" opacity="0.8"/>
+                            <circle cx="165" cy="55" r="6" fill="#008080" opacity="0.8"/>
+                            
+                            <!-- Base label -->
+                            <text x="100" y="25" text-anchor="middle" fill="#F4D03F" font-size="16" font-weight="bold">♪ ♫ ♪</text>
+                            <text x="100" y="195" text-anchor="middle" fill="#F4D03F" font-size="9" font-weight="bold">CHORD BUILDER</text>
+                        </svg>
+                    </div>
+                    <h4>Simple Chord Builder Extended</h4>
+                    <p>Build beautiful chords with smooth ascending note playback. Perfect for understanding chord construction.</p>
+                    <ul class="app-features">
+                        <li>Interactive chord construction</li>
+                        <li>Smooth ascending arpeggios</li>
+                        <li>Visual chord structure display</li>
+                        <li>Multiple chord quality options</li>
+                    </ul>
+                    <div class="app-actions">
+                        <a href="apps/chord-builder.html" class="btn-launch">Launch App</a>
+                    </div>
+                </div>
+
+                <!-- App Card 17: Cymatics Music Theory Visualizer -->
+                <div class="app-card">
+                    <span class="app-badge badge-premium">PREMIUM</span>
+                    <div class="app-icon">
+                        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Cymatics wave pattern background -->
+                            <defs>
+                                <radialGradient id="cymaticsGrad" cx="50%" cy="50%">
+                                    <stop offset="0%" style="stop-color:#F4D03F;stop-opacity:0.8" />
+                                    <stop offset="50%" style="stop-color:#8B6BA3;stop-opacity:0.5" />
+                                    <stop offset="100%" style="stop-color:#008080;stop-opacity:0.2" />
+                                </radialGradient>
+                            </defs>
+                            
+                            <!-- Cymatics resonance circles -->
+                            <circle cx="100" cy="100" r="80" fill="none" stroke="url(#cymaticsGrad)" stroke-width="2"/>
+                            <circle cx="100" cy="100" r="65" fill="none" stroke="#8B6BA3" stroke-width="1.5" opacity="0.6"/>
+                            <circle cx="100" cy="100" r="50" fill="none" stroke="#F4D03F" stroke-width="1.5" opacity="0.7"/>
+                            <circle cx="100" cy="100" r="35" fill="none" stroke="#CF7A5A" stroke-width="1" opacity="0.5"/>
+                            <circle cx="100" cy="100" r="20" fill="none" stroke="#008080" stroke-width="2" opacity="0.8"/>
+                            
+                            <!-- Vibration nodes -->
+                            <circle cx="100" cy="40" r="4" fill="#F4D03F"/>
+                            <circle cx="140" cy="70" r="4" fill="#8B6BA3"/>
+                            <circle cx="140" cy="130" r="4" fill="#CF7A5A"/>
+                            <circle cx="100" cy="160" r="4" fill="#F4D03F"/>
+                            <circle cx="60" cy="130" r="4" fill="#8B6BA3"/>
+                            <circle cx="60" cy="70" r="4" fill="#CF7A5A"/>
+                            
+                            <!-- Standing wave pattern -->
+                            <path d="M 30,100 Q 50,80 70,100 T 110,100 T 150,100 T 170,100" 
+                                  fill="none" stroke="#F4D03F" stroke-width="2" opacity="0.6"/>
+                            
+                            <!-- Center energy point -->
+                            <circle cx="100" cy="100" r="8" fill="rgba(244, 208, 63, 0.4)" stroke="#F4D03F" stroke-width="2"/>
+                            
+                            <!-- Label -->
+                            <text x="100" y="195" text-anchor="middle" fill="#F4D03F" font-size="9" font-weight="bold">CYMATICS THEORY</text>
+                        </svg>
+                    </div>
+                    <h4>Cymatics Music Theory Visualizer</h4>
+                    <p>Explore the physics of sound through stunning cymatics patterns synchronized with music theory concepts.</p>
+                    <ul class="app-features">
+                        <li>Real-time cymatics visualization</li>
+                        <li>Sound wave pattern display</li>
+                        <li>Frequency resonance mapping</li>
+                        <li>Interactive theory integration</li>
+                    </ul>
+                    <div class="app-actions">
+                        <a href="apps/kcm-cymatics-visualizer.html" class="btn-launch">Launch App</a>
+                    </div>
+                </div>
+                
+                <!-- Chromatic Mandala -->
+                <div class="app-card">
+                    <span class="app-badge badge-pro">PRO</span>
+                    <div class="app-icon">
+                        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Deep space background -->
+                            <circle cx="100" cy="100" r="98" fill="#000000"/>
+                            <circle cx="100" cy="100" r="95" fill="none" stroke="#F4D03F" stroke-width="4"/>
+                            
+                            <!-- Outer mandala ring with 12 chromatic sections -->
+                            <circle cx="100" cy="100" r="85" fill="none" stroke="#8B6BA3" stroke-width="2" stroke-dasharray="20,2"/>
+                            
+                            <!-- 12 chromatic note positions in mandala arrangement -->
+                            <!-- C - Yellow - 12 o'clock -->
+                            <circle cx="100" cy="20" r="8" fill="#FFFF00" stroke="#fff" stroke-width="2"/>
+                            <!-- C#/Db - 1 o'clock -->
+                            <circle cx="143" cy="31" r="7" fill="#FFD700" stroke="#ccc" stroke-width="1.5" opacity="0.9"/>
+                            <!-- D - Orange - 2 o'clock -->
+                            <circle cx="174" cy="62" r="8" fill="#FF8C00" stroke="#fff" stroke-width="2"/>
+                            <!-- D#/Eb - 3 o'clock -->
+                            <circle cx="185" cy="100" r="7" fill="#FF6347" stroke="#ccc" stroke-width="1.5" opacity="0.9"/>
+                            <!-- E - Red - 4 o'clock -->
+                            <circle cx="174" cy="138" r="8" fill="#FF0000" stroke="#fff" stroke-width="2"/>
+                            <!-- F - 5 o'clock -->
+                            <circle cx="143" cy="169" r="7" fill="#DC143C" stroke="#ccc" stroke-width="1.5" opacity="0.9"/>
+                            <!-- F#/Gb - 6 o'clock -->
+                            <circle cx="100" cy="180" r="7" fill="#C71585" stroke="#ccc" stroke-width="1.5" opacity="0.9"/>
+                            <!-- G - Purple - 7 o'clock -->
+                            <circle cx="57" cy="169" r="8" fill="#8B00FF" stroke="#fff" stroke-width="2"/>
+                            <!-- G#/Ab - 8 o'clock -->
+                            <circle cx="26" cy="138" r="7" fill="#6A0DAD" stroke="#ccc" stroke-width="1.5" opacity="0.9"/>
+                            <!-- A - Blue - 9 o'clock -->
+                            <circle cx="15" cy="100" r="8" fill="#0080FF" stroke="#fff" stroke-width="2"/>
+                            <!-- A#/Bb - 10 o'clock -->
+                            <circle cx="26" cy="62" r="7" fill="#00CED1" stroke="#ccc" stroke-width="1.5" opacity="0.9"/>
+                            <!-- B - 11 o'clock -->
+                            <circle cx="57" cy="31" r="7" fill="#00FF80" stroke="#ccc" stroke-width="1.5" opacity="0.9"/>
+                            
+                            <!-- Inner sacred geometry pattern -->
+                            <circle cx="100" cy="100" r="65" fill="none" stroke="#008080" stroke-width="2" stroke-dasharray="8,4" opacity="0.7"/>
+                            <circle cx="100" cy="100" r="50" fill="none" stroke="#CF7A5A" stroke-width="2" stroke-dasharray="5,3" opacity="0.6"/>
+                            
+                            <!-- Radiating mandala lines -->
+                            <line x1="100" y1="100" x2="100" y2="20" stroke="#F4D03F" stroke-width="1" opacity="0.3"/>
+                            <line x1="100" y1="100" x2="174" y2="62" stroke="#F4D03F" stroke-width="1" opacity="0.3"/>
+                            <line x1="100" y1="100" x2="174" y2="138" stroke="#F4D03F" stroke-width="1" opacity="0.3"/>
+                            <line x1="100" y1="100" x2="100" y2="180" stroke="#F4D03F" stroke-width="1" opacity="0.3"/>
+                            <line x1="100" y1="100" x2="26" y2="138" stroke="#F4D03F" stroke-width="1" opacity="0.3"/>
+                            <line x1="100" y1="100" x2="26" y2="62" stroke="#F4D03F" stroke-width="1" opacity="0.3"/>
+                            
+                            <!-- Center mandala core -->
+                            <circle cx="100" cy="100" r="30" fill="rgba(244, 208, 63, 0.2)" stroke="#F4D03F" stroke-width="2"/>
+                            <circle cx="100" cy="100" r="15" fill="rgba(0, 128, 128, 0.3)" stroke="#008080" stroke-width="2"/>
+                            <circle cx="100" cy="100" r="6" fill="#F4D03F"/>
+                            
+                            <!-- Mandala label -->
+                            <text x="100" y="195" text-anchor="middle" fill="#F4D03F" font-size="9" font-weight="bold">CHROMATIC MANDALA</text>
+                        </svg>
+                    </div>
+                    <h4>Chromatic Mandala</h4>
+                    <p>Sacred mandala visualization of the complete chromatic scale with geometric harmony.</p>
+                    <ul class="app-features">
+                        <li>12-note chromatic mandala</li>
+                        <li>Sacred geometric patterns</li>
+                        <li>Visual chromatic relationships</li>
+                        <li>Meditative music exploration</li>
+                    </ul>
+                    <div class="app-actions">
+                        <a href="apps/chromatic-mandala.html" class="btn-launch">Launch App</a>
+                    </div>
+                </div>
+
+                <!-- Chladni Plate Cymatics Visualizer -->
+                <div class="app-card">
+                    <span class="app-badge badge-premium">PREMIUM</span>
+                    <div class="app-icon">
+                        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Background -->
+                            <rect width="200" height="200" fill="#1a1a2e" rx="10"/>
+                            
+                            <!-- Circular plate background -->
+                            <circle cx="100" cy="100" r="85" fill="rgba(10, 10, 30, 0.8)" stroke="#008080" stroke-width="3"/>
+                            
+                            <!-- Cymatic pattern - concentric interference -->
+                            <circle cx="100" cy="100" r="70" fill="none" stroke="#F4D03F" stroke-width="1.5" opacity="0.6"/>
+                            <circle cx="100" cy="100" r="50" fill="none" stroke="#F4D03F" stroke-width="1.5" opacity="0.7"/>
+                            <circle cx="100" cy="100" r="30" fill="none" stroke="#F4D03F" stroke-width="2" opacity="0.8"/>
+                            
+                            <!-- Nodal lines (standing wave patterns) -->
+                            <line x1="30" y1="100" x2="170" y2="100" stroke="#00D9FF" stroke-width="2" opacity="0.5"/>
+                            <line x1="100" y1="30" x2="100" y2="170" stroke="#00D9FF" stroke-width="2" opacity="0.5"/>
+                            <line x1="45" y1="45" x2="155" y2="155" stroke="#00D9FF" stroke-width="1.5" opacity="0.4"/>
+                            <line x1="155" y1="45" x2="45" y2="155" stroke="#00D9FF" stroke-width="1.5" opacity="0.4"/>
+                            
+                            <!-- Animated particles forming patterns -->
+                            <circle cx="100" cy="60" r="3" fill="#F4D03F">
+                                <animate attributeName="opacity" values="0.3;1;0.3" dur="2s" repeatCount="indefinite"/>
+                            </circle>
+                            <circle cx="60" cy="100" r="3" fill="#F4D03F">
+                                <animate attributeName="opacity" values="1;0.3;1" dur="2s" repeatCount="indefinite"/>
+                            </circle>
+                            <circle cx="140" cy="100" r="3" fill="#F4D03F">
+                                <animate attributeName="opacity" values="0.5;1;0.5" dur="2s" repeatCount="indefinite"/>
+                            </circle>
+                            <circle cx="100" cy="140" r="3" fill="#F4D03F">
+                                <animate attributeName="opacity" values="1;0.3;1" dur="2s" repeatCount="indefinite"/>
+                            </circle>
+                            
+                            <!-- Particle clusters at nodes -->
+                            <g opacity="0.8">
+                                <circle cx="75" cy="75" r="2" fill="#8B6BA3"/>
+                                <circle cx="78" cy="73" r="2" fill="#8B6BA3"/>
+                                <circle cx="72" cy="77" r="2" fill="#8B6BA3"/>
+                            </g>
+                            <g opacity="0.8">
+                                <circle cx="125" cy="75" r="2" fill="#8B6BA3"/>
+                                <circle cx="128" cy="73" r="2" fill="#8B6BA3"/>
+                                <circle cx="122" cy="77" r="2" fill="#8B6BA3"/>
+                            </g>
+                            <g opacity="0.8">
+                                <circle cx="75" cy="125" r="2" fill="#8B6BA3"/>
+                                <circle cx="78" cy="123" r="2" fill="#8B6BA3"/>
+                                <circle cx="72" cy="127" r="2" fill="#8B6BA3"/>
+                            </g>
+                            <g opacity="0.8">
+                                <circle cx="125" cy="125" r="2" fill="#8B6BA3"/>
+                                <circle cx="128" cy="123" r="2" fill="#8B6BA3"/>
+                                <circle cx="122" cy="127" r="2" fill="#8B6BA3"/>
+                            </g>
+                            
+                            <!-- Center resonance point -->
+                            <circle cx="100" cy="100" r="8" fill="rgba(244, 208, 63, 0.3)" stroke="#F4D03F" stroke-width="2">
+                                <animate attributeName="r" values="8;12;8" dur="1.5s" repeatCount="indefinite"/>
+                                <animate attributeName="opacity" values="0.8;0.3;0.8" dur="1.5s" repeatCount="indefinite"/>
+                            </circle>
+                            
+                            <!-- Frequency display -->
+                            <text x="100" y="22" font-family="Arial" font-size="14" font-weight="bold" fill="#00D9FF" text-anchor="middle">440 Hz</text>
+                            
+                            <!-- MIDI indicator -->
+                            <rect x="160" y="12" width="30" height="15" fill="rgba(139, 107, 163, 0.3)" stroke="#8B6BA3" stroke-width="1" rx="3"/>
+                            <text x="175" y="22" font-family="Arial" font-size="8" font-weight="bold" fill="#8B6BA3" text-anchor="middle">MIDI</text>
+                        </svg>
+                    </div>
+                    <h4>Chladni Plate Cymatics Visualizer</h4>
+                    <p>Watch sound create art with 10,000+ particles forming stunning geometric patterns through physics simulation.</p>
+                    <ul class="app-features">
+                        <li>Real-time cymatics visualization</li>
+                        <li>MIDI keyboard support</li>
+                        <li>Extended chord library</li>
+                        <li>Interactive 3D particle physics</li>
+                    </ul>
+                    <div class="app-actions">
+                        <a href="apps/chladni-visualizer.html" class="btn-launch">Launch App</a>
+                    </div>
+                </div>
+
+                <!-- Real-Time Pitch Detector -->
+                <div class="app-card">
+                    <span class="app-badge badge-free">FREE</span>
+                    <div class="app-icon">
+                        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Background -->
+                            <rect width="200" height="200" fill="#1a3d5f" rx="10"/>
+                            
+                            <!-- Microphone Body -->
+                            <ellipse cx="100" cy="80" rx="25" ry="35" fill="#4A7BA7" stroke="#F4D03F" stroke-width="3"/>
+                            <rect x="75" y="80" width="50" height="15" fill="#4A7BA7"/>
+                            <line x1="85" y1="70" x2="115" y2="70" stroke="#008080" stroke-width="2.5" opacity="0.7"/>
+                            <line x1="85" y1="80" x2="115" y2="80" stroke="#008080" stroke-width="2.5" opacity="0.7"/>
+                            
+                            <!-- Microphone Stand -->
+                            <rect x="95" y="95" width="10" height="45" fill="#2a4d6f" rx="2"/>
+                            <ellipse cx="100" cy="140" rx="20" ry="5" fill="#2a4d6f"/>
+                            
+                            <!-- Sound Waves (Left) with Chromatic Colors -->
+                            <path d="M 60 60 Q 50 70, 60 80" fill="none" stroke="#FFFF00" stroke-width="3" opacity="0.8"/>
+                            <path d="M 50 50 Q 35 70, 50 90" fill="none" stroke="#FF8000" stroke-width="3" opacity="0.7"/>
+                            <path d="M 40 40 Q 20 70, 40 100" fill="none" stroke="#FF0000" stroke-width="3" opacity="0.6"/>
+                            
+                            <!-- Sound Waves (Right) with Chromatic Colors -->
+                            <path d="M 140 60 Q 150 70, 140 80" fill="none" stroke="#0000FF" stroke-width="3" opacity="0.8"/>
+                            <path d="M 150 50 Q 165 70, 150 90" fill="none" stroke="#007FFF" stroke-width="3" opacity="0.7"/>
+                            <path d="M 160 40 Q 180 70, 160 100" fill="none" stroke="#00FF80" stroke-width="3" opacity="0.6"/>
+                            
+                            <!-- Chromatic Circle Visualization -->
+                            <circle cx="100" cy="160" r="8" fill="#FFFF00" stroke="#fff" stroke-width="1.5"/>
+                            <circle cx="115" cy="165" r="8" fill="#FF8000" stroke="#fff" stroke-width="1.5"/>
+                            <circle cx="125" cy="175" r="8" fill="#FF0000" stroke="#fff" stroke-width="1.5"/>
+                            <circle cx="85" cy="165" r="8" fill="#0000FF" stroke="#fff" stroke-width="1.5"/>
+                            <circle cx="75" cy="175" r="8" fill="#00FF80" stroke="#fff" stroke-width="1.5"/>
+                            
+                            <!-- Staff Lines -->
+                            <line x1="30" y1="120" x2="70" y2="120" stroke="#F4D03F" stroke-width="1.5" opacity="0.6"/>
+                            <line x1="30" y1="125" x2="70" y2="125" stroke="#F4D03F" stroke-width="1.5" opacity="0.6"/>
+                            <line x1="30" y1="130" x2="70" y2="130" stroke="#F4D03F" stroke-width="1.5" opacity="0.6"/>
+                            <line x1="30" y1="135" x2="70" y2="135" stroke="#F4D03F" stroke-width="1.5" opacity="0.6"/>
+                            <line x1="30" y1="140" x2="70" y2="140" stroke="#F4D03F" stroke-width="1.5" opacity="0.6"/>
+                            
+                            <!-- Treble Clef Symbol -->
+                            <text x="35" y="138" font-family="serif" font-size="24" fill="#F4D03F" font-weight="bold">𝄞</text>
+                            
+                            <!-- Note on staff -->
+                            <ellipse cx="55" cy="125" rx="5" ry="4" fill="#FF0000" stroke="#fff" stroke-width="1"/>
+                            <line x1="60" y1="125" x2="60" y2="105" stroke="#fff" stroke-width="2"/>
+                            
+                            <!-- "LIVE" indicator -->
+                            <circle cx="175" cy="25" r="8" fill="#FF0000"/>
+                            <text x="175" y="45" font-family="Arial" font-size="10" font-weight="bold" fill="#FF0000" text-anchor="middle">LIVE</text>
+                        </svg>
+                    </div>
+                    <h4>Real-Time Pitch Detector</h4>
+                    <p>Professional pitch detection with synchronized 4-view chromatic visualization.</p>
+                    <ul class="app-features">
+                        <li>Live microphone pitch detection</li>
+                        <li>Chromatic circle, piano, guitar, staff views</li>
+                        <li>Recording capability</li>
+                        <li>Manual note exploration</li>
+                    </ul>
+                    <div class="app-actions">
+                        <a href="apps/pitch-detector.html" class="btn-launch">Launch App</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <!-- Footer -->
+    <footer role="contentinfo">
+        <div class="footer-content">
+            <svg width="35" height="35" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 2px 8px rgba(244, 208, 63, 0.3)); margin: 0 auto 1.5rem; display: block; opacity: 0.7;">
+                <circle cx="100" cy="100" r="98" fill="#4A7BA7" stroke="#008080" stroke-width="2"/>
+                <polygon points="100,15 185,185 15,185" fill="#F4D03F" opacity="0.9"/>
+                <polygon points="100,15 15,185 15,55" fill="#8B6BA3" opacity="0.75"/>
+                <polygon points="100,15 185,55 185,185" fill="#6FA5A5" opacity="0.75"/>
+                <polygon points="15,55 100,100 15,185" fill="#CF7A5A" opacity="0.65"/>
+                <polygon points="185,55 100,100 185,185" fill="#9AAF7A" opacity="0.65"/>
+                <polygon points="100,55 145,100 100,145 55,100" fill="#E8D77F" opacity="0.6"/>
+                <circle cx="100" cy="100" r="50" fill="none" stroke="#008080" stroke-width="3"/>
+                <circle cx="100" cy="100" r="7" fill="#F4D03F"/>
+                <line x1="40" y1="40" x2="160" y2="160" stroke="#008080" stroke-width="2" opacity="0.3"/>
+                <line x1="160" y1="40" x2="40" y2="160" stroke="#008080" stroke-width="2" opacity="0.3"/>
+            </svg>
+            
+            <div class="footer-brand">
+                <h3>KEYS, CODES & MODES</h3>
+            </div>
+            
+            <nav class="footer-links" aria-label="Footer navigation">
+                <a href="index.html">Home</a>
+                <a href="insights.html">Applications</a>
+                <a href="pricing.html">Pricing</a>
+            </nav>
+            
+            <nav class="social-links" aria-label="Social media links">
+                <a href="https://www.facebook.com/KeysCodesModes" target="_blank" rel="noopener noreferrer" aria-label="Follow us on Facebook">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                    </svg>
+                </a>
+                <a href="https://www.tiktok.com/@keyscodesandmodes" target="_blank" rel="noopener noreferrer" aria-label="Follow us on TikTok">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                    </svg>
+                </a>
+                <a href="https://www.instagram.com/keyscodesandmodes" target="_blank" rel="noopener noreferrer" aria-label="Follow us on Instagram">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                    </svg>
+                </a>
+                <a href="https://www.linkedin.com/in/ben-ryan-guitar-freestyle/" target="_blank" rel="noopener noreferrer" aria-label="Connect on LinkedIn">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                        <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                    </svg>
+                </a>
+            </div>
+            
+            <div class="copyright">
+                <p>&copy; 2026 Keys, Codes & Modes. Created by <strong>Benjamin Ryan</strong>. All rights reserved.</p>
+                <p style="margin-top: 0.5rem; font-size: 0.9rem;">Based on the book "Keys, Codes, and Modes: A Visual Approach to Understanding Music"</p>
+                <p style="margin-top: 0.5rem; font-size: 0.9rem; color: #666;">Santa Barbara, California</p>
+            </div>
+        </div>
+    </footer>
+    
+    <script>
+        // Email form submission handler
+        function handleEmailSubmit(event) {
+            event.preventDefault();
+            const email = event.target.querySelector('input[type="email"]').value;
+            
+            // Here you would integrate with your email service (Mailchimp, ConvertKit, etc.)
+            console.log('Email submitted:', email);
+            
+            // Show success message
+            alert('🎉 Success! Check your email to get started with your free trial.');
+            
+            // Reset form
+            event.target.reset();
+            
+            // Optional: Redirect to first free app
+            // window.location.href = 'guitar-fretboard-explorer-pro.html';
+        }
+        
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+        
+        // Analytics tracking (placeholder - add your Google Analytics ID)
+            </script>
+</body>
+</html>
