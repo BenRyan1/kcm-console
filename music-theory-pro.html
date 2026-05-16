@@ -5240,7 +5240,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
 
         // Timing tuned for guitar
         const _SING_HOLD_GAP    = 250;  // ms silence before committing held note
-        const _SING_MIN_DUR     = 140;  // ms minimum — kills pick noise & buzz
+        const _SING_MIN_DUR     = 100;  // ms minimum — balance noise vs responsiveness
         const _SING_COOLDOWN    = 40;   // ms between detections (RAF ≈ 16ms, skip if too fast)
 
         // Note event list: {pc, oct, midiNote, freq, startTs, endTs, durMs}
@@ -5261,12 +5261,12 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         // Uses FFT spectral peaks + chroma smoothing — same as Sound Observatory v29
         // Much more accurate than autocorrelation for guitar (handles harmonics correctly)
         const _SING_FFT           = 4096;
-        const _SING_SILENCE_GATE  = 0.008;  // RMS below this = silence
-        const _SING_PEAK_HEADROOM = 18;     // dB above noise floor to count as a peak
-        const _SING_SMOOTH_DECAY  = 0.70;   // temporal smoothing
-        const _SING_SMOOTH_RISE   = 0.30;
-        const _SING_STRENGTH_MIN  = 0.10;   // min smoothed strength to count
-        const _SING_LOCK_FRAMES   = 4;      // frames dominant must persist before commit
+        const _SING_SILENCE_GATE  = 0.004;  // RMS gate — lowered for acoustic guitar
+        const _SING_PEAK_HEADROOM = 10;     // dB above noise floor — more sensitive
+        const _SING_SMOOTH_DECAY  = 0.60;   // faster decay for snappier response
+        const _SING_SMOOTH_RISE   = 0.40;
+        const _SING_STRENGTH_MIN  = 0.05;   // lower threshold = catches quieter notes
+        const _SING_LOCK_FRAMES   = 3;      // 3 frames ≈ 50ms — snappier lock-on
         let   _singLockNote  = null;
         let   _singLockCount = 0;
 
@@ -5559,7 +5559,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                             const midi = Math.round(_singFreqToMidi(freq));
                             const ni   = ((midi % 12) + 12) % 12;
                             const str  = Math.max(0, (db - peakThresh) / 40);
-                            const fw   = freq < 400 ? 1.5 : freq < 700 ? 1.1 : 0.8; // prefer fundamentals
+                            const fw   = freq < 200 ? 2.5 : freq < 350 ? 2.0 : freq < 500 ? 1.4 : freq < 800 ? 0.9 : 0.5; // strongly prefer guitar fundamentals
                             if (str * fw > nE[ni]) { nE[ni] = str * fw; nFq[ni] = freq; }
                         }
                     }
@@ -5590,7 +5590,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                         const midi = Math.round(_singFreqToMidi(domFreq));
                         const pc   = ((midi % 12) + 12) % 12;
                         let   oct  = Math.floor(midi / 12) - 1;
-                        if (oct < 2) oct = 2;
+                        if (oct < 3) oct = 3;  // guitar minimum: E2=oct2 but FFT usually reads 1 low → clamp to 3
                         if (oct > 6) oct = 6;
                         const corrMidi = (oct + 1) * 12 + pc;
                         const cents = Math.round((_singFreqToMidi(domFreq) - midi) * 100);
