@@ -5260,7 +5260,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         function _autocorrelate(buf, sampleRate) {
             let sum = 0;
             for (let i = 0; i < buf.length; i++) sum += buf[i] * buf[i];
-            if (Math.sqrt(sum / buf.length) < 0.025) return -1; // silence threshold
+            if (Math.sqrt(sum / buf.length) < 0.008) return -1; // silence threshold
 
             let r1 = 0, r2 = buf.length - 1;
             for (let i = 0; i < buf.length / 2; i++) { if (Math.abs(buf[i]) < 0.2) { r1 = i; break; } }
