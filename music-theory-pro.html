@@ -5244,8 +5244,8 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         let _singHeldTimer = null;
 
         const _SING_COOLDOWN    = 60;   // ms between pitch detections
-        const _SING_HOLD_GAP    = 250;  // ms of silence before we end a held note
-        const _SING_MIN_DUR     = 140;   // ms minimum note duration to record
+        const _SING_HOLD_GAP    = 250;  // ms of silence before we end a held note (raised for guitar)
+        const _SING_MIN_DUR     = 140;  // ms minimum note duration — eliminates pick noise & buzz
 
         // KCM colors for piano roll
         const _SING_COLORS = ['#FFFF00','#FFC400','#FF8000','#FF4000','#FF0000','#C4007F','#8000FF','#4000FF','#0000FF','#007FFF','#00FF80','#80FF00'];
@@ -5260,7 +5260,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         function _autocorrelate(buf, sampleRate) {
             let sum = 0;
             for (let i = 0; i < buf.length; i++) sum += buf[i] * buf[i];
-            if (Math.sqrt(sum / buf.length) < 0.008) return -1; // silence threshold
+            if (Math.sqrt(sum / buf.length) < 0.008) return -1; // silence threshold — guitar-tuned
 
             let r1 = 0, r2 = buf.length - 1;
             for (let i = 0; i < buf.length / 2; i++) { if (Math.abs(buf[i]) < 0.2) { r1 = i; break; } }
@@ -5284,9 +5284,17 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
             const noteNum  = 12 * Math.log2(freq / 440);
             const midiNote = Math.round(noteNum) + 69;
             const pc  = ((midiNote % 12) + 12) % 12;
-            const oct = Math.floor(midiNote / 12) - 1;
+            let   oct = Math.floor(midiNote / 12) - 1;
+            // Guitar fundamental range: E2 (82Hz) to E6 (1319Hz) = octaves 2-6
+            // Autocorrelation often locks on 2nd harmonic → detected oct is 1 too low.
+            // Correct: if detected freq < 180Hz and oct < 3, shift up one octave.
+            // This catches the common case of E2/A2/D2 being read as 1 octave low.
+            if (freq < 180 && oct < 3) { oct += 1; }
+            // Also clamp: nothing below oct 2 makes sense for guitar/voice
+            if (oct < 2) oct = 2;
+            const correctedMidi = (oct + 1) * 12 + pc;
             const cents = Math.round((noteNum - Math.round(noteNum)) * 100);
-            return { pc, oct, midiNote, cents };
+            return { pc, oct, midiNote: correctedMidi, cents };
         }
 
         // ── Commit a held note to the events list ──
@@ -5446,28 +5454,6 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 singStatus.textContent = `🎵 ${_SING_NOTE_NAMES[pc]}${oct}  ·  ${freq.toFixed(1)} Hz`;
                 singStatus.style.color = color;
             }
-
-            // ── Broadcast to Console shell + all sibling panels ──────────────
-            // Sends KCM_STATE so Circle of Fifths, Modal, Chromatic Universe
-            // all react to the live detected note in real time.
-            try {
-                const _SING_NOTE_SHARP = ['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
-                const _SING_COLORS_MAP = ['#FFE800','#FFC400','#FF8000','#FF4400','#FF0000','#CC0077','#8800FF','#4400FF','#0000FF','#0088FF','#00FF88','#88FF00'];
-                const singPayload = {
-                    root:       _SING_NOTE_SHARP[pc],
-                    rootIndex:  pc,
-                    color:      _SING_COLORS_MAP[pc],
-                    hz:         freq,
-                    activeNotes:[pc],
-                    source:     'music-theory-pro-sing',
-                    micActive:  true,
-                };
-                const singMsg = { type: 'KCM_STATE', payload: singPayload };
-                // Up to Console shell
-                try { window.parent.postMessage(singMsg, '*'); } catch(_) {}
-                // KCM.bus if running standalone
-                try { if (window.KCM?.bus?.set) window.KCM.bus.set(singPayload); } catch(_) {}
-            } catch(_) {}
         }
 
         function _singClearDisplays() {
@@ -5497,24 +5483,12 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 const btn    = document.getElementById('singStartBtn');
                 const status = document.getElementById('singStatus');
 
-                // Auto-init main audio engine — playback works without START AUDIO ENGINE
-                if (!audioReady) {
-                    try {
-                        audioContext = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: 'interactive' });
-                        await audioContext.resume();
-                        audioReady = true;
-                    } catch(e) { console.warn('[SING] main audioContext init failed:', e); }
-                } else if (audioContext && audioContext.state === 'suspended') {
-                    await audioContext.resume();
-                }
-
                 const micCtx = new (window.AudioContext || window.webkitAudioContext)();
                 _singAudioCtx = micCtx;
 
                 if (status) { status.textContent = '🎤 Requesting microphone…'; status.style.color = '#F4D03F'; }
 
                 _singStream = await navigator.mediaDevices.getUserMedia({
-                    // Observatory-grade: raw instrument signal — NO voice processing
                     audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 1 },
                     video: false
                 });
@@ -5523,7 +5497,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
 
                 _singAnalyser = micCtx.createAnalyser();
                 _singAnalyser.fftSize = 4096;
-                _singAnalyser.smoothingTimeConstant = 0.65;  // Observatory-tuned
+                _singAnalyser.smoothingTimeConstant = 0.65;  // Observatory-tuned for instruments
 
                 const src  = micCtx.createMediaStreamSource(_singStream);
                 _singProcessor = micCtx.createScriptProcessor(2048, 1, 1);
@@ -5676,16 +5650,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         // ── Playback captured events through the KCM synth ──
         function singPlayback() {
             if (_singEvents.length === 0) return;
-            // Auto-resume audioContext if suspended — don't block playback
-            if (audioContext && audioContext.state === 'suspended') audioContext.resume();
-            if (!audioReady || !audioContext) {
-                // Try to init inline rather than just alerting
-                try {
-                    audioContext = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: 'interactive' });
-                    audioContext.resume();
-                    audioReady = true;
-                } catch(e) { alert('Click START AUDIO ENGINE first, then try playback.'); return; }
-            }
+            if (!audioReady) { alert('Click START AUDIO ENGINE first!'); return; }
             const t0 = _singEvents[0].startTs;
             _singEvents.forEach(e => {
                 const delayMs = e.startTs - t0;
