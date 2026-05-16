@@ -5284,7 +5284,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
             const noteNum  = 12 * Math.log2(freq / 440);
             const midiNote = Math.round(noteNum) + 69;
             const pc  = ((midiNote % 12) + 12) % 12;
-            let oct = Math.floor(midiNote / 12) - 1;
+            let oct = Math.floor(midiNote / 12) - 1; if (oct < 3) oct = 3;
             if (oct < 3) oct = 3;
             const cents = Math.round((noteNum - Math.round(noteNum)) * 100);
             return { pc, oct, midiNote, cents };
