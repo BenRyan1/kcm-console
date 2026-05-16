@@ -5446,28 +5446,6 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 singStatus.textContent = `🎵 ${_SING_NOTE_NAMES[pc]}${oct}  ·  ${freq.toFixed(1)} Hz`;
                 singStatus.style.color = color;
             }
-
-            // ── Broadcast to Console shell + all sibling panels ──────────────
-            // Sends KCM_STATE so Circle of Fifths, Modal, Chromatic Universe
-            // all react to the live detected note in real time.
-            try {
-                const _SING_NOTE_SHARP = ['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
-                const _SING_COLORS_MAP = ['#FFE800','#FFC400','#FF8000','#FF4400','#FF0000','#CC0077','#8800FF','#4400FF','#0000FF','#0088FF','#00FF88','#88FF00'];
-                const singPayload = {
-                    root:       _SING_NOTE_SHARP[pc],
-                    rootIndex:  pc,
-                    color:      _SING_COLORS_MAP[pc],
-                    hz:         freq,
-                    activeNotes:[pc],
-                    source:     'music-theory-pro-sing',
-                    micActive:  true,
-                };
-                const singMsg = { type: 'KCM_STATE', payload: singPayload };
-                // Up to Console shell
-                try { window.parent.postMessage(singMsg, '*'); } catch(_) {}
-                // KCM.bus if running standalone
-                try { if (window.KCM?.bus?.set) window.KCM.bus.set(singPayload); } catch(_) {}
-            } catch(_) {}
         }
 
         function _singClearDisplays() {
@@ -5503,8 +5481,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 if (status) { status.textContent = '🎤 Requesting microphone…'; status.style.color = '#F4D03F'; }
 
                 _singStream = await navigator.mediaDevices.getUserMedia({
-                    // Observatory-grade: raw instrument signal — NO voice processing
-                    audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 1 },
+                    audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: false },
                     video: false
                 });
 
@@ -5512,7 +5489,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
 
                 _singAnalyser = micCtx.createAnalyser();
                 _singAnalyser.fftSize = 4096;
-                _singAnalyser.smoothingTimeConstant = 0.65;  // Observatory-tuned
+                _singAnalyser.smoothingTimeConstant = 0.3;
 
                 const src  = micCtx.createMediaStreamSource(_singStream);
                 _singProcessor = micCtx.createScriptProcessor(2048, 1, 1);

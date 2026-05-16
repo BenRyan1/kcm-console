@@ -19,17 +19,17 @@
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
   <link rel="apple-touch-icon" href="assets/favicon.svg" />
 
-  <!-- ── Open Graph ── -->
-  <meta property="og:type"         content="website" />
-  <meta property="og:site_name"    content="Keys, Codes &amp; Modes™" />
-  <meta property="og:title"        content="KCM Console — Visual Music Theory" />
-  <meta property="og:description"  content="A browser-based visual music theory environment. Synchronized panels driven by the 12-Color Chromatic Spectrum™. Save sessions as .gcis files." />
-  <meta property="og:url"          content="https://console.keyscodesandmodes.com/" />
-  <meta property="og:image"        content="https://console.keyscodesandmodes.com/assets/og-console.png" />
+  <!-- ── Open Graph (Facebook / LinkedIn / iMessage) ── -->
+  <meta property="og:type"        content="website" />
+  <meta property="og:site_name"   content="Keys, Codes &amp; Modes™" />
+  <meta property="og:title"       content="KCM Console — Visual Music Theory" />
+  <meta property="og:description" content="A browser-based visual music theory environment. Synchronized panels driven by the 12-Color Chromatic Spectrum™. Save sessions as .gcis files." />
+  <meta property="og:url"         content="https://console.keyscodesandmodes.com/" />
+  <meta property="og:image"       content="https://console.keyscodesandmodes.com/assets/og-console.png" />
   <meta property="og:image:width"  content="1200" />
   <meta property="og:image:height" content="630" />
-  <meta property="og:image:alt"    content="KCM Console — 12-Color Chromatic Spectrum™ music theory panels" />
-  <meta property="og:locale"       content="en_US" />
+  <meta property="og:image:alt"   content="KCM Console — 12-Color Chromatic Spectrum™ music theory panels" />
+  <meta property="og:locale"      content="en_US" />
 
   <!-- ── Twitter / X Card ── -->
   <meta name="twitter:card"        content="summary_large_image" />
@@ -85,8 +85,7 @@
       "KCM Chromatic Universe panel",
       "Four-panel synchronized harmonic state bus",
       ".gcis session save and load",
-      "SUNO AI prompt generator",
-      "Live mic pitch detection — chord, scale, arpeggio recognition"
+      "SUNO AI prompt generator"
     ]
   }
   </script>
@@ -102,10 +101,6 @@
   <link rel="stylesheet" href="css/responsive.css" />
 </head>
 <body>
-
-  <!-- ═══════════════════════════════════════════════════════════════════════ -->
-  <!-- HEADER                                                                  -->
-  <!-- ═══════════════════════════════════════════════════════════════════════ -->
   <header class="kcm-header" role="banner">
     <div class="kcm-header__inner">
       <div class="kcm-header__brand">
@@ -116,6 +111,7 @@
         </div>
       </div>
       <nav class="kcm-header__nav" aria-label="Primary">
+        <!-- Session title — editable inline -->
         <input
           type="text"
           id="kcm-session-title"
@@ -125,6 +121,7 @@
           aria-label="Session title"
           spellcheck="false"
         />
+        <!-- Save / Load -->
         <button class="kcm-gcis-btn kcm-gcis-btn--save" id="kcm-save" aria-label="Save session as .gcis file">
           ⬇ Save .gcis
         </button>
@@ -138,42 +135,32 @@
     </div>
   </header>
 
-  <!-- ═══════════════════════════════════════════════════════════════════════ -->
-  <!-- MAIN                                                                    -->
-  <!-- ═══════════════════════════════════════════════════════════════════════ -->
   <main class="kcm-main" id="main">
-
-    <!-- Panel 1: Music Theory Pro — above hero for immediate access -->
-    <div class="kcm-panel" id="panel-mtp">
-      <div class="kcm-panel__header">
-        <span class="kcm-panel__accent"></span>
-        <h3 class="kcm-panel__title">Music Theory Pro</h3>
-        <div class="kcm-panel__controls">
-          <button class="kcm-panel__btn" data-panel-action="minimize" aria-label="Minimize panel">−</button>
+    <!-- Panel 1: Music Theory Pro -->
+      <div class="kcm-panel" id="panel-mtp">
+        <div class="kcm-panel__header">
+          <span class="kcm-panel__accent"></span>
+          <h3 class="kcm-panel__title">Music Theory Pro</h3>
+          <div class="kcm-panel__controls">
+            <button class="kcm-panel__btn" data-panel-action="minimize" aria-label="Minimize panel">−</button>
+          </div>
+        </div>
+        <div class="kcm-panel__body">
+          <iframe
+            id="iframe-mtp"
+            class="kcm-panel__iframe"
+            src="music-theory-pro.html"
+            title="Music Theory Pro"
+            allow="autoplay; midi"
+            loading="lazy"
+          ></iframe>
         </div>
       </div>
-      <div class="kcm-panel__body">
-        <iframe
-          id="iframe-mtp"
-          class="kcm-panel__iframe"
-          src="music-theory-pro.html"
-          title="Music Theory Pro"
-          allow="autoplay; midi; microphone"
-          loading="lazy"
-        ></iframe>
-      </div>
-    </div>
 
-    <!-- ═══════════════════════════════════════════════════════════════════ -->
-    <!-- 🎙 KCM MIC ENGINE BAR                                              -->
-    <!-- Observatory-grade pitch detection → chord + scale + arpeggio      -->
-    <!-- Broadcasts KCM_STATE live to ALL panels simultaneously             -->
-    <!-- ═══════════════════════════════════════════════════════════════════ -->
-    <div id="kcm-mic-bar"></div>
-
-    <!-- ── Hero ─────────────────────────────────────────────────────────── -->
+      
     <section class="kcm-hero" aria-labelledby="hero-heading">
       <div class="kcm-hero__chromatic" aria-hidden="true">
+        <!-- 12-Color Chromatic Spectrum™. C wedge CENTERED at 12 o'clock. -->
         <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg" class="kcm-chromatic-clock">
           <g id="chromatic-wedges"></g>
           <circle cx="200" cy="200" r="60" fill="var(--bg-deep)" stroke="var(--primary-teal)" stroke-width="2" />
@@ -181,6 +168,7 @@
           <text x="200" y="215" text-anchor="middle" dominant-baseline="central" fill="var(--text-secondary)" font-family="Montserrat, sans-serif" font-size="10" letter-spacing="2">CONSOLE</text>
         </svg>
       </div>
+
       <div class="kcm-hero__text">
         <h2 id="hero-heading" class="kcm-hero__heading">KCM Console</h2>
         <p class="kcm-hero__lede">
@@ -190,8 +178,8 @@
           Change the root in one panel — every other panel follows in real time.
         </p>
         <div class="kcm-hero__meta">
-          <span class="kcm-hero__badge">v1.1 · Live</span>
-          <span class="kcm-hero__version" id="build-version">Build v1.1 · 4 Panels · Mic Engine · 2026</span>
+          <span class="kcm-hero__badge">v1.0 · Live</span>
+          <span class="kcm-hero__version" id="build-version">Build v1.0 · 4 Panels · 2026-05-01</span>
         </div>
       </div>
     </section>
@@ -264,19 +252,21 @@
 
     </section>
 
-    <!-- ── What ships ─────────────────────────────────────────────────── -->
     <section class="kcm-status" aria-label="Build status">
-      <h3 class="kcm-status__title">What ships in v1.1</h3>
+      <h3 class="kcm-status__title">What ships in v1</h3>
       <ul class="kcm-status__list">
         <li><strong>Four synchronized panels.</strong> Music Theory Pro, Circle of Fifths, Modal Stencil Player, and Chromatic Universe — all driven by a single shared harmonic state.</li>
-        <li><strong>Live mic engine.</strong> Sing or play any instrument — pitch detection lights up the chromatic clock, names the chord, identifies the scale, and tracks arpeggios. All panels follow in real time.</li>
         <li><strong>Cross-panel synchronization.</strong> Root, mode, scale, and active notes shared in real time. Change anything anywhere — everything follows.</li>
         <li><strong>.gcis file format.</strong> Save your harmonic state. Load it back later. Portable between sessions.</li>
         <li><strong>Suno Prompt Generator.</strong> Every root + mode change instantly builds a Suno-ready prompt. One click to copy — paste into suno.com and generate.</li>
       </ul>
     </section>
 
-    <!-- ── Bridge test harness (dev only — ?bridge-test=1) ───────────── -->
+    <!--
+      BRIDGE TEST HARNESS — Session 3
+      Visible only when URL has ?bridge-test=1 (body.bridge-test-mode set by bridge.js).
+      Has no user-facing function — keep gated or remove before launch.
+    -->
     <section class="kcm-bridge-test" aria-label="Bridge test harness" id="bridge-test-panel">
       <div class="kcm-bridge-test__header">
         <h3>Bridge Test — postMessage Harness</h3>
@@ -311,9 +301,6 @@
 
   </main>
 
-  <!-- ═══════════════════════════════════════════════════════════════════════ -->
-  <!-- FOOTER                                                                  -->
-  <!-- ═══════════════════════════════════════════════════════════════════════ -->
   <footer class="kcm-footer" role="contentinfo">
     <div class="kcm-footer__inner">
       <p class="kcm-footer__copy">
@@ -325,20 +312,9 @@
     </div>
   </footer>
 
-  <!-- ═══════════════════════════════════════════════════════════════════════ -->
-  <!-- SCRIPTS                                                                 -->
-  <!-- Load order matters:                                                     -->
-  <!--   1. console.js  — KCM.bus reactive state                              -->
-  <!--   2. bridge.js   — iframe postMessage adapter                           -->
-  <!--   3. gcis.js     — save/load .gcis sessions                            -->
-  <!--   4. suno-panel  — Suno prompt generator                               -->
-  <!--   5. kcm-mic-engine — mic → pitch → chord/scale/arp → all panels       -->
-  <!-- ═══════════════════════════════════════════════════════════════════════ -->
   <script src="js/console.js" defer></script>
   <script src="js/bridge.js" defer></script>
   <script src="js/gcis.js" defer></script>
   <script src="js/suno-panel.js" defer></script>
-  <script src="js/kcm-mic-engine.js" defer></script>
-
 </body>
 </html>
