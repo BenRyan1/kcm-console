@@ -5244,8 +5244,8 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         let _singHeldTimer = null;
 
         const _SING_COOLDOWN    = 60;   // ms between pitch detections
-        const _SING_HOLD_GAP    = 180;  // ms of silence before we end a held note
-        const _SING_MIN_DUR     = 80;   // ms minimum note duration to record
+        const _SING_HOLD_GAP    = 250;  // ms of silence before we end a held note
+        const _SING_MIN_DUR     = 140;   // ms minimum note duration to record
 
         // KCM colors for piano roll
         const _SING_COLORS = ['#FFFF00','#FFC400','#FF8000','#FF4000','#FF0000','#C4007F','#8000FF','#4000FF','#0000FF','#007FFF','#00FF80','#80FF00'];
