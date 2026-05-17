@@ -1590,7 +1590,7 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                     <!-- Export buttons row -->
                     <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:0.75rem;">
                         <button id="singMidiBtn" style="padding:0.55rem 1.1rem;font-family:var(--font-display);font-size:0.75rem;font-weight:800;background:linear-gradient(135deg,rgba(139,107,163,0.25),rgba(139,107,163,0.08));border:2px solid rgba(139,107,163,0.4);border-radius:10px;color:#aaa;cursor:pointer;letter-spacing:0.5px;" disabled>💾 Download MIDI</button>
-                        <button id="singWavBtn" style="padding:0.55rem 1.1rem;font-family:var(--font-display);font-size:0.75rem;font-weight:800;background:linear-gradient(135deg,rgba(26,188,156,0.25),rgba(26,188,156,0.08));border:2px solid rgba(26,188,156,0.4);border-radius:10px;color:#aaa;cursor:pointer;letter-spacing:0.5px;" disabled>🎧 Record WAV</button>
+                        <button id="singWavBtn" style="display:none;" disabled>🎧 Record WAV</button>
                     </div>
 
                     <div id="singStatus" style="text-align:center;font-size:0.78rem;color:#555;font-style:italic;margin-bottom:0.5rem;">Click START LISTENING then allow microphone access</div>
@@ -5678,6 +5678,16 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 _singEvents = [];
                 _singHeldNote = null;
                 clearTimeout(_singHeldTimer);
+                // Auto-start WAV recording in sync with MIDI recording
+                if (_singStream) {
+                    // Force-reset any stale WAV state before starting fresh
+                    if (_singWavRecording && _singWavRecorder) {
+                        try { _singWavRecorder.stop(); } catch(e) {}
+                    }
+                    _singWavRecording = false;
+                    _singWavChunks = [];
+                    setTimeout(() => { if (_singStream && !_singWavRecording) _singStartWAV(); }, 50);
+                }
                 if (btn) { btn.textContent = '⏹ STOP REC'; btn.style.animation = 'recordPulse 1s infinite'; btn.style.background = 'linear-gradient(135deg,#e74c3c,#922b21)'; btn.style.borderColor = '#e74c3c'; }
                 if (mBtn)  { mBtn.disabled = true; mBtn.style.color = '#aaa'; }
                 if (wBtn)  { wBtn.disabled = true; wBtn.style.color = '#aaa'; }
@@ -5690,11 +5700,13 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 const cnt = document.getElementById('singNoteCount');
                 if (cnt) cnt.textContent = '0';
                 const status = document.getElementById('singStatus');
-                if (status) { status.textContent = '⏺ Recording… sing your notes!'; status.style.color = '#e74c3c'; }
+                if (status) { status.textContent = '⏺ Recording MIDI + WAV… play your notes!'; status.style.color = '#e74c3c'; }
             } else {
                 _singRecording = false;
                 clearTimeout(_singHeldTimer);
                 _singCommitHeld(Date.now());
+                // Auto-stop WAV in sync with MIDI recording
+                if (_singWavRecording) _singStopWAV();
                 if (btn) { btn.textContent = '⏺ RECORD'; btn.style.animation = ''; btn.style.background = 'linear-gradient(135deg,#c0392b,#922b21)'; btn.style.borderColor = '#e74c3c'; }
                 const hasNotes = _singEvents.length > 0;
                 if (mBtn)  { mBtn.disabled  = !hasNotes; mBtn.style.color  = hasNotes ? '#fff' : '#aaa'; if (hasNotes) { mBtn.style.background  = 'linear-gradient(135deg,#8B6BA3,#6a4f8c)'; mBtn.style.borderColor  = '#8B6BA3'; } }
@@ -5841,12 +5853,14 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 const a    = document.createElement('a');
                 a.href = url;
                 a.download = `kcm-sing-${new Date().toISOString().slice(0,10)}${ext}`;
+                a.style.display = 'none';
+                document.body.appendChild(a);
                 a.click();
-                URL.revokeObjectURL(url);
+                setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 2000);
                 _singWavRecording = false;
                 if (wavBtn) { wavBtn.textContent = '🎧 Record WAV'; wavBtn.style.background = 'linear-gradient(135deg,rgba(26,188,156,0.25),rgba(26,188,156,0.08))'; }
                 const status = document.getElementById('singStatus');
-                if (status) status.textContent = `🎧 WAV saved (${(blob.size/1024).toFixed(0)} KB)`;
+                if (status) status.textContent = `🎧 WAV saved (${(blob.size/1024).toFixed(0)} KB) — check Downloads`;
             };
             _singWavRecorder.start(100);
             _singWavRecording = true;
@@ -5856,9 +5870,12 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         }
 
         function _singStopWAV() {
-            if (_singWavRecorder && _singWavRecording) {
-                _singWavRecorder.stop();
-            }
+            try {
+                if (_singWavRecorder && _singWavRecorder.state !== 'inactive') {
+                    _singWavRecorder.stop();
+                }
+            } catch(e) { console.warn('[WAV] stop error:', e); }
+            _singWavRecording = false;
         }
 
         // ── Wire up sing panel buttons ──

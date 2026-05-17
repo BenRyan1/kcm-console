@@ -5870,9 +5870,12 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         }
 
         function _singStopWAV() {
-            if (_singWavRecorder && _singWavRecording) {
-                _singWavRecorder.stop();
-            }
+            try {
+                if (_singWavRecorder && _singWavRecorder.state !== 'inactive') {
+                    _singWavRecorder.stop();
+                }
+            } catch(e) { console.warn('[WAV] stop error:', e); }
+            _singWavRecording = false;
         }
 
         // ── Wire up sing panel buttons ──
