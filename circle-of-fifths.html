@@ -123,6 +123,24 @@ body{font-family:var(--font-b);background:radial-gradient(ellipse at 30% 20%,#1e
   .three-col{grid-template-columns:1fr;gap:.6rem;}
   .center-col{order:0;} .panel-min-wrap{order:1;}
 }
+
+/* ── RECORD BAR ── */
+.record-bar{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;
+  padding:10px 16px;margin:8px auto 0;max-width:860px;
+  background:rgba(6,6,14,0.85);border:1.5px solid rgba(0,192,192,0.2);
+  border-radius:14px;}
+.rec-btn{padding:7px 16px;border-radius:8px;font-size:0.72rem;font-weight:800;
+  cursor:pointer;letter-spacing:0.5px;border:1.5px solid;transition:all 0.2s;
+  font-family:var(--font-d);}
+.rec-btn:disabled{opacity:0.35;cursor:not-allowed;}
+#cofRecordBtn{background:linear-gradient(135deg,#8b0000,#600000);border-color:#c82333;color:#fff;}
+#cofRecordBtn.recording{animation:recPulse 1.2s ease-in-out infinite;}
+@keyframes recPulse{0%,100%{opacity:1;}50%{opacity:0.45;}}
+#cofWavBtn{background:linear-gradient(135deg,#1a6b5a,#0d4a3a);border-color:#1abc9c;color:#fff;}
+#cofMidiBtn{background:linear-gradient(135deg,#4a0d80,#2d0050);border-color:#9b30ff;color:#fff;}
+#cofRecStatus{font-size:0.68rem;color:#888;font-style:italic;}
+#cofNoteCount{background:rgba(200,35,51,0.85);color:#fff;border-radius:12px;
+  padding:2px 8px;font-size:0.65rem;font-weight:800;display:none;}
 </style>
 </head>
 <body>
@@ -199,6 +217,15 @@ body{font-family:var(--font-b);background:radial-gradient(ellipse at 30% 20%,#1e
       </div>
 
       <!-- Loop block -->
+      <div class="record-bar" style="margin:8px 0;">
+        <button class="rec-btn" id="cofRecordBtn">🔴 RECORD</button>
+        <span id="cofNoteCount">0 notes</span>
+        <button class="rec-btn" id="cofWavBtn" disabled>⬇ WAV</button>
+        <button class="rec-btn" id="cofMidiBtn" disabled>⬇ MIDI</button>
+        <button class="rec-btn" id="cofClearBtn" disabled style="background:linear-gradient(135deg,#3a1a00,#1a0a00);border-color:#c0601a;color:#ffaa66;">🗑 Clear</button>
+        <span id="cofRecStatus">Press RECORD then play chords</span>
+      </div>
+
       <div class="loop-block" id="loopBlock">
         <div class="loop-title">↻ Loop Player</div>
         <div class="loop-steps">
@@ -287,6 +314,8 @@ body{font-family:var(--font-b);background:radial-gradient(ellipse at 30% 20%,#1e
     </div>
   </div>
 </div>
+
+
 </main>
 
 <div class="spectrum-bar" aria-hidden="true"></div>
@@ -409,6 +438,10 @@ const playNotes = (notes,oct=4,dur=0.9,delay=0) => {
     osc.connect(g); g.connect(masterGain||ctx.destination);
     osc.start(ctx.currentTime+delay); osc.stop(ctx.currentTime+delay+dur);
   });
+  // Capture for recording
+  if(typeof _cof_recording!=='undefined' && _cof_recording && delay===0){
+    setTimeout(()=>_cofRecordNote(notes,false,Math.round(dur*1000)), Math.round(delay*1000));
+  }
 };
 
 // ── App state ─────────────────────────────────────────
@@ -889,6 +922,145 @@ window.addEventListener('message',ev=>{
     }
   }catch(e){}
 });
+
+// ══════════════════════════════════════════════════════
+// RECORDING ENGINE — WAV + MIDI
+// ══════════════════════════════════════════════════════
+let _cof_recording  = false;
+let _cof_recStart   = 0;
+let _cof_midiEvents = [];   // {tick, type, midi, vel}
+let _cof_wavDest    = null;
+let _cof_wavRec     = null;
+let _cof_wavChunks  = [];
+let _cof_wavMime    = ['audio/webm;codecs=opus','audio/webm','audio/ogg']
+                        .find(m=>{ try{return MediaRecorder.isTypeSupported(m);}catch(e){return false;} }) || '';
+
+const _COF_PPQ  = 480;
+const _COF_BPM  = 100;
+const _COF_TPB  = _COF_PPQ; // ticks per beat
+
+function _cofMsToTicks(ms){ return Math.round(ms/1000*(_COF_BPM/60)*_COF_PPQ); }
+
+function _cofStartRec(){
+  const ctx = getAudio();
+  _cof_midiEvents = [];
+  _cof_wavChunks  = [];
+  _cof_recStart   = Date.now();
+  _cof_recording  = true;
+
+  // Tap master gain for WAV
+  try {
+    _cof_wavDest = ctx.createMediaStreamDestination();
+    masterGain.connect(_cof_wavDest);
+    _cof_wavRec  = new MediaRecorder(_cof_wavDest.stream, {mimeType:_cof_wavMime});
+    _cof_wavRec.ondataavailable = e => { if(e.data.size>0) _cof_wavChunks.push(e.data); };
+    _cof_wavRec.start(100);
+  } catch(e){ console.warn('WAV capture unavailable:', e); }
+
+  document.getElementById('cofRecordBtn').textContent = '⏹ STOP REC';
+  document.getElementById('cofRecordBtn').classList.add('recording');
+  document.getElementById('cofNoteCount').style.display = 'inline-block';
+  document.getElementById('cofRecStatus').textContent   = '🔴 Recording…';
+  document.getElementById('cofWavBtn').disabled  = true;
+  document.getElementById('cofMidiBtn').disabled = true;
+}
+
+function _cofStopRec(){
+  _cof_recording = false;
+  try { if(_cof_wavRec && _cof_wavRec.state!=='inactive') _cof_wavRec.stop(); } catch(e){}
+  try { if(_cof_wavDest) masterGain.disconnect(_cof_wavDest); } catch(e){}
+
+  document.getElementById('cofRecordBtn').textContent = '🔴 RECORD';
+  document.getElementById('cofRecordBtn').classList.remove('recording');
+  document.getElementById('cofRecStatus').textContent =
+    `Captured ${_cof_midiEvents.filter(e=>e.type===0x90).length} note-ons`;
+
+  const hasNotes = _cof_midiEvents.length > 0;
+  document.getElementById('cofWavBtn').disabled  = !hasNotes;
+  document.getElementById('cofMidiBtn').disabled = !hasNotes;
+  document.getElementById('cofClearBtn').disabled = !hasNotes;
+}
+
+function _cofRecordNote(noteNames, isMinor, durationMs){
+  if(!_cof_recording) return;
+  const t0 = Date.now() - _cof_recStart;
+
+  noteNames.forEach(n => {
+    const chroma = NOTE_CHROMA[n];
+    if(chroma===undefined) return;
+    // Octave 4 for minor, 4 for major
+    const midi = (4+1)*12 + chroma;  // oct 4 → midi 60 base
+    const onTick  = _cofMsToTicks(t0);
+    const offTick = _cofMsToTicks(t0 + durationMs);
+    _cof_midiEvents.push({tick:onTick,  type:0x90, midi, vel:80});
+    _cof_midiEvents.push({tick:offTick, type:0x80, midi, vel:0});
+  });
+
+  // Update counter
+  const count = _cof_midiEvents.filter(e=>e.type===0x90).length;
+  const el = document.getElementById('cofNoteCount');
+  el.textContent = count + (count===1?' note':' notes');
+}
+
+function _cofDownloadWAV(){
+  if(!_cof_wavChunks.length){ alert('No WAV data recorded.'); return; }
+  const blob = new Blob(_cof_wavChunks, {type:_cof_wavMime});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = `KCM-Circle-${Date.now()}.webm`;
+  a.click(); URL.revokeObjectURL(url);
+}
+
+function _cofDownloadMIDI(){
+  if(!_cof_midiEvents.length){ alert('No notes recorded.'); return; }
+  const usPerBeat = Math.round(60000000/_COF_BPM);
+  function varLen(v){const b=[];b.unshift(v&0x7f);v>>=7;while(v){b.unshift((v&0x7f)|0x80);v>>=7;}return b;}
+  function u32(v){return[(v>>24)&0xff,(v>>16)&0xff,(v>>8)&0xff,v&0xff];}
+  function u16(v){return[(v>>8)&0xff,v&0xff];}
+
+  // Sort by tick
+  const evts = [..._cof_midiEvents].sort((a,b)=>a.tick-b.tick);
+  const track=[];
+  track.push(...varLen(0),0xff,0x51,0x03,...u32(usPerBeat).slice(1));
+  const name=Array.from('KCM Circle of Fifths').map(c=>c.charCodeAt(0));
+  track.push(...varLen(0),0xff,0x03,...varLen(name.length),...name);
+  track.push(...varLen(0),0xc0,0); // program: piano
+
+  let prev=0;
+  evts.forEach(ev=>{
+    const delta=ev.tick-prev; prev=ev.tick;
+    track.push(...varLen(Math.max(0,delta)),ev.type,
+               Math.min(127,Math.max(0,ev.midi)),ev.vel);
+  });
+  track.push(...varLen(0),0xff,0x2f,0x00);
+
+  const header=[0x4d,0x54,0x68,0x64,...u32(6),0x00,0x00,0x00,0x01,...u16(_COF_PPQ)];
+  const trkH  =[0x4d,0x54,0x72,0x6b,...u32(track.length)];
+  const bytes = new Uint8Array([...header,...trkH,...track]);
+  const blob  = new Blob([bytes],{type:'audio/midi'});
+  const url   = URL.createObjectURL(blob);
+  const a     = document.createElement('a');
+  a.href=url; a.download=`KCM-Circle-${new Date().toISOString().slice(0,10)}.mid`;
+  a.click(); URL.revokeObjectURL(url);
+}
+
+// Wire record bar buttons
+document.getElementById('cofRecordBtn').addEventListener('click',()=>{
+  if(_cof_recording) _cofStopRec(); else _cofStartRec();
+});
+document.getElementById('cofWavBtn').addEventListener('click', _cofDownloadWAV);
+document.getElementById('cofMidiBtn').addEventListener('click', _cofDownloadMIDI);
+document.getElementById('cofClearBtn').addEventListener('click', ()=>{
+  _cof_midiEvents = [];
+  _cof_wavChunks  = [];
+  document.getElementById('cofWavBtn').disabled  = true;
+  document.getElementById('cofMidiBtn').disabled = true;
+  document.getElementById('cofClearBtn').disabled = true;
+  document.getElementById('cofNoteCount').style.display = 'none';
+  document.getElementById('cofNoteCount').textContent = '0 notes';
+  document.getElementById('cofRecStatus').textContent = 'Cleared — press RECORD to start again';
+});
+
 </script>
 </body>
 </html>
