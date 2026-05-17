@@ -5785,7 +5785,9 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
             function msToTicks(ms) { return Math.max(1, Math.round(ms / 1000 * (bpm / 60) * ppq)); }
 
             // Build absolute-time event list (note-on + note-off pairs)
-            const t0 = _singEvents[0].startTs;
+            // Shift t0 back by WAV encoder startup (~800ms) so MIDI aligns with WebM in DAW
+            const _WAV_LATENCY_MS = 800;
+            const t0 = _singEvents[0].startTs - _WAV_LATENCY_MS;
             const rawEvents = [];
             _singEvents.forEach(e => {
                 const onTick  = msToTicks(e.startTs - t0);
