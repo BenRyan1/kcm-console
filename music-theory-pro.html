@@ -1193,15 +1193,41 @@ select option { background: #1a1a2e; color: white; }
 /* ============================================================
    PROGRESSION CONTROLS
    ============================================================ */
+.harm-hover-wrap {
+    position: relative;
+    display: inline-block;
+}
 .progression-controls {
     display: none;
-    background: rgba(0,0,0,0.5);
-    padding: 1.5rem 1.75rem;
+    position: absolute;
+    bottom: calc(100% + 12px);
+    left: 50%;
+    transform: translateX(-50%);
+    width: 820px;
+    max-width: 92vw;
+    background: rgba(8,8,20,0.97);
+    padding: 1.25rem 1.5rem;
     border-radius: 16px;
-    margin: 1rem auto;
-    max-width: 1000px;
-    border: 2px solid rgba(244,208,63,0.3);
-    box-shadow: 0 6px 25px rgba(0,0,0,0.4);
+    border: 2px solid rgba(244,208,63,0.45);
+    box-shadow: 0 -8px 40px rgba(0,0,0,0.7), 0 0 0 1px rgba(244,208,63,0.1);
+    z-index: 9000;
+    pointer-events: none;
+}
+/* little caret pointing down to button */
+.progression-controls::after {
+    content: "";
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 10px solid transparent;
+    border-top-color: rgba(244,208,63,0.45);
+    border-bottom: none;
+}
+.harm-hover-wrap:hover .progression-controls,
+.progression-controls.pinned {
+    display: block;
+    pointer-events: auto;
 }
 .progression-controls h4 {
     margin: 0 0 1rem 0;
@@ -1612,16 +1638,18 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                 <div style="background:linear-gradient(135deg, var(--primary-teal), #006666); color:white; padding:5px; border-radius:8px 8px 0 0; margin:-12px -15px 6px -15px; text-align:center; font-size:0.72rem; font-weight:800; letter-spacing:1px; font-family:var(--font-display);">
                     🎼 STAFF NOTATION
                 </div>
-                <svg id="staffSVG" viewBox="0 0 220 135" preserveAspectRatio="xMidYMid meet" aria-hidden="true"></svg>
-                <div style="display:flex;gap:8px;justify-content:center;margin-top:8px;">
-                    <button onclick="document.getElementById('globalPlayBtn').click()"
-                        style="padding:6px 20px;background:linear-gradient(135deg,#27ae60,#1e8449);color:#fff;border:2px solid #27ae60;border-radius:6px;font-family:'Cinzel',serif;font-size:0.75rem;font-weight:800;letter-spacing:1px;cursor:pointer;transition:all 0.2s;"
-                        onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 16px rgba(39,174,96,0.5)'"
-                        onmouseout="this.style.transform='';this.style.boxShadow=''">▶ PLAY</button>
-                    <button onclick="document.getElementById('globalStopBtn').click()"
-                        style="padding:6px 20px;background:linear-gradient(135deg,#e74c3c,#c0392b);color:#fff;border:2px solid #e74c3c;border-radius:6px;font-family:'Cinzel',serif;font-size:0.75rem;font-weight:800;letter-spacing:1px;cursor:pointer;transition:all 0.2s;"
-                        onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 16px rgba(231,76,60,0.5)'"
-                        onmouseout="this.style.transform='';this.style.boxShadow=''">■ STOP</button>
+                <div style="display:flex;align-items:center;gap:0;">
+                    <svg id="staffSVG" viewBox="0 0 220 135" preserveAspectRatio="xMidYMid meet" aria-hidden="true" style="flex-shrink:0;width:55%;"></svg>
+                    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:0 12px;">
+                        <button onclick="document.getElementById('globalPlayBtn').click()"
+                            style="width:100%;padding:10px 0;background:linear-gradient(135deg,#27ae60,#1e8449);color:#fff;border:2px solid #27ae60;border-radius:8px;font-family:'Cinzel',serif;font-size:0.8rem;font-weight:800;letter-spacing:1.5px;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 12px rgba(39,174,96,0.3);"
+                            onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 20px rgba(39,174,96,0.5)'"
+                            onmouseout="this.style.transform='';this.style.boxShadow='0 4px 12px rgba(39,174,96,0.3)'">▶ PLAY</button>
+                        <button onclick="document.getElementById('globalStopBtn').click()"
+                            style="width:100%;padding:10px 0;background:linear-gradient(135deg,#e74c3c,#c0392b);color:#fff;border:2px solid #e74c3c;border-radius:8px;font-family:'Cinzel',serif;font-size:0.8rem;font-weight:800;letter-spacing:1.5px;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 12px rgba(231,76,60,0.3);"
+                            onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 20px rgba(231,76,60,0.5)'"
+                            onmouseout="this.style.transform='';this.style.boxShadow='0 4px 12px rgba(231,76,60,0.3)'">■ STOP</button>
+                    </div>
                 </div>
             </div>
 
@@ -1660,7 +1688,20 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                 <button class="level-btn"         data-level="6"         title="6 Notes">Whole Tone</button>
                 <button class="level-btn"         data-level="scales"    title="7 Notes">Scales</button>
                 <button class="level-btn"         data-level="modes"     title="7 Notes · Modes">Modes</button>
-                <button class="level-btn"         data-level="harm"      title="Harmonized">Harmonized</button>
+                <div class="harm-hover-wrap">
+                    <button class="level-btn"         data-level="harm"      title="Harmonized">Harmonized</button>
+                    <!-- HOVER TOOLTIP: Chord Progressions -->
+                    <div class="progression-controls" id="progressionControls" aria-live="polite">
+                        <h4>🎼 Chord Progressions in Key of <span id="progressionKey">C</span></h4>
+                        <div style="text-align:center; font-size:0.75rem; opacity:0.8; margin-bottom:0.85rem; font-weight:600;">
+                            Using <span id="progressionChordType">Triads</span> · Scale: <span id="progressionScaleType">Major</span>
+                        </div>
+                        <div style="text-align:center; margin-bottom:0.85rem;">
+                            <button class="play-btn" id="playAllChordsBtn" style="margin:0 auto; display:inline-flex;">🎹 Play All Scale Chords</button>
+                        </div>
+                        <div class="progression-buttons" id="progressionButtons"></div>
+                    </div>
+                </div>
                 <button class="level-btn"         data-level="freeplay"  title="Free Play">Free Play</button>
             </div>
 
@@ -1676,16 +1717,7 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
     </div><!-- end info-panel -->
 
     <!-- PROGRESSION CONTROLS — shown only for Harmonized Major/Minor -->
-    <div class="progression-controls" id="progressionControls" aria-live="polite" style="display:none;">
-        <h4>🎼 Chord Progressions in Key of <span id="progressionKey">C</span></h4>
-        <div style="text-align:center; font-size:0.75rem; opacity:0.8; margin-bottom:0.85rem; font-weight:600;">
-            Using <span id="progressionChordType">Triads</span> · Scale: <span id="progressionScaleType">Major</span>
-        </div>
-        <div style="text-align:center; margin-bottom:0.85rem;">
-            <button class="play-btn" id="playAllChordsBtn" style="margin:0 auto; display:inline-flex;">🎹 Play All Scale Chords</button>
-        </div>
-        <div class="progression-buttons" id="progressionButtons"></div>
-    </div>
+    <!-- progressionControls moved into harm-hover-wrap tooltip -->
 
     <!-- CHORD VOICING DISPLAY PANEL — shown below progressions in Harmonized mode -->
     <div id="chordVoicingPanel" style="display:none; margin:1rem auto; max-width:860px; background:rgba(0,0,0,0.35); border:2px solid rgba(0,128,128,0.3); border-radius:16px; padding:1.25rem 1.5rem;">
