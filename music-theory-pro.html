@@ -5238,7 +5238,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         let _singTdb = null, _singFdb = null;
         let _singLastNote = -1, _singLastDetect = 0;
         let _singSmooth = new Array(12).fill(0);
-        let _singLockNote = null, _singLockCount = 0, _singLockFreq = 0;
+        let _singLockNote = null, _singLockCount = 0, _singLockFreq = 0, _singLockOct = -1;
 
         // Note event list
         let _singEvents = [];
@@ -5617,13 +5617,24 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                     else { _singLockFreq = domFreq * 0.3 + (_singLockFreq||domFreq) * 0.7; } // smooth freq
 
                     if (_singLockCount >= _SING_LOCK_FRAMES) {
-                        const { pc, oct, midiNote, cents } = _freqToNote(_singLockFreq);
+                        let { pc, oct, midiNote, cents } = _freqToNote(_singLockFreq);
+                        // Octave hysteresis: resist jumping octaves unless clearly moved
+                        if (_singLockOct >= 0 && pc === (_singLockNote !== null ? _singLockNote : pc)) {
+                            const prevMidi = (_singLockOct + 1) * 12 + pc;
+                            if (Math.abs(midiNote - prevMidi) === 12) {
+                                // Same pitch class, adjacent octave — stay in current octave
+                                oct = _singLockOct; midiNote = prevMidi;
+                            }
+                        }
+                        _singLockOct = oct;
                         if (pc !== _singLastNote) { _singLastNote = pc; _singUpdateDisplays(pc, oct, _singLockFreq, cents); }
                         if (_singRecording) {
                             clearTimeout(_singHeldTimer);
                             if (!_singHeldNote || _singHeldNote.midiNote !== midiNote) {
                                 _singCommitHeld(now);
-                                _singHeldNote = { pc, oct, midiNote, freq: _singLockFreq, startTs: now };
+                                // Map signal strength to MIDI velocity 40-110
+                                const _vel = Math.round(Math.min(110, Math.max(40, 40 + domStr * 280)));
+                                _singHeldNote = { pc, oct, midiNote, freq: _singLockFreq, vel: _vel, startTs: now };
                             }
                             if (_singHeldNote) _singHeldNote.freq = _singLockFreq;
                         }
@@ -5648,7 +5659,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         function stopSingMode() {
             _singActive = false;
             _singLastNote = -1;
-            _singLockNote = null; _singLockCount = 0; _singLockFreq = 0;
+            _singLockNote = null; _singLockCount = 0; _singLockFreq = 0; _singLockOct = -1;
             clearTimeout(_singHeldTimer);
             if (_singRaf) { cancelAnimationFrame(_singRaf); _singRaf = null; }
             if (_singRecording) { _singCommitHeld(Date.now()); _singRecording = false; }
@@ -5792,7 +5803,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
             _singEvents.forEach(e => {
                 const onTick  = msToTicks(e.startTs - t0);
                 const offTick = msToTicks(e.endTs   - t0);
-                rawEvents.push({ tick: onTick,  type: 0x90, midi: e.midiNote, vel: 80 });
+                rawEvents.push({ tick: onTick,  type: 0x90, midi: e.midiNote, vel: e.vel || 80 });
                 rawEvents.push({ tick: offTick, type: 0x80, midi: e.midiNote, vel: 0  });
             });
             rawEvents.sort((a, b) => a.tick - b.tick);
