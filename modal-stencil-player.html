@@ -98,24 +98,25 @@
 
         /* ── RIGHT: ACTIVE PANEL ── */
         .active-panel{
-            display:grid;
-            grid-template-columns:auto 1fr;
-            gap:2rem;
+            display:flex;flex-direction:column;gap:1.25rem;
             background:rgba(26,26,46,0.5);
             border:2px solid rgba(74,123,167,0.3);
             border-radius:14px;
-            padding:1.5rem 1.75rem;
+            padding:1.5rem 2rem;
             min-height:460px;
-            align-items:center;
             transition:border-color 0.3s, box-shadow 0.3s;
         }
         .active-panel.has-mode{
             border-color:rgba(244,208,63,0.4);
             box-shadow:0 0 36px rgba(244,208,63,0.10);
         }
+        .panel-columns{display:grid;grid-template-columns:1fr 1fr 1fr;align-items:start;}
+        .panel-col{display:flex;flex-direction:column;align-items:center;padding:0 1.5rem;}
+        .panel-col+.panel-col{border-left:1px solid rgba(74,123,167,0.2);}
+        .panel-col-label{font-family:var(--font-display);font-size:0.65rem;color:var(--primary-gold);text-transform:uppercase;letter-spacing:2px;margin-bottom:10px;opacity:0.7;text-align:center;}
 
         /* ── STENCIL DISPLAY (left of active panel) ── */
-        .stencil-display{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:150px;}
+        .stencil-display{display:flex;flex-direction:column;align-items:center;gap:4px;width:100%;}
         .stencil-mode-name{font-family:var(--font-display);font-size:1.15rem;font-weight:700;color:var(--primary-gold);letter-spacing:3px;text-transform:uppercase;margin-bottom:4px;text-align:center;}
         .stencil-mode-char{font-family:var(--font-accent);font-size:0.95rem;color:#888;font-style:italic;text-align:center;margin-bottom:10px;letter-spacing:2px;}
 
@@ -142,13 +143,7 @@
         .note-F .interval,.note-FS .interval,.note-G .interval,.note-GS .interval,.note-A .interval{color:rgba(255,255,255,0.6);}
 
         /* ── PLAY ZONE (right of active stencil) ── */
-        .play-zone{
-            display:flex;flex-direction:column;gap:1.25rem;
-            border-left:2px solid rgba(74,123,167,0.25);
-            padding-left:2rem;
-            justify-content:center;
-            align-self:stretch;
-        }
+        .play-zone{display:none;}
         .play-zone-header{font-family:var(--font-display);font-size:0.75rem;color:var(--primary-teal);text-transform:uppercase;letter-spacing:3px;font-weight:700;padding-bottom:0.5rem;border-bottom:1px solid rgba(0,128,128,0.2);}
 
         /* Empty state */
@@ -172,8 +167,11 @@
         .play-stencil-label{font-family:var(--font-accent);font-size:0.9rem;color:#666;font-style:italic;margin-bottom:6px;}
 
         /* ── INTERVAL MAP ── */
-        .interval-map{display:flex;flex-direction:column;gap:3px;margin-top:0.5rem;}
-        .interval-row{display:flex;align-items:center;gap:8px;}
+        .interval-map{display:flex;flex-direction:column-reverse;gap:3px;width:100%;}
+        .interval-row{display:flex;align-items:center;gap:8px;padding:2px 4px;border-radius:4px;transition:background 0.15s;}
+        .interval-row.active{background:rgba(244,208,63,0.18);box-shadow:0 0 8px rgba(244,208,63,0.3);}
+        .interval-row.active .interval-badge{color:var(--primary-gold);}
+        .interval-row.active .interval-note{color:#fff;}
         .interval-badge{font-family:var(--font-display);font-size:0.65rem;font-weight:700;color:#888;min-width:20px;text-align:right;}
         .interval-step{height:18px;border-radius:3px;display:flex;align-items:center;padding:0 6px;font-size:0.6rem;font-weight:700;color:rgba(0,0,0,0.7);transition:all 0.2s;}
         .interval-step.whole{width:56px;background:rgba(0,128,128,0.4);color:var(--primary-teal);border:1px solid rgba(0,128,128,0.5);}
@@ -261,6 +259,7 @@
                         <span id="rec-count">0 notes</span>
                         <button id="play-recording-button" class="control-btn" disabled>▶ Play</button>
                         <button id="clear-recording-button" class="control-btn" disabled>🗑 Clear</button>
+                        <button id="midi-download-button" class="control-btn" disabled style="background:linear-gradient(135deg,#6a0dad,#4a0080);border-color:#9b30ff;">⬇ MIDI</button>
                     </div>
                 </div>
                 <!-- Play/Stop live here in the bar too -->
@@ -285,37 +284,30 @@
                     <div class="empty-text">Choose a mode to begin</div>
                 </div>
 
-                <!-- Stencil column (left of panel) -->
-                <div class="stencil-display" id="stencil-display" style="display:none;">
-                    <div class="stencil-mode-name" id="stencil-mode-name"></div>
-                    <div class="stencil-mode-char" id="stencil-mode-char"></div>
-                    <div class="stencil" id="stencil-cells"></div>
+                <!-- 3-column panel: Stencil | Interval Steps | Sequencer -->
+                <div class="panel-columns" id="panel-columns" style="display:none;">
+                    <!-- COL 1: Stencil -->
+                    <div class="panel-col">
+                        <div class="panel-col-label" id="stencil-mode-name"></div>
+                        <div style="font-family:var(--font-accent);font-size:0.85rem;color:#888;font-style:italic;text-align:center;margin-bottom:10px;letter-spacing:1px;" id="stencil-mode-char"></div>
+                        <div class="stencil" id="stencil-cells" style="width:100%;max-width:160px;"></div>
+                    </div>
+                    <!-- COL 2: Interval Steps -->
+                    <div class="panel-col">
+                        <div class="panel-col-label">Interval Steps</div>
+                        <div class="interval-map" id="interval-map" style="width:100%;"></div>
+                    </div>
+                    <!-- COL 3: Sequencer -->
+                    <div class="panel-col">
+                        <div class="panel-col-label">Sequencer</div>
+                        <div class="stencil" id="play-stencil" style="width:100%;max-width:160px;"></div>
+                    </div>
                 </div>
 
-                <!-- Play zone (right of panel) -->
-                <div class="play-zone" id="play-zone" style="display:none;">
-                    <div class="play-zone-header">▶ Play Zone</div>
-                    <div class="play-controls">
-                        <!-- buttons moved to control bar; mirror here for convenience -->
-                    </div>
-
-                    <!-- Interval steps + Sequencer side by side -->
-                    <div style="display:flex;gap:2rem;align-items:flex-start;flex-wrap:wrap;justify-content:flex-start;">
-                        <div>
-                            <div style="font-family:var(--font-display);font-size:0.65rem;color:var(--primary-gold);text-transform:uppercase;letter-spacing:2px;margin-bottom:8px;opacity:0.7;">Interval Steps</div>
-                            <div class="interval-map" id="interval-map"></div>
-                        </div>
-                        <div>
-                            <div style="font-family:var(--font-display);font-size:0.65rem;color:var(--primary-gold);text-transform:uppercase;letter-spacing:2px;margin-bottom:8px;opacity:0.7;">Sequencer</div>
-                            <div class="stencil" id="play-stencil" style="max-width:155px;"></div>
-                        </div>
-                    </div>
-
-                    <!-- Mode info — bottom -->
-                    <div class="mode-info" id="mode-info-card">
-                        <div class="mode-info-title">About this Mode</div>
-                        <div class="mode-info-text" id="mode-info-text"></div>
-                    </div>
+                <!-- Mode info — full width below columns -->
+                <div class="mode-info" id="mode-info-card" style="display:none;">
+                    <div class="mode-info-title">About this Mode</div>
+                    <div class="mode-info-text" id="mode-info-text"></div>
                 </div>
             </div>
         </div>
@@ -392,7 +384,7 @@
             for(let i=0;i<steps.length;i++){
                 const ni=(ti+iv[i])%12,note=NOTES[ni];
                 const nxt=(ti+iv[i+1])%12,nextNote=NOTES[nxt];
-                const row=document.createElement("div");row.className="interval-row";
+                const row=document.createElement("div");row.className="interval-row";row.dataset.degree=i+1;
                 const badge=document.createElement("div");badge.className="interval-badge";badge.textContent=i+1;
                 const step=document.createElement("div");
                 step.className=`interval-step ${steps[i]===2?'whole':'half'}`;
@@ -424,16 +416,16 @@
 
         function renderActivePanel() {
             const emptyEl=document.getElementById("empty-state");
-            const stencilDisplay=document.getElementById("stencil-display");
-            const playZone=document.getElementById("play-zone");
+            const panelCols=document.getElementById("panel-columns");
+            const infoCard=document.getElementById("mode-info-card");
             const panel=document.getElementById("active-panel");
             const pb=document.getElementById("play-button");
             const sb=document.getElementById("stop-button");
 
             if(!playingMode){
                 emptyEl.style.display="flex";
-                stencilDisplay.style.display="none";
-                playZone.style.display="none";
+                panelCols.style.display="none";
+                infoCard.style.display="none";
                 panel.classList.remove("has-mode");
                 if(pb){pb.disabled=true;pb.textContent="▶ Start";pb.classList.remove("playing");}
                 if(sb)sb.disabled=true;
@@ -442,19 +434,19 @@
 
             const md=MODES[playingMode];
             emptyEl.style.display="none";
-            stencilDisplay.style.display="flex";
-            playZone.style.display="flex";
+            panelCols.style.display="grid";
+            infoCard.style.display="block";
             panel.classList.add("has-mode");
             if(pb)pb.disabled=false;
             if(sb)sb.disabled=false;
 
-            // Mode name + character
+            // Mode name + character (now in panel-col-label)
             document.getElementById("stencil-mode-name").textContent=md.name;
             document.getElementById("stencil-mode-char").textContent=md.char;
 
             // Build main stencil
             buildStencilCells(document.getElementById("stencil-cells"),playingMode,md,false);
-            // Build mirror stencil in play zone
+            // Build sequencer stencil
             buildStencilCells(document.getElementById("play-stencil"),playingMode,md,true);
             // Build interval map
             buildIntervalMap(md);
@@ -476,6 +468,11 @@
                 const cell=cells[playStep];const pcell=pcells[playStep];
                 if(cell){
                     cell.classList.add("active");if(pcell)pcell.classList.add("active");
+                    // highlight matching interval row
+                    document.querySelectorAll(".interval-row").forEach(r=>r.classList.remove("active"));
+                    const deg=cell.dataset.degree;
+                    const irow=document.querySelector(`.interval-row[data-degree="${deg}"]`);
+                    if(irow)irow.classList.add("active");
                     const midi=parseInt(cell.dataset.midi);
                     playNoteByMidi(midi,playSpeed/1000*0.75);
                     postToConsole({activeNotes:[midi]});
@@ -489,6 +486,7 @@
             if(playInterval){clearInterval(playInterval);playInterval=null;}
             isPlaying=false;playStep=0;playDir=1;
             document.querySelectorAll(".degree-cell").forEach(c=>c.classList.remove("active"));
+            document.querySelectorAll(".interval-row").forEach(r=>r.classList.remove("active"));
             const pb=document.getElementById("play-button");if(pb){pb.textContent="▶ Start";pb.classList.remove("playing");}
             postToConsole({activeNotes:[]});
         }
@@ -511,6 +509,7 @@
                 if(recordedNotes.length>0){
                     document.getElementById("play-recording-button").disabled=false;
                     document.getElementById("clear-recording-button").disabled=false;
+                    document.getElementById("midi-download-button").disabled=false;
                 }
             }
         });
@@ -531,13 +530,92 @@
             recordedNotes=[];
             document.getElementById("play-recording-button").disabled=true;
             document.getElementById("clear-recording-button").disabled=true;
+            document.getElementById("midi-download-button").disabled=true;
         });
+        document.getElementById("midi-download-button").addEventListener("click", exportMIDI);
         document.getElementById("tonicSelect").addEventListener("change",(e)=>{
             currentTonic=e.target.value;renderTabs();renderActivePanel();postToConsole({root:currentTonic});
         });
         document.getElementById("speedSelect").addEventListener("change",(e)=>{
             playSpeed=parseInt(e.target.value);if(isPlaying)startPlaying();
         });
+
+        // ── MIDI EXPORT ──────────────────────────────────────────
+        function exportMIDI() {
+            if (!recordedNotes.length) return;
+            const tempo = 500000; // 120 BPM in microseconds/beat
+            const tpq = 480;      // ticks per quarter note
+
+            function varLen(v) {
+                const buf = [];
+                buf.push(v & 0x7f);
+                v >>= 7;
+                while (v > 0) { buf.unshift((v & 0x7f) | 0x80); v >>= 7; }
+                return buf;
+            }
+
+            function msToTicks(ms) {
+                return Math.round((ms / 1000) * (tpq * 1000000 / tempo));
+            }
+
+            // Build track events
+            const events = [];
+            let lastTick = 0;
+
+            // Tempo event
+            events.push([0, [0xff, 0x51, 0x03, (tempo>>16)&0xff, (tempo>>8)&0xff, tempo&0xff]]);
+
+            // Note events — note-on then note-off 200ms later
+            recordedNotes.forEach(n => {
+                const onTick  = msToTicks(n.time);
+                const offTick = msToTicks(n.time + 200);
+                const vel = n.velocity || 80;
+                events.push([onTick,  [0x90, n.midi, vel]]);
+                events.push([offTick, [0x80, n.midi, 0]]);
+            });
+
+            // Sort by tick
+            events.sort((a, b) => a[0] - b[0]);
+
+            // Convert to delta-time bytes
+            const trackBytes = [];
+            let prevTick = 0;
+            events.forEach(([tick, data]) => {
+                const delta = tick - prevTick;
+                prevTick = tick;
+                varLen(delta).forEach(b => trackBytes.push(b));
+                data.forEach(b => trackBytes.push(b));
+            });
+            // End of track
+            [0x00, 0xff, 0x2f, 0x00].forEach(b => trackBytes.push(b));
+
+            // MIDI file header
+            const header = [
+                0x4d,0x54,0x68,0x64, // MThd
+                0x00,0x00,0x00,0x06, // chunk length 6
+                0x00,0x00,           // format 0
+                0x00,0x01,           // 1 track
+                (tpq>>8)&0xff, tpq&0xff // ticks per quarter
+            ];
+
+            // Track header
+            const tLen = trackBytes.length;
+            const trackHeader = [
+                0x4d,0x54,0x72,0x6b, // MTrk
+                (tLen>>24)&0xff,(tLen>>16)&0xff,(tLen>>8)&0xff,tLen&0xff
+            ];
+
+            const allBytes = [...header, ...trackHeader, ...trackBytes];
+            const buf = new Uint8Array(allBytes);
+            const blob = new Blob([buf], {type:'audio/midi'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            const modeName = playingMode ? MODES[playingMode].name : 'Modal';
+            a.href = url;
+            a.download = `KCM-${modeName}-${currentTonic}.mid`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
 
         // Init
         renderTabs();
