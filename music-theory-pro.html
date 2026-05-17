@@ -5618,13 +5618,15 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
 
                     if (_singLockCount >= _SING_LOCK_FRAMES) {
                         let { pc, oct, midiNote, cents } = _freqToNote(_singLockFreq);
-                        // Octave hysteresis: resist jumping octaves unless clearly moved
-                        if (_singLockOct >= 0 && pc === (_singLockNote !== null ? _singLockNote : pc)) {
+                        // Octave hysteresis: only resist if freq is ambiguous (within 150 cents of octave boundary)
+                        if (_singLockOct >= 0 && _singLockOct !== oct) {
                             const prevMidi = (_singLockOct + 1) * 12 + pc;
-                            if (Math.abs(midiNote - prevMidi) === 12) {
-                                // Same pitch class, adjacent octave — stay in current octave
+                            const centsDiff = Math.abs(_singFreqToMidi(_singLockFreq) - prevMidi) * 100;
+                            if (centsDiff < 150) {
+                                // Frequency still close to old octave — stay put
                                 oct = _singLockOct; midiNote = prevMidi;
                             }
+                            // If centsDiff >= 150 cents, allow the octave change
                         }
                         _singLockOct = oct;
                         if (pc !== _singLastNote) { _singLastNote = pc; _singUpdateDisplays(pc, oct, _singLockFreq, cents); }
@@ -5633,7 +5635,9 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                             if (!_singHeldNote || _singHeldNote.midiNote !== midiNote) {
                                 _singCommitHeld(now);
                                 // Map signal strength to MIDI velocity 40-110
-                                const _vel = Math.round(Math.min(110, Math.max(40, 40 + domStr * 280)));
+                                // Log-compressed velocity: spreads guitar dynamics across 50-110
+                                const _velRaw = Math.log1p(domStr * 8) / Math.log1p(8);
+                                const _vel = Math.round(Math.min(110, Math.max(50, 50 + _velRaw * 60)));
                                 _singHeldNote = { pc, oct, midiNote, freq: _singLockFreq, vel: _vel, startTs: now };
                             }
                             if (_singHeldNote) _singHeldNote.freq = _singLockFreq;
