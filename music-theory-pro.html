@@ -1628,6 +1628,13 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                         <div style="display:flex;justify-content:space-between;font-size:0.58rem;color:#555;margin-top:2px;"><span>♭ Flat</span><span style="color:#00FF80;">● In Tune</span><span>Sharp ♯</span></div>
                     </div>
 
+                    <!-- Polyphonic chord display -->
+                    <div id="polyChordDisplay" style="display:none;margin:0 auto 0.75rem;max-width:480px;background:rgba(0,0,0,0.35);border:2px solid rgba(244,208,63,0.3);border-radius:14px;padding:0.75rem 1rem;text-align:center;">
+                        <div style="font-size:0.5rem;font-weight:700;letter-spacing:1.5px;color:var(--primary-gold);text-transform:uppercase;margin-bottom:6px;">🎸 CHORD DETECTED</div>
+                        <div id="polyChordName" style="font-family:var(--font-display);font-size:1.6rem;font-weight:900;color:var(--primary-gold);letter-spacing:2px;margin-bottom:4px;">—</div>
+                        <div id="polyChordNotes" style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:6px;"></div>
+                    </div>
+
                     <!-- Control buttons row -->
                     <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:0.75rem;">
                         <button id="singStartBtn" style="padding:0.65rem 1.5rem;font-family:var(--font-display);font-size:0.82rem;font-weight:800;background:linear-gradient(135deg,#008080,#005555);border:2px solid #008080;border-radius:12px;color:#fff;cursor:pointer;letter-spacing:1px;transition:all 0.2s;">🎤 START LISTENING</button>
@@ -5572,9 +5579,156 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 }, 800);
 
                 // ── Observatory RAF detection loop ──────────────────────
+
+        // ══════════════════════════════════════════════════════════════
+        // POLYPHONIC CHORD DETECTION ENGINE
+        // Transplanted from polyphonic-guitar-detector.html
+        // Runs alongside monophonic SING loop — detects full chords
+        // ══════════════════════════════════════════════════════════════
+
+        const _POLY_CHORD_PATTERNS = {
+            'Major':           [0,4,7],
+            'Minor':           [0,3,7],
+            'Diminished':      [0,3,6],
+            'Augmented':       [0,4,8],
+            'Major 7':         [0,4,7,11],
+            'Dominant 7':      [0,4,7,10],
+            'Minor 7':         [0,3,7,10],
+            'Half-Dim 7':      [0,3,6,10],
+            'Diminished 7':    [0,3,6,9],
+            'Sus2':            [0,2,7],
+            'Sus4':            [0,5,7],
+            'Power':           [0,7],
+            'Add9':            [0,4,7,14],
+        };
+
+        const _POLY_NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+
+        function _polyFindPeaks(dataArray, threshold, sampleRate, bufLen) {
+            const peaks = [];
+            const nyquist = sampleRate / 2;
+            for (let i = 3; i < dataArray.length - 3; i++) {
+                const cur = dataArray[i];
+                if (cur < threshold) continue;
+                if (cur > dataArray[i-1] && cur > dataArray[i-2] && cur > dataArray[i+1] && cur > dataArray[i+2]) {
+                    const freq = i * nyquist / bufLen;
+                    if (freq < 80 || freq > 1320) continue; // guitar range only
+                    // Harmonic suppression — skip if integer multiple of existing peak
+                    let isHarmonic = false;
+                    for (const pi of peaks) {
+                        const pf = pi * nyquist / bufLen;
+                        const ratio = freq / pf;
+                        if (Math.abs(ratio - Math.round(ratio)) < 0.05 && ratio > 1.5) {
+                            isHarmonic = true; break;
+                        }
+                    }
+                    if (!isHarmonic) peaks.push(i);
+                }
+            }
+            return peaks;
+        }
+
+        function _polyIdentifyChord(noteSet) {
+            const notes = Array.from(noteSet);
+            if (notes.length < 2) return null;
+            // Try every note as potential root
+            for (let ri = 0; ri < notes.length; ri++) {
+                const root = notes[ri];
+                const rootIdx = _POLY_NOTE_NAMES.indexOf(root);
+                const intervals = notes
+                    .map(n => (_POLY_NOTE_NAMES.indexOf(n) - rootIdx + 12) % 12)
+                    .sort((a,b) => a-b);
+                for (const [name, pattern] of Object.entries(_POLY_CHORD_PATTERNS)) {
+                    if (pattern.length !== intervals.length) continue;
+                    if (pattern.every((v,i) => v === intervals[i])) {
+                        return { root, name, notes };
+                    }
+                }
+            }
+            return null;
+        }
+
+        // Polyphonic detection loop — runs every animation frame when SING active
+        let _polyLastNotes = new Set();
+        let _polyStableCount = 0;
+        const _POLY_STABLE_FRAMES = 4; // frames chord must be stable before showing
+
+        function _polyAnalyse() {
+            if (!_singActive || !_singAnalyser) return;
+
+            const fftSize  = _singAnalyser.fftSize;
+            const bufLen   = _singAnalyser.frequencyBinCount;
+            const sr       = _singAudioCtx.sampleRate;
+            const byteData = new Uint8Array(bufLen);
+            _singAnalyser.getByteFrequencyData(byteData);
+
+            // Dynamic threshold — 30% of max energy
+            let maxVal = 0;
+            for (let i = 0; i < bufLen; i++) if (byteData[i] > maxVal) maxVal = byteData[i];
+            if (maxVal < 20) { _polyShowChord(null, new Set()); return; } // silence
+            const threshold = Math.max(30, maxVal * 0.28);
+
+            const peaks = _polyFindPeaks(byteData, threshold, sr, bufLen);
+            const noteSet = new Set();
+            const nyquist = sr / 2;
+
+            peaks.forEach(pi => {
+                const freq = pi * nyquist / bufLen;
+                const midi = Math.round(69 + 12 * Math.log2(freq / 440));
+                noteSet.add(_POLY_NOTE_NAMES[((midi % 12) + 12) % 12]);
+            });
+
+            // Stability check — chord must persist N frames
+            let same = noteSet.size === _polyLastNotes.size &&
+                       [...noteSet].every(n => _polyLastNotes.has(n));
+            if (same) { _polyStableCount++; } else { _polyStableCount = 0; }
+            _polyLastNotes = noteSet;
+
+            if (_polyStableCount >= _POLY_STABLE_FRAMES) {
+                const chord = _polyIdentifyChord(noteSet);
+                _polyShowChord(chord, noteSet);
+                // Broadcast to KCM bus
+                if (chord) {
+                    try {
+                        window.parent.postMessage({
+                            type: 'KCM_STATE',
+                            payload: { activeNotes: [...noteSet].map(n => _POLY_NOTE_NAMES.indexOf(n)), chordName: chord.root + ' ' + chord.name }
+                        }, '*');
+                    } catch(_) {}
+                }
+            }
+        }
+
+        function _polyShowChord(chord, noteSet) {
+            const display = document.getElementById('polyChordDisplay');
+            const nameEl  = document.getElementById('polyChordName');
+            const notesEl = document.getElementById('polyChordNotes');
+            if (!display) return;
+
+            if (!chord || noteSet.size < 2) {
+                if (noteSet.size < 2) display.style.display = 'none';
+                return;
+            }
+
+            display.style.display = 'block';
+            nameEl.textContent = chord.root + ' ' + chord.name;
+            nameEl.style.color = _SING_COLORS[_POLY_NOTE_NAMES.indexOf(chord.root)] || '#F4D03F';
+
+            notesEl.innerHTML = '';
+            [...noteSet].sort((a,b) => _POLY_NOTE_NAMES.indexOf(a) - _POLY_NOTE_NAMES.indexOf(b))
+                .forEach(n => {
+                    const idx = _POLY_NOTE_NAMES.indexOf(n);
+                    const badge = document.createElement('div');
+                    badge.textContent = n;
+                    badge.style.cssText = `background:${_SING_COLORS[idx]};color:#000;padding:3px 10px;border-radius:20px;font-family:var(--font-display);font-size:0.8rem;font-weight:800;`;
+                    notesEl.appendChild(badge);
+                });
+        }
+
                 function _singLoop() {
                     if (!_singActive) return;
                     _singRaf = requestAnimationFrame(_singLoop);
+                    _polyAnalyse(); // Polyphonic chord detection
                     const now = Date.now();
                     if (now - _singLastDetect < _SING_COOLDOWN) return;
                     _singLastDetect = now;
@@ -5759,6 +5913,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
             if (_singWavRecording) _singStopWAV();
             if (_singAnalyser)  { try { _singAnalyser.disconnect();  } catch(e){} _singAnalyser = null; }
             if (_singStream)    { _singStream.getTracks().forEach(t => t.stop()); _singStream = null; }
+            _polyLastNotes = new Set(); _polyStableCount = 0; _polyShowChord(null, new Set());
             if (_singAudioCtx)  { try { _singAudioCtx.close(); } catch(e){} _singAudioCtx = null; }
             _singSmooth = new Array(12).fill(0);
             _singClearDisplays();
