@@ -1511,7 +1511,7 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
 <div class="app-title-banner">
     <h2>🎵 Music Theory Explorer Pro</h2>
     <p>Interactive Music Learning · Chromatic Circle · Piano · Guitar · Ear Training · MIDI Support</p>
-    <button id="startAudio" aria-label="Start audio engine">🔊 START AUDIO ENGINE</button>
+    <button id="startAudio" aria-label="Press to start audio">🔊 PRESS TO START</button>
 </div>
 
 <!-- ============================================================
@@ -1751,7 +1751,7 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
 
     <!-- TWO-COLUMN CONTROLS PANEL -->
     <div class="info-panel">
-        <h3 id="status" role="status" aria-live="polite">Click START AUDIO ENGINE to begin!</h3>
+        <h3 id="status" role="status" aria-live="polite">Press 🔊 PRESS TO START to begin!</h3>
 
         <div class="two-col-controls">
 
@@ -2312,7 +2312,7 @@ window.addEventListener('unhandledrejection', function(event) {
 
                 const el = (id) => document.getElementById(id);
                 if (el('playChromaticBtn')) el('playChromaticBtn').onclick = () => {
-                    if (!audioReady) { alert('Click START AUDIO ENGINE first!'); return; }
+                    if (!audioReady) { alert('Press PRESS TO START first!'); return; }
                     try {
                         const freqs = [261.63,277.18,293.66,311.13,329.63,349.23,369.99,392.00,415.30,440.00,466.16,493.88];
                         const beatMs  = 60000 / currentBPM;
@@ -2380,7 +2380,7 @@ window.addEventListener('unhandledrejection', function(event) {
                     updateGuitarDisplay();
                 };
                 if (el('globalPlayBtn')) el('globalPlayBtn').onclick = () => {
-                    if (!audioReady) { alert('Click START AUDIO ENGINE first!'); return; }
+                    if (!audioReady) { alert('Press PRESS TO START first!'); return; }
                     playSelection('up');
                 };
                 if (el('globalStopBtn')) el('globalStopBtn').onclick = () => {
@@ -2530,13 +2530,30 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                     audioReady = true;
                     // Set up master bus for WAV recording capture
                     window._kcmMasterBus = audioContext.createGain();
-                    window._kcmMasterBus.gain.value = 1.0;
-                    window._kcmMasterBus.connect(audioContext.destination);
+                    window._kcmMasterBus.gain.value = 0.85;
+                    // Compressor — prevents clipping on chords/arpeggios
+                    const _comp = audioContext.createDynamicsCompressor();
+                    _comp.threshold.value = -18;  // start compressing at -18dBFS
+                    _comp.knee.value      = 8;    // soft knee
+                    _comp.ratio.value     = 4;    // 4:1 ratio
+                    _comp.attack.value    = 0.003; // 3ms attack
+                    _comp.release.value   = 0.18;  // 180ms release
+                    // Limiter — hard ceiling at -1dBFS
+                    const _lim = audioContext.createDynamicsCompressor();
+                    _lim.threshold.value  = -1;
+                    _lim.knee.value       = 0;
+                    _lim.ratio.value      = 20;
+                    _lim.attack.value     = 0.001;
+                    _lim.release.value    = 0.05;
+                    window._kcmMasterBus.connect(_comp);
+                    _comp.connect(_lim);
+                    _lim.connect(audioContext.destination);
+                    window._kcmComp = _comp; window._kcmLim = _lim;
                     // Auto-load samples if a non-synth instrument is already selected
                     if (currentInstrument !== 'synth') setTimeout(() => _loadSoundFont(currentInstrument), 200);
                     const btn = document.getElementById('startAudio');
                     if (btn) {
-                        btn.textContent = '✓ AUDIO READY';
+                        btn.textContent = '✓ READY TO PLAY';
                         btn.style.background = 'linear-gradient(135deg, #27ae60 0%, #229954 100%)';
                         btn.style.boxShadow = '0 6px 25px rgba(39,174,96,0.6)';
                         btn.disabled = true;
@@ -2737,7 +2754,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 lbl.dataset.stringIdx = s;
                 lbl.setAttribute('aria-label', `${names[s]} string`);
                 lbl.onclick = () => {
-                    if (!audioReady) { alert('Click START AUDIO ENGINE first!'); return; }
+                    if (!audioReady) { alert('Press PRESS TO START first!'); return; }
                     playNote(tuning[s], octs[s], 0.8);
                 };
                 headerRow.appendChild(lbl);
@@ -2782,7 +2799,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 cell.appendChild(dot);
 
                 cell.onclick = () => {
-                    if (!audioReady) { alert('Click START AUDIO ENGINE first!'); return; }
+                    if (!audioReady) { alert('Press PRESS TO START first!'); return; }
                     playNote(tuning[s], octs[s], 0.8);
                 };
                 nutRow.appendChild(cell);
@@ -2835,7 +2852,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                     cell.appendChild(dot);
 
                     cell.onclick = () => {
-                        if (!audioReady) { alert('Click START AUDIO ENGINE first!'); return; }
+                        if (!audioReady) { alert('Press PRESS TO START first!'); return; }
                         playNote(pc, oct, 0.8);
                     };
                     row.appendChild(cell);
@@ -2850,7 +2867,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         // ── Note click handler ────────────────────────────────────
         function handleNoteClick(noteIndex, noteOctave) {
             try {
-                if (!audioReady) { alert('Please click START AUDIO ENGINE first!'); return; }
+                if (!audioReady) { alert('Press PRESS TO START first!'); return; }
                 if (typeof noteIndex !== 'number' || noteIndex < 0 || noteIndex > 11) return;
                 const _oct = (typeof noteOctave === 'number') ? noteOctave : currentOctave;
 
@@ -2900,7 +2917,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 // ANY click when size===2 resets. Clicking root while waiting for 2nd also resets.
                 if (currentLevel === '2') {
                     // Guard: audio must be ready
-                    if (!audioReady) { alert('Click START AUDIO ENGINE first!'); return; }
+                    if (!audioReady) { alert('Press PRESS TO START first!'); return; }
                     // Ensure context is running (STOP button suspends it)
                     if (audioContext.state === 'suspended') audioContext.resume();
 
@@ -3353,7 +3370,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         // ── playSelection: sequencer ───────────────────────────────
         function playSelection(mode) {
             try {
-                if (!audioReady) { alert('Click START AUDIO ENGINE first!'); return; }
+                if (!audioReady) { alert('Press PRESS TO START first!'); return; }
                 _cancelAllPlay();
                 if (selectedNotes.size === 0) { alert('No notes selected!'); return; }
 
@@ -4029,7 +4046,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         // ── Recording ─────────────────────────────────────────────
         function startRecording() {
             try {
-                if (!audioReady) { alert('Click START AUDIO ENGINE first!'); return; }
+                if (!audioReady) { alert('Press PRESS TO START first!'); return; }
                 const btn = document.getElementById('recordBtn');
                 const status = document.getElementById('recordingStatus');
                 if (!isRecording) {
@@ -4120,15 +4137,23 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 // Since all _playAt / _playSynth / _playSample connect to audioContext.destination,
                 // we redirect them through a master bus instead.
                 window._kcmMasterBus = audioContext.createGain();
-                window._kcmMasterBus.gain.value = 1.0;
-                window._kcmMasterBus.connect(audioContext.destination);
-                window._kcmMasterBus.connect(_wavDest);
+                window._kcmMasterBus.gain.value = 0.85;
+                const _comp2 = audioContext.createDynamicsCompressor();
+                _comp2.threshold.value=-18;_comp2.knee.value=8;_comp2.ratio.value=4;
+                _comp2.attack.value=0.003;_comp2.release.value=0.18;
+                const _lim2 = audioContext.createDynamicsCompressor();
+                _lim2.threshold.value=-1;_lim2.knee.value=0;_lim2.ratio.value=20;
+                _lim2.attack.value=0.001;_lim2.release.value=0.05;
+                window._kcmMasterBus.connect(_comp2);
+                _comp2.connect(_lim2);
+                _lim2.connect(audioContext.destination);
+                _lim2.connect(_wavDest);
             } catch(e) { console.error('WAV dest error:', e); }
         }
 
         function startWAVRecording() {
             try {
-                if (!audioReady) { alert('Click START AUDIO ENGINE first!'); return; }
+                if (!audioReady) { alert('Press PRESS TO START first!'); return; }
                 if (_wavRecording) { stopWAVRecording(); return; }
 
                 _ensureWAVDest();
@@ -5185,7 +5210,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
 
         function playProgression(degrees) {
             try {
-                if (!audioReady) { alert('Click START AUDIO ENGINE first!'); return; }
+                if (!audioReady) { alert('Press PRESS TO START first!'); return; }
                 _cancelAllPlay(); // stop any existing progression
                 const isMajor = currentLevel === 'harmMajor';
                 const use7th = currentHarmChordType === '7th';
@@ -5256,7 +5281,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
 
         function playAllScaleChords() {
             try {
-                if (!audioReady) { alert('Click START AUDIO ENGINE first!'); return; }
+                if (!audioReady) { alert('Press PRESS TO START first!'); return; }
                 playProgression([0,1,2,3,4,5,6]);
             } catch(e) { console.error('Play all chords error:', e); }
         }
@@ -5809,8 +5834,25 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                     await audioContext.resume();
                     audioReady = true;
                     window._kcmMasterBus = audioContext.createGain();
-                    window._kcmMasterBus.gain.value = 1.0;
-                    window._kcmMasterBus.connect(audioContext.destination);
+                    window._kcmMasterBus.gain.value = 0.85;
+                    // Compressor — prevents clipping on chords/arpeggios
+                    const _comp = audioContext.createDynamicsCompressor();
+                    _comp.threshold.value = -18;  // start compressing at -18dBFS
+                    _comp.knee.value      = 8;    // soft knee
+                    _comp.ratio.value     = 4;    // 4:1 ratio
+                    _comp.attack.value    = 0.003; // 3ms attack
+                    _comp.release.value   = 0.18;  // 180ms release
+                    // Limiter — hard ceiling at -1dBFS
+                    const _lim = audioContext.createDynamicsCompressor();
+                    _lim.threshold.value  = -1;
+                    _lim.knee.value       = 0;
+                    _lim.ratio.value      = 20;
+                    _lim.attack.value     = 0.001;
+                    _lim.release.value    = 0.05;
+                    window._kcmMasterBus.connect(_comp);
+                    _comp.connect(_lim);
+                    _lim.connect(audioContext.destination);
+                    window._kcmComp = _comp; window._kcmLim = _lim;
                 } catch(e) { console.warn('[SING] singPlayback audio init:', e); return; }
             } else if (audioContext.state === 'suspended') {
                 await audioContext.resume();
