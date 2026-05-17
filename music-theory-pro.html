@@ -1463,6 +1463,7 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
 <div class="app-title-banner">
     <h2>🎵 Music Theory Explorer Pro</h2>
     <p>Interactive Music Learning · Chromatic Circle · Piano · Guitar · Ear Training · MIDI Support</p>
+    <button id="startAudio" aria-label="Start audio engine">🔊 START AUDIO ENGINE</button>
 </div>
 
 <!-- ============================================================
@@ -1625,7 +1626,6 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
             </div>
 
             <!-- ── CONTROLS (always visible below panels) ── -->
-            <button id="startAudio" aria-label="Start audio engine">🔊 START AUDIO ENGINE</button>
 
             <div class="view-toggle" role="group" aria-label="View selector">
                 <button class="view-btn active" data-view="circle">⭕ Circle</button>
@@ -6139,7 +6139,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
 <!-- ============================================================
      FLOATING CONTROL DOCK
      ============================================================ -->
-<div id="floatingDock">
+<div id="floatingDock" class="collapsed">
     <div id="dockHandle" onclick="toggleDock()">
         <span class="dock-title">🎛 KCM Control Dock</span>
         <span id="kcmBridgeDot"
