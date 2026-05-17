@@ -5532,7 +5532,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
 
                     for (let i = 3; i < _singFdb.length - 3; i++) {
                         const freq = i * binHz;
-                        if (freq < 78 || freq > 1233) continue;  // guitar range: E2(82Hz)–fret22(1175Hz) ±5%
+                        if (freq < 80 || freq > 1233) continue;  // guitar range: E2(82Hz)–fret22(1175Hz) ±3%
                         const db = _singFdb[i];
                         if (db < peakThresh) continue;
                         if (db > _singFdb[i-1] && db > _singFdb[i-2] && db > _singFdb[i+1] && db > _singFdb[i+2]) {
