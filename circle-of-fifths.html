@@ -601,7 +601,7 @@ const renderCircle = () => {
   NOTE_ORDER.forEach((note,index)=>{
     const angle=(index*30-90)*(Math.PI/180);
     const ox=cx+outerOrbit*Math.cos(angle), oy=cy+outerOrbit*Math.sin(angle);
-    const iAngle=(index*30-180)*(Math.PI/180);
+    const iAngle=(index*30-90)*(Math.PI/180);
     const ix=cx+innerOrbit*Math.cos(iAngle), iy=cy+innerOrbit*Math.sin(iAngle);
     const kx=cx+ksSig*Math.cos(angle), ky=cy+ksSig*Math.sin(angle);
 
