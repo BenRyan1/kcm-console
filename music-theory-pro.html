@@ -1463,7 +1463,6 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
 <div class="app-title-banner">
     <h2>🎵 Music Theory Explorer Pro</h2>
     <p>Interactive Music Learning · Chromatic Circle · Piano · Guitar · Ear Training · MIDI Support</p>
-    <button id="startAudio" aria-label="Start audio engine">🔊 START AUDIO ENGINE</button>
 </div>
 
 <!-- ============================================================
@@ -1613,9 +1612,20 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                     🎼 STAFF NOTATION
                 </div>
                 <svg id="staffSVG" viewBox="0 0 220 135" preserveAspectRatio="xMidYMid meet" aria-hidden="true"></svg>
+                <div style="display:flex;gap:8px;justify-content:center;margin-top:8px;">
+                    <button onclick="document.getElementById('globalPlayBtn').click()"
+                        style="padding:6px 20px;background:linear-gradient(135deg,#27ae60,#1e8449);color:#fff;border:2px solid #27ae60;border-radius:6px;font-family:'Cinzel',serif;font-size:0.75rem;font-weight:800;letter-spacing:1px;cursor:pointer;transition:all 0.2s;"
+                        onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 16px rgba(39,174,96,0.5)'"
+                        onmouseout="this.style.transform='';this.style.boxShadow=''">▶ PLAY</button>
+                    <button onclick="document.getElementById('globalStopBtn').click()"
+                        style="padding:6px 20px;background:linear-gradient(135deg,#e74c3c,#c0392b);color:#fff;border:2px solid #e74c3c;border-radius:6px;font-family:'Cinzel',serif;font-size:0.75rem;font-weight:800;letter-spacing:1px;cursor:pointer;transition:all 0.2s;"
+                        onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 16px rgba(231,76,60,0.5)'"
+                        onmouseout="this.style.transform='';this.style.boxShadow=''">■ STOP</button>
+                </div>
             </div>
 
             <!-- ── CONTROLS (always visible below panels) ── -->
+            <button id="startAudio" aria-label="Start audio engine">🔊 START AUDIO ENGINE</button>
 
             <div class="view-toggle" role="group" aria-label="View selector">
                 <button class="view-btn active" data-view="circle">⭕ Circle</button>
@@ -6129,7 +6139,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
 <!-- ============================================================
      FLOATING CONTROL DOCK
      ============================================================ -->
-<div id="floatingDock" class="collapsed">
+<div id="floatingDock">
     <div id="dockHandle" onclick="toggleDock()">
         <span class="dock-title">🎛 KCM Control Dock</span>
         <span id="kcmBridgeDot"
