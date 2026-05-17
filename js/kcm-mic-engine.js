@@ -19,18 +19,18 @@
 
   // ── KCM 12-Color Chromatic Spectrum™ ─────────────────────────────────────────
   const NOTES = [
-    { name:'C',  flat:'C',  color:'#FFE800', tc:'#222' },
+    { name:'C',  flat:'C',  color:'#FFFF00', tc:'#222' },
     { name:'C♯', flat:'Db', color:'#FFC400', tc:'#222' },
     { name:'D',  flat:'D',  color:'#FF8000', tc:'#fff' },
-    { name:'D♯', flat:'Eb', color:'#FF4400', tc:'#fff' },
+    { name:'D♯', flat:'Eb', color:'#FF4000', tc:'#fff' },
     { name:'E',  flat:'E',  color:'#FF0000', tc:'#fff' },
-    { name:'F',  flat:'F',  color:'#CC0077', tc:'#fff' },
-    { name:'F♯', flat:'Gb', color:'#8800FF', tc:'#fff' },
-    { name:'G',  flat:'G',  color:'#4400FF', tc:'#fff' },
+    { name:'F',  flat:'F',  color:'#C4007F', tc:'#fff' },
+    { name:'F♯', flat:'Gb', color:'#8000FF', tc:'#fff' },
+    { name:'G',  flat:'G',  color:'#4000FF', tc:'#fff' },
     { name:'G♯', flat:'Ab', color:'#0000FF', tc:'#fff' },
-    { name:'A',  flat:'A',  color:'#0088FF', tc:'#fff' },
-    { name:'A♯', flat:'Bb', color:'#00FF88', tc:'#222' },
-    { name:'B',  flat:'B',  color:'#88FF00', tc:'#222' },
+    { name:'A',  flat:'A',  color:'#007FFF', tc:'#fff' },
+    { name:'A♯', flat:'Bb', color:'#00FF80', tc:'#222' },
+    { name:'B',  flat:'B',  color:'#80FF00', tc:'#222' },
   ];
 
   // ── Chord templates — longest match wins ─────────────────────────────────────
