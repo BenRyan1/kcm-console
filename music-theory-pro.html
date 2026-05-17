@@ -5247,7 +5247,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
 
         // Timing — tuned for guitar
         const _SING_HOLD_GAP   = 250;   // ms silence before committing note
-        const _SING_MIN_DUR    = 100;   // ms minimum duration — kills pick noise
+        const _SING_MIN_DUR    = 120;   // ms minimum duration — kills pick noise and resonance transients
         const _SING_COOLDOWN   = 40;    // ms between RAF detections
 
         // Observatory FFT constants
@@ -5393,7 +5393,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
             // Broadcast to Console + sibling panels
             try {
                 const noteNames = ['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
-                const kcmHex   = ['#FFE800','#FFC400','#FF8000','#FF4400','#FF0000','#CC0077','#8800FF','#4400FF','#0000FF','#0088FF','#00FF88','#88FF00'];
+                const kcmHex   = ['#FFFF00','#FFC400','#FF8000','#FF4000','#FF0000','#C4007F','#8000FF','#4000FF','#0000FF','#007FFF','#00FF80','#80FF00'];
                 const payload  = { root: noteNames[pc], rootIndex: pc, color: kcmHex[pc], hz: freq, activeNotes:[pc], source:'music-theory-pro-sing', micActive:true };
                 const msg = { type:'KCM_STATE', payload };
                 try { window.parent.postMessage(msg,'*'); } catch(_) {}
@@ -5468,13 +5468,19 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 _singTdb    = new Float32Array(_SING_FFT);
                 _singFdb    = new Float32Array(_singAnalyser.frequencyBinCount);
                 _singSmooth = new Array(12).fill(0);
-                _singLockNote = null; _singLockCount = 0; _singLockFreq = 0; _singLockFreq = 0;
+                _singLockNote = null; _singLockCount = 0; _singLockFreq = 0;
 
                 _singActive = true;
                 if (btn) { btn.textContent = '⏹ STOP LISTENING'; btn.style.background = 'linear-gradient(135deg,#e74c3c,#922b21)'; btn.style.borderColor = '#e74c3c'; }
-                const recBtn = document.getElementById('singRecordBtn');
-                if (recBtn) { recBtn.disabled = false; recBtn.style.background = 'linear-gradient(135deg,#c0392b,#922b21)'; recBtn.style.borderColor = '#e74c3c'; recBtn.style.color = '#fff'; }
-                if (status) { status.textContent = '🎤 Listening — sing or play a note!'; status.style.color = '#00FF80'; }
+                if (status) { status.textContent = '🎤 Warming up… (hold on)'; status.style.color = '#F4D03F'; }
+                // 800ms warmup — lets mic/encoder stabilize before RECORD is available
+                // This prevents phantom notes from being captured before audio is truly live
+                setTimeout(() => {
+                    if (!_singActive) return;
+                    const recBtn = document.getElementById('singRecordBtn');
+                    if (recBtn) { recBtn.disabled = false; recBtn.style.background = 'linear-gradient(135deg,#c0392b,#922b21)'; recBtn.style.borderColor = '#e74c3c'; recBtn.style.color = '#fff'; }
+                    if (status) { status.textContent = '🎤 Listening — sing or play a note!'; status.style.color = '#00FF80'; }
+                }, 800);
 
                 // ── Observatory RAF detection loop ──────────────────────
                 function _singLoop() {
@@ -5526,7 +5532,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
 
                     for (let i = 3; i < _singFdb.length - 3; i++) {
                         const freq = i * binHz;
-                        if (freq < 70 || freq > 1400) continue;
+                        if (freq < 78 || freq > 1233) continue;  // guitar range: E2(82Hz)–fret22(1175Hz) ±5%
                         const db = _singFdb[i];
                         if (db < peakThresh) continue;
                         if (db > _singFdb[i-1] && db > _singFdb[i-2] && db > _singFdb[i+1] && db > _singFdb[i+2]) {
@@ -5642,7 +5648,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         function stopSingMode() {
             _singActive = false;
             _singLastNote = -1;
-            _singLockNote = null; _singLockCount = 0; _singLockFreq = 0; _singLockFreq = 0;
+            _singLockNote = null; _singLockCount = 0; _singLockFreq = 0;
             clearTimeout(_singHeldTimer);
             if (_singRaf) { cancelAnimationFrame(_singRaf); _singRaf = null; }
             if (_singRecording) { _singCommitHeld(Date.now()); _singRecording = false; }
@@ -5703,9 +5709,21 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         }
 
         // ── Playback captured events through the KCM synth ──
-        function singPlayback() {
+        async function singPlayback() {
             if (_singEvents.length === 0) return;
-            if (!audioReady) { alert('Click START AUDIO ENGINE first!'); return; }
+            // Auto-init audio engine — no blocking alert needed
+            if (!audioReady || !audioContext) {
+                try {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: 'interactive' });
+                    await audioContext.resume();
+                    audioReady = true;
+                    window._kcmMasterBus = audioContext.createGain();
+                    window._kcmMasterBus.gain.value = 1.0;
+                    window._kcmMasterBus.connect(audioContext.destination);
+                } catch(e) { console.warn('[SING] singPlayback audio init:', e); return; }
+            } else if (audioContext.state === 'suspended') {
+                await audioContext.resume();
+            }
             const t0 = _singEvents[0].startTs;
             _singEvents.forEach(e => {
                 const delayMs = e.startTs - t0;
