@@ -1,0 +1,24 @@
+User-agent: *
+
+# ── Private / gated pages — never index ───────────────────
+Disallow: /offerings.html
+Disallow: /gate.html
+Disallow: /auth-guard-snippet.html
+Disallow: /mtp-fixed.html
+Disallow: /music-theory-pro-MASTER.html
+Disallow: /indexfor egt.html
+
+# ── Internal / dev files ──────────────────────────────────
+Disallow: /modal-stencil-player.html
+Disallow: /KCM-CREPE-Integration-Spec.html
+Disallow: /KCM-Yamaha-OnePager.html
+
+# ── Allow everything else (public apps) ───────────────────
+Allow: /music-theory-pro.html
+Allow: /kcm-chromatic-universe.html
+Allow: /kcm-sound-observatory.html
+Allow: /kcm-clock-wheel.html
+Allow: /circle-of-fifths.html
+Allow: /kcm-midi-bridge.html
+
+Sitemap: https://console.keyscodesandmodes.com/sitemap.xml
