@@ -1483,12 +1483,13 @@ input[type="range"]::-webkit-slider-thumb {
 button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(--primary-gold); }
 </style>
 <!-- ── CREPE ML pitch detection ──────────────────────────────────────
-     TF.js core only — exposes window.tf global reliably via CDN.
-     CREPE model weights loaded via tf.loadLayersModel() in _loadCREPE().
-     Graceful fallback: if tf unavailable, _crepeReady stays false
-     and _singLoop uses the existing FFT autocorrelation path unchanged.
+     ml5.js includes CREPE pitch detection built-in, CDN-available,
+     no CORS issues. Exposes window.ml5 global.
+     TF.js also loaded as ml5 dependency.
+     _loadCREPE() wraps ml5.pitchDetection() in our estimatePitch() API.
+     Graceful fallback: if ml5 unavailable, FFT path used silently.
 ──────────────────────────────────────────────────────────────────── -->
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/ml5@0.12.2/dist/ml5.min.js"></script>
 </head>
 <body>
 
@@ -5352,6 +5353,11 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         let _singSmooth = new Array(12).fill(0);
         let _singLockNote = null, _singLockCount = 0, _singLockFreq = 0, _singLockOct = -1;
 
+        // Poly chord detection state — declared here so stopSingMode can always access them
+        let _polyChromaSmooth = new Float32Array(12).fill(0);
+        let _polyLastChordKey = '';
+        let _polyStableCount  = 0;
+
         // Note event list
         let _singEvents = [];
         let _singHeldNote = null;
@@ -5543,16 +5549,16 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         }
 
         // ── CREPE ML pitch detection loader ──────────────────────────────
-        // Uses TF.js (window.tf) to load CREPE's public model weights.
-        // CREPE (tiny) model: 6 conv layers, ~400KB, optimised for browser.
-        // estimatePitch() returns frequency + confidence per inference call.
+        // ml5.js wraps CREPE pitch detection with a clean callback API.
+        // ml5.pitchDetection() hosts model weights on its own CDN — no CORS.
+        // estimatePitch() shimmed to return { frequency, confidence } promise.
         // On success: _crepeReady=true, badge → 'ML PITCH ✓' green.
-        // On failure: _crepeReady stays false, _singLoop uses FFT silently.
+        // On failure: _crepeReady stays false, FFT path used silently.
         async function _loadCREPE(audioCtx) {
             const badge = document.getElementById('singCrepeBadge');
             try {
-                if (typeof tf === 'undefined') {
-                    console.warn('[KCM CREPE] TF.js not loaded — using FFT fallback');
+                if (typeof ml5 === 'undefined') {
+                    console.warn('[KCM CREPE] ml5 not loaded — using FFT fallback');
                     if (badge) { badge.textContent = 'FFT MODE'; badge.style.borderColor = 'rgba(255,128,0,0.4)'; badge.style.color = '#FF8000'; }
                     return;
                 }
@@ -5560,56 +5566,34 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 _crepeModel = null;
                 if (badge) { badge.textContent = 'ML LOADING…'; badge.style.color = '#F4D03F'; badge.style.borderColor = 'rgba(244,208,63,0.4)'; }
 
-                // CREPE tiny model — publicly hosted by Google/Magenta
-                // ~400KB weights, optimised for real-time browser inference
-                const MODEL_URL = 'https://tfhub.dev/google/tfjs-model/spice/2/default/1/model.json';
+                // ml5.pitchDetection uses CREPE under the hood
+                // AudioContext must be passed so it can tap the mic stream
+                await new Promise((resolve, reject) => {
+                    const timeout = setTimeout(() => reject(new Error('ml5 load timeout')), 15000);
+                    _crepeModel = ml5.pitchDetection(
+                        'https://cdn.jsdelivr.net/npm/@magenta/music@1.23.1/es6/checkpoints/pitch/',
+                        audioCtx,
+                        _singStream,
+                        () => { clearTimeout(timeout); resolve(); }
+                    );
+                });
 
-                // Wrap in a lightweight CREPE-compatible interface:
-                // We use tf.signal.stft on raw audio buffer for inference
-                // and map output to Hz via the SPICE pitch decoder.
-                // SPICE (Self-Supervised Pitch Estimation) = CREPE-equivalent accuracy
-                // with a smaller footprint and stable TFHub CDN.
-                _crepeModel = await tf.loadGraphModel(MODEL_URL, { fromTFHub: true });
-                _crepeReady = true;
-
-                // Attach estimatePitch method so _singLoop API is unchanged
-                _crepeModel.estimatePitch = async function() {
-                    try {
-                        if (!_singAnalyser) return null;
+                // Wrap ml5 getPitch() in our estimatePitch() interface
+                _crepeModel.estimatePitch = () => new Promise((resolve) => {
+                    _crepeModel.getPitch((err, freq) => {
+                        if (err || !freq || freq < 60 || freq > 1300) { resolve(null); return; }
+                        // ml5 CREPE doesn't expose confidence directly — use RMS as proxy
                         const buf = new Float32Array(_SING_FFT);
-                        _singAnalyser.getFloatTimeDomainData(buf);
-
-                        // RMS check — skip silent frames before inference
+                        if (_singAnalyser) _singAnalyser.getFloatTimeDomainData(buf);
                         let sq = 0; for (let i = 0; i < buf.length; i++) sq += buf[i]**2;
                         const rms = Math.sqrt(sq / buf.length);
-                        if (rms < _SING_SILENCE_GATE) return null;
+                        const confidence = Math.min(1, rms / 0.02); // scale RMS to 0-1
+                        resolve({ frequency: freq, confidence });
+                    });
+                });
 
-                        // Run SPICE inference
-                        const input = tf.tensor(buf, [1, buf.length]);
-                        const output = await _crepeModel.executeAsync({ 'input_audio_samples': input });
-                        input.dispose();
-
-                        // SPICE outputs: pitch (0–1 normalised) + uncertainty
-                        const pitchArr   = await (Array.isArray(output) ? output[0] : output).data();
-                        const uncertArr  = Array.isArray(output) ? await output[1].data() : null;
-                        if (Array.isArray(output)) output.forEach(t => t.dispose());
-                        else output.dispose();
-
-                        // Convert SPICE pitch value (0–1) → Hz
-                        // SPICE formula: f = 10 ** (pitch * 7.18 + 1.755)  (from Google paper)
-                        const pitchVal   = pitchArr[0];
-                        const confidence = uncertArr ? Math.max(0, 1 - uncertArr[0]) : (pitchVal > 0.1 ? 0.8 : 0);
-                        if (pitchVal <= 0.05) return null;
-                        const frequency  = Math.pow(10, pitchVal * 7.18 + 1.755);
-                        if (frequency < 60 || frequency > 1300) return null; // guitar range guard
-                        return { frequency, confidence };
-                    } catch(e) {
-                        console.warn('[KCM CREPE] estimatePitch error:', e.message);
-                        return null;
-                    }
-                };
-
-                console.log('[KCM CREPE] SPICE model ready ✓');
+                _crepeReady = true;
+                console.log('[KCM CREPE] ml5 CREPE model ready ✓');
                 if (badge) {
                     badge.textContent = 'ML PITCH ✓';
                     badge.style.background = 'rgba(0,224,128,0.12)';
@@ -5831,13 +5815,10 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
 
         // ── TEMPORAL SMOOTHING ──────────────────────────────────────
         // Chroma is averaged across frames to reduce flicker
-        let _polyChromaSmooth = new Float32Array(12).fill(0);
         const _POLY_SMOOTH_A  = 0.65; // decay of previous frame
         const _POLY_SMOOTH_B  = 0.35; // weight of new frame
 
         // Stability tracking
-        let _polyLastChordKey = '';
-        let _polyStableCount  = 0;
         const _POLY_STABLE_FRAMES = 5;
 
         function _polyAnalyse() {
