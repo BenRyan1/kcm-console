@@ -578,7 +578,7 @@ nav a.active { color: var(--primary-teal); }
     transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
 }
 #floatingDock.collapsed {
-    transform: translateX(-50%) translateY(calc(100% - 48px));
+    transform: translateX(-50%) translateY(calc(100% - 36px));
 }
 #dockHandle {
     display: flex;
@@ -586,12 +586,11 @@ nav a.active { color: var(--primary-teal); }
     justify-content: space-between;
     background: linear-gradient(90deg,#005555 0%,#008080 50%,#005555 100%);
     border-radius: 12px 12px 0 0;
-    padding: 10px 18px;
+    padding: 6px 18px;
     cursor: pointer;
     user-select: none;
-    border: 1px solid rgba(0,255,255,0.3);
+    border: 1px solid rgba(0,255,255,0.2);
     border-bottom: none;
-    box-shadow: 0 -4px 20px rgba(0,128,128,0.5);
 }
 #dockHandle .dock-title { font-family:var(--font-display); font-size:0.65rem; font-weight:800; letter-spacing:1.5px; text-transform:uppercase; color:#fff; }
 #dockHandle .dock-arrow { font-size:0.75rem; transition:transform 0.3s; color:rgba(255,255,255,0.8); }
@@ -1194,63 +1193,16 @@ select option { background: #1a1a2e; color: white; }
 /* ============================================================
    PROGRESSION CONTROLS
    ============================================================ */
-.harm-hover-wrap {
-    position: relative;
-    display: inline-block;
-}
 .progression-controls {
-    visibility: hidden;
-    opacity: 0;
-    pointer-events: none;
-    position: absolute;
-    bottom: calc(100% + 4px);
-    left: 50%;
-    transform: translateX(-50%);
-    width: 820px;
-    max-width: 92vw;
-    background: rgba(8,8,20,0.97);
-    padding: 1.25rem 1.5rem;
+    display: none;
+    background: rgba(0,0,0,0.5);
+    padding: 1.5rem 1.75rem;
     border-radius: 16px;
-    border: 2px solid rgba(244,208,63,0.45);
-    box-shadow: 0 -8px 40px rgba(0,0,0,0.7), 0 0 0 1px rgba(244,208,63,0.1);
-    z-index: 9000;
-    transition: opacity 0.2s ease, visibility 0.2s ease;
-    /* invisible bridge fills gap between tooltip and button so mouse doesnt escape */
-    padding-bottom: 20px;
+    margin: 1rem auto;
+    max-width: 1000px;
+    border: 2px solid rgba(244,208,63,0.3);
+    box-shadow: 0 6px 25px rgba(0,0,0,0.4);
 }
-.progression-controls::before {
-    content: "";
-    position: absolute;
-    bottom: -14px;
-    left: 0;
-    width: 100%;
-    height: 14px;
-}
-.progression-controls::after {
-    content: "";
-    position: absolute;
-    bottom: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-    border: 10px solid transparent;
-    border-top-color: rgba(244,208,63,0.45);
-    border-bottom: none;
-}
-.progression-controls.prog-hidden {
-    visibility: hidden !important;
-    opacity: 0 !important;
-    pointer-events: none !important;
-}
-/* Show on hover over EITHER the button OR the tooltip itself */
-.harm-hover-wrap:hover .progression-controls,
-.progression-controls:hover {
-    visibility: visible;
-    opacity: 1;
-    pointer-events: auto;
-}
-/* progression pill buttons — fix text spacing */
-.progression-buttons { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
-.prog-btn-label { font-size:0.6rem; opacity:0.65; display:block; text-align:center; margin-top:2px; letter-spacing:0.5px; }
 .progression-controls h4 {
     margin: 0 0 1rem 0;
     text-align: center;
@@ -1511,7 +1463,7 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
 <div class="app-title-banner">
     <h2>🎵 Music Theory Explorer Pro</h2>
     <p>Interactive Music Learning · Chromatic Circle · Piano · Guitar · Ear Training · MIDI Support</p>
-    <button id="startAudio" aria-label="Press to start audio">🔊 PRESS TO START</button>
+    <button id="startAudio" aria-label="Start audio engine">🔊 START AUDIO ENGINE</button>
 </div>
 
 <!-- ============================================================
@@ -1628,13 +1580,6 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                         <div style="display:flex;justify-content:space-between;font-size:0.58rem;color:#555;margin-top:2px;"><span>♭ Flat</span><span style="color:#00FF80;">● In Tune</span><span>Sharp ♯</span></div>
                     </div>
 
-                    <!-- Polyphonic chord display -->
-                    <div id="polyChordDisplay" style="display:none;margin:0 auto 0.75rem;max-width:480px;background:rgba(0,0,0,0.35);border:2px solid rgba(244,208,63,0.3);border-radius:14px;padding:0.75rem 1rem;text-align:center;">
-                        <div style="font-size:0.5rem;font-weight:700;letter-spacing:1.5px;color:var(--primary-gold);text-transform:uppercase;margin-bottom:6px;">🎸 CHORD DETECTED</div>
-                        <div id="polyChordName" style="font-family:var(--font-display);font-size:1.6rem;font-weight:900;color:var(--primary-gold);letter-spacing:2px;margin-bottom:4px;">—</div>
-                        <div id="polyChordNotes" style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:6px;"></div>
-                    </div>
-
                     <!-- Control buttons row -->
                     <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:0.75rem;">
                         <button id="singStartBtn" style="padding:0.65rem 1.5rem;font-family:var(--font-display);font-size:0.82rem;font-weight:800;background:linear-gradient(135deg,#008080,#005555);border:2px solid #008080;border-radius:12px;color:#fff;cursor:pointer;letter-spacing:1px;transition:all 0.2s;">🎤 START LISTENING</button>
@@ -1717,20 +1662,7 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                 <button class="level-btn"         data-level="6"         title="6 Notes">Whole Tone</button>
                 <button class="level-btn"         data-level="scales"    title="7 Notes">Scales</button>
                 <button class="level-btn"         data-level="modes"     title="7 Notes · Modes">Modes</button>
-                <div class="harm-hover-wrap">
-                    <button class="level-btn"         data-level="harm"      title="Harmonized">Harmonized</button>
-                    <!-- HOVER TOOLTIP: Chord Progressions -->
-                    <div class="progression-controls" id="progressionControls" aria-live="polite">
-                        <h4>🎼 Chord Progressions in Key of <span id="progressionKey">C</span></h4>
-                        <div style="text-align:center; font-size:0.75rem; opacity:0.8; margin-bottom:0.85rem; font-weight:600;">
-                            Using <span id="progressionChordType">Triads</span> · Scale: <span id="progressionScaleType">Major</span>
-                        </div>
-                        <div style="text-align:center; margin-bottom:0.85rem;">
-                            <button class="play-btn" id="playAllChordsBtn" style="margin:0 auto; display:inline-flex;">🎹 Play All Scale Chords</button>
-                        </div>
-                        <div class="progression-buttons" id="progressionButtons"></div>
-                    </div>
-                </div>
+                <button class="level-btn"         data-level="harm"      title="Harmonized">Harmonized</button>
                 <button class="level-btn"         data-level="freeplay"  title="Free Play">Free Play</button>
             </div>
 
@@ -1746,7 +1678,16 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
     </div><!-- end info-panel -->
 
     <!-- PROGRESSION CONTROLS — shown only for Harmonized Major/Minor -->
-    <!-- progressionControls moved into harm-hover-wrap tooltip -->
+    <div class="progression-controls" id="progressionControls" aria-live="polite" style="display:none;">
+        <h4>🎼 Chord Progressions in Key of <span id="progressionKey">C</span></h4>
+        <div style="text-align:center; font-size:0.75rem; opacity:0.8; margin-bottom:0.85rem; font-weight:600;">
+            Using <span id="progressionChordType">Triads</span> · Scale: <span id="progressionScaleType">Major</span>
+        </div>
+        <div style="text-align:center; margin-bottom:0.85rem;">
+            <button class="play-btn" id="playAllChordsBtn" style="margin:0 auto; display:inline-flex;">🎹 Play All Scale Chords</button>
+        </div>
+        <div class="progression-buttons" id="progressionButtons"></div>
+    </div>
 
     <!-- CHORD VOICING DISPLAY PANEL — shown below progressions in Harmonized mode -->
     <div id="chordVoicingPanel" style="display:none; margin:1rem auto; max-width:860px; background:rgba(0,0,0,0.35); border:2px solid rgba(0,128,128,0.3); border-radius:16px; padding:1.25rem 1.5rem;">
@@ -1758,7 +1699,7 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
 
     <!-- TWO-COLUMN CONTROLS PANEL -->
     <div class="info-panel">
-        <h3 id="status" role="status" aria-live="polite">Press 🔊 PRESS TO START to begin!</h3>
+        <h3 id="status" role="status" aria-live="polite">Click START AUDIO ENGINE to begin!</h3>
 
         <div class="two-col-controls">
 
@@ -2287,7 +2228,7 @@ window.addEventListener('unhandledrejection', function(event) {
                         if (freeplayHint) freeplayHint.style.display = currentLevel === 'freeplay' ? 'block' : 'none';
                         const progressionControls = document.getElementById('progressionControls');
                         if ((currentLevel === 'harmMajor' || currentLevel === 'harmMinor') && currentView !== 'ear') {
-                            progressionControls.classList.remove('prog-hidden');
+                            progressionControls.style.display = 'block';
                             updateProgressionButtons();
                             const keySpan = document.getElementById('progressionKey');
                             const typeSpan = document.getElementById('progressionChordType');
@@ -2296,7 +2237,7 @@ window.addEventListener('unhandledrejection', function(event) {
                             if (typeSpan) typeSpan.textContent = currentHarmChordType === '7th' ? 'Seventh Chords (4-note)' : 'Triads (3-note)';
                             if (scaleSpan) scaleSpan.textContent = currentLevel === 'harmMinor' ? 'Natural Minor' : 'Major';
                         } else {
-                            progressionControls.classList.add('prog-hidden');
+                            progressionControls.style.display = 'none';
                         }
                         if (currentLevel === 'freeplay') {
                             multiSelectNotes.clear(); selectedNotes = new Set(); window.currentPatternIntervals = [];
@@ -2319,7 +2260,7 @@ window.addEventListener('unhandledrejection', function(event) {
 
                 const el = (id) => document.getElementById(id);
                 if (el('playChromaticBtn')) el('playChromaticBtn').onclick = () => {
-                    if (!audioReady) { alert('Press PRESS TO START first!'); return; }
+                    if (!audioReady) { alert('Click START AUDIO ENGINE first!'); return; }
                     try {
                         const freqs = [261.63,277.18,293.66,311.13,329.63,349.23,369.99,392.00,415.30,440.00,466.16,493.88];
                         const beatMs  = 60000 / currentBPM;
@@ -2387,7 +2328,7 @@ window.addEventListener('unhandledrejection', function(event) {
                     updateGuitarDisplay();
                 };
                 if (el('globalPlayBtn')) el('globalPlayBtn').onclick = () => {
-                    if (!audioReady) { alert('Press PRESS TO START first!'); return; }
+                    if (!audioReady) { alert('Click START AUDIO ENGINE first!'); return; }
                     playSelection('up');
                 };
                 if (el('globalStopBtn')) el('globalStopBtn').onclick = () => {
@@ -2537,30 +2478,13 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                     audioReady = true;
                     // Set up master bus for WAV recording capture
                     window._kcmMasterBus = audioContext.createGain();
-                    window._kcmMasterBus.gain.value = 0.85;
-                    // Compressor — prevents clipping on chords/arpeggios
-                    const _comp = audioContext.createDynamicsCompressor();
-                    _comp.threshold.value = -18;  // start compressing at -18dBFS
-                    _comp.knee.value      = 8;    // soft knee
-                    _comp.ratio.value     = 4;    // 4:1 ratio
-                    _comp.attack.value    = 0.003; // 3ms attack
-                    _comp.release.value   = 0.18;  // 180ms release
-                    // Limiter — hard ceiling at -1dBFS
-                    const _lim = audioContext.createDynamicsCompressor();
-                    _lim.threshold.value  = -1;
-                    _lim.knee.value       = 0;
-                    _lim.ratio.value      = 20;
-                    _lim.attack.value     = 0.001;
-                    _lim.release.value    = 0.05;
-                    window._kcmMasterBus.connect(_comp);
-                    _comp.connect(_lim);
-                    _lim.connect(audioContext.destination);
-                    window._kcmComp = _comp; window._kcmLim = _lim;
+                    window._kcmMasterBus.gain.value = 1.0;
+                    window._kcmMasterBus.connect(audioContext.destination);
                     // Auto-load samples if a non-synth instrument is already selected
                     if (currentInstrument !== 'synth') setTimeout(() => _loadSoundFont(currentInstrument), 200);
                     const btn = document.getElementById('startAudio');
                     if (btn) {
-                        btn.textContent = '✓ READY TO PLAY';
+                        btn.textContent = '✓ AUDIO READY';
                         btn.style.background = 'linear-gradient(135deg, #27ae60 0%, #229954 100%)';
                         btn.style.boxShadow = '0 6px 25px rgba(39,174,96,0.6)';
                         btn.disabled = true;
@@ -2761,7 +2685,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 lbl.dataset.stringIdx = s;
                 lbl.setAttribute('aria-label', `${names[s]} string`);
                 lbl.onclick = () => {
-                    if (!audioReady) { alert('Press PRESS TO START first!'); return; }
+                    if (!audioReady) { alert('Click START AUDIO ENGINE first!'); return; }
                     playNote(tuning[s], octs[s], 0.8);
                 };
                 headerRow.appendChild(lbl);
@@ -2806,7 +2730,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 cell.appendChild(dot);
 
                 cell.onclick = () => {
-                    if (!audioReady) { alert('Press PRESS TO START first!'); return; }
+                    if (!audioReady) { alert('Click START AUDIO ENGINE first!'); return; }
                     playNote(tuning[s], octs[s], 0.8);
                 };
                 nutRow.appendChild(cell);
@@ -2859,7 +2783,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                     cell.appendChild(dot);
 
                     cell.onclick = () => {
-                        if (!audioReady) { alert('Press PRESS TO START first!'); return; }
+                        if (!audioReady) { alert('Click START AUDIO ENGINE first!'); return; }
                         playNote(pc, oct, 0.8);
                     };
                     row.appendChild(cell);
@@ -2874,7 +2798,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         // ── Note click handler ────────────────────────────────────
         function handleNoteClick(noteIndex, noteOctave) {
             try {
-                if (!audioReady) { alert('Press PRESS TO START first!'); return; }
+                if (!audioReady) { alert('Please click START AUDIO ENGINE first!'); return; }
                 if (typeof noteIndex !== 'number' || noteIndex < 0 || noteIndex > 11) return;
                 const _oct = (typeof noteOctave === 'number') ? noteOctave : currentOctave;
 
@@ -2924,7 +2848,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 // ANY click when size===2 resets. Clicking root while waiting for 2nd also resets.
                 if (currentLevel === '2') {
                     // Guard: audio must be ready
-                    if (!audioReady) { alert('Press PRESS TO START first!'); return; }
+                    if (!audioReady) { alert('Click START AUDIO ENGINE first!'); return; }
                     // Ensure context is running (STOP button suspends it)
                     if (audioContext.state === 'suspended') audioContext.resume();
 
@@ -3377,7 +3301,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         // ── playSelection: sequencer ───────────────────────────────
         function playSelection(mode) {
             try {
-                if (!audioReady) { alert('Press PRESS TO START first!'); return; }
+                if (!audioReady) { alert('Click START AUDIO ENGINE first!'); return; }
                 _cancelAllPlay();
                 if (selectedNotes.size === 0) { alert('No notes selected!'); return; }
 
@@ -4053,7 +3977,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         // ── Recording ─────────────────────────────────────────────
         function startRecording() {
             try {
-                if (!audioReady) { alert('Press PRESS TO START first!'); return; }
+                if (!audioReady) { alert('Click START AUDIO ENGINE first!'); return; }
                 const btn = document.getElementById('recordBtn');
                 const status = document.getElementById('recordingStatus');
                 if (!isRecording) {
@@ -4144,23 +4068,15 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 // Since all _playAt / _playSynth / _playSample connect to audioContext.destination,
                 // we redirect them through a master bus instead.
                 window._kcmMasterBus = audioContext.createGain();
-                window._kcmMasterBus.gain.value = 0.85;
-                const _comp2 = audioContext.createDynamicsCompressor();
-                _comp2.threshold.value=-18;_comp2.knee.value=8;_comp2.ratio.value=4;
-                _comp2.attack.value=0.003;_comp2.release.value=0.18;
-                const _lim2 = audioContext.createDynamicsCompressor();
-                _lim2.threshold.value=-1;_lim2.knee.value=0;_lim2.ratio.value=20;
-                _lim2.attack.value=0.001;_lim2.release.value=0.05;
-                window._kcmMasterBus.connect(_comp2);
-                _comp2.connect(_lim2);
-                _lim2.connect(audioContext.destination);
-                _lim2.connect(_wavDest);
+                window._kcmMasterBus.gain.value = 1.0;
+                window._kcmMasterBus.connect(audioContext.destination);
+                window._kcmMasterBus.connect(_wavDest);
             } catch(e) { console.error('WAV dest error:', e); }
         }
 
         function startWAVRecording() {
             try {
-                if (!audioReady) { alert('Press PRESS TO START first!'); return; }
+                if (!audioReady) { alert('Click START AUDIO ENGINE first!'); return; }
                 if (_wavRecording) { stopWAVRecording(); return; }
 
                 _ensureWAVDest();
@@ -5117,8 +5033,8 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 updateStaffNotation(staffNotes.length > 0 ? staffNotes : [rootNote]);
                 const pc = el('progressionControls');
                 if ((currentLevel==='harmMajor'||currentLevel==='harmMinor') && currentView!=='ear') {
-                    if (pc) { pc.classList.remove('prog-hidden'); updateProgressionButtons(); }
-                } else { if (pc) pc.classList.add('prog-hidden'); }
+                    if (pc) { pc.style.display='block'; updateProgressionButtons(); }
+                } else { if (pc) pc.style.display='none'; }
             } catch(e) { console.error('Update view error:', e); }
         }
 
@@ -5206,8 +5122,8 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 progressions.forEach(prog => {
                     const btn = document.createElement('button');
                     btn.className = 'level-btn';
-                    btn.style.cssText = 'padding:8px 16px;font-size:0.72rem;min-width:auto;text-align:center;line-height:1.2;';
-                    btn.innerHTML = `<span style="font-weight:800;letter-spacing:0.5px;">${prog.name}</span><span style="display:block;font-size:0.58rem;opacity:0.65;margin-top:2px;font-weight:500;letter-spacing:0.3px;">${prog.desc}</span>`;
+                    btn.style.cssText = 'padding:8px 14px;font-size:0.68rem;min-width:auto;';
+                    btn.innerHTML = `${prog.name}<br><small style="opacity:0.75;font-size:0.58rem;">${prog.desc}</small>`;
                     btn.onclick = () => playProgression(prog.degrees); container.appendChild(btn);
                 });
             } catch(e) { console.error('Progression buttons error:', e); }
@@ -5217,7 +5133,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
 
         function playProgression(degrees) {
             try {
-                if (!audioReady) { alert('Press PRESS TO START first!'); return; }
+                if (!audioReady) { alert('Click START AUDIO ENGINE first!'); return; }
                 _cancelAllPlay(); // stop any existing progression
                 const isMajor = currentLevel === 'harmMajor';
                 const use7th = currentHarmChordType === '7th';
@@ -5288,7 +5204,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
 
         function playAllScaleChords() {
             try {
-                if (!audioReady) { alert('Press PRESS TO START first!'); return; }
+                if (!audioReady) { alert('Click START AUDIO ENGINE first!'); return; }
                 playProgression([0,1,2,3,4,5,6]);
             } catch(e) { console.error('Play all chords error:', e); }
         }
@@ -5579,252 +5495,9 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 }, 800);
 
                 // ── Observatory RAF detection loop ──────────────────────
-
-        // ══════════════════════════════════════════════════════════════
-        // POLYPHONIC CHORD DETECTION ENGINE
-        // Transplanted from polyphonic-guitar-detector.html
-        // Runs alongside monophonic SING loop — detects full chords
-        // ══════════════════════════════════════════════════════════════
-
-        // ══════════════════════════════════════════════════════════════
-        // POLYPHONIC CHORD DETECTION ENGINE v2
-        // HPS (Harmonic Product Spectrum) + Chroma Vectors
-        // ══════════════════════════════════════════════════════════════
-
-        const _POLY_NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
-
-        // Extended chord library — scored by commonality (higher = prefer)
-        const _POLY_CHORDS = [
-            // Power / dyads
-            {n:'Power 5',  p:[0,7],          score:1},
-            // Triads
-            {n:'Major',    p:[0,4,7],         score:10},
-            {n:'Minor',    p:[0,3,7],         score:10},
-            {n:'Sus2',     p:[0,2,7],         score:7},
-            {n:'Sus4',     p:[0,5,7],         score:7},
-            {n:'Diminished',p:[0,3,6],        score:6},
-            {n:'Augmented', p:[0,4,8],        score:5},
-            // 7ths
-            {n:'Major 7',  p:[0,4,7,11],      score:9},
-            {n:'Dom 7',    p:[0,4,7,10],      score:9},
-            {n:'Minor 7',  p:[0,3,7,10],      score:9},
-            {n:'Min/Maj 7',p:[0,3,7,11],      score:7},
-            {n:'Half-Dim', p:[0,3,6,10],      score:6},
-            {n:'Dim 7',    p:[0,3,6,9],       score:6},
-            {n:'Dom 7sus4',p:[0,5,7,10],      score:6},
-            // 6ths
-            {n:'Major 6',  p:[0,4,7,9],       score:7},
-            {n:'Minor 6',  p:[0,3,7,9],       score:7},
-            // Add chords
-            {n:'Add 9',    p:[0,2,4,7],       score:7},
-            {n:'Min Add9', p:[0,2,3,7],       score:6},
-            // 9ths
-            {n:'Major 9',  p:[0,2,4,7,11],    score:8},
-            {n:'Dom 9',    p:[0,2,4,7,10],    score:8},
-            {n:'Minor 9',  p:[0,2,3,7,10],    score:8},
-        ];
-
-        // ── HPS: Harmonic Product Spectrum ─────────────────────────
-        // Multiplies spectrum by downsampled versions (÷2, ÷3, ÷4, ÷5)
-        // Fundamentals reinforce, harmonics cancel — far better than peak-picking
-        function _polyHPS(floatData, sr, bufLen, numHarmonics=5) {
-            const hps = new Float32Array(bufLen);
-            // Convert dB to linear magnitude
-            for (let i = 0; i < bufLen; i++) {
-                hps[i] = Math.pow(10, floatData[i] / 20);
-            }
-            // Multiply by downsampled copies
-            for (let h = 2; h <= numHarmonics; h++) {
-                for (let i = 0; i < Math.floor(bufLen / h); i++) {
-                    hps[i] *= Math.pow(10, floatData[i * h] / 20);
-                }
-            }
-            return hps;
-        }
-
-        // ── CHROMA VECTOR ───────────────────────────────────────────
-        // Collapses all octaves into 12 pitch classes
-        // Eliminates octave confusion — C2 and C4 both vote for 'C'
-        function _polyChroma(hpsData, sr, bufLen) {
-            const chroma = new Float32Array(12).fill(0);
-            const binHz  = sr / (bufLen * 2);
-
-            for (let i = 2; i < bufLen; i++) {
-                const freq = i * binHz;
-                if (freq < 60 || freq > 1400) continue; // guitar range
-                if (hpsData[i] <= 0) continue;
-                // Map frequency to pitch class
-                const midi = 69 + 12 * Math.log2(freq / 440);
-                const pc   = ((Math.round(midi) % 12) + 12) % 12;
-                chroma[pc] += hpsData[i];
-            }
-
-            // Normalize chroma to 0–1
-            const maxC = Math.max(...chroma);
-            if (maxC > 0) for (let i = 0; i < 12; i++) chroma[i] /= maxC;
-            return chroma;
-        }
-
-        // ── CHORD MATCHING from chroma ──────────────────────────────
-        // Uses cosine-similarity style scoring against chord templates
-        function _polyMatchChord(chroma) {
-            let bestScore = -Infinity, bestChord = null, bestRoot = 0;
-
-            for (let root = 0; root < 12; root++) {
-                for (const chord of _POLY_CHORDS) {
-                    // Build binary template for this chord at this root
-                    const template = new Float32Array(12).fill(0);
-                    chord.p.forEach(interval => { template[(root + interval) % 12] = 1; });
-
-                    // Score = dot product of chroma × template × commonality weight
-                    let dot = 0, tNorm = 0, cNorm = 0;
-                    for (let i = 0; i < 12; i++) {
-                        dot   += chroma[i] * template[i];
-                        tNorm += template[i] * template[i];
-                        cNorm += chroma[i]   * chroma[i];
-                    }
-                    const cosine = (tNorm > 0 && cNorm > 0)
-                        ? dot / (Math.sqrt(tNorm) * Math.sqrt(cNorm)) : 0;
-
-                    // Penalty for notes present in chroma but not in chord
-                    let penalty = 0;
-                    for (let i = 0; i < 12; i++) {
-                        if (template[i] === 0 && chroma[i] > 0.4) penalty += chroma[i] * 0.3;
-                    }
-
-                    const total = cosine * chord.score - penalty;
-                    if (total > bestScore) {
-                        bestScore = total;
-                        bestChord = chord;
-                        bestRoot  = root;
-                    }
-                }
-            }
-
-            // Confidence threshold — below this it's probably just noise
-            if (bestScore < 1.8) return null;
-
-            // Build active note set from winning chord + root
-            const noteSet = new Set();
-            bestChord.p.forEach(interval => {
-                noteSet.add(_POLY_NOTE_NAMES[(bestRoot + interval) % 12]);
-            });
-
-            return {
-                root:  _POLY_NOTE_NAMES[bestRoot],
-                name:  bestChord.n,
-                notes: noteSet,
-                score: bestScore
-            };
-        }
-
-        // ── TEMPORAL SMOOTHING ──────────────────────────────────────
-        // Chroma is averaged across frames to reduce flicker
-        let _polyChromaSmooth = new Float32Array(12).fill(0);
-        const _POLY_SMOOTH_A  = 0.65; // decay of previous frame
-        const _POLY_SMOOTH_B  = 0.35; // weight of new frame
-
-        // Stability tracking
-        let _polyLastChordKey = '';
-        let _polyStableCount  = 0;
-        const _POLY_STABLE_FRAMES = 5;
-
-        function _polyAnalyse() {
-            if (!_singActive || !_singAnalyser) return;
-
-            const bufLen  = _singAnalyser.frequencyBinCount;
-            const sr      = _singAudioCtx.sampleRate;
-            const fltData = new Float32Array(bufLen);
-            _singAnalyser.getFloatFrequencyData(fltData);
-
-            // Silence gate
-            let maxDb = -Infinity;
-            for (let i = 0; i < bufLen; i++) if (fltData[i] > maxDb) maxDb = fltData[i];
-            if (maxDb < -55) {
-                // Fade chroma smoothly to silence
-                for (let i = 0; i < 12; i++) _polyChromaSmooth[i] *= 0.7;
-                _polyStableCount = 0;
-                _polyShowChord(null, new Set());
-                return;
-            }
-
-            // HPS — get fundamental-reinforced spectrum
-            const hps    = _polyHPS(fltData, sr, bufLen, 5);
-
-            // Chroma vector — collapse octaves into 12 pitch classes
-            const chroma = _polyChroma(hps, sr, bufLen);
-
-            // Temporal smoothing — blend with previous frame
-            for (let i = 0; i < 12; i++) {
-                _polyChromaSmooth[i] = _POLY_SMOOTH_A * _polyChromaSmooth[i]
-                                     + _POLY_SMOOTH_B * chroma[i];
-            }
-
-            // Match chord against smoothed chroma
-            const result = _polyMatchChord(_polyChromaSmooth);
-
-            // Stability gate — chord must win N consecutive frames
-            const key = result ? result.root + result.name : '';
-            if (key === _polyLastChordKey) { _polyStableCount++; }
-            else { _polyStableCount = 0; _polyLastChordKey = key; }
-
-            if (_polyStableCount >= _POLY_STABLE_FRAMES) {
-                _polyShowChord(result, result ? result.notes : new Set());
-                if (result) {
-                    try {
-                        window.parent.postMessage({
-                            type: 'KCM_STATE',
-                            payload: {
-                                activeNotes: [...result.notes].map(n => _POLY_NOTE_NAMES.indexOf(n)),
-                                chordName:   result.root + ' ' + result.name
-                            }
-                        }, '*');
-                    } catch(_) {}
-                }
-            }
-        }
-
-        function _polyShowChord(chord, noteSet) {
-            const display = document.getElementById('polyChordDisplay');
-            const nameEl  = document.getElementById('polyChordName');
-            const notesEl = document.getElementById('polyChordNotes');
-            if (!display) return;
-
-            if (!chord) { display.style.display = 'none'; return; }
-
-            display.style.display = 'block';
-            const rootIdx = _POLY_NOTE_NAMES.indexOf(chord.root);
-            nameEl.textContent = chord.root + ' ' + chord.name;
-            nameEl.style.color = _SING_COLORS[rootIdx] || '#F4D03F';
-            nameEl.style.textShadow = `0 0 20px ${_SING_COLORS[rootIdx]}88`;
-
-            notesEl.innerHTML = '';
-            [...noteSet]
-                .sort((a,b) => _POLY_NOTE_NAMES.indexOf(a) - _POLY_NOTE_NAMES.indexOf(b))
-                .forEach(n => {
-                    const idx   = _POLY_NOTE_NAMES.indexOf(n);
-                    const badge = document.createElement('div');
-                    badge.textContent = n;
-                    const isRoot = (n === chord.root);
-                    badge.style.cssText = [
-                        `background:${_SING_COLORS[idx]}`,
-                        `color:#000`,
-                        `padding:4px 12px`,
-                        `border-radius:20px`,
-                        `font-family:var(--font-display)`,
-                        `font-size:${isRoot ? '0.95rem' : '0.8rem'}`,
-                        `font-weight:800`,
-                        isRoot ? `box-shadow:0 0 12px ${_SING_COLORS[idx]},0 0 24px ${_SING_COLORS[idx]}88` : '',
-                        isRoot ? `transform:scale(1.15)` : '',
-                    ].join(';');
-                    notesEl.appendChild(badge);
-                });
-        }
-
                 function _singLoop() {
                     if (!_singActive) return;
                     _singRaf = requestAnimationFrame(_singLoop);
-                    _polyAnalyse(); // Polyphonic chord detection
                     const now = Date.now();
                     if (now - _singLastDetect < _SING_COOLDOWN) return;
                     _singLastDetect = now;
@@ -6009,7 +5682,6 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
             if (_singWavRecording) _singStopWAV();
             if (_singAnalyser)  { try { _singAnalyser.disconnect();  } catch(e){} _singAnalyser = null; }
             if (_singStream)    { _singStream.getTracks().forEach(t => t.stop()); _singStream = null; }
-            _polyLastNotes = new Set(); _polyStableCount = 0; _polyShowChord(null, new Set());
             if (_singAudioCtx)  { try { _singAudioCtx.close(); } catch(e){} _singAudioCtx = null; }
             _singSmooth = new Array(12).fill(0);
             _singClearDisplays();
@@ -6085,25 +5757,8 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                     await audioContext.resume();
                     audioReady = true;
                     window._kcmMasterBus = audioContext.createGain();
-                    window._kcmMasterBus.gain.value = 0.85;
-                    // Compressor — prevents clipping on chords/arpeggios
-                    const _comp = audioContext.createDynamicsCompressor();
-                    _comp.threshold.value = -18;  // start compressing at -18dBFS
-                    _comp.knee.value      = 8;    // soft knee
-                    _comp.ratio.value     = 4;    // 4:1 ratio
-                    _comp.attack.value    = 0.003; // 3ms attack
-                    _comp.release.value   = 0.18;  // 180ms release
-                    // Limiter — hard ceiling at -1dBFS
-                    const _lim = audioContext.createDynamicsCompressor();
-                    _lim.threshold.value  = -1;
-                    _lim.knee.value       = 0;
-                    _lim.ratio.value      = 20;
-                    _lim.attack.value     = 0.001;
-                    _lim.release.value    = 0.05;
-                    window._kcmMasterBus.connect(_comp);
-                    _comp.connect(_lim);
-                    _lim.connect(audioContext.destination);
-                    window._kcmComp = _comp; window._kcmLim = _lim;
+                    window._kcmMasterBus.gain.value = 1.0;
+                    window._kcmMasterBus.connect(audioContext.destination);
                 } catch(e) { console.warn('[SING] singPlayback audio init:', e); return; }
             } else if (audioContext.state === 'suspended') {
                 await audioContext.resume();
@@ -6486,15 +6141,6 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
 <!-- ============================================================
      FLOATING CONTROL DOCK
      ============================================================ -->
-<button id="dockToggleBtn" onclick="toggleDock()" title="Toggle Control Dock"
-    style="position:fixed;bottom:16px;right:16px;z-index:10000;
-           background:linear-gradient(135deg,#005555,#008080);
-           color:#fff;border:2px solid rgba(0,255,255,0.4);
-           border-radius:50px;padding:8px 16px;
-           font-family:'Cinzel',serif;font-size:0.65rem;font-weight:800;
-           letter-spacing:1px;cursor:pointer;
-           box-shadow:0 4px 20px rgba(0,128,128,0.5);
-           transition:all 0.2s;">🎛 DOCK</button>
 <div id="floatingDock" class="collapsed">
     <div id="dockHandle" onclick="toggleDock()">
         <span class="dock-title">🎛 KCM Control Dock</span>
