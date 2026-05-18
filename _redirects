@@ -1,25 +1,11 @@
-# Cloudflare Pages _redirects file
-# Place in ROOT of deployment alongside index.html
+# KCM Canonical Redirects
+# Cloudflare Pages _redirects — processed top to bottom, first match wins
+# Handles: /index variants, /index.html, extensionless refund-policy, extensionless lander
 
-# NOTE: www redirect removed - handle via Cloudflare DNS or Worker script instead
-
-# Remove trailing slashes (except homepage)
-/about/ /about.html 301
-/contact/ /contact.html 301
-/pricing/ /pricing.html 301
-/offerings/ /offerings.html 301
-/insights/ /insights.html 301
-/signup/ /signup.html 301
-/privacy-policy/ /privacy-policy.html 301
-/terms-of-service/ /terms-of-service.html 301
-/refund-policy/ /refund-policy.html 301
-/cookie-policy/ /cookie-policy.html 301
-/holy-mole-grail/ /holy-mole-grail.html 301
-
-# ── Homepage duplicate variants
 /index          /       301
 /index.html     /       301
 
-# ── Extensionless canonicalization
 /refund-policy  /refund-policy.html     301
 /lander         /lander.html            301
+
+/welcome-premium        /welcome-premium.html   302
