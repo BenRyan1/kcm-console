@@ -6156,7 +6156,8 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
             if (_singWavRecording) _singStopWAV();
             if (_singAnalyser)  { try { _singAnalyser.disconnect();  } catch(e){} _singAnalyser = null; }
             if (_singStream)    { _singStream.getTracks().forEach(t => t.stop()); _singStream = null; }
-            _polyLastChordKey = ''; _polyStableCount = 0; _polyShowChord(null, new Set());
+            _polyLastChordKey = ''; _polyStableCount = 0;
+            if (typeof _polyShowChord === 'function') _polyShowChord(null, new Set());
             if (_singAudioCtx)  { try { _singAudioCtx.close(); } catch(e){} _singAudioCtx = null; }
             _singSmooth = new Array(12).fill(0);
             _singClearDisplays();
