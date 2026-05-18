@@ -1482,6 +1482,15 @@ input[type="range"]::-webkit-slider-thumb {
 }
 button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(--primary-gold); }
 </style>
+<!-- ── CREPE ML pitch detection ──────────────────────────────────────
+     TF.js core loads first; pitch-detection model loader second.
+     Both deferred — no impact on page render time.
+     _loadCREPE() is called after _singAudioCtx is created in startSingMode().
+     Graceful fallback: if either fails, _crepeReady stays false
+     and _singLoop uses the existing FFT autocorrelation path unchanged.
+──────────────────────────────────────────────────────────────────── -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pitch-detection@0.0.2/dist/pitch-detection.min.js"></script>
 </head>
 <body>
 
@@ -1593,7 +1602,10 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                 <!-- PANEL 5: SING / PITCH DETECTOR -->
                 <div id="singPanel" role="region" aria-label="Pitch detector" style="display:none;">
                     <h2 style="font-family:var(--font-display);font-size:1.2rem;font-weight:900;color:var(--primary-gold);margin-bottom:0.4rem;text-align:center;">🎤 SING OR PLAY — Watch Your Music Come Alive</h2>
-                    <p style="text-align:center;font-size:0.75rem;color:#b0b0cc;margin-bottom:0.75rem;">Sing, hum, or play any note — lights up on circle, keyboard, guitar & staff in real time</p>
+                    <p style="text-align:center;font-size:0.75rem;color:#b0b0cc;margin-bottom:0.5rem;">Sing, hum, or play any note — lights up on circle, keyboard, guitar & staff in real time</p>
+                    <div style="text-align:center;margin-bottom:0.75rem;">
+                        <span id="singCrepeBadge" style="display:inline-block;font-size:0.6rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:3px 12px;border-radius:20px;background:rgba(0,128,128,0.12);border:1px solid rgba(0,128,128,0.3);color:#008080;font-family:var(--font-body);">FFT MODE</span>
+                    </div>
 
                     <!-- Live readout row -->
                     <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:0.75rem;">
@@ -2860,7 +2872,13 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
 
                     cell.onclick = () => {
                         if (!audioReady) { alert('Press PRESS TO START first!'); return; }
-                        playNote(pc, oct, 0.8);
+                        // Route through handleNoteClick so interval mode, harmonized mode,
+                        // freeplay, and the interval popup all work from the guitar fretboard
+                        if (typeof handleNoteClick === 'function') {
+                            handleNoteClick(pc, oct);
+                        } else {
+                            playNote(pc, oct, 0.8);
+                        }
                     };
                     row.appendChild(cell);
                 }
@@ -5359,6 +5377,14 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         const _SING_COLORS     = ['#FFFF00','#FFC400','#FF8000','#FF4000','#FF0000','#C4007F','#8000FF','#4000FF','#0000FF','#007FFF','#00FF80','#80FF00'];
         const _SING_NOTE_NAMES = ['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
 
+        // ── CREPE ML pitch detection state ───────────────────────────
+        // _SING_CONFIDENCE_MIN: CREPE confidence threshold (0–1).
+        // Frames below this are treated as silence. 0.70 = high confidence.
+        // Tune down to 0.60 in noisy rooms; up to 0.80 for cleaner gate.
+        const _SING_CONFIDENCE_MIN = 0.70;
+        let   _crepeModel  = null;   // loaded async after AudioContext created
+        let   _crepeReady  = false;  // true once model is loaded and usable
+
         // WAV recording
         let _singWavRecorder = null, _singWavChunks = [], _singWavRecording = false;
 
@@ -5518,6 +5544,44 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
             if (status) { status.textContent = 'Listening…'; status.style.color = '#666'; }
         }
 
+        // ── CREPE ML pitch detection loader ──────────────────────────────
+        // Called once per SING session after _singAudioCtx is live.
+        // Uses @tensorflow-models/pitch-detection (pitchDetection global).
+        // On success: sets _crepeReady=true, updates the ML badge in SING panel.
+        // On failure: _crepeReady stays false, _singLoop uses FFT fallback silently.
+        async function _loadCREPE(audioCtx) {
+            const badge = document.getElementById('singCrepeBadge');
+            try {
+                // pitchDetection is the global from the CDN script
+                if (typeof pitchDetection === 'undefined') {
+                    console.warn('[KCM CREPE] pitchDetection library not loaded — using FFT fallback');
+                    if (badge) { badge.textContent = 'FFT MODE'; badge.style.borderColor = 'rgba(255,128,0,0.4)'; badge.style.color = '#FF8000'; }
+                    return;
+                }
+                _crepeReady = false;
+                _crepeModel = null;
+                if (badge) badge.textContent = 'ML LOADING…';
+
+                _crepeModel = await pitchDetection.load(
+                    pitchDetection.SupportedModels.CREPE,
+                    { audioContext: audioCtx, sampleRate: audioCtx.sampleRate }
+                );
+                _crepeReady = true;
+                console.log('[KCM CREPE] Model ready ✓ sampleRate:', audioCtx.sampleRate);
+                if (badge) {
+                    badge.textContent = 'ML PITCH ✓';
+                    badge.style.background = 'rgba(0,224,128,0.12)';
+                    badge.style.borderColor = 'rgba(0,224,128,0.3)';
+                    badge.style.color = '#00e080';
+                }
+            } catch(e) {
+                console.warn('[KCM CREPE] Load failed, FFT fallback active:', e.message);
+                _crepeReady = false;
+                _crepeModel = null;
+                if (badge) { badge.textContent = 'FFT MODE'; badge.style.borderColor = 'rgba(255,128,0,0.4)'; badge.style.color = '#FF8000'; }
+            }
+        }
+
         async function startSingMode() {
             try {
                 if (_singActive) { stopSingMode(); return; }
@@ -5549,6 +5613,11 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
 
                 _singAudioCtx = new (window.AudioContext||window.webkitAudioContext)();
                 if (_singAudioCtx.state === 'suspended') await _singAudioCtx.resume();
+
+                // ── Load CREPE ML model (async, non-blocking) ─────────────────
+                // Runs in background while mic warms up. Updates badge when ready.
+                // Falls back to FFT path silently if unavailable.
+                _loadCREPE(_singAudioCtx);
 
                 _singAnalyser = _singAudioCtx.createAnalyser();
                 _singAnalyser.fftSize = _SING_FFT;
@@ -5824,11 +5893,66 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 function _singLoop() {
                     if (!_singActive) return;
                     _singRaf = requestAnimationFrame(_singLoop);
-                    _polyAnalyse(); // Polyphonic chord detection
+                    _polyAnalyse(); // Polyphonic chord detection — always runs regardless of CREPE
                     const now = Date.now();
                     if (now - _singLastDetect < _SING_COOLDOWN) return;
                     _singLastDetect = now;
 
+                    // ── CREPE ML path ─────────────────────────────────────────
+                    // When model is loaded, use ML-based pitch estimation.
+                    // CREPE returns { frequency, confidence } or null.
+                    // Confidence replaces the RMS silence gate for the ML path.
+                    if (_crepeReady && _crepeModel) {
+                        _crepeModel.estimatePitch().then(pitch => {
+                            if (!_singActive) return;
+                            if (!pitch || pitch.confidence < _SING_CONFIDENCE_MIN) {
+                                // Below confidence threshold — treat as silence
+                                for (let i = 0; i < 12; i++) _singSmooth[i] *= 0.4;
+                                if (_singLastNote !== -1) { _singClearDisplays(); _singLastNote = -1; }
+                                if (_singRecording && _singHeldNote) {
+                                    clearTimeout(_singHeldTimer);
+                                    _singHeldTimer = setTimeout(() => _singCommitHeld(Date.now()), _SING_HOLD_GAP);
+                                }
+                                return;
+                            }
+                            // Good pitch — derive pc/oct from frequency and update displays
+                            const freq = pitch.frequency;
+                            let { pc, oct, midiNote, cents } = _freqToNote(freq);
+
+                            // Octave hysteresis — same logic as FFT path
+                            if (_singLockOct >= 0 && _singLockOct !== oct) {
+                                const prevMidi = (_singLockOct + 1) * 12 + pc;
+                                const centsDiff = Math.abs(_singFreqToMidi(freq) - prevMidi) * 100;
+                                if (centsDiff < 150) { oct = _singLockOct; midiNote = prevMidi; }
+                            }
+                            _singLockOct = oct;
+
+                            // Stability gate — reuse LOCK_FRAMES logic
+                            if (pc === _singLockNote) { _singLockCount++; }
+                            else { _singLockNote = pc; _singLockCount = 1; _singLockFreq = freq; }
+                            _singLockFreq = freq * 0.3 + (_singLockFreq || freq) * 0.7;
+
+                            if (_singLockCount >= _SING_LOCK_FRAMES) {
+                                if (pc !== _singLastNote) { _singLastNote = pc; _singUpdateDisplays(pc, oct, _singLockFreq, cents); }
+                                if (_singRecording) {
+                                    clearTimeout(_singHeldTimer);
+                                    if (!_singHeldNote || _singHeldNote.midiNote !== midiNote) {
+                                        _singCommitHeld(Date.now());
+                                        const _vel = Math.round(Math.min(110, Math.max(50, 50 + pitch.confidence * 60)));
+                                        _singHeldNote = { pc, oct, midiNote, freq: _singLockFreq, vel: _vel, startTs: Date.now() };
+                                    }
+                                    if (_singHeldNote) _singHeldNote.freq = _singLockFreq;
+                                }
+                            }
+                        }).catch(e => {
+                            // CREPE inference error — don't crash the loop
+                            console.warn('[KCM CREPE] estimatePitch error:', e.message);
+                        });
+                        return; // CREPE path handled async — return here
+                    }
+
+                    // ── FFT fallback path (original) ──────────────────────────
+                    // Used when CREPE hasn't loaded or failed to initialize.
                     _singAnalyser.getFloatTimeDomainData(_singTdb);
                     _singAnalyser.getFloatFrequencyData(_singFdb);
                     const binHz = _singAudioCtx.sampleRate / _SING_FFT;
