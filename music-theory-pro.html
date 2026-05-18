@@ -7562,7 +7562,7 @@ async function _guideFireClaude(userPrompt) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                model: 'claude-sonnet-4-20250514',
+                model: 'claude-sonnet-4-5',
                 max_tokens: 400,
                 system: typeof _getKCMContext === 'function' ? _getKCMContext() : 'You are the KCM AI Music Theory Tutor. Be warm, concise, and educational.',
                 messages: [{ role: 'user', content: userPrompt }]
@@ -7813,7 +7813,7 @@ Create a complete, expressive composition. Make the chord progression interestin
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                model: 'claude-sonnet-4-20250514',
+                model: 'claude-sonnet-4-5',
                 max_tokens: 4000,
                 system: systemPrompt,
                 messages: [{ role: 'user', content: userPrompt }]
@@ -8300,7 +8300,7 @@ async function kcmAIAsk(type) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                model: 'claude-sonnet-4-20250514',
+                model: 'claude-sonnet-4-5',
                 max_tokens: 1000,
                 system: _getKCMContext(),
                 messages: [{ role: 'user', content: userPrompt }]
