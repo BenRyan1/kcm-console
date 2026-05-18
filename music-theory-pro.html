@@ -7558,7 +7558,7 @@ async function _guideFireClaude(userPrompt) {
     if (dot)      dot.style.background   = '#F4D03F';
 
     try {
-        const res = await fetch('https://api.anthropic.com/v1/messages', {
+        const res = await fetch('https://snowy-rain-84a5.ben-03b.workers.dev/ai', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -7809,7 +7809,7 @@ Make the melody genuinely musical — use stepwise motion with occasional leaps,
 Create a complete, expressive composition. Make the chord progression interesting and appropriate to the mode. The melody should be singable and emotionally resonant with the "${feel}" feel. Use the KCM color system throughout.`;
 
     try {
-        const res = await fetch('https://api.anthropic.com/v1/messages', {
+        const res = await fetch('https://snowy-rain-84a5.ben-03b.workers.dev/ai', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -8296,7 +8296,7 @@ async function kcmAIAsk(type) {
     if (dot)      { dot.style.background = '#F4D03F'; }
 
     try {
-        const res = await fetch('https://api.anthropic.com/v1/messages', {
+        const res = await fetch('https://snowy-rain-84a5.ben-03b.workers.dev/ai', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
