@@ -16,7 +16,6 @@ export default {
         { status: 405, headers: { ...cors, 'Content-Type': 'application/json' } });
     }
 
-    // ── Sanitize helper ──────────────────────────────────────
     function sanitize(str, maxLen = 200) {
       if (typeof str !== 'string') return '';
       return str.trim().slice(0, maxLen)
@@ -28,7 +27,38 @@ export default {
           '&':  '&amp;',
         }[c]));
     }
-    // ────────────────────────────────────────────────────────
+
+    const url = new URL(request.url);
+
+    if (url.pathname === '/api/verify-code') {
+      let code = '';
+      try {
+        const body = await request.json();
+        code = (body.code || '').trim();
+      } catch (e) {
+        return new Response(JSON.stringify({ ok: false, error: 'Invalid JSON' }),
+          { status: 400, headers: { ...cors, 'Content-Type': 'application/json' } });
+      }
+
+      const validCodes = new Set([
+        env.CODE_PREMIUM,
+        env.CODE_FOUNDER,
+        env.CODE_BETA,
+        env.CODE_PRESS,
+        env.CODE_FRIEND,
+        env.CODE_DEMO,
+        env.CODE_SUPT,
+        env.CODE_YMS,
+      ]);
+
+      const valid = code.length > 0 && validCodes.has(code);
+
+      return new Response(JSON.stringify({ ok: valid }),
+        {
+          status: valid ? 200 : 401,
+          headers: { ...cors, 'Content-Type': 'application/json' },
+        });
+    }
 
     let email = '';
     try {
