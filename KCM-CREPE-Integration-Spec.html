@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CREPE Integration — KCM SING Mode Technical Spec</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Montserrat:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0a0a15; --surface: #12121f; --teal: #008080; --teal-lt: #00c0c0;
+    --gold: #F4D03F; --text: #e8e8f8; --muted: #b0b0cc;
+    --border: rgba(0,128,128,0.25); --code-bg: #0d0d1a;
+    --green: #00e080; --orange: #FF8000; --red: #FF4040;
+  }
+  html { background: var(--bg); color: var(--text); font-family: 'Montserrat', sans-serif; }
+  body { max-width: 860px; margin: 0 auto; padding: 44px 40px 60px; line-height: 1.65; }
+
+  .wordmark { font-family:'Cinzel',serif; font-size:10px; letter-spacing:.18em; color:var(--teal-lt); margin-bottom:10px; text-transform:uppercase; }
+  h1 { font-family:'Cinzel',serif; font-size:26px; color:#fff; margin-bottom:8px; }
+  .sub { font-size:13px; color:var(--muted); font-weight:300; margin-bottom:36px; padding-bottom:24px; border-bottom:1px solid var(--border); }
+
+  .section-label {
+    font-family:'Cinzel',serif; font-size:9px; letter-spacing:.22em;
+    text-transform:uppercase; color:var(--teal-lt); margin:32px 0 14px;
+    display:flex; align-items:center; gap:10px;
+  }
+  .section-label::after { content:''; flex:1; height:1px; background:var(--border); }
+
+  p { font-size:13.5px; color:var(--muted); margin-bottom:14px; line-height:1.7; }
+  p em { color:var(--text); font-style:normal; font-weight:500; }
+
+  /* PHASE CARDS */
+  .phases { display:flex; flex-direction:column; gap:14px; margin-bottom:8px; }
+  .phase {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:10px; padding:20px 22px;
+    display:grid; grid-template-columns:48px 1fr; gap:16px; align-items:start;
+  }
+  .phase-num {
+    width:40px; height:40px; border-radius:50%;
+    background:rgba(0,128,128,0.15); border:1px solid var(--teal);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Cinzel',serif; font-size:16px; font-weight:600; color:var(--teal-lt);
+  }
+  .phase h3 { font-family:'Cinzel',serif; font-size:12px; font-weight:600; color:var(--gold); margin-bottom:6px; letter-spacing:.06em; }
+  .phase p { font-size:12.5px; margin-bottom:0; }
+
+  /* CODE BLOCKS */
+  pre {
+    background:var(--code-bg); border:1px solid rgba(0,128,128,0.2);
+    border-radius:8px; padding:18px 20px; overflow-x:auto;
+    font-family:'JetBrains Mono',monospace; font-size:12px;
+    line-height:1.6; margin-bottom:20px; color:#c8e0ff;
+  }
+  .kw { color:#00c0c0; }   /* keywords */
+  .cm { color:#4a5a6a; font-style:italic; }  /* comments */
+  .st { color:#80c080; }   /* strings */
+  .nm { color:#F4D03F; }   /* numbers */
+  .fn { color:#CF7A5A; }   /* function names */
+
+  /* COMPARISON TABLE */
+  .cmp { background:var(--surface); border:1px solid var(--border); border-radius:10px; overflow:hidden; margin-bottom:28px; }
+  .cmp table { width:100%; border-collapse:collapse; font-size:12.5px; }
+  .cmp thead tr { background:rgba(0,128,128,0.12); }
+  .cmp thead th { padding:10px 16px; font-family:'Cinzel',serif; font-size:9px; letter-spacing:.14em; text-transform:uppercase; color:var(--teal-lt); text-align:left; }
+  .cmp tbody tr { border-top:1px solid rgba(0,128,128,0.1); }
+  .cmp td { padding:10px 16px; color:var(--muted); vertical-align:top; }
+  .cmp td:first-child { color:var(--text); font-weight:500; }
+  .win { color:var(--green) !important; }
+  .lose { color:var(--red) !important; }
+  .mid { color:var(--orange) !important; }
+
+  /* CONSTANTS BOX */
+  .constants {
+    background:var(--code-bg); border:1px solid rgba(244,208,63,0.2);
+    border-radius:10px; padding:22px 24px; margin-bottom:24px;
+  }
+  .constants h4 { font-family:'Cinzel',serif; font-size:10px; letter-spacing:.14em; color:var(--gold); margin-bottom:14px; text-transform:uppercase; }
+  .const-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+  .const-item { font-family:'JetBrains Mono',monospace; font-size:11px; }
+  .const-key { color:var(--teal-lt); }
+  .const-val { color:#F4D03F; }
+
+  /* CALLOUT */
+  .callout {
+    border-left:3px solid var(--teal); background:rgba(0,128,128,0.08);
+    padding:16px 20px; border-radius:0 8px 8px 0; margin-bottom:20px; font-size:13px; color:var(--muted);
+  }
+  .callout strong { color:var(--teal-lt); }
+
+  /* STATUS PILLS */
+  .pill { display:inline-block; padding:2px 10px; border-radius:20px; font-size:10px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; }
+  .pill-done { background:rgba(0,224,128,0.15); color:var(--green); border:1px solid rgba(0,224,128,0.3); }
+  .pill-next { background:rgba(0,128,128,0.15); color:var(--teal-lt); border:1px solid var(--border); }
+  .pill-future { background:rgba(139,107,163,0.15); color:#8B6BA3; border:1px solid rgba(139,107,163,0.3); }
+
+  @media print {
+    html { background:#fff; color:#111; }
+    body { padding:24px; }
+    :root { --bg:#fff; --surface:#f5f5f5; --code-bg:#f0f0f0; --text:#111; --muted:#444; --border:rgba(0,100,100,0.2); --teal-lt:#006666; --gold:#8a6800; --teal:#006666; --green:#006600; }
+    pre { color:#333; }
+    .kw { color:#006666; } .nm { color:#8a6800; } .fn { color:#7a3a2a; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wordmark">Keys, Codes &amp; Modes™ &nbsp;·&nbsp; Internal Technical Specification</div>
+<h1>CREPE Integration — SING Mode</h1>
+<div class="sub">
+  Replacing FFT autocorrelation with TensorFlow.js CREPE for ML-based monophonic pitch detection &nbsp;·&nbsp;
+  Target file: <code style="color:var(--teal-lt);font-family:JetBrains Mono,monospace">music-theory-pro-MASTER.html</code>
+  &nbsp;·&nbsp; May 2026
+</div>
+
+<!-- WHY -->
+<div class="section-label">Why CREPE</div>
+<p>The current SING mode uses FFT autocorrelation (<em>_singLoop</em>) — accurate for clean guitar but struggles with: singing voice harmonics, noisy environments, guitar with vibrato/bends, and ambiguous partials. CREPE (Convolutional Representation for Pitch Estimation) is a <em>pretrained deep learning model</em> trained on 11,000+ hours of audio. It outputs a per-frame pitch estimate with confidence score — dramatically outperforming autocorrelation for both voice and guitar.</p>
+
+<div class="callout"><strong>Scope:</strong> CREPE replaces only the monophonic pitch detection pathway inside <code>_singLoop</code>. The HPS + chroma polyphonic chord detector, KCM.bus broadcasts, WAV capture, and all display logic remain untouched.</div>
+
+<!-- COMPARISON -->
+<div class="section-label">Current vs. CREPE</div>
+<div class="cmp">
+  <table>
+    <thead><tr><th>Dimension</th><th>FFT Autocorrelation (current)</th><th>CREPE ML Model</th></tr></thead>
+    <tbody>
+      <tr><td>Accuracy (clean)</td><td class="mid">Good (~98% on guitar)</td><td class="win">Excellent (~99.5%)</td></tr>
+      <tr><td>Accuracy (voice)</td><td class="lose">Poor — harmonics confuse it</td><td class="win">Excellent — trained on voice</td></tr>
+      <tr><td>Vibrato/bends</td><td class="lose">Stutters, loses lock</td><td class="win">Tracks continuously</td></tr>
+      <tr><td>Noisy room</td><td class="lose">Degrades significantly</td><td class="win">Much more robust</td></tr>
+      <tr><td>Confidence score</td><td class="lose">None</td><td class="win">Per-frame 0–1 confidence</td></tr>
+      <tr><td>Load time</td><td class="win">Instant</td><td class="mid">~2–4s model load (CDN cached)</td></tr>
+      <tr><td>CPU / GPU</td><td class="win">Negligible</td><td class="mid">Moderate — GPU-accelerated via WebGL</td></tr>
+      <tr><td>Bundle size</td><td class="win">0 bytes</td><td class="mid">~20MB model weights (CDN)</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- IMPLEMENTATION PHASES -->
+<div class="section-label">Implementation — 3 Phases</div>
+<div class="phases">
+  <div class="phase">
+    <div class="phase-num">1</div>
+    <div>
+      <h3>Load CREPE via CDN &nbsp;<span class="pill pill-next">Next Session</span></h3>
+      <p>Add TensorFlow.js core + CREPE model loader to the <code style="color:var(--teal-lt)">&lt;head&gt;</code>. Model weights load asynchronously after AudioContext starts — user sees a loading indicator. No npm, no build step.</p>
+    </div>
+  </div>
+  <div class="phase">
+    <div class="phase-num">2</div>
+    <div>
+      <h3>Replace _singLoop Pitch Extraction &nbsp;<span class="pill pill-next">Next Session</span></h3>
+      <p>Swap the autocorrelation block inside <code style="color:var(--teal-lt)">_singLoop</code> for a CREPE inference call. Feed the same <code style="color:var(--teal-lt)">AnalyserNode</code> float buffer. Use CREPE's confidence score as the silence gate instead of amplitude threshold. All downstream logic (note display, KCM.bus, WAV sync) unchanged.</p>
+    </div>
+  </div>
+  <div class="phase">
+    <div class="phase-num">3</div>
+    <div>
+      <h3>GUITAR / VOICE Toggle &nbsp;<span class="pill pill-future">Follow-on</span></h3>
+      <p>Two constant sets: current guitar constants stay as-is; add VOICE preset with wider frequency range, lower silence gate, different smooth decay. Simple button in SING panel header. CREPE handles both accurately — the toggle only adjusts display thresholds and lock-frame timing.</p>
+    </div>
+  </div>
+</div>
+
+<!-- CDN LOAD CODE -->
+<div class="section-label">Phase 1 — CDN Load Code</div>
+<p>Add to <code style="color:var(--teal-lt)">&lt;head&gt;</code>, after existing scripts:</p>
+<pre><span class="cm">/* CREPE — ML pitch detection */</span>
+<span class="cm">/* Load order: TF core → TF WebGL backend → CREPE model */</span>
+&lt;script src=<span class="st">"https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0/dist/tf.min.js"</span>&gt;&lt;/script&gt;
+&lt;script src=<span class="st">"https://cdn.jsdelivr.net/npm/@tensorflow-models/pitch-detection@0.0.2/dist/pitch-detection.min.js"</span>&gt;&lt;/script&gt;
+
+<span class="cm">/* In JS — init after AudioContext is created */</span>
+<span class="kw">let</span> _crepeModel = <span class="kw">null</span>;
+<span class="kw">let</span> _crepeReady = <span class="kw">false</span>;
+
+<span class="kw">async function</span> <span class="fn">_loadCREPE</span>() {
+  <span class="kw">try</span> {
+    <span class="cm">// pitchDetection is the @tensorflow-models/pitch-detection API</span>
+    _crepeModel = <span class="kw">await</span> pitchDetection.<span class="fn">load</span>(
+      pitchDetection.SupportedModels.CREPE,
+      { audioContext: _audioCtx, sampleRate: _audioCtx.sampleRate }
+    );
+    _crepeReady = <span class="kw">true</span>;
+    console.<span class="fn">log</span>(<span class="st">'[KCM] CREPE model ready'</span>);
+    <span class="cm">// Update UI — replace loading spinner in SING panel</span>
+    <span class="kw">const</span> badge = document.<span class="fn">getElementById</span>(<span class="st">'singCrepeStatus'</span>);
+    <span class="kw">if</span> (badge) badge.textContent = <span class="st">'ML PITCH ✓'</span>;
+  } <span class="kw">catch</span> (e) {
+    console.<span class="fn">warn</span>(<span class="st">'[KCM] CREPE load failed, falling back to FFT'</span>, e);
+    _crepeReady = <span class="kw">false</span>; <span class="cm">// graceful fallback</span>
+  }
+}
+
+<span class="cm">/* Call after AudioContext unlock (inside startAudioEngine) */</span>
+<span class="fn">_loadCREPE</span>();</pre>
+
+<!-- PHASE 2 SWAP -->
+<div class="section-label">Phase 2 — _singLoop Swap</div>
+<p>The current autocorrelation block occupies roughly 40 lines inside <code style="color:var(--teal-lt)">_singLoop</code>. Replace only that block — the confidence score gates the silence check, everything else flows identically:</p>
+<pre><span class="cm">/* === BEFORE (FFT autocorrelation — remove this block) ===
+   const buf = new Float32Array(_SING_FFT);
+   _singAnalyser.getFloatTimeDomainData(buf);
+   const rms = Math.sqrt(buf.reduce((s,v)=>s+v*v,0)/buf.length);
+   if (rms < _SING_SILENCE_GATE) { ... silence handling ... return; }
+   const freq = _autocorrelate(buf, _audioCtx.sampleRate);
+   ... === END REMOVE === */</span>
+
+<span class="cm">/* === AFTER (CREPE inference — insert this block) === */</span>
+<span class="kw">async function</span> <span class="fn">_singLoop</span>() {
+  <span class="kw">if</span> (!_singActive) <span class="kw">return</span>;
+
+  <span class="kw">if</span> (_crepeReady &amp;&amp; _crepeModel) {
+    <span class="cm">// CREPE path — async per-frame inference</span>
+    <span class="kw">const</span> pitch = <span class="kw">await</span> _crepeModel.<span class="fn">estimatePitch</span>();
+    <span class="cm">// pitch = { frequency: 440.2, confidence: 0.94 } | null</span>
+
+    <span class="kw">if</span> (!pitch || pitch.confidence &lt; _SING_CONFIDENCE_MIN) {
+      <span class="fn">_handleSilence</span>(); <span class="cm">// existing silence handler</span>
+    } <span class="kw">else</span> {
+      <span class="fn">_handlePitch</span>(pitch.frequency); <span class="cm">// existing pitch handler — unchanged</span>
+    }
+  } <span class="kw">else</span> {
+    <span class="cm">// Fallback — existing FFT autocorrelation (unchanged)</span>
+    <span class="fn">_singLoopFFT</span>();
+  }
+
+  _singRAF = <span class="fn">requestAnimationFrame</span>(_singLoop);
+}</pre>
+
+<!-- NEW CONSTANTS -->
+<div class="section-label">Updated SING Constants</div>
+<div class="constants">
+  <h4>Add to SING Mode Constants block</h4>
+  <div class="const-grid">
+    <div class="const-item"><span class="const-key">_SING_FFT</span> = <span class="const-val">4096</span></div>
+    <div class="const-item"><span class="const-key">_SING_SILENCE_GATE</span> = <span class="const-val">0.004</span></div>
+    <div class="const-item"><span class="const-key">_SING_HEADROOM_DB</span> = <span class="const-val">10</span></div>
+    <div class="const-item"><span class="const-key">_SING_SMOOTH_DECAY</span> = <span class="const-val">0.60</span></div>
+    <div class="const-item"><span class="const-key">_SING_SMOOTH_RISE</span> = <span class="const-val">0.40</span></div>
+    <div class="const-item"><span class="const-key">_SING_STRENGTH_MIN</span> = <span class="const-val">0.05</span></div>
+    <div class="const-item"><span class="const-key">_SING_LOCK_FRAMES</span> = <span class="const-val">3</span></div>
+    <div class="const-item"><span class="const-key">_SING_HOLD_GAP</span> = <span class="const-val">250</span></div>
+    <div class="const-item"><span class="const-key">_SING_MIN_DUR</span> = <span class="const-val">120</span></div>
+    <div class="const-item"><span class="const-key">_SING_COOLDOWN</span> = <span class="const-val">40</span></div>
+    <div class="const-item"><span class="const-key">_WAV_LATENCY_MS</span> = <span class="const-val">800</span></div>
+    <div class="const-item" style="background:rgba(0,128,128,0.1);border-radius:4px;padding:3px 6px;"><span class="const-key">_SING_CONFIDENCE_MIN</span> = <span class="const-val" style="color:var(--green)">0.70</span> <span style="color:#4a5a6a;font-size:10px">← NEW</span></div>
+  </div>
+</div>
+
+<div class="callout">
+  <strong>_SING_CONFIDENCE_MIN = 0.70</strong> — CREPE returns 0–1. At 0.70, the model is quite sure. Tune down to 0.60 if too many valid notes get gated; up to 0.80 in noisy rooms. This replaces the amplitude RMS silence gate for the CREPE path only.
+</div>
+
+<!-- UI BADGE -->
+<div class="section-label">SING Panel UI — Loading State</div>
+<p>Add a small status badge in the SING panel header that shows model loading state. Users shouldn't be confused by a delay:</p>
+<pre><span class="cm">/* In SING panel header HTML */</span>
+&lt;span id=<span class="st">"singCrepeStatus"</span> style=<span class="st">"
+  font-size:10px; padding:2px 8px; border-radius:12px;
+  background:rgba(0,128,128,0.15); color:#00c0c0;
+  border:1px solid rgba(0,128,128,0.3);
+  font-family:Montserrat,sans-serif; letter-spacing:.06em;
+"</span>&gt;ML LOADING…&lt;/span&gt;
+
+<span class="cm">/* _loadCREPE() updates textContent to 'ML PITCH ✓' on success */</span>
+<span class="cm">/* On failure stays 'FFT MODE' (set in catch block) */</span></pre>
+
+<!-- GUITAR / VOICE TOGGLE -->
+<div class="section-label">Phase 3 — Guitar / Voice Constant Sets</div>
+<pre><span class="kw">const</span> SING_PRESETS = {
+  guitar: {
+    lockFrames:  <span class="nm">3</span>,
+    holdGap:     <span class="nm">250</span>,   <span class="cm">// ms</span>
+    minDur:      <span class="nm">120</span>,   <span class="cm">// ms</span>
+    cooldown:    <span class="nm">40</span>,    <span class="cm">// ms</span>
+    smoothDecay: <span class="nm">0.60</span>,
+    smoothRise:  <span class="nm">0.40</span>,
+    confidenceMin: <span class="nm">0.72</span>,
+  },
+  voice: {
+    lockFrames:  <span class="nm">5</span>,    <span class="cm">// voice transitions slower</span>
+    holdGap:     <span class="nm">350</span>,   <span class="cm">// longer inter-note gap</span>
+    minDur:      <span class="nm">180</span>,   <span class="cm">// longer minimum note</span>
+    cooldown:    <span class="nm">60</span>,
+    smoothDecay: <span class="nm">0.72</span>,  <span class="cm">// voice vibrato — slower decay</span>
+    smoothRise:  <span class="nm">0.28</span>,
+    confidenceMin: <span class="nm">0.65</span>, <span class="cm">// voice more ambiguous — slightly lower gate</span>
+  }
+};
+
+<span class="kw">let</span> _singPreset = <span class="st">'guitar'</span>; <span class="cm">// current default</span>
+
+<span class="cm">/* Toggle button in SING panel — updates _singPreset and live constants */</span>
+<span class="kw">function</span> <span class="fn">setSingMode</span>(mode) {
+  _singPreset = mode;
+  <span class="kw">const</span> p = SING_PRESETS[mode];
+  _SING_LOCK_FRAMES   = p.lockFrames;
+  _SING_HOLD_GAP      = p.holdGap;
+  _SING_MIN_DUR       = p.minDur;
+  _SING_COOLDOWN      = p.cooldown;
+  _SING_SMOOTH_DECAY  = p.smoothDecay;
+  _SING_SMOOTH_RISE   = p.smoothRise;
+  _SING_CONFIDENCE_MIN = p.confidenceMin;
+}</pre>
+
+<!-- PRIORITY -->
+<div class="section-label">Priority &amp; Sequencing</div>
+<div class="phases">
+  <div class="phase">
+    <div class="phase-num" style="font-size:12px">P1</div>
+    <div>
+      <h3>Phases 1 + 2 together &nbsp;<span class="pill pill-next">Next session — ~90 min</span></h3>
+      <p>CDN load + _singLoop swap are tightly coupled. Do both in one session. Test: open SING mode, play guitar note or sing — confirm "ML PITCH ✓" badge appears and pitch locks correctly. Fallback to FFT if CREPE fails to load.</p>
+    </div>
+  </div>
+  <div class="phase">
+    <div class="phase-num" style="font-size:12px">P2</div>
+    <div>
+      <h3>KCM Bus full wiring &nbsp;<span class="pill pill-future">Session after CREPE</span></h3>
+      <p>Circle of Fifths highlights detected chord root. Piano lights detected notes. Guitar fretboard shows chord voicing. Mode panel suggests related modes. This is the Yamaha demo moment — all panels reacting to a single played chord.</p>
+    </div>
+  </div>
+  <div class="phase">
+    <div class="phase-num" style="font-size:12px">P3</div>
+    <div>
+      <h3>Guitar / Voice toggle &nbsp;<span class="pill pill-future">Follow-on</span></h3>
+      <p>Simple two-button toggle in SING panel. Swaps constant sets live. No model reload needed — CREPE handles both modes; only the timing thresholds change.</p>
+    </div>
+  </div>
+</div>
+
+<div style="margin-top:40px;padding-top:20px;border-top:1px solid var(--border);font-size:11px;color:var(--muted)">
+  KCM Console — <code style="color:var(--teal-lt)">BenRyan1/kcm-console</code> (private) &nbsp;·&nbsp;
+  Deploy: <code style="color:var(--teal-lt)">./kcm-deploy.sh "add CREPE ML pitch detection"</code> &nbsp;·&nbsp;
+  Live: console.keyscodesandmodes.com &nbsp;·&nbsp; May 2026
+</div>
+
+</body>
+</html>

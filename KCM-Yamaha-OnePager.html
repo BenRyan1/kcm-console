@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Keys, Codes & Modes™ — Strategic Partnership Overview</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:       #0a0a15;
+    --surface:  #12121f;
+    --surface2: #1a1a2e;
+    --teal:     #008080;
+    --teal-lt:  #00c0c0;
+    --gold:     #F4D03F;
+    --gold-dim: #b89d2b;
+    --purple:   #8B6BA3;
+    --coral:    #CF7A5A;
+    --text:     #e8e8f8;
+    --muted:    #b0b0cc;
+    --border:   rgba(0,128,128,0.25);
+    --c-c:  #FFFF00; --c-cs: #FFC400; --c-d:  #FF8000; --c-ds: #FF4000;
+    --c-e:  #FF0000; --c-f:  #C4007F; --c-fs: #8000FF; --c-g:  #4000FF;
+    --c-gs: #0000FF; --c-a:  #007FFF; --c-as: #00FF80; --c-b:  #80FF00;
+  }
+
+  html { background: var(--bg); color: var(--text); font-family: 'Montserrat', sans-serif; }
+
+  body {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 48px 40px 60px;
+    line-height: 1.65;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: start;
+    gap: 24px;
+    margin-bottom: 40px;
+    padding-bottom: 28px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .wordmark {
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--teal-lt);
+    margin-bottom: 10px;
+  }
+
+  h1 {
+    font-family: 'Cinzel', serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.2;
+    margin-bottom: 8px;
+  }
+
+  .tagline {
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 300;
+    letter-spacing: 0.04em;
+  }
+
+  .header-meta {
+    text-align: right;
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.8;
+  }
+
+  .header-meta strong { color: var(--gold); font-weight: 600; }
+
+  /* ── CHROMATIC CLOCK ── */
+  .clock-wrap {
+    display: flex;
+    justify-content: center;
+    margin: 32px 0 28px;
+  }
+
+  /* ── SECTION TITLES ── */
+  .section-label {
+    font-family: 'Cinzel', serif;
+    font-size: 9px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--teal-lt);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ── LEAD STATEMENT ── */
+  .lead {
+    font-size: 16px;
+    font-weight: 300;
+    color: var(--text);
+    line-height: 1.75;
+    margin-bottom: 36px;
+    padding: 22px 28px;
+    background: var(--surface);
+    border-left: 3px solid var(--teal);
+    border-radius: 0 8px 8px 0;
+  }
+
+  .lead em {
+    font-style: normal;
+    color: var(--gold);
+    font-weight: 500;
+  }
+
+  /* ── THREE-COLUMN PILLARS ── */
+  .pillars {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 36px;
+  }
+
+  .pillar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 22px 18px;
+  }
+
+  .pillar-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 17px;
+    margin-bottom: 14px;
+  }
+
+  .pillar h3 {
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--teal-lt);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+  }
+
+  .pillar p {
+    font-size: 12.5px;
+    color: var(--muted);
+    line-height: 1.65;
+  }
+
+  /* ── DISTINCTION TABLE ── */
+  .distinction {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 36px;
+  }
+
+  .distinction table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  .distinction thead tr {
+    background: rgba(0,128,128,0.15);
+  }
+
+  .distinction thead th {
+    padding: 12px 18px;
+    text-align: left;
+    font-family: 'Cinzel', serif;
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--teal-lt);
+    font-weight: 600;
+  }
+
+  .distinction tbody tr {
+    border-top: 1px solid rgba(0,128,128,0.12);
+  }
+
+  .distinction tbody tr:hover {
+    background: rgba(0,128,128,0.06);
+  }
+
+  .distinction td {
+    padding: 12px 18px;
+    vertical-align: top;
+    color: var(--muted);
+    line-height: 1.55;
+  }
+
+  .distinction td:first-child {
+    color: var(--text);
+    font-weight: 500;
+    width: 36%;
+  }
+
+  .distinction td:last-child {
+    color: var(--gold);
+    font-size: 12px;
+  }
+
+  /* ── KANSEI BRIDGE ── */
+  .kansei-bridge {
+    display: grid;
+    grid-template-columns: 1fr 48px 1fr;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 36px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 24px;
+  }
+
+  .kansei-side {
+    padding: 4px 8px;
+  }
+
+  .kansei-side .label {
+    font-family: 'Cinzel', serif;
+    font-size: 9px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .kansei-side .name {
+    font-size: 15px;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 6px;
+  }
+
+  .kansei-side p {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  .kansei-arrow {
+    text-align: center;
+    font-size: 22px;
+    color: var(--teal);
+    padding: 0 4px;
+  }
+
+  .kansei-bridge .bridge-label {
+    text-align: center;
+    font-family: 'Cinzel', serif;
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--teal-lt);
+    margin-bottom: 4px;
+  }
+
+  /* ── SPECTRUM BAR ── */
+  .spectrum-row {
+    display: flex;
+    gap: 0;
+    height: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 6px 0 24px;
+  }
+
+  /* ── TECH STACK ── */
+  .tech-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 36px;
+  }
+
+  .tech-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 12px;
+    text-align: center;
+  }
+
+  .tech-item .t-label {
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 4px;
+  }
+
+  .tech-item .t-val {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--teal-lt);
+  }
+
+  /* ── OPPORTUNITY CALLOUT ── */
+  .opportunity {
+    background: linear-gradient(135deg, rgba(0,128,128,0.12), rgba(139,107,163,0.12));
+    border: 1px solid var(--teal);
+    border-radius: 10px;
+    padding: 28px 32px;
+    margin-bottom: 36px;
+  }
+
+  .opportunity h3 {
+    font-family: 'Cinzel', serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--gold);
+    margin-bottom: 14px;
+    letter-spacing: 0.06em;
+  }
+
+  .opp-items {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 24px;
+  }
+
+  .opp-item {
+    font-size: 13px;
+    color: var(--muted);
+    padding-left: 16px;
+    position: relative;
+    line-height: 1.55;
+  }
+
+  .opp-item::before {
+    content: '◆';
+    position: absolute;
+    left: 0;
+    color: var(--teal);
+    font-size: 7px;
+    top: 4px;
+  }
+
+  /* ── FOOTER ── */
+  .footer {
+    border-top: 1px solid var(--border);
+    padding-top: 24px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .footer .contact strong {
+    display: block;
+    color: var(--text);
+    font-weight: 600;
+    margin-bottom: 4px;
+    font-size: 13px;
+  }
+
+  .footer .legal {
+    text-align: right;
+    line-height: 1.8;
+  }
+
+  .footer a { color: var(--teal-lt); text-decoration: none; }
+
+  /* ── PRINT ── */
+  @media print {
+    html { background: #fff; color: #111; }
+    body { padding: 24px 28px; max-width: 100%; }
+    :root {
+      --bg: #fff; --surface: #f5f5f5; --surface2: #ebebeb;
+      --text: #111; --muted: #555; --border: rgba(0,100,100,0.2);
+      --teal-lt: #006666; --gold: #8a6800; --teal: #006666;
+    }
+    .pillar, .distinction, .kansei-bridge, .opportunity, .tech-item {
+      break-inside: avoid;
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div>
+    <div class="wordmark">Keys, Codes &amp; Modes™ &nbsp;·&nbsp; Strategic Partnership Overview</div>
+    <h1>What KCM Does<br>That Nothing Else Does</h1>
+    <div class="tagline">Visual cognition + real-time polyphonic intelligence + a proprietary color grammar for music</div>
+  </div>
+  <div class="header-meta">
+    <strong>Prepared for</strong><br>
+    Yusuke Sugino, CEO<br>
+    Yamaha Music Innovations<br>
+    <br>
+    <strong>Benjamin Ryan</strong><br>
+    Founder, KCM<br>
+    keyscodesandmodes.com<br>
+    ben@keyscodesandmodes.com
+  </div>
+</div>
+
+<!-- CHROMATIC CLOCK SVG -->
+<div class="clock-wrap">
+<svg viewBox="0 0 340 200" width="340" height="200" xmlns="http://www.w3.org/2000/svg" aria-label="KCM 12-Color Chromatic Spectrum arranged as clock face, C=Yellow at 12 o'clock clockwise">
+  <defs>
+    <filter id="glow"><feGaussianBlur stdDeviation="2.5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <!-- Background -->
+  <rect width="340" height="200" fill="#0a0a15" rx="10"/>
+  <!-- Clock ring -->
+  <circle cx="100" cy="100" r="80" fill="none" stroke="rgba(0,128,128,0.2)" stroke-width="1"/>
+  <circle cx="100" cy="100" r="60" fill="none" stroke="rgba(0,128,128,0.12)" stroke-width="0.5"/>
+  <!-- 12 notes as segments + dots, clockwise from C=12 -->
+  <!-- C=12 -->
+  <circle cx="100" cy="22" r="11" fill="#FFFF00" filter="url(#glow)"/>
+  <text x="100" y="26" text-anchor="middle" font-family="Cinzel,serif" font-size="8" font-weight="700" fill="#0a0a15">C</text>
+  <!-- C# = 1 o'clock -->
+  <circle cx="139" cy="30" r="9" fill="#FFC400"/>
+  <text x="139" y="34" text-anchor="middle" font-family="Cinzel,serif" font-size="7" font-weight="700" fill="#0a0a15">C♯</text>
+  <!-- D = 2 -->
+  <circle cx="167" cy="55" r="9" fill="#FF8000"/>
+  <text x="167" y="59" text-anchor="middle" font-family="Cinzel,serif" font-size="7" font-weight="700" fill="#0a0a15">D</text>
+  <!-- D# = 3 -->
+  <circle cx="178" cy="90" r="9" fill="#FF4000"/>
+  <text x="178" y="94" text-anchor="middle" font-family="Cinzel,serif" font-size="7" font-weight="700" fill="#0a0a15">D♯</text>
+  <!-- E = 4 -->
+  <circle cx="167" cy="126" r="9" fill="#FF0000"/>
+  <text x="167" y="130" text-anchor="middle" font-family="Cinzel,serif" font-size="7" font-weight="700" fill="#fff">E</text>
+  <!-- F = 5 -->
+  <circle cx="139" cy="153" r="9" fill="#C4007F"/>
+  <text x="139" y="157" text-anchor="middle" font-family="Cinzel,serif" font-size="7" font-weight="700" fill="#fff">F</text>
+  <!-- F# = 6 (6 o'clock) -->
+  <circle cx="100" cy="163" r="9" fill="#8000FF"/>
+  <text x="100" y="167" text-anchor="middle" font-family="Cinzel,serif" font-size="7" font-weight="700" fill="#fff">F♯</text>
+  <!-- G = 7 -->
+  <circle cx="61" cy="153" r="9" fill="#4000FF"/>
+  <text x="61" y="157" text-anchor="middle" font-family="Cinzel,serif" font-size="7" font-weight="700" fill="#fff">G</text>
+  <!-- G# = 8 -->
+  <circle cx="33" cy="126" r="9" fill="#0000FF"/>
+  <text x="33" y="130" text-anchor="middle" font-family="Cinzel,serif" font-size="7" font-weight="700" fill="#fff">G♯</text>
+  <!-- A = 9 -->
+  <circle cx="22" cy="90" r="9" fill="#007FFF"/>
+  <text x="22" y="94" text-anchor="middle" font-family="Cinzel,serif" font-size="7" font-weight="700" fill="#fff">A</text>
+  <!-- A# = 10 -->
+  <circle cx="33" cy="55" r="9" fill="#00FF80"/>
+  <text x="33" y="59" text-anchor="middle" font-family="Cinzel,serif" font-size="7" font-weight="700" fill="#0a0a15">A♯</text>
+  <!-- B = 11 -->
+  <circle cx="61" cy="30" r="9" fill="#80FF00"/>
+  <text x="61" y="34" text-anchor="middle" font-family="Cinzel,serif" font-size="7" font-weight="700" fill="#0a0a15">B</text>
+  <!-- Center label -->
+  <text x="100" y="96" text-anchor="middle" font-family="Cinzel,serif" font-size="9" fill="rgba(0,192,192,0.9)" letter-spacing="1">12-COLOR</text>
+  <text x="100" y="108" text-anchor="middle" font-family="Cinzel,serif" font-size="9" fill="rgba(0,192,192,0.7)" letter-spacing="1">CHROMATIC</text>
+  <text x="100" y="120" text-anchor="middle" font-family="Cinzel,serif" font-size="9" fill="rgba(0,192,192,0.5)" letter-spacing="1">SPECTRUM™</text>
+
+  <!-- Right side: feature callouts -->
+  <rect x="215" y="12" width="112" height="54" rx="6" fill="rgba(0,128,128,0.1)" stroke="rgba(0,128,128,0.3)" stroke-width="0.5"/>
+  <text x="226" y="30" font-family="Montserrat,sans-serif" font-size="8.5" font-weight="600" fill="#00c0c0">Polyphonic Detection</text>
+  <text x="226" y="44" font-family="Montserrat,sans-serif" font-size="8" fill="#b0b0cc">HPS + Chroma vectors</text>
+  <text x="226" y="57" font-family="Montserrat,sans-serif" font-size="8" fill="#b0b0cc">Cosine similarity matching</text>
+
+  <rect x="215" y="75" width="112" height="54" rx="6" fill="rgba(139,107,163,0.1)" stroke="rgba(139,107,163,0.3)" stroke-width="0.5"/>
+  <text x="226" y="93" font-family="Montserrat,sans-serif" font-size="8.5" font-weight="600" fill="#8B6BA3">Visual Cognition</text>
+  <text x="226" y="107" font-family="Montserrat,sans-serif" font-size="8" fill="#b0b0cc">Color encodes pitch class</text>
+  <text x="226" y="120" font-family="Montserrat,sans-serif" font-size="8" fill="#b0b0cc">Spatial = harmonic logic</text>
+
+  <rect x="215" y="138" width="112" height="54" rx="6" fill="rgba(244,208,63,0.08)" stroke="rgba(244,208,63,0.25)" stroke-width="0.5"/>
+  <text x="226" y="156" font-family="Montserrat,sans-serif" font-size="8.5" font-weight="600" fill="#F4D03F">Cross-Panel Sync</text>
+  <text x="226" y="170" font-family="Montserrat,sans-serif" font-size="8" fill="#b0b0cc">Piano · Guitar · Staff</text>
+  <text x="226" y="183" font-family="Montserrat,sans-serif" font-size="8" fill="#b0b0cc">Circle · Ear Training</text>
+</svg>
+</div>
+
+<!-- SPECTRUM BAR -->
+<div class="spectrum-row">
+  <div style="flex:1;background:#FFFF00"></div>
+  <div style="flex:1;background:#FFC400"></div>
+  <div style="flex:1;background:#FF8000"></div>
+  <div style="flex:1;background:#FF4000"></div>
+  <div style="flex:1;background:#FF0000"></div>
+  <div style="flex:1;background:#C4007F"></div>
+  <div style="flex:1;background:#8000FF"></div>
+  <div style="flex:1;background:#4000FF"></div>
+  <div style="flex:1;background:#0000FF"></div>
+  <div style="flex:1;background:#007FFF"></div>
+  <div style="flex:1;background:#00FF80"></div>
+  <div style="flex:1;background:#80FF00"></div>
+</div>
+
+<!-- LEAD -->
+<div class="lead">
+  Every music education platform teaches notes. KCM makes music <em>visible</em> — as a unified, real-time color language that maps pitch, harmony, and emotion into a single perceptual system. It is the only platform that combines <em>polyphonic chord detection from live audio</em> with a proprietary chromatic color grammar, synchronized across piano, guitar, staff notation, and ear training — all in the browser, zero install.
+</div>
+
+<!-- THREE PILLARS -->
+<div class="section-label">The Three Distinctions</div>
+<div class="pillars">
+  <div class="pillar">
+    <div class="pillar-icon" style="background:rgba(0,128,128,0.15)">🎯</div>
+    <h3>Polyphonic Intelligence</h3>
+    <p>HPS harmonic product spectrum + 12-bin chroma vectors + cosine similarity chord matching. Detects full chords from mic input in real time — not just single pitches. 20 chord types, 5-frame stability gate, broadcasts to all panels simultaneously via KCM.bus.</p>
+  </div>
+  <div class="pillar">
+    <div class="pillar-icon" style="background:rgba(139,107,163,0.15)">🎨</div>
+    <h3>12-Color Chromatic Spectrum™</h3>
+    <p>A proprietary perceptual color grammar: each of the 12 pitch classes has a fixed, full-saturation color. C = Yellow at 12 o'clock, clockwise to B. Students see chord relationships, key signatures, and modal structure as color patterns — leveraging spatial and chromatic memory simultaneously.</p>
+  </div>
+  <div class="pillar">
+    <div class="pillar-icon" style="background:rgba(244,208,63,0.12)">🔗</div>
+    <h3>Cross-Panel Visual Sync</h3>
+    <p>A single event bus (KCM.bus) drives 8+ synchronized panels: Chromatic Circle, Piano Keyboard, Guitar Fretboard, Staff Notation, Ear Training, Modal Stencil, Circle of Fifths, and Mic Detection. One detected chord lights up every representation at once.</p>
+  </div>
+</div>
+
+<!-- DISTINCTION TABLE -->
+<div class="section-label">KCM vs. Everything Else</div>
+<div class="distinction">
+  <table>
+    <thead>
+      <tr>
+        <th>Capability</th>
+        <th>Conventional Platforms</th>
+        <th>KCM</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Pitch detection</td>
+        <td>Single note, autocorrelation only</td>
+        <td style="color:var(--gold)">Full polyphonic chords — HPS + chroma pipeline</td>
+      </tr>
+      <tr>
+        <td>Color encoding</td>
+        <td>None, or arbitrary highlight colors</td>
+        <td style="color:var(--gold)">Fixed 12-color grammar — every pitch = one color, always</td>
+      </tr>
+      <tr>
+        <td>Cross-instrument sync</td>
+        <td>One view at a time</td>
+        <td style="color:var(--gold)">8 panels synchronized via event bus — detect once, see everywhere</td>
+      </tr>
+      <tr>
+        <td>Visual music theory</td>
+        <td>Static diagrams or tab</td>
+        <td style="color:var(--gold)">Animated clock-face circle, real-time modal stencil overlays</td>
+      </tr>
+      <tr>
+        <td>Delivery</td>
+        <td>App install, platform lock-in</td>
+        <td style="color:var(--gold)">Pure browser — zero install, any device, embeddable</td>
+      </tr>
+      <tr>
+        <td>IP foundation</td>
+        <td>None proprietary</td>
+        <td style="color:var(--gold)">4 U.S. patents (FreeStyle® Musical Device) + Chromatic Spectrum™ trademark</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- KANSEI BRIDGE -->
+<div class="section-label">The Yamaha Connection</div>
+<div class="kansei-bridge">
+  <div class="kansei-side">
+    <div class="label">Yamaha's Framework</div>
+    <div class="name">KANSEI Engineering</div>
+    <p>Maps emotional and sensory response to product attributes — the science of how music <em>feels</em> to the listener and player. Applied across synthesis R&D, instrument design, and music education.</p>
+  </div>
+  <div style="text-align:center; padding: 0 8px;">
+    <div style="font-size:10px; color:var(--teal-lt); font-family:Cinzel,serif; letter-spacing:0.1em; margin-bottom:6px; text-transform:uppercase">Bridge</div>
+    <div style="font-size:24px; color:var(--teal)">⟷</div>
+  </div>
+  <div class="kansei-side" style="text-align:right">
+    <div class="label">KCM's Framework</div>
+    <div class="name">Visual Cognition Layer</div>
+    <p>Maps pitch relationships to color and spatial position — making harmonic emotion <em>seeable</em>. The 12-color grammar encodes the same emotional gradients KANSEI tracks, but externalizes them as learnable visual structure.</p>
+  </div>
+</div>
+
+<!-- TECH STACK -->
+<div class="section-label">Technical Foundation</div>
+<div class="tech-grid">
+  <div class="tech-item">
+    <div class="t-label">Detection</div>
+    <div class="t-val">HPS + Chroma</div>
+  </div>
+  <div class="tech-item">
+    <div class="t-label">Delivery</div>
+    <div class="t-val">Pure Browser</div>
+  </div>
+  <div class="tech-item">
+    <div class="t-label">Sync Layer</div>
+    <div class="t-val">KCM.bus</div>
+  </div>
+  <div class="tech-item">
+    <div class="t-label">Next: ML Pitch</div>
+    <div class="t-val">TF.js CREPE</div>
+  </div>
+  <div class="tech-item">
+    <div class="t-label">Panels</div>
+    <div class="t-val">8 Synced</div>
+  </div>
+  <div class="tech-item">
+    <div class="t-label">Chord Types</div>
+    <div class="t-val">20 + Growing</div>
+  </div>
+  <div class="tech-item">
+    <div class="t-label">Patents</div>
+    <div class="t-val">4 U.S. (FreeStyle®)</div>
+  </div>
+  <div class="tech-item">
+    <div class="t-label">Platform</div>
+    <div class="t-val">Zero Install</div>
+  </div>
+</div>
+
+<!-- OPPORTUNITY -->
+<div class="opportunity">
+  <h3>Partnership Opportunity with Yamaha</h3>
+  <div class="opp-items">
+    <div class="opp-item">Embed KCM's visual layer into Yamaha's education ecosystem as the cognitive bridge between playing and understanding</div>
+    <div class="opp-item">License the 12-Color Chromatic Spectrum™ as a visual standard for Yamaha's digital music learning products</div>
+    <div class="opp-item">Co-develop KANSEI-aligned color-emotion mapping with KCM's real-time harmonic detection infrastructure</div>
+    <div class="opp-item">Integrate polyphonic chord intelligence into Yamaha's instrument firmware or companion apps</div>
+    <div class="opp-item">Position KCM as Yamaha's visual cognition R&D partner — the perceptual layer their synthesis science doesn't yet have</div>
+    <div class="opp-item">Joint grant applications targeting music education funding (NAMM Foundation, institutional school partnerships)</div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <div class="contact">
+    <strong>Benjamin Ryan — Founder, Keys, Codes &amp; Modes™</strong>
+    <a href="https://keyscodesandmodes.com">keyscodesandmodes.com</a><br>
+    <a href="https://console.keyscodesandmodes.com">console.keyscodesandmodes.com</a> — Live demo<br>
+    ben@keyscodesandmodes.com &nbsp;·&nbsp; 805-886-4092<br>
+    1187 Coast Village Rd #110, Santa Barbara, CA 93108
+  </div>
+  <div class="legal">
+    Keys, Codes &amp; Modes™ is a trademark of Benjamin Ryan.<br>
+    FreeStyle® is a registered trademark, U.S. Patent Nos. on file.<br>
+    12-Color Chromatic Spectrum™ — proprietary visual system.<br>
+    © 2026 Benjamin Ryan. All rights reserved.
+  </div>
+</div>
+
+</body>
+</html>
