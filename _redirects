@@ -15,3 +15,11 @@
 /refund-policy/ /refund-policy.html 301
 /cookie-policy/ /cookie-policy.html 301
 /holy-mole-grail/ /holy-mole-grail.html 301
+
+# ── Homepage duplicate variants
+/index          /       301
+/index.html     /       301
+
+# ── Extensionless canonicalization
+/refund-policy  /refund-policy.html     301
+/lander         /lander.html            301

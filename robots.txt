@@ -67,3 +67,11 @@ Allow: /
 # Sitemap — global, not tied to any user-agent
 # ============================================
 Sitemap: https://keyscodesandmodes.com/sitemap.xml
+
+# Block post-purchase / internal utility pages
+Disallow: /welcome-premium
+Disallow: /welcome-premium.html
+Disallow: /welcome-free-picker
+Disallow: /welcome-free-picker.html
+Disallow: /sitemail
+Disallow: /sitemail.html
