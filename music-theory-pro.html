@@ -330,9 +330,38 @@ nav a.active { color: var(--primary-teal); }
     text-transform: uppercase;
     letter-spacing: 1.5px;
     transition: all 0.3s;
+    animation: kcmPulse 2s ease-in-out infinite;
 }
-#startAudio:hover { transform: translateY(-3px); box-shadow: 0 10px 35px rgba(231,76,60,0.6); }
-#startAudio:disabled { cursor: default; }
+#startAudio:hover { transform: translateY(-3px); box-shadow: 0 10px 35px rgba(231,76,60,0.6); animation: none; }
+#startAudio:disabled { cursor: default; animation: none; opacity: 0.6; }
+@keyframes kcmPulse {
+    0%,100% { box-shadow: 0 6px 25px rgba(231,76,60,0.5); }
+    50%      { box-shadow: 0 8px 40px rgba(231,76,60,0.9), 0 0 0 8px rgba(231,76,60,0.15); }
+}
+/* Audio-gated buttons — dim until audio starts */
+.kcm-needs-audio {
+    opacity: 0.38;
+    cursor: not-allowed !important;
+    filter: grayscale(0.4);
+    transition: opacity 0.4s, filter 0.4s;
+}
+.kcm-needs-audio.kcm-audio-ready {
+    opacity: 1;
+    cursor: pointer !important;
+    filter: none;
+}
+/* Recording-gated buttons — dim until recording exists */
+.kcm-needs-recording {
+    opacity: 0.38;
+    cursor: not-allowed !important;
+    filter: grayscale(0.5);
+    transition: opacity 0.4s, filter 0.4s;
+}
+.kcm-needs-recording.kcm-rec-ready {
+    opacity: 1;
+    cursor: pointer !important;
+    filter: none;
+}
 
 /* ============================================================
    VIEW TOGGLE BUTTONS
@@ -1488,7 +1517,25 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
      TF.js also loaded as ml5 dependency.
      _loadCREPE() wraps ml5.pitchDetection() in our estimatePitch() API.
      Graceful fallback: if ml5 unavailable, FFT path used silently.
+     Suppress duplicate TF.js backend registration warnings from ml5 v0.12.2.
 ──────────────────────────────────────────────────────────────────── -->
+<script>
+// Suppress ml5/TF.js "backend already registered" console warnings (cosmetic, harmless)
+(function() {
+    const _warn = console.warn.bind(console);
+    console.warn = function() {
+        const msg = arguments[0] && arguments[0].toString ? arguments[0].toString() : '';
+        if (msg.includes('backend was already registered') ||
+            msg.includes('Platform browser has already been set') ||
+            msg.includes('Overwriting the platform')) return;
+        _warn.apply(console, arguments);
+    };
+    // Restore after ml5 loads
+    window.addEventListener('load', function() {
+        setTimeout(() => { console.warn = _warn; }, 3000);
+    });
+})();
+</script>
 <script src="https://cdn.jsdelivr.net/npm/ml5@0.12.2/dist/ml5.min.js"></script>
 </head>
 <body>
@@ -1702,8 +1749,8 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                 <button class="view-btn" data-view="ear">👂 Ear</button>
                 <button class="view-btn" data-view="sing">🎤 Sing</button>
                 <button class="view-btn key-selector-btn" id="keyPickerBtn" onclick="toggleKeyPicker()" aria-haspopup="true" aria-expanded="false">🎵 Key: <span id="keyPickerLabel">C</span></button>
-                <button id="globalPlayBtn" class="view-action-btn" style="background:linear-gradient(135deg,#27ae60,#1e8449); border-color:#27ae60; color:#fff; font-weight:800;">▶ Play</button>
-                <button id="globalStopBtn" class="view-action-btn" style="background:linear-gradient(135deg,#e74c3c,#c0392b); border-color:#e74c3c; color:#fff; font-weight:800;">■ Stop</button>
+                <button id="globalPlayBtn" class="view-action-btn kcm-needs-audio" title="Press 🔊 PRESS TO START first" style="background:linear-gradient(135deg,#27ae60,#1e8449); border-color:#27ae60; color:#fff; font-weight:800;">▶ Play</button>
+                <button id="globalStopBtn" class="view-action-btn kcm-needs-audio" title="Press 🔊 PRESS TO START first" style="background:linear-gradient(135deg,#e74c3c,#c0392b); border-color:#e74c3c; color:#fff; font-weight:800;">■ Stop</button>
             </div>
 
             <!-- ── KEY PICKER PANEL ─────────────────────────────── -->
@@ -1716,7 +1763,7 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
             </div>
 
             <div style="display:flex; justify-content:center; margin-bottom:0.5rem;">
-                <button class="level-btn" id="playChromaticBtn" style="background:linear-gradient(135deg, var(--primary-teal) 0%, #006666 100%); border-color:var(--primary-teal); color:#fff; min-width:220px; font-size:0.85rem; letter-spacing:1px; box-shadow:var(--teal-glow);">🎹 CHROMATIC SCALE</button>
+                <button class="level-btn kcm-needs-audio" id="playChromaticBtn" title="Press 🔊 PRESS TO START first" style="background:linear-gradient(135deg, var(--primary-teal) 0%, #006666 100%); border-color:var(--primary-teal); color:#fff; min-width:220px; font-size:0.85rem; letter-spacing:1px; box-shadow:var(--teal-glow);">🎹 CHROMATIC SCALE</button>
             </div>
 
             <div class="level-selector" role="group" aria-label="Learning mode selector">
@@ -1737,7 +1784,7 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                             Using <span id="progressionChordType">Triads</span> · Scale: <span id="progressionScaleType">Major</span>
                         </div>
                         <div style="text-align:center; margin-bottom:0.85rem;">
-                            <button class="play-btn" id="playAllChordsBtn" style="margin:0 auto; display:inline-flex;">🎹 Play All Scale Chords</button>
+                            <button class="play-btn kcm-needs-audio" id="playAllChordsBtn" title="Press 🔊 PRESS TO START first" style="margin:0 auto; display:inline-flex;">🎹 Play All Scale Chords</button>
                         </div>
                         <div class="progression-buttons" id="progressionButtons"></div>
                     </div>
@@ -1746,11 +1793,11 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
             </div>
 
             <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
-                <button class="play-btn" id="playUpBtn" style="flex:1; max-width:160px;">↑ Ascending</button>
-                <button class="play-btn" id="playDownBtn" style="flex:1; max-width:160px;">↓ Descending</button>
-                <button class="play-btn" id="playScaleBtn" style="flex:1; max-width:160px;">♫ Full Scale</button>
-                <button class="play-btn" id="playChordBtn" style="flex:1; max-width:160px;">♪ Play Chord</button>
-                <button class="play-btn" id="stopPlayBtn" style="flex:1; max-width:130px; background:linear-gradient(135deg,#7f8c8d,#555); border-color:#7f8c8d;">⏹ Stop</button>
+                <button class="play-btn kcm-needs-audio" id="playUpBtn" title="Press 🔊 PRESS TO START first" style="flex:1; max-width:160px;">↑ Ascending</button>
+                <button class="play-btn kcm-needs-audio" id="playDownBtn" title="Press 🔊 PRESS TO START first" style="flex:1; max-width:160px;">↓ Descending</button>
+                <button class="play-btn kcm-needs-audio" id="playScaleBtn" title="Press 🔊 PRESS TO START first" style="flex:1; max-width:160px;">♫ Full Scale</button>
+                <button class="play-btn kcm-needs-audio" id="playChordBtn" title="Press 🔊 PRESS TO START first" style="flex:1; max-width:160px;">♪ Play Chord</button>
+                <button class="play-btn kcm-needs-audio" id="stopPlayBtn" title="Press 🔊 PRESS TO START first" style="flex:1; max-width:130px; background:linear-gradient(135deg,#7f8c8d,#555); border-color:#7f8c8d;">⏹ Stop</button>
             </div>
 
         </div><!-- end views swap zone -->
@@ -2031,11 +2078,11 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
         <div style="background:rgba(0,0,0,0.4); padding:1.5rem; border-radius:12px; margin-top:1.5rem; border:2px solid rgba(0,128,128,0.2);">
             <h4 style="margin:0 0 1rem 0; text-align:center; font-family:var(--font-display); font-size:1rem; font-weight:700; color:var(--primary-gold); text-transform:uppercase; letter-spacing:1px;">🎙️ Recording Studio</h4>
             <div style="display:flex; gap:10px; margin-bottom:1rem; flex-wrap:wrap; justify-content:center;">
-                <button class="rec-btn" id="recordBtn" aria-pressed="false">⏺ Record</button>
-                <button class="rec-btn" id="playRecBtn">▶ Playback</button>
+                <button class="rec-btn kcm-needs-audio" id="recordBtn" aria-pressed="false" title="Press 🔊 PRESS TO START first">⏺ Record</button>
+                <button class="rec-btn kcm-needs-audio kcm-needs-recording" id="playRecBtn" title="Record something first">▶ Playback</button>
                 <button class="rec-btn" id="clearRecBtn" style="background:linear-gradient(135deg, #e67e22 0%, #d35400 100%);">🗑 Clear</button>
-                <button class="rec-btn" id="downloadRecBtn" style="background:linear-gradient(135deg, var(--primary-purple) 0%, #6a4f8c 100%);">💾 MIDI</button>
-                <button class="rec-btn" id="downloadWAVBtn" style="background:linear-gradient(135deg, #1abc9c 0%, #16a085 100%);" title="Record audio to WAV — start Recording first, then click this to capture">🎧 WAV</button>
+                <button class="rec-btn kcm-needs-audio kcm-needs-recording" id="downloadRecBtn" title="Record something first" style="background:linear-gradient(135deg, var(--primary-purple) 0%, #6a4f8c 100%);">💾 MIDI</button>
+                <button class="rec-btn kcm-needs-audio" id="downloadWAVBtn" title="Press 🔊 PRESS TO START first — then Record to capture audio" style="background:linear-gradient(135deg, #1abc9c 0%, #16a085 100%);">🎧 WAV</button>
             </div>
             <div style="text-align:center; font-size:0.68rem; color:#b0b0cc; margin-bottom:0.5rem; line-height:1.4;">
                 ⏺ Record captures note events for MIDI · 🎧 WAV captures the actual audio output
@@ -2417,7 +2464,7 @@ window.addEventListener('unhandledrejection', function(event) {
                 if (el('newQuizBtn')) el('newQuizBtn').onclick = generateQuiz;
                 if (el('recordBtn')) el('recordBtn').onclick = startRecording;
                 if (el('playRecBtn')) el('playRecBtn').onclick = playbackRecording;
-                if (el('clearRecBtn')) el('clearRecBtn').onclick = () => { recordedNotes = []; const s = el('recordingStatus'); if (s) s.textContent = '🗑 Recording cleared'; };
+                if (el('clearRecBtn')) el('clearRecBtn').onclick = () => { recordedNotes = []; const s = el('recordingStatus'); if (s) s.textContent = '🗑 Recording cleared'; document.querySelectorAll('.kcm-needs-recording').forEach(b => b.classList.remove('kcm-rec-ready')); };
                 if (el('downloadRecBtn')) el('downloadRecBtn').onclick = downloadMIDI;
                 if (el('downloadWAVBtn')) el('downloadWAVBtn').onclick = startWAVRecording;
                 const tempoSlider = el('tempoSlider');
@@ -2580,6 +2627,8 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                     if (dab) { dab.textContent = '✓ Audio Ready'; dab.style.background = 'linear-gradient(135deg,#27ae60,#1e8449)'; }
                     const status = document.getElementById('status');
                     if (status) status.textContent = '✨ Ready! Click notes or use controls';
+                    // ── Unlock all audio-gated buttons ──
+                    document.querySelectorAll('.kcm-needs-audio').forEach(b => b.classList.add('kcm-audio-ready'));
                     try { trackEvent('audio_started', {}); } catch(e) {}
                 });
                 // Keep context alive on iOS — resume on any touch
@@ -4077,10 +4126,16 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                     isRecording = true; recordedNotes = []; recordingStartTime = Date.now();
                     if (btn) { btn.textContent = '⏹ Stop'; btn.classList.add('recording'); btn.setAttribute('aria-pressed','true'); }
                     if (status) status.textContent = '⏺ Recording...';
+                    // Dim playback/download while new recording is in progress
+                    document.querySelectorAll('.kcm-needs-recording').forEach(b => b.classList.remove('kcm-rec-ready'));
                 } else {
                     isRecording = false;
                     if (btn) { btn.textContent = '⏺ Record'; btn.classList.remove('recording'); btn.setAttribute('aria-pressed','false'); }
                     if (status) status.textContent = `✓ Recorded ${recordedNotes.length} notes`;
+                    // Unlock playback/download buttons now that we have notes
+                    if (recordedNotes.length > 0) {
+                        document.querySelectorAll('.kcm-needs-recording').forEach(b => b.classList.add('kcm-rec-ready'));
+                    }
                 }
             } catch(e) { console.error('Recording error:', e); }
         }
@@ -5338,6 +5393,35 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
             currentModeSelection = mode;
             updateDisplay();
             setTimeout(() => playSelection('up'), 200);
+        };
+
+        // Expose currentLevel setter for dock (dockSwitchHarm needs to write into IIFE scope)
+        window._setCurrentLevel = function(level, opts) {
+            opts = opts || {};
+            currentLevel = level;
+            if (level === 'harmMajor' || level === 'harmMinor') {
+                window.currentHarmKey = level;
+                currentHarmDegree    = typeof opts.degree === 'number' ? opts.degree : 0;
+                currentHarmChordType = opts.chordType || currentHarmChordType || 'triad';
+            }
+            clearAllHighlights();
+            updateDisplay();
+            updateView();
+            if (typeof updateControls === 'function') updateControls();
+        };
+
+        // Expose harm degree setter so dock degree buttons work correctly
+        window._setHarmDegree = function(deg) {
+            currentHarmDegree = deg;
+            updateDisplay();
+            setTimeout(() => { if (typeof playHarmChordAscending === 'function') playHarmChordAscending(); }, 150);
+        };
+
+        // Expose harm chord type setter so dock Triads/7ths buttons work correctly
+        window._setHarmChordType = function(type) {
+            currentHarmChordType = type;
+            updateDisplay();
+            setTimeout(() => { if (typeof playHarmChordAscending === 'function') playHarmChordAscending(); }, 150);
         };
 
 
@@ -6676,7 +6760,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 🎵 Key: <span id="dockKeyLabel">C</span>
             </button>
             <div class="dock-divider"></div>
-            <button class="dock-play-btn" onclick="document.getElementById('globalPlayBtn').click()" style="background:linear-gradient(135deg,#27ae60,#1e8449);">▶ Play</button>
+            <button class="dock-play-btn kcm-needs-audio" onclick="document.getElementById('globalPlayBtn').click()" title="Press 🔊 Start Audio first" style="background:linear-gradient(135deg,#27ae60,#1e8449);">▶ Play</button>
             <button class="dock-play-btn" onclick="document.getElementById('globalStopBtn').click()" style="background:linear-gradient(135deg,#e74c3c,#c0392b);">■ Stop</button>
         </div>
 
@@ -6718,10 +6802,10 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
             <button class="dock-play-btn" style="background:linear-gradient(135deg,#008080,#005555);" onclick="if(typeof playChromaticBtn!=='undefined')playChromaticBtn.click(); else document.getElementById('playChromaticBtn').click();">🎹 Chromatic</button>
             <div class="dock-divider"></div>
             <!-- Playback — context-aware for Harm modes -->
-            <button class="dock-play-btn" id="dockPlayAllBtn" style="background:linear-gradient(135deg,#27ae60,#1e8449);" onclick="dockSmartPlay('all')">▶ Play</button>
-            <button class="dock-play-btn" id="dockAscBtn"    style="background:linear-gradient(135deg,#7f8c8d,#555);"    onclick="dockSmartPlay('up')">↑ Asc</button>
-            <button class="dock-play-btn" id="dockDescBtn"   style="background:linear-gradient(135deg,#7f8c8d,#555);"    onclick="dockSmartPlay('down')">↓ Desc</button>
-            <button class="dock-play-btn" id="dockChordBtn2" style="background:linear-gradient(135deg,#8B6BA3,#6a4f8c);" onclick="dockSmartPlay('chord')">♪ Chord</button>
+            <button class="dock-play-btn kcm-needs-audio" id="dockPlayAllBtn" title="Press 🔊 Start Audio first" style="background:linear-gradient(135deg,#27ae60,#1e8449);" onclick="dockSmartPlay('all')">▶ Play</button>
+            <button class="dock-play-btn kcm-needs-audio" id="dockAscBtn"    title="Press 🔊 Start Audio first" style="background:linear-gradient(135deg,#7f8c8d,#555);"    onclick="dockSmartPlay('up')">↑ Asc</button>
+            <button class="dock-play-btn kcm-needs-audio" id="dockDescBtn"   title="Press 🔊 Start Audio first" style="background:linear-gradient(135deg,#7f8c8d,#555);"    onclick="dockSmartPlay('down')">↓ Desc</button>
+            <button class="dock-play-btn kcm-needs-audio" id="dockChordBtn2" title="Press 🔊 Start Audio first" style="background:linear-gradient(135deg,#8B6BA3,#6a4f8c);" onclick="dockSmartPlay('chord')">♪ Chord</button>
             <button class="dock-play-btn" style="background:linear-gradient(135deg,#e74c3c,#c0392b);" onclick="document.getElementById('globalStopBtn').click()">■ Stop</button>
             <div class="dock-divider"></div>
             <!-- Octave -->
@@ -6858,29 +6942,33 @@ function dockSetView(el, view) {
 
 function dockSetLevel(el, level) {
     // Resolve unified 'harm' to actual type
-    if (level === 'harm') {
-        if (!window.currentHarmKey) window.currentHarmKey = 'harmMajor';
-        // Don't override level — let the main button click handler do it
-    }
+    const effectiveLevel = level === 'harm' ? (window.currentHarmKey || 'harmMajor') : level;
+    if (level === 'harm' && !window.currentHarmKey) window.currentHarmKey = 'harmMajor';
+
     // Update dock buttons
     document.querySelectorAll('.dock-level-btn').forEach(b => b.classList.remove('active'));
     el.classList.add('active');
-    // Show/hide degree sub-menu
-    const effectiveLevel = level === 'harm' ? (window.currentHarmKey || 'harmMajor') : level;
+
+    // Show/hide sub-menus
     dockShowDegrees(effectiveLevel);
-    // Show/hide scales sub-menu
     const isScaleLevel = (level === 'scales' || level === '5' || level === '6' || level === '7' || level === 'minor');
     if (typeof dockShowScales === 'function') dockShowScales(isScaleLevel);
-    // Show/hide mode sub-menu
     dockShowModes(effectiveLevel);
-    // Update play button labels for Harm vs regular modes
     dockUpdatePlayLabels(effectiveLevel);
-    // Click the matching main level button
+
+    // Click the matching main level button — this triggers all main-panel setup
     const mainBtn = document.querySelector(`.level-btn[data-level="${level}"]`);
-    if (mainBtn) mainBtn.click();
-    // Also sync the main level-btn visual
-    document.querySelectorAll('.level-btn[data-level]').forEach(b => b.classList.remove('active'));
-    if (mainBtn) mainBtn.classList.add('active');
+    if (mainBtn) {
+        mainBtn.click();
+        // Ensure main btn visual is active (click handler removes/adds active)
+        setTimeout(() => {
+            document.querySelectorAll('.level-btn[data-level]').forEach(b => b.classList.remove('active'));
+            mainBtn.classList.add('active');
+        }, 20);
+    } else if (typeof window._setCurrentLevel === 'function') {
+        // Fallback if main button not found
+        window._setCurrentLevel(effectiveLevel);
+    }
 }
 
 function dockChangeBPM(delta) {
@@ -7007,14 +7095,15 @@ function dockSwitchHarm(key) {
     // Switch the degree display
     dockShowDegrees(key);
     if (typeof dockUpdateProgressions === 'function') dockUpdateProgressions(key === 'harmMinor');
-    // Update app state
-    currentLevel = key;
-    currentHarmDegree = 0;
+    // ── Update IIFE-scoped currentLevel via the exposed setter (not direct assignment) ──
+    if (typeof window._setCurrentLevel === 'function') {
+        window._setCurrentLevel(key, { degree: 0 });
+    }
     if (typeof dockUpdatePlayLabels === 'function') dockUpdatePlayLabels(key);
-    if (typeof window.updateDisplay === 'function') window.updateDisplay();
-    setTimeout(() => { if (typeof playHarmChordAscending === 'function') window.playHarmChordAscending(); }, 200);
-    // Sync main panel controls
-    setTimeout(() => { if (typeof updateControls === 'function') window.updateControls(); }, 50);
+    setTimeout(() => { if (typeof window.playHarmChordAscending === 'function') window.playHarmChordAscending(); }, 200);
+    // Also click the matching main panel level button to keep full UI in sync
+    const mainHarmBtn = document.querySelector('.level-btn[data-level="harm"]');
+    if (mainHarmBtn && !mainHarmBtn.classList.contains('active')) mainHarmBtn.click();
 }
 
 function dockShowDegrees(level) {
@@ -7024,6 +7113,8 @@ function dockShowDegrees(level) {
     // Sync Major/Minor toggle buttons
     const majBtn = document.getElementById('dockHarmMajorBtn');
     const minBtn = document.getElementById('dockHarmMinorBtn');
+    // Treat bare 'harm' as harmMajor (default) when switching in from dock
+    if (level === 'harm') level = window.currentHarmKey || 'harmMajor';
     if (level === 'harmMajor') {
         row.style.display = 'flex';
         maj.style.display = 'flex';
@@ -7110,42 +7201,35 @@ function dockSetMode(el, mode) {
 
 function dockSetDegree(el, deg) {
     // Update active state in whichever group is visible
-    // Determine current level by checking which dock-level-btn is active
-    const activeLvlBtn = document.querySelector('.dock-level-btn.active');
-    const _lvl = activeLvlBtn ? activeLvlBtn.dataset.dockLevel : 'harmMajor';
-    const group = _lvl === 'harmMinor'
+    const appLevel = (typeof window.currentLevel === 'string') ? window.currentLevel : '';
+    const isMinor  = appLevel === 'harmMinor' || window.currentHarmKey === 'harmMinor';
+    const group = isMinor
         ? document.getElementById('dockMinorDegrees')
         : document.getElementById('dockMajorDegrees');
-    group.querySelectorAll('.dock-deg-btn').forEach(b => b.classList.remove('active'));
+    if (group) group.querySelectorAll('.dock-deg-btn').forEach(b => b.classList.remove('active'));
     el.classList.add('active');
-    // Also click matching main deg-btn to keep in sync
-    const mainBtn = document.querySelector(`.deg-btn[data-deg="${deg}"]`);
-    if (mainBtn) {
-        mainBtn.click();
+    // Set via exposed setter (works even when main deg-btn doesn't exist yet)
+    if (typeof window._setHarmDegree === 'function') {
+        window._setHarmDegree(deg);
     } else {
-        // Fallback: set directly and play
-        if (typeof currentHarmDegree !== 'undefined') {
-            currentHarmDegree = deg;
-            if (typeof updateDisplay === 'function') window.updateDisplay();
-            setTimeout(() => { if (typeof playHarmChordAscending === 'function') window.playHarmChordAscending(); }, 200);
-        }
+        // Belt-and-suspenders: try main panel button
+        const mainBtn = document.querySelector(`.deg-btn[data-deg="${deg}"]`);
+        if (mainBtn) mainBtn.click();
     }
 }
 
 function dockSetChordType(type) {
-    document.getElementById('dockTriadBtn').style.background = type==='triad' ? 'rgba(0,128,128,0.4)' : '';
-    document.getElementById('dockTriadBtn').style.borderColor = type==='triad' ? 'var(--primary-teal)' : '';
-    document.getElementById('dock7thBtn').style.background   = type==='7th'   ? 'rgba(0,128,128,0.4)' : '';
-    document.getElementById('dock7thBtn').style.borderColor  = type==='7th'   ? 'var(--primary-teal)' : '';
-    // Sync with main chord type select
-    const sel = document.getElementById('harmTypeSelect');
-    if (sel) { sel.value = type; sel.dispatchEvent(new Event('change')); }
-    else {
-        if (typeof currentHarmChordType !== 'undefined') {
-            currentHarmChordType = type;
-            if (typeof updateDisplay === 'function') window.updateDisplay();
-            setTimeout(() => { if (typeof playHarmChordAscending === 'function') window.playHarmChordAscending(); }, 200);
-        }
+    const triadBtn = document.getElementById('dockTriadBtn');
+    const btn7th   = document.getElementById('dock7thBtn');
+    if (triadBtn) { triadBtn.style.background = type==='triad' ? 'rgba(0,128,128,0.4)' : ''; triadBtn.style.borderColor = type==='triad' ? 'var(--primary-teal)' : ''; }
+    if (btn7th)   { btn7th.style.background   = type==='7th'   ? 'rgba(0,128,128,0.4)' : ''; btn7th.style.borderColor   = type==='7th'   ? 'var(--primary-teal)' : ''; }
+    // Use exposed setter to write into IIFE scope
+    if (typeof window._setHarmChordType === 'function') {
+        window._setHarmChordType(type);
+    } else {
+        // Fallback: try main panel select
+        const sel = document.getElementById('harmTypeSelect');
+        if (sel) { sel.value = type; sel.dispatchEvent(new Event('change')); }
     }
 }
 // Mirror octave display
@@ -7333,13 +7417,16 @@ function dockGetLevel() {
 
 function dockSmartPlay(mode) {
     const lvl = dockGetLevel();
-    const isHarm = lvl === 'harmMajor' || lvl === 'harmMinor';
+    // Resolve 'harm' → check actual currentLevel (harmMajor/harmMinor) set by app
+    const appLevel = (typeof window.currentLevel === 'string') ? window.currentLevel : lvl;
+    const isHarm = lvl === 'harm' || appLevel === 'harmMajor' || appLevel === 'harmMinor'
+                   || lvl === 'harmMajor' || lvl === 'harmMinor';
     if (mode === 'all') {
         if (isHarm) {
-            // Play all 7 scale-degree chords in sequence
             dockPlayAllScaleChords();
         } else {
-            document.getElementById('globalPlayBtn').click();
+            const btn = document.getElementById('globalPlayBtn');
+            if (btn) btn.click();
         }
         return;
     }
@@ -7348,7 +7435,7 @@ function dockSmartPlay(mode) {
             dockPlayCurrentDegreeChord();
         } else if (typeof playSelection === 'function') {
             playSelection('chord');
-        }
+        } else { const b = document.getElementById('playChordBtn'); if(b) b.click(); }
         return;
     }
     if (mode === 'up') {
@@ -7356,16 +7443,15 @@ function dockSmartPlay(mode) {
             dockPlayCurrentDegreeArp();
         } else if (typeof playSelection === 'function') {
             playSelection('up');
-        }
+        } else { const b = document.getElementById('playUpBtn'); if(b) b.click(); }
         return;
     }
     if (mode === 'down') {
         if (isHarm) {
-            // Descending arpeggio of current degree chord
             dockPlayCurrentDegreeArpDown();
         } else if (typeof playSelection === 'function') {
             playSelection('down');
-        }
+        } else { const b = document.getElementById('playDownBtn'); if(b) b.click(); }
         return;
     }
 }
@@ -7404,7 +7490,7 @@ function dockPlayAllScaleChords() {
 
 // ── Update dock button labels when entering/leaving Harm mode ────
 function dockUpdatePlayLabels(level) {
-    const isHarm  = level === 'harmMajor' || level === 'harmMinor';
+    const isHarm  = level === 'harmMajor' || level === 'harmMinor' || level === 'harm';
     const isModes = level === 'modes';
     const allBtn   = document.getElementById('dockPlayAllBtn');
     const ascBtn   = document.getElementById('dockAscBtn');
