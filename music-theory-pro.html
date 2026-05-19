@@ -5426,6 +5426,246 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
 
 
         // ══════════════════════════════════════════════════════════════
+
+        // ── Polyphonic chord detection engine (module-level) ──
+        // POLYPHONIC CHORD DETECTION ENGINE
+        // Transplanted from polyphonic-guitar-detector.html
+        // Runs alongside monophonic SING loop — detects full chords
+        // ══════════════════════════════════════════════════════════════
+
+        // ══════════════════════════════════════════════════════════════
+        // POLYPHONIC CHORD DETECTION ENGINE v2
+        // HPS (Harmonic Product Spectrum) + Chroma Vectors
+        // ══════════════════════════════════════════════════════════════
+
+        const _POLY_NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+
+        // Extended chord library — scored by commonality (higher = prefer)
+        const _POLY_CHORDS = [
+            // Power / dyads
+            {n:'Power 5',  p:[0,7],          score:1},
+            // Triads
+            {n:'Major',    p:[0,4,7],         score:10},
+            {n:'Minor',    p:[0,3,7],         score:10},
+            {n:'Sus2',     p:[0,2,7],         score:7},
+            {n:'Sus4',     p:[0,5,7],         score:7},
+            {n:'Diminished',p:[0,3,6],        score:6},
+            {n:'Augmented', p:[0,4,8],        score:5},
+            // 7ths
+            {n:'Major 7',  p:[0,4,7,11],      score:9},
+            {n:'Dom 7',    p:[0,4,7,10],      score:9},
+            {n:'Minor 7',  p:[0,3,7,10],      score:9},
+            {n:'Min/Maj 7',p:[0,3,7,11],      score:7},
+            {n:'Half-Dim', p:[0,3,6,10],      score:6},
+            {n:'Dim 7',    p:[0,3,6,9],       score:6},
+            {n:'Dom 7sus4',p:[0,5,7,10],      score:6},
+            // 6ths
+            {n:'Major 6',  p:[0,4,7,9],       score:7},
+            {n:'Minor 6',  p:[0,3,7,9],       score:7},
+            // Add chords
+            {n:'Add 9',    p:[0,2,4,7],       score:7},
+            {n:'Min Add9', p:[0,2,3,7],       score:6},
+            // 9ths
+            {n:'Major 9',  p:[0,2,4,7,11],    score:8},
+            {n:'Dom 9',    p:[0,2,4,7,10],    score:8},
+            {n:'Minor 9',  p:[0,2,3,7,10],    score:8},
+        ];
+
+        // ── HPS: Harmonic Product Spectrum ─────────────────────────
+        // Multiplies spectrum by downsampled versions (÷2, ÷3, ÷4, ÷5)
+        // Fundamentals reinforce, harmonics cancel — far better than peak-picking
+        function _polyHPS(floatData, sr, bufLen, numHarmonics=5) {
+            const hps = new Float32Array(bufLen);
+            // Convert dB to linear magnitude
+            for (let i = 0; i < bufLen; i++) {
+                hps[i] = Math.pow(10, floatData[i] / 20);
+            }
+            // Multiply by downsampled copies
+            for (let h = 2; h <= numHarmonics; h++) {
+                for (let i = 0; i < Math.floor(bufLen / h); i++) {
+                    hps[i] *= Math.pow(10, floatData[i * h] / 20);
+                }
+            }
+            return hps;
+        }
+
+        // ── CHROMA VECTOR ───────────────────────────────────────────
+        // Collapses all octaves into 12 pitch classes
+        // Eliminates octave confusion — C2 and C4 both vote for 'C'
+        function _polyChroma(hpsData, sr, bufLen) {
+            const chroma = new Float32Array(12).fill(0);
+            const binHz  = sr / (bufLen * 2);
+
+            for (let i = 2; i < bufLen; i++) {
+                const freq = i * binHz;
+                if (freq < 60 || freq > 1400) continue; // guitar range
+                if (hpsData[i] <= 0) continue;
+                // Map frequency to pitch class
+                const midi = 69 + 12 * Math.log2(freq / 440);
+                const pc   = ((Math.round(midi) % 12) + 12) % 12;
+                chroma[pc] += hpsData[i];
+            }
+
+            // Normalize chroma to 0–1
+            const maxC = Math.max(...chroma);
+            if (maxC > 0) for (let i = 0; i < 12; i++) chroma[i] /= maxC;
+            return chroma;
+        }
+
+        // ── CHORD MATCHING from chroma ──────────────────────────────
+        // Uses cosine-similarity style scoring against chord templates
+        function _polyMatchChord(chroma) {
+            let bestScore = -Infinity, bestChord = null, bestRoot = 0;
+
+            for (let root = 0; root < 12; root++) {
+                for (const chord of _POLY_CHORDS) {
+                    // Build binary template for this chord at this root
+                    const template = new Float32Array(12).fill(0);
+                    chord.p.forEach(interval => { template[(root + interval) % 12] = 1; });
+
+                    // Score = dot product of chroma × template × commonality weight
+                    let dot = 0, tNorm = 0, cNorm = 0;
+                    for (let i = 0; i < 12; i++) {
+                        dot   += chroma[i] * template[i];
+                        tNorm += template[i] * template[i];
+                        cNorm += chroma[i]   * chroma[i];
+                    }
+                    const cosine = (tNorm > 0 && cNorm > 0)
+                        ? dot / (Math.sqrt(tNorm) * Math.sqrt(cNorm)) : 0;
+
+                    // Penalty for notes present in chroma but not in chord
+                    let penalty = 0;
+                    for (let i = 0; i < 12; i++) {
+                        if (template[i] === 0 && chroma[i] > 0.4) penalty += chroma[i] * 0.3;
+                    }
+
+                    const total = cosine * chord.score - penalty;
+                    if (total > bestScore) {
+                        bestScore = total;
+                        bestChord = chord;
+                        bestRoot  = root;
+                    }
+                }
+            }
+
+            // Confidence threshold — below this it's probably just noise
+            if (bestScore < 1.8) return null;
+
+            // Build active note set from winning chord + root
+            const noteSet = new Set();
+            bestChord.p.forEach(interval => {
+                noteSet.add(_POLY_NOTE_NAMES[(bestRoot + interval) % 12]);
+            });
+
+            return {
+                root:  _POLY_NOTE_NAMES[bestRoot],
+                name:  bestChord.n,
+                notes: noteSet,
+                score: bestScore
+            };
+        }
+
+        // ── TEMPORAL SMOOTHING ──────────────────────────────────────
+        // Chroma is averaged across frames to reduce flicker
+        const _POLY_SMOOTH_A  = 0.65; // decay of previous frame
+        const _POLY_SMOOTH_B  = 0.35; // weight of new frame
+
+        // Stability tracking
+        const _POLY_STABLE_FRAMES = 5;
+
+        function _polyAnalyse() {
+            if (!_singActive || !_singAnalyser) return;
+
+            const bufLen  = _singAnalyser.frequencyBinCount;
+            const sr      = _singAudioCtx.sampleRate;
+            const fltData = new Float32Array(bufLen);
+            _singAnalyser.getFloatFrequencyData(fltData);
+
+            // Silence gate
+            let maxDb = -Infinity;
+            for (let i = 0; i < bufLen; i++) if (fltData[i] > maxDb) maxDb = fltData[i];
+            if (maxDb < -55) {
+                // Fade chroma smoothly to silence
+                for (let i = 0; i < 12; i++) _polyChromaSmooth[i] *= 0.7;
+                _polyStableCount = 0;
+                _polyShowChord(null, new Set());
+                return;
+            }
+
+            // HPS — get fundamental-reinforced spectrum
+            const hps    = _polyHPS(fltData, sr, bufLen, 5);
+
+            // Chroma vector — collapse octaves into 12 pitch classes
+            const chroma = _polyChroma(hps, sr, bufLen);
+
+            // Temporal smoothing — blend with previous frame
+            for (let i = 0; i < 12; i++) {
+                _polyChromaSmooth[i] = _POLY_SMOOTH_A * _polyChromaSmooth[i]
+                                     + _POLY_SMOOTH_B * chroma[i];
+            }
+
+            // Match chord against smoothed chroma
+            const result = _polyMatchChord(_polyChromaSmooth);
+
+            // Stability gate — chord must win N consecutive frames
+            const key = result ? result.root + result.name : '';
+            if (key === _polyLastChordKey) { _polyStableCount++; }
+            else { _polyStableCount = 0; _polyLastChordKey = key; }
+
+            if (_polyStableCount >= _POLY_STABLE_FRAMES) {
+                _polyShowChord(result, result ? result.notes : new Set());
+                if (result) {
+                    try {
+                        window.parent.postMessage({
+                            type: 'KCM_STATE',
+                            payload: {
+                                activeNotes: [...result.notes].map(n => _POLY_NOTE_NAMES.indexOf(n)),
+                                chordName:   result.root + ' ' + result.name
+                            }
+                        }, '*');
+                    } catch(_) {}
+                }
+            }
+        }
+
+        function _polyShowChord(chord, noteSet) {
+            const display = document.getElementById('polyChordDisplay');
+            const nameEl  = document.getElementById('polyChordName');
+            const notesEl = document.getElementById('polyChordNotes');
+            if (!display) return;
+
+            if (!chord) { display.style.display = 'none'; return; }
+
+            display.style.display = 'block';
+            const rootIdx = _POLY_NOTE_NAMES.indexOf(chord.root);
+            nameEl.textContent = chord.root + ' ' + chord.name;
+            nameEl.style.color = _SING_COLORS[rootIdx] || '#F4D03F';
+            nameEl.style.textShadow = `0 0 20px ${_SING_COLORS[rootIdx]}88`;
+
+            notesEl.innerHTML = '';
+            [...noteSet]
+                .sort((a,b) => _POLY_NOTE_NAMES.indexOf(a) - _POLY_NOTE_NAMES.indexOf(b))
+                .forEach(n => {
+                    const idx   = _POLY_NOTE_NAMES.indexOf(n);
+                    const badge = document.createElement('div');
+                    badge.textContent = n;
+                    const isRoot = (n === chord.root);
+                    badge.style.cssText = [
+                        `background:${_SING_COLORS[idx]}`,
+                        `color:#000`,
+                        `padding:4px 12px`,
+                        `border-radius:20px`,
+                        `font-family:var(--font-display)`,
+                        `font-size:${isRoot ? '0.95rem' : '0.8rem'}`,
+                        `font-weight:800`,
+                        isRoot ? `box-shadow:0 0 12px ${_SING_COLORS[idx]},0 0 24px ${_SING_COLORS[idx]}88` : '',
+                        isRoot ? `transform:scale(1.15)` : '',
+                    ].join(';');
+                    notesEl.appendChild(badge);
+                });
+        }
+
+
         // 🎤 SING MODE — Observatory-grade FFT pitch detection
         // No ScriptProcessor — uses AnalyserNode + requestAnimationFrame
         // Same engine as KCM Sound Observatory v29
@@ -5760,243 +6000,6 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 // ── Observatory RAF detection loop ──────────────────────
 
         // ══════════════════════════════════════════════════════════════
-        // POLYPHONIC CHORD DETECTION ENGINE
-        // Transplanted from polyphonic-guitar-detector.html
-        // Runs alongside monophonic SING loop — detects full chords
-        // ══════════════════════════════════════════════════════════════
-
-        // ══════════════════════════════════════════════════════════════
-        // POLYPHONIC CHORD DETECTION ENGINE v2
-        // HPS (Harmonic Product Spectrum) + Chroma Vectors
-        // ══════════════════════════════════════════════════════════════
-
-        const _POLY_NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
-
-        // Extended chord library — scored by commonality (higher = prefer)
-        const _POLY_CHORDS = [
-            // Power / dyads
-            {n:'Power 5',  p:[0,7],          score:1},
-            // Triads
-            {n:'Major',    p:[0,4,7],         score:10},
-            {n:'Minor',    p:[0,3,7],         score:10},
-            {n:'Sus2',     p:[0,2,7],         score:7},
-            {n:'Sus4',     p:[0,5,7],         score:7},
-            {n:'Diminished',p:[0,3,6],        score:6},
-            {n:'Augmented', p:[0,4,8],        score:5},
-            // 7ths
-            {n:'Major 7',  p:[0,4,7,11],      score:9},
-            {n:'Dom 7',    p:[0,4,7,10],      score:9},
-            {n:'Minor 7',  p:[0,3,7,10],      score:9},
-            {n:'Min/Maj 7',p:[0,3,7,11],      score:7},
-            {n:'Half-Dim', p:[0,3,6,10],      score:6},
-            {n:'Dim 7',    p:[0,3,6,9],       score:6},
-            {n:'Dom 7sus4',p:[0,5,7,10],      score:6},
-            // 6ths
-            {n:'Major 6',  p:[0,4,7,9],       score:7},
-            {n:'Minor 6',  p:[0,3,7,9],       score:7},
-            // Add chords
-            {n:'Add 9',    p:[0,2,4,7],       score:7},
-            {n:'Min Add9', p:[0,2,3,7],       score:6},
-            // 9ths
-            {n:'Major 9',  p:[0,2,4,7,11],    score:8},
-            {n:'Dom 9',    p:[0,2,4,7,10],    score:8},
-            {n:'Minor 9',  p:[0,2,3,7,10],    score:8},
-        ];
-
-        // ── HPS: Harmonic Product Spectrum ─────────────────────────
-        // Multiplies spectrum by downsampled versions (÷2, ÷3, ÷4, ÷5)
-        // Fundamentals reinforce, harmonics cancel — far better than peak-picking
-        function _polyHPS(floatData, sr, bufLen, numHarmonics=5) {
-            const hps = new Float32Array(bufLen);
-            // Convert dB to linear magnitude
-            for (let i = 0; i < bufLen; i++) {
-                hps[i] = Math.pow(10, floatData[i] / 20);
-            }
-            // Multiply by downsampled copies
-            for (let h = 2; h <= numHarmonics; h++) {
-                for (let i = 0; i < Math.floor(bufLen / h); i++) {
-                    hps[i] *= Math.pow(10, floatData[i * h] / 20);
-                }
-            }
-            return hps;
-        }
-
-        // ── CHROMA VECTOR ───────────────────────────────────────────
-        // Collapses all octaves into 12 pitch classes
-        // Eliminates octave confusion — C2 and C4 both vote for 'C'
-        function _polyChroma(hpsData, sr, bufLen) {
-            const chroma = new Float32Array(12).fill(0);
-            const binHz  = sr / (bufLen * 2);
-
-            for (let i = 2; i < bufLen; i++) {
-                const freq = i * binHz;
-                if (freq < 60 || freq > 1400) continue; // guitar range
-                if (hpsData[i] <= 0) continue;
-                // Map frequency to pitch class
-                const midi = 69 + 12 * Math.log2(freq / 440);
-                const pc   = ((Math.round(midi) % 12) + 12) % 12;
-                chroma[pc] += hpsData[i];
-            }
-
-            // Normalize chroma to 0–1
-            const maxC = Math.max(...chroma);
-            if (maxC > 0) for (let i = 0; i < 12; i++) chroma[i] /= maxC;
-            return chroma;
-        }
-
-        // ── CHORD MATCHING from chroma ──────────────────────────────
-        // Uses cosine-similarity style scoring against chord templates
-        function _polyMatchChord(chroma) {
-            let bestScore = -Infinity, bestChord = null, bestRoot = 0;
-
-            for (let root = 0; root < 12; root++) {
-                for (const chord of _POLY_CHORDS) {
-                    // Build binary template for this chord at this root
-                    const template = new Float32Array(12).fill(0);
-                    chord.p.forEach(interval => { template[(root + interval) % 12] = 1; });
-
-                    // Score = dot product of chroma × template × commonality weight
-                    let dot = 0, tNorm = 0, cNorm = 0;
-                    for (let i = 0; i < 12; i++) {
-                        dot   += chroma[i] * template[i];
-                        tNorm += template[i] * template[i];
-                        cNorm += chroma[i]   * chroma[i];
-                    }
-                    const cosine = (tNorm > 0 && cNorm > 0)
-                        ? dot / (Math.sqrt(tNorm) * Math.sqrt(cNorm)) : 0;
-
-                    // Penalty for notes present in chroma but not in chord
-                    let penalty = 0;
-                    for (let i = 0; i < 12; i++) {
-                        if (template[i] === 0 && chroma[i] > 0.4) penalty += chroma[i] * 0.3;
-                    }
-
-                    const total = cosine * chord.score - penalty;
-                    if (total > bestScore) {
-                        bestScore = total;
-                        bestChord = chord;
-                        bestRoot  = root;
-                    }
-                }
-            }
-
-            // Confidence threshold — below this it's probably just noise
-            if (bestScore < 1.8) return null;
-
-            // Build active note set from winning chord + root
-            const noteSet = new Set();
-            bestChord.p.forEach(interval => {
-                noteSet.add(_POLY_NOTE_NAMES[(bestRoot + interval) % 12]);
-            });
-
-            return {
-                root:  _POLY_NOTE_NAMES[bestRoot],
-                name:  bestChord.n,
-                notes: noteSet,
-                score: bestScore
-            };
-        }
-
-        // ── TEMPORAL SMOOTHING ──────────────────────────────────────
-        // Chroma is averaged across frames to reduce flicker
-        const _POLY_SMOOTH_A  = 0.65; // decay of previous frame
-        const _POLY_SMOOTH_B  = 0.35; // weight of new frame
-
-        // Stability tracking
-        const _POLY_STABLE_FRAMES = 5;
-
-        function _polyAnalyse() {
-            if (!_singActive || !_singAnalyser) return;
-
-            const bufLen  = _singAnalyser.frequencyBinCount;
-            const sr      = _singAudioCtx.sampleRate;
-            const fltData = new Float32Array(bufLen);
-            _singAnalyser.getFloatFrequencyData(fltData);
-
-            // Silence gate
-            let maxDb = -Infinity;
-            for (let i = 0; i < bufLen; i++) if (fltData[i] > maxDb) maxDb = fltData[i];
-            if (maxDb < -55) {
-                // Fade chroma smoothly to silence
-                for (let i = 0; i < 12; i++) _polyChromaSmooth[i] *= 0.7;
-                _polyStableCount = 0;
-                _polyShowChord(null, new Set());
-                return;
-            }
-
-            // HPS — get fundamental-reinforced spectrum
-            const hps    = _polyHPS(fltData, sr, bufLen, 5);
-
-            // Chroma vector — collapse octaves into 12 pitch classes
-            const chroma = _polyChroma(hps, sr, bufLen);
-
-            // Temporal smoothing — blend with previous frame
-            for (let i = 0; i < 12; i++) {
-                _polyChromaSmooth[i] = _POLY_SMOOTH_A * _polyChromaSmooth[i]
-                                     + _POLY_SMOOTH_B * chroma[i];
-            }
-
-            // Match chord against smoothed chroma
-            const result = _polyMatchChord(_polyChromaSmooth);
-
-            // Stability gate — chord must win N consecutive frames
-            const key = result ? result.root + result.name : '';
-            if (key === _polyLastChordKey) { _polyStableCount++; }
-            else { _polyStableCount = 0; _polyLastChordKey = key; }
-
-            if (_polyStableCount >= _POLY_STABLE_FRAMES) {
-                _polyShowChord(result, result ? result.notes : new Set());
-                if (result) {
-                    try {
-                        window.parent.postMessage({
-                            type: 'KCM_STATE',
-                            payload: {
-                                activeNotes: [...result.notes].map(n => _POLY_NOTE_NAMES.indexOf(n)),
-                                chordName:   result.root + ' ' + result.name
-                            }
-                        }, '*');
-                    } catch(_) {}
-                }
-            }
-        }
-
-        function _polyShowChord(chord, noteSet) {
-            const display = document.getElementById('polyChordDisplay');
-            const nameEl  = document.getElementById('polyChordName');
-            const notesEl = document.getElementById('polyChordNotes');
-            if (!display) return;
-
-            if (!chord) { display.style.display = 'none'; return; }
-
-            display.style.display = 'block';
-            const rootIdx = _POLY_NOTE_NAMES.indexOf(chord.root);
-            nameEl.textContent = chord.root + ' ' + chord.name;
-            nameEl.style.color = _SING_COLORS[rootIdx] || '#F4D03F';
-            nameEl.style.textShadow = `0 0 20px ${_SING_COLORS[rootIdx]}88`;
-
-            notesEl.innerHTML = '';
-            [...noteSet]
-                .sort((a,b) => _POLY_NOTE_NAMES.indexOf(a) - _POLY_NOTE_NAMES.indexOf(b))
-                .forEach(n => {
-                    const idx   = _POLY_NOTE_NAMES.indexOf(n);
-                    const badge = document.createElement('div');
-                    badge.textContent = n;
-                    const isRoot = (n === chord.root);
-                    badge.style.cssText = [
-                        `background:${_SING_COLORS[idx]}`,
-                        `color:#000`,
-                        `padding:4px 12px`,
-                        `border-radius:20px`,
-                        `font-family:var(--font-display)`,
-                        `font-size:${isRoot ? '0.95rem' : '0.8rem'}`,
-                        `font-weight:800`,
-                        isRoot ? `box-shadow:0 0 12px ${_SING_COLORS[idx]},0 0 24px ${_SING_COLORS[idx]}88` : '',
-                        isRoot ? `transform:scale(1.15)` : '',
-                    ].join(';');
-                    notesEl.appendChild(badge);
-                });
-        }
-
                 function _singLoop() {
                     if (!_singActive) return;
                     _singRaf = requestAnimationFrame(_singLoop);
