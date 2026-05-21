@@ -189,8 +189,8 @@ function getLayout(){
   // neck width = 6 columns
   const COLS=6;
   const LEFT=isLandscape?38:42;
-  const CW=Math.floor((vw-LEFT-24)/COLS);
-  const RH=isLandscape?46:52;
+  const CW=Math.floor(Math.min((vw-LEFT-24)/COLS, 44));
+  const RH=isLandscape?42:46;
   const NUT_H=isLandscape?26:30;
   return{LEFT,CW,RH,NUT_H,COLS};
 }
