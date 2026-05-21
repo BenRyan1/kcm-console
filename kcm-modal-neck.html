@@ -224,37 +224,54 @@ function playArp(degrees,descend){
   const btn=document.getElementById(btnId);
   btn.classList.add('playing');
   allDots.forEach(d=>setActive(d,false));
+
   const mode=MODES[curMode];
   const modeArr=mode.semi.map(s=>(curKey+s)%12);
   const degIdx=degrees===4?[0,2,4,6]:[0,2,4];
   const arpChromas=degIdx.map(i=>modeArr[i]);
+
   // Start at LOWEST root on fretboard
   const rootDots=allDots.filter(d=>d.isRoot).sort((a,b)=>a.midi-b.midi);
   if(!rootDots.length){isPlaying=false;btn.classList.remove('playing');return;}
+
+  // Build strictly ascending sequence: each note must be higher than prev
   let seq=[rootDots[0]];
   let prevMidi=rootDots[0].midi;
   arpChromas.slice(1).forEach(ch=>{
+    // Find dot with this chroma whose midi is strictly > prevMidi
     let cands=allDots.filter(d=>d.ch===ch&&d.midi>prevMidi);
-    if(!cands.length)cands=allDots.filter(d=>d.ch===ch);
-    if(!cands.length)return;
+    if(!cands.length){
+      // Not on fretboard — compute the midi directly (no dot, just sound)
+      // Find next occurrence of this chroma above prevMidi
+      const semisAbove=((ch-prevMidi%12)+12)%12||12;
+      const synMidi=prevMidi+semisAbove;
+      // Create a virtual entry (no dot to highlight, just play the note)
+      seq.push({midi:synMidi,isVirtual:true});
+      prevMidi=synMidi;
+      return;
+    }
     cands.sort((a,b)=>a.midi-b.midi);
     seq.push(cands[0]);
     prevMidi=cands[0].midi;
   });
-  // Descend: reverse and close with root an octave DOWN
+
+  // Descend: reverse so we go strictly from highest to lowest
   if(descend)seq=[...seq].reverse();
+
   const STEP=SPEEDS[speedIdx],dur=Math.max(0.12,STEP*0.88);
   const ctx=getCtx();let t=ctx.currentTime;
+
   seq.forEach((dot,i)=>{
     playNote(dot.midi,t,dur);
-    setTimeout(()=>setActive(dot,true),i*STEP*1000);
-    setTimeout(()=>setActive(dot,false),i*STEP*1000+Math.min(300,STEP*700));
+    if(!dot.isVirtual){
+      setTimeout(()=>setActive(dot,true),i*STEP*1000);
+      setTimeout(()=>setActive(dot,false),i*STEP*1000+Math.min(300,STEP*700));
+    }
     t+=STEP;
   });
-  // Close: root octave up (ascend) or root itself again (descend)
-  const closeNote=descend?seq[seq.length-1].midi:seq[0].midi+12;
-  playNote(closeNote,t,dur);
-  setTimeout(()=>{isPlaying=false;btn.classList.remove('playing');},(seq.length+1)*STEP*1000+200);
+
+  // No extra closing note — just the clean 3 or 4 notes
+  setTimeout(()=>{isPlaying=false;btn.classList.remove('playing');},seq.length*STEP*1000+200);
 }
 function buildSeq(descend){
   const byStr=Array.from({length:6},(_,si)=>{
