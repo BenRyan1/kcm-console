@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>KCM Modal Neck</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{background:#0a0a15;color:#e8e8f8;font-family:'Montserrat',sans-serif;min-height:100vh;overflow-x:hidden}
+
+#app{display:flex;flex-direction:column;align-items:center;padding:12px;min-height:100vh}
+
+h1{font-family:'Cinzel',serif;color:#00c0c0;font-size:18px;letter-spacing:2px;text-align:center;margin-bottom:2px}
+.sub{color:#b0b0cc;font-size:9px;letter-spacing:3px;text-align:center;margin-bottom:12px}
+
+.controls{display:flex;gap:8px;width:100%;max-width:500px;margin-bottom:10px;flex-wrap:wrap;justify-content:center}
+.sel-wrap{display:flex;flex-direction:column;gap:3px;flex:1;min-width:120px}
+.sel-wrap label{font-size:9px;color:#00c0c0;letter-spacing:2px;font-weight:600;text-transform:uppercase}
+select{
+  background:#12122a;border:1px solid rgba(0,128,128,0.5);color:#e8e8f8;
+  font-family:'Montserrat',sans-serif;font-size:13px;padding:8px 10px;
+  border-radius:8px;cursor:pointer;width:100%;appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2300c0c0' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 10px center;padding-right:28px;
+}
+select:focus{outline:none;border-color:#00c0c0}
+
+.mode-info{text-align:center;margin-bottom:8px;width:100%;max-width:500px}
+.mode-name{font-family:'Cinzel',serif;font-size:15px;color:#F4D03F;letter-spacing:2px}
+.mode-notes{font-size:10px;color:#00c0c0;margin-top:3px;letter-spacing:2px;font-weight:600;word-spacing:4px}
+.mode-desc{font-size:9px;color:#b0b0cc;margin-top:2px;letter-spacing:1px}
+
+.btns{display:flex;gap:8px;margin-bottom:10px;width:100%;max-width:500px}
+.btn{
+  flex:1;background:#12122a;border:1px solid rgba(0,128,128,0.5);
+  color:#00c0c0;font-family:'Montserrat',sans-serif;font-size:11px;
+  letter-spacing:1px;padding:10px 8px;border-radius:8px;cursor:pointer;
+  transition:all .2s;touch-action:manipulation;min-height:44px;
+}
+.btn:active{background:#005555;transform:scale(0.97)}
+.btn.playing{background:#F4D03F;color:#0a0a15;border-color:#F4D03F}
+
+.neck-wrap{width:100%;max-width:500px;overflow-x:auto;display:flex;justify-content:center}
+svg#neck{display:block;touch-action:manipulation}
+
+.legend{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:10px;width:100%;max-width:500px}
+.leg-item{display:flex;align-items:center;gap:4px;font-size:10px;color:#b0b0cc}
+.leg-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+
+@media (orientation:landscape){
+  #app{flex-direction:row;flex-wrap:wrap;align-items:flex-start;padding:8px;gap:8px}
+  .header{width:100%;display:flex;justify-content:space-between;align-items:center}
+  .left-col{display:flex;flex-direction:column;gap:6px;width:180px;flex-shrink:0}
+  .right-col{flex:1;display:flex;flex-direction:column;align-items:center}
+  h1{font-size:15px}
+  .sub{display:none}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <h1>KCM MODAL NECK</h1>
+  <div class="sub">12 KEYS · 7 MODES · NUT + FRETS 1–4</div>
+
+  <div class="controls">
+    <div class="sel-wrap">
+      <label>Key</label>
+      <select id="keySel"></select>
+    </div>
+    <div class="sel-wrap">
+      <label>Mode</label>
+      <select id="modeSel"></select>
+    </div>
+  </div>
+
+  <div class="mode-info">
+    <div class="mode-name" id="modeName"></div>
+    <div class="mode-notes" id="modeNotes"></div>
+    <div class="mode-desc" id="modeDesc"></div>
+  </div>
+
+  <div class="btns">
+    <button class="btn" id="btnAsc" ontouchstart="" onclick="playMode(false)">▶ ASCEND</button>
+    <button class="btn" id="btnDesc" ontouchstart="" onclick="playMode(true)">▼ DESCEND</button>
+  </div>
+
+  <div class="neck-wrap">
+    <svg id="neck" xmlns="http://www.w3.org/2000/svg"></svg>
+  </div>
+
+  <div class="legend" id="legend"></div>
+</div>
+
+<script>
+const CHR=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const COL={C:'#FFFF00','C#':'#FFC400',D:'#FF8000','D#':'#FF4000',E:'#FF0000',F:'#C4007F','F#':'#8000FF',G:'#4000FF','G#':'#0000FF',A:'#007FFF','A#':'#00FF80',B:'#80FF00'};
+const DARK=['C','C#','D','D#','E','A#','B'];
+const IV=['R','b2','2','b3','3','p4','b5','p5','b6','6','b7','Δ7'];
+
+const MODES={
+  'Ionian':    {semi:[0,2,4,5,7,9,11],desc:'1  2  3  4  5  6  7'},
+  'Dorian':    {semi:[0,2,3,5,7,9,10],desc:'1  2  b3 4  5  6  b7'},
+  'Phrygian':  {semi:[0,1,3,5,7,8,10],desc:'1  b2 b3 4  5  b6 b7'},
+  'Lydian':    {semi:[0,2,4,6,7,9,11],desc:'1  2  3  #4 5  6  7'},
+  'Mixolydian':{semi:[0,2,4,5,7,9,10],desc:'1  2  3  4  5  6  b7'},
+  'Aeolian':   {semi:[0,2,3,5,7,8,10],desc:'1  2  b3 4  5  b6 b7'},
+  'Locrian':   {semi:[0,1,3,5,6,8,10],desc:'1  b2 b3 4  b5 b6 b7'}
+};
+
+// STRINGS = COLUMNS left→right: E  A  D  G  B  e
+// Open chroma:                   4  9  2  7  11 4
+// Open MIDI:                    40 45 50 55 59 64
+// Fret 1:                        F  Bb Eb Ab C  F  ✓
+const SC=[4,9,2,7,11,4];
+const SN=['E','A','D','G','B','e'];
+const SM=[40,45,50,55,59,64];
+
+const FLAT_KEYS=[5,10,3,8,1,6];
+const FLAT_MAP={'C#':'Db','D#':'Eb','F#':'Gb','G#':'Ab','A#':'Bb'};
+function useFlats(k){return FLAT_KEYS.includes(k);}
+function dispNote(ch,k){const n=CHR[ch];return(useFlats(k)&&FLAT_MAP[n])||n;}
+function keyLabel(ch){return['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'][ch];}
+
+// Find root on string 6(s=0), 5(s=1), or 4(s=2) in frets 0-4
+function findRoot(rootCh){
+  for(let s=0;s<3;s++)
+    for(let f=0;f<=4;f++)
+      if((SC[s]+f)%12===rootCh) return{s,f};
+  for(let s=0;s<6;s++)
+    for(let f=0;f<=4;f++)
+      if((SC[s]+f)%12===rootCh) return{s,f};
+  return{s:0,f:0};
+}
+
+// Skip note if same MIDI as open of next string (duplicate pitch)
+function isDupe(s,f){
+  return s<5&&(SM[s]+f)===SM[s+1];
+}
+
+let curKey=0,curMode='Ionian',audioCtx=null,isPlaying=false,allDots=[];
+
+function getCtx(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();return audioCtx;}
+function mf(m){return 440*Math.pow(2,(m-69)/12);}
+
+function playNote(midi,t,dur=0.65){
+  const ctx=getCtx();
+  const o1=ctx.createOscillator(),g1=ctx.createGain();
+  const o2=ctx.createOscillator(),g2=ctx.createGain();
+  const master=ctx.createGain();
+  o1.type='triangle';o1.frequency.value=mf(midi);
+  o2.type='sawtooth';o2.frequency.value=mf(midi);
+  g1.gain.setValueAtTime(0,t);g1.gain.linearRampToValueAtTime(0.48,t+0.012);g1.gain.exponentialRampToValueAtTime(0.001,t+dur);
+  g2.gain.setValueAtTime(0,t);g2.gain.linearRampToValueAtTime(0.06,t+0.012);g2.gain.exponentialRampToValueAtTime(0.001,t+dur);
+  master.gain.value=0.65;
+  o1.connect(g1);o2.connect(g2);g1.connect(master);g2.connect(master);master.connect(ctx.destination);
+  o1.start(t);o1.stop(t+dur+0.05);o2.start(t);o2.stop(t+dur+0.05);
+}
+
+function svgEl(tag,a,p){
+  const e=document.createElementNS('http://www.w3.org/2000/svg',tag);
+  for(const[k,v]of Object.entries(a))e.setAttribute(k,v);
+  if(p)p.appendChild(e);return e;
+}
+
+function setActive(dot,on){
+  if(dot.isNut){
+    if(on){dot.el.setAttribute('opacity','1');dot.el.setAttribute('transform',`translate(${dot.cx},${dot.cy}) scale(1.6) translate(${-dot.cx},${-dot.cy})`);}
+    else{dot.el.setAttribute('opacity','0.85');dot.el.removeAttribute('transform');}
+    return;
+  }
+  const r=dot.isRoot?R_ROOT:R_NOTE;
+  if(on){
+    dot.mc.setAttribute('r',r+5);dot.gc.setAttribute('r',r+13);
+    dot.gc.setAttribute('opacity','1');dot.gc.setAttribute('stroke-width',dot.isRoot?5:4);
+  } else {
+    dot.mc.setAttribute('r',r);dot.gc.setAttribute('r',r+4);
+    dot.gc.setAttribute('opacity',dot.isRoot?'0.8':'0.45');
+    dot.gc.setAttribute('stroke-width',dot.isRoot?2.5:1.5);
+  }
+}
+
+// Responsive sizing
+const R_ROOT=18, R_NOTE=13;
+
+function getLayout(){
+  const isLandscape=window.innerWidth>window.innerHeight;
+  const vw=Math.min(window.innerWidth,500);
+  // neck width = 6 columns
+  const COLS=6;
+  const LEFT=isLandscape?38:42;
+  const CW=Math.floor((vw-LEFT-24)/COLS);
+  const RH=isLandscape?46:52;
+  const NUT_H=isLandscape?26:30;
+  return{LEFT,CW,RH,NUT_H,COLS};
+}
+
+function draw(){
+  const mode=MODES[curMode];
+  const modeSet=new Set(mode.semi.map(s=>(curKey+s)%12));
+  const modeArr=mode.semi.map(s=>(curKey+s)%12);
+  const rootPos=findRoot(curKey);
+
+  document.getElementById('modeName').textContent=`${keyLabel(curKey)} ${curMode}`;
+  document.getElementById('modeNotes').textContent=modeArr.map(ch=>dispNote(ch,curKey)).join('  ');
+  document.getElementById('modeDesc').textContent=mode.desc;
+
+  const svg=document.getElementById('neck');
+  svg.innerHTML='';allDots=[];
+
+  const{LEFT,CW,RH,NUT_H,COLS}=getLayout();
+  const TOP=36;
+  const NUT_Y=TOP+NUT_H;
+  const W=LEFT+CW*COLS+20;
+  const H=NUT_Y+RH*4+16;
+
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  svg.setAttribute('width',W);svg.setAttribute('height',H);
+
+  // Background
+  svgEl('rect',{x:0,y:0,width:W,height:H,fill:'#0a0a15',rx:10},svg);
+
+  // String name labels E A D G B e
+  for(let s=0;s<COLS;s++){
+    const x=LEFT+CW*s+CW/2;
+    const ch=SC[s]%12;
+    svgEl('text',{x,y:TOP-14,'text-anchor':'middle','dominant-baseline':'auto',
+      fill:modeSet.has(ch)?'#00c0c0':'#334455',
+      'font-family':'Montserrat,sans-serif','font-size':12,'font-weight':700},svg).textContent=SN[s];
+  }
+
+  // NUT label
+  svgEl('text',{x:LEFT-4,y:NUT_Y+2,'text-anchor':'end','dominant-baseline':'central',
+    fill:'#F4D03F','font-family':'Montserrat,sans-serif','font-size':8,'font-weight':700},svg).textContent='NUT';
+
+  // NUT bar
+  svgEl('rect',{x:LEFT,y:NUT_Y,width:CW*COLS,height:4,fill:'#d8c888',rx:1},svg);
+
+  // String lines
+  for(let s=0;s<=COLS;s++){
+    const x=LEFT+CW*s;
+    svgEl('line',{x1:x,y1:NUT_Y+4,x2:x,y2:NUT_Y+RH*4,
+      stroke:'rgba(160,160,190,0.25)','stroke-width':s===0||s===COLS?1.5:0.7},svg);
+  }
+
+  // NUT open string diamonds
+  for(let s=0;s<COLS;s++){
+    const ch=SC[s]%12;
+    if(!modeSet.has(ch))continue;
+    const isRootNote=ch===curKey;
+    const col=COL[CHR[ch]];
+    const midi=SM[s];
+    const x=LEFT+CW*s+CW/2, y=NUT_Y-11;
+    const sz=isRootNote?9:6;
+    const pts=`${x},${y-sz} ${x+sz},${y} ${x},${y+sz} ${x-sz},${y}`;
+    const el=svgEl('polygon',{points:pts,fill:col,opacity:'0.85',
+      stroke:isRootNote?'#fff':'rgba(255,255,255,0.5)',
+      'stroke-width':isRootNote?1.5:0.7},svg);
+    el.style.cursor='pointer';
+
+    const dot={isNut:true,s,fret:0,ch,midi,isRoot:isRootNote,el,cx:x,cy:y};
+    allDots.push(dot);
+
+    const handler=()=>{
+      if(isPlaying)return;
+      getCtx().resume();
+      playNote(midi,getCtx().currentTime,0.6);
+      setActive(dot,true);setTimeout(()=>setActive(dot,false),400);
+    };
+    el.addEventListener('touchstart',e=>{e.preventDefault();handler();},{passive:false});
+    el.addEventListener('click',handler);
+  }
+
+  // Fret rows 1–4 (FIXED window — always frets 1,2,3,4)
+  for(let row=0;row<4;row++){
+    const fret=row+1;
+    const rowY=NUT_Y+RH*row;
+    const isRF=(fret===rootPos.f&&rootPos.s<3);
+
+    // Fret bottom line
+    svgEl('line',{x1:LEFT,y1:rowY+RH,x2:LEFT+CW*COLS,y2:rowY+RH,
+      stroke:'rgba(0,128,128,0.22)','stroke-width':1},svg);
+
+    // Fret label
+    svgEl('text',{x:LEFT-4,y:rowY+RH/2,'text-anchor':'end','dominant-baseline':'central',
+      fill:isRF?'#F4D03F':'#b0b0cc',
+      'font-family':'Montserrat,sans-serif','font-size':isRF?12:10,
+      'font-weight':isRF?700:400},svg).textContent=String(fret);
+
+    // Neck position dot marker at fret 3
+    if(fret===3){
+      svgEl('circle',{cx:LEFT+CW*COLS+14,cy:rowY+RH/2,r:5,fill:'rgba(0,192,192,0.28)'},svg);
+    }
+
+    for(let s=0;s<COLS;s++){
+      const ch=(SC[s]+fret)%12;
+      if(!modeSet.has(ch))continue;
+      if(isDupe(s,fret))continue;
+
+      const isRootNote=ch===curKey;
+      const col=COL[CHR[ch]];
+      const midi=SM[s]+fret;
+      const label=dispNote(ch,curKey);
+      const useDark=DARK.includes(CHR[ch]);
+      const r=isRootNote?R_ROOT:R_NOTE;
+      const x=LEFT+CW*s+CW/2, y=rowY+RH/2;
+
+      const g=svgEl('g',{},svg);
+      g.style.cursor='pointer';
+
+      // Invisible tap target (44px min for mobile)
+      svgEl('circle',{cx:x,cy:y,r:22,fill:'transparent'},g);
+
+      const gc=svgEl('circle',{cx:x,cy:y,r:r+4,fill:'none',stroke:col,
+        'stroke-width':isRootNote?2.5:1.5,opacity:isRootNote?'0.8':'0.45'},g);
+      const mc=svgEl('circle',{cx:x,cy:y,r,fill:col,
+        stroke:isRootNote?'#fff':'rgba(255,255,255,0.3)',
+        'stroke-width':isRootNote?2:0.8},g);
+      svgEl('text',{x,y,'text-anchor':'middle','dominant-baseline':'central',
+        fill:useDark?'#111':'#fff','font-family':'Montserrat,sans-serif',
+        'font-size':isRootNote?11:9,'font-weight':700,
+        style:'pointer-events:none'},g).textContent=label;
+      svgEl('text',{x,y:y+r+9,'text-anchor':'middle','dominant-baseline':'central',
+        fill:'#5050a0','font-family':'Montserrat,sans-serif','font-size':8,
+        style:'pointer-events:none'},g).textContent=IV[(ch-curKey+12)%12];
+
+      const dot={isNut:false,s,row,fret,ch,midi,isRoot:isRootNote,mc,gc,g};
+      allDots.push(dot);
+
+      const handler=()=>{
+        if(isPlaying)return;
+        getCtx().resume();
+        playNote(midi,getCtx().currentTime,0.7);
+        setActive(dot,true);setTimeout(()=>setActive(dot,false),450);
+      };
+      g.addEventListener('touchstart',e=>{e.preventDefault();handler();},{passive:false});
+      g.addEventListener('click',handler);
+    }
+  }
+
+  buildLegend(modeArr);
+}
+
+function buildLegend(modeArr){
+  const leg=document.getElementById('legend');leg.innerHTML='';
+  modeArr.forEach(ch=>{
+    const col=COL[CHR[ch]];
+    const iv=IV[(ch-curKey+12)%12];
+    const nm=dispNote(ch,curKey);
+    const div=document.createElement('div');div.className='leg-item';
+    div.innerHTML=`<div class="leg-dot" style="background:${col};${ch===curKey?'outline:2px solid #fff;outline-offset:1px':''}"></div><span>${nm}<span style="color:#444;margin-left:2px">${iv}</span></span>`;
+    leg.appendChild(div);
+  });
+}
+
+function buildSeq(descend){
+  const byStr=Array.from({length:6},(_,si)=>{
+    const open=allDots.find(d=>d.isNut&&d.s===si);
+    const frets=allDots.filter(d=>!d.isNut&&d.s===si).sort((a,b)=>a.fret-b.fret);
+    return open?[open,...frets]:frets;
+  });
+  let seq=[];
+  byStr.forEach(arr=>arr.forEach(d=>seq.push(d)));
+
+  const rootPos=findRoot(curKey);
+  let ri=seq.findIndex(d=>d.s===rootPos.s&&d.fret===rootPos.f&&d.isRoot);
+  if(ri<0)ri=seq.findIndex(d=>d.isRoot);
+  if(ri>0)seq=[...seq.slice(ri),...seq.slice(0,ri)];
+  if(descend)seq=[...seq].reverse();
+  return seq;
+}
+
+function playMode(descend){
+  if(isPlaying)return;
+  getCtx().resume();
+  isPlaying=true;
+  const btn=document.getElementById(descend?'btnDesc':'btnAsc');
+  btn.classList.add('playing');
+  allDots.forEach(d=>setActive(d,false));
+
+  const seq=buildSeq(descend);
+  const ctx=getCtx();
+  const STEP=0.36;let t=ctx.currentTime;
+
+  seq.forEach((dot,i)=>{
+    playNote(dot.midi,t,0.65);
+    setTimeout(()=>setActive(dot,true),i*STEP*1000);
+    setTimeout(()=>setActive(dot,false),i*STEP*1000+300);
+    t+=STEP;
+  });
+  setTimeout(()=>{isPlaying=false;btn.classList.remove('playing');},seq.length*STEP*1000+300);
+}
+
+// Dropdowns
+const kSel=document.getElementById('keySel');
+const mSel=document.getElementById('modeSel');
+[0,7,2,9,4,11,6,1,8,3,10,5].forEach(ch=>{
+  const o=document.createElement('option');
+  o.value=ch;o.textContent=keyLabel(ch);
+  if(ch===0)o.selected=true;
+  kSel.appendChild(o);
+});
+Object.keys(MODES).forEach(m=>{
+  const o=document.createElement('option');o.value=m;o.textContent=m;
+  mSel.appendChild(o);
+});
+kSel.addEventListener('change',e=>{curKey=parseInt(e.target.value);draw();});
+mSel.addEventListener('change',e=>{curMode=e.target.value;draw();});
+
+// Redraw on orientation change
+window.addEventListener('resize',()=>{draw();});
+draw();
+</script>
+</body>
+</html>
