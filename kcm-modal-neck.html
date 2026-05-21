@@ -58,8 +58,10 @@ svg#neck{display:block;touch-action:manipulation}
   </div>
   <div class="btn-row">
     <button class="btn" id="btnAsc" onclick="playMode(false)">▶ ASCEND</button>
-    <button class="btn" id="btnArp1" onclick="playArp(3)" style="border-color:rgba(244,208,63,0.5);color:#F4D03F">▲ 1·3·5</button>
-    <button class="btn" id="btnArp2" onclick="playArp(4)" style="border-color:rgba(244,208,63,0.5);color:#F4D03F">▲ 1·3·5·7</button>
+    <button class="btn" id="btnArp1u" onclick="playArp(3,false)" style="border-color:rgba(244,208,63,0.5);color:#F4D03F">▲ 1·3·5</button>
+    <button class="btn" id="btnArp1d" onclick="playArp(3,true)" style="border-color:rgba(244,208,63,0.5);color:#F4D03F">▼ 1·3·5</button>
+    <button class="btn" id="btnArp2u" onclick="playArp(4,false)" style="border-color:rgba(244,208,63,0.5);color:#F4D03F">▲ 1·3·5·7</button>
+    <button class="btn" id="btnArp2d" onclick="playArp(4,true)" style="border-color:rgba(244,208,63,0.5);color:#F4D03F">▼ 1·3·5·7</button>
     <button class="btn" id="btnDesc" onclick="playMode(true)">▼ DESCEND</button>
   </div>
   <div class="tempo-row">
@@ -215,10 +217,10 @@ function buildLegend(modeArr){
     leg.appendChild(div);
   });
 }
-function playArp(degrees){
+function playArp(degrees,descend){
   if(isPlaying)return;
   getCtx().resume();isPlaying=true;
-  const btnId=degrees===4?'btnArp2':'btnArp1';
+  const btnId=degrees===4?(descend?'btnArp2d':'btnArp2u'):(descend?'btnArp1d':'btnArp1u');
   const btn=document.getElementById(btnId);
   btn.classList.add('playing');
   allDots.forEach(d=>setActive(d,false));
@@ -239,6 +241,8 @@ function playArp(degrees){
     seq.push(cands[0]);
     prevMidi=cands[0].midi;
   });
+  // Descend: reverse and close with root an octave DOWN
+  if(descend)seq=[...seq].reverse();
   const STEP=SPEEDS[speedIdx],dur=Math.max(0.12,STEP*0.88);
   const ctx=getCtx();let t=ctx.currentTime;
   seq.forEach((dot,i)=>{
@@ -247,7 +251,9 @@ function playArp(degrees){
     setTimeout(()=>setActive(dot,false),i*STEP*1000+Math.min(300,STEP*700));
     t+=STEP;
   });
-  playNote(seq[0].midi+12,t,dur);
+  // Close: root octave up (ascend) or root itself again (descend)
+  const closeNote=descend?seq[seq.length-1].midi:seq[0].midi+12;
+  playNote(closeNote,t,dur);
   setTimeout(()=>{isPlaying=false;btn.classList.remove('playing');},(seq.length+1)*STEP*1000+200);
 }
 function buildSeq(descend){
