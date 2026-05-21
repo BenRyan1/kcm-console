@@ -8,13 +8,13 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{background:#0a0a15;color:#e8e8f8;font-family:'Montserrat',sans-serif;min-height:100vh;overflow-x:hidden}
-
 #app{display:flex;flex-direction:column;align-items:center;padding:12px;min-height:100vh}
+.kcm-wrap{width:100%;max-width:420px;margin:0 auto;display:flex;flex-direction:column;align-items:center;gap:6px;}
 
 h1{font-family:'Cinzel',serif;color:#00c0c0;font-size:18px;letter-spacing:2px;text-align:center;margin-bottom:2px}
 .sub{color:#b0b0cc;font-size:9px;letter-spacing:3px;text-align:center;margin-bottom:12px}
 
-.controls{display:flex;gap:8px;width:100%;max-width:500px;margin-bottom:10px;flex-wrap:wrap;justify-content:center}
+.controls{display:flex;gap:8px;width:100%;margin-bottom:10px;flex-wrap:wrap;justify-content:center}
 .sel-wrap{display:flex;flex-direction:column;gap:3px;flex:1;min-width:120px}
 .sel-wrap label{font-size:9px;color:#00c0c0;letter-spacing:2px;font-weight:600;text-transform:uppercase}
 select{
@@ -26,12 +26,12 @@ select{
 }
 select:focus{outline:none;border-color:#00c0c0}
 
-.mode-info{text-align:center;margin-bottom:8px;width:100%;max-width:500px}
+.mode-info{text-align:center;margin-bottom:8px;width:100%}
 .mode-name{font-family:'Cinzel',serif;font-size:15px;color:#F4D03F;letter-spacing:2px}
 .mode-notes{font-size:10px;color:#00c0c0;margin-top:3px;letter-spacing:2px;font-weight:600;word-spacing:4px}
 .mode-desc{font-size:9px;color:#b0b0cc;margin-top:2px;letter-spacing:1px}
 
-.btns{display:flex;gap:8px;margin-bottom:10px;width:100%;max-width:500px}
+.btns{display:flex;gap:8px;margin-bottom:10px;width:100%}
 .btn{
   flex:1;background:#12122a;border:1px solid rgba(0,128,128,0.5);
   color:#00c0c0;font-family:'Montserrat',sans-serif;font-size:11px;
@@ -41,10 +41,10 @@ select:focus{outline:none;border-color:#00c0c0}
 .btn:active{background:#005555;transform:scale(0.97)}
 .btn.playing{background:#F4D03F;color:#0a0a15;border-color:#F4D03F}
 
-.neck-wrap{width:100%;max-width:500px;overflow-x:auto;display:flex;justify-content:center}
+.neck-wrap{width:100%;overflow-x:auto;display:flex;justify-content:center}
 svg#neck{display:block;touch-action:manipulation}
 
-.legend{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:10px;width:100%;max-width:500px}
+.legend{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:10px;width:100%}
 .leg-item{display:flex;align-items:center;gap:4px;font-size:10px;color:#b0b0cc}
 .leg-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
 
@@ -60,6 +60,7 @@ svg#neck{display:block;touch-action:manipulation}
 </head>
 <body>
 <div id="app">
+<div class="kcm-wrap">
   <h1>KCM MODAL NECK</h1>
   <div class="sub">12 KEYS · 7 MODES · NUT + FRETS 1–4</div>
 
@@ -90,6 +91,7 @@ svg#neck{display:block;touch-action:manipulation}
   </div>
 
   <div class="legend" id="legend"></div>
+</div>
 </div>
 
 <script>
@@ -185,7 +187,7 @@ const R_ROOT=18, R_NOTE=13;
 
 function getLayout(){
   const isLandscape=window.innerWidth>window.innerHeight;
-  const vw=Math.min(window.innerWidth,500);
+  const cont=document.querySelector('.kcm-wrap');const vw=cont?Math.min(cont.clientWidth,420):400;
   // neck width = 6 columns
   const COLS=6;
   const LEFT=isLandscape?38:42;
@@ -415,6 +417,15 @@ draw();
 const ROOT_TO_CH={'C':0,'Db':1,'D':2,'Eb':3,'E':4,'F':5,'Gb':6,'G':7,'Ab':8,'A':9,'Bb':10,'B':11,'C#':1,'D#':3,'F#':6,'G#':8,'A#':10};
 function matchMode(n){if(!n)return null;n=n.toLowerCase();const m={'ionian':'Ionian','major':'Ionian','dorian':'Dorian','phrygian':'Phrygian','lydian':'Lydian','mixolydian':'Mixolydian','aeolian':'Aeolian','minor':'Aeolian','locrian':'Locrian'};for(const[k,v]of Object.entries(m))if(n.includes(k))return v;return null;}
 function applyKCMState(p){let ch=false;if(p.root!==undefined){const x=ROOT_TO_CH[p.root];if(x!==undefined&&x!==curKey){curKey=x;kSel.value=x;ch=true;}}if(p.mode!==undefined){const m=matchMode(p.mode);if(m&&m!==curMode){curMode=m;mSel.value=m;ch=true;}}if(ch){draw();flashSync();}}
+const sd=document.createElement('div');sd.style.cssText='position:fixed;top:8px;right:10px;width:8px;height:8px;border-radius:50%;background:#00c0c0;opacity:0;transition:opacity .3s;z-index:999;';document.body.appendChild(sd);
+function flashSync(){sd.style.opacity='1';setTimeout(function(){sd.style.opacity='0';},600);}
+window.addEventListener('message',function(e){if(!e.data)return;if(e.data.type==='KCM_STATE'&&e.data.payload)applyKCMState(e.data.payload);if(e.data.type==='KCM_STATE_PATCH'&&e.data.payload)applyKCMState(e.data.payload);});
+window.parent.postMessage({type:'KCM_READY',panel:'modal-neck'},'*');
+
+// KCM DOCK
+const ROOT_TO_CH={'C':0,'Db':1,'C#':1,'D':2,'Eb':3,'D#':3,'E':4,'F':5,'Gb':6,'F#':6,'G':7,'Ab':8,'G#':8,'A':9,'Bb':10,'A#':10,'B':11};
+function matchMode(n){if(!n)return null;n=n.toLowerCase();const m={'ionian':'Ionian','major':'Ionian','dorian':'Dorian','phrygian':'Phrygian','lydian':'Lydian','mixolydian':'Mixolydian','aeolian':'Aeolian','minor':'Aeolian','locrian':'Locrian'};for(const[k,v]of Object.entries(m))if(n.includes(k))return v;return null;}
+function applyKCMState(p){let ch=false;if(p.root!==undefined){const x=ROOT_TO_CH[p.root];if(x!==undefined&&x!==curKey){curKey=x;document.getElementById('keySel').value=x;ch=true;}}if(p.mode!==undefined){const m=matchMode(p.mode);if(m&&m!==curMode){curMode=m;document.getElementById('modeSel').value=m;ch=true;}}if(ch){draw();flashSync();}}
 const sd=document.createElement('div');sd.style.cssText='position:fixed;top:8px;right:10px;width:8px;height:8px;border-radius:50%;background:#00c0c0;opacity:0;transition:opacity .3s;z-index:999;';document.body.appendChild(sd);
 function flashSync(){sd.style.opacity='1';setTimeout(function(){sd.style.opacity='0';},600);}
 window.addEventListener('message',function(e){if(!e.data)return;if(e.data.type==='KCM_STATE'&&e.data.payload)applyKCMState(e.data.payload);if(e.data.type==='KCM_STATE_PATCH'&&e.data.payload)applyKCMState(e.data.payload);});
