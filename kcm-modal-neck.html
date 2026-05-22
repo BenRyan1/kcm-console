@@ -175,7 +175,7 @@ const R_ROOT=16,R_NOTE=12;
 function getCtx(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();return audioCtx;}
 function mf(m){return 440*Math.pow(2,(m-69)/12);}
 function setSpeed(i){speedIdx=i;[0,1,2].forEach(j=>document.getElementById('spd'+j).classList.toggle('on',j===i));}
-function shiftPos(d){winStart=Math.max(0,Math.min(17,winStart+d));document.getElementById('posLabel').textContent=winStart===0?'NUT':'Fret '+(winStart)+'-'+(winStart+3);document.getElementById('posHint').textContent=POS_HINTS[winStart]||'';draw();}
+function shiftPos(d){winStart=Math.max(0,Math.min(17,winStart+d));document.getElementById('posLabel').textContent=winStart===0?'NUT':'Fret '+(winStart)+'–'+(winStart+3);document.getElementById('posHint').textContent=winStart===0?'open strings':('Capo fret '+winStart+' → sounds like '+['C','Db','D','Eb','E','F','F#','G','Ab','A','Bb','B'][curKey]);draw();}
 function playNote(midi,t,dur){
   const ctx=getCtx();
   const o1=ctx.createOscillator(),g1=ctx.createGain();
@@ -224,6 +224,7 @@ function draw(){
   }
   // NUT
   svgEl('text',{x:LEFT-4,y:NUT_Y+2,'text-anchor':'end','dominant-baseline':'central',fill:'#F4D03F','font-family':'Montserrat,sans-serif','font-size':7,'font-weight':700},svg).textContent='NUT';
+  if(winStart>0){svgEl('text',{x:LEFT-4,y:NUT_Y+11,'text-anchor':'end','dominant-baseline':'central',fill:'#8B6BA3','font-family':'Montserrat,sans-serif','font-size':6,'font-weight':600},svg).textContent='capo '+winStart;}
   svgEl('rect',{x:LEFT,y:NUT_Y,width:CW*COLS,height:winStart===0?5:2,fill:winStart===0?'#d8c888':'rgba(80,70,40,0.4)',rx:1},svg);
   // String lines
   for(let s=0;s<=COLS;s++){const x=LEFT+CW*s;svgEl('line',{x1:x,y1:NUT_Y+(winStart===0?5:2),x2:x,y2:NUT_Y+RH*WIN,stroke:'rgba(160,160,190,0.22)','stroke-width':s===0||s===COLS?1.5:0.7},svg);}
