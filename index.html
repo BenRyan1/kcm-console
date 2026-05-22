@@ -1,344 +1,511 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- ── Core ── -->
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <title>KCM Console — Visual Music Theory | Keys, Codes &amp; Modes™</title>
-  <meta name="description" content="KCM Console is a browser-based visual music theory environment. Four synchronized panels — Music Theory Pro, Circle of Fifths, Modal Stencil Player, Chromatic Universe — powered by the 12-Color Chromatic Spectrum™. Save sessions as .gcis files. Built by Benjamin Ryan." />
-  <meta name="author" content="Benjamin Ryan" />
-  <meta name="robots" content="index, follow" />
-  <meta name="theme-color" content="#008080" />
-  <meta name="keywords" content="music theory, visual music theory, keys codes modes, chromatic spectrum, circle of fifths, modal stencil, music education, KCM console, Benjamin Ryan, FreeStyle musical device" />
-
-  <!-- ── Canonical ── -->
-  <link rel="canonical" href="https://console.keyscodesandmodes.com/" />
-
-  <!-- ── Favicons ── -->
-  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
-  <link rel="apple-touch-icon" href="assets/favicon.svg" />
-
-  <!-- ── Open Graph ── -->
-  <meta property="og:type"         content="website" />
-  <meta property="og:site_name"    content="Keys, Codes &amp; Modes™" />
-  <meta property="og:title"        content="KCM Console — Visual Music Theory" />
-  <meta property="og:description"  content="A browser-based visual music theory environment. Synchronized panels driven by the 12-Color Chromatic Spectrum™. Save sessions as .gcis files." />
-  <meta property="og:url"          content="https://console.keyscodesandmodes.com/" />
-  <meta property="og:image"        content="https://console.keyscodesandmodes.com/assets/og-console.png" />
-  <meta property="og:image:width"  content="1200" />
-  <meta property="og:image:height" content="630" />
-  <meta property="og:image:alt"    content="KCM Console — 12-Color Chromatic Spectrum™ music theory panels" />
-  <meta property="og:locale"       content="en_US" />
-
-  <!-- ── Twitter / X Card ── -->
-  <meta name="twitter:card"        content="summary_large_image" />
-  <meta name="twitter:site"        content="@keyscodesandmodes" />
-  <meta name="twitter:creator"     content="@benryanmusic" />
-  <meta name="twitter:title"       content="KCM Console — Visual Music Theory" />
-  <meta name="twitter:description" content="Browser-based music theory environment. Circle of Fifths, Modal Stencil &amp; more, all synchronized via the 12-Color Chromatic Spectrum™." />
-  <meta name="twitter:image"       content="https://console.keyscodesandmodes.com/assets/og-console.png" />
-  <meta name="twitter:image:alt"   content="KCM Console panels" />
-
-  <!-- ── JSON-LD Structured Data ── -->
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "WebApplication",
-    "name": "KCM Console",
-    "url": "https://console.keyscodesandmodes.com/",
-    "description": "A browser-based visual music theory environment powered by the 12-Color Chromatic Spectrum™. Synchronized interactive panels for Circle of Fifths, Modal Stencil Player, and Music Theory Pro. Save and load harmonic sessions as .gcis files.",
-    "applicationCategory": "EducationalApplication",
-    "operatingSystem": "Web",
-    "browserRequirements": "Requires JavaScript. Works in all modern browsers.",
-    "inLanguage": "en-US",
-    "isAccessibleForFree": true,
-    "offers": {
-      "@type": "Offer",
-      "price": "0",
-      "priceCurrency": "USD",
-      "url": "https://console.keyscodesandmodes.com/"
-    },
-    "creator": {
-      "@type": "Person",
-      "name": "Benjamin Ryan",
-      "url": "https://keyscodesandmodes.com/about.html",
-      "sameAs": [
-        "https://keyscodesandmodes.com",
-        "https://benryanphotographer.com"
-      ]
-    },
-    "publisher": {
-      "@type": "Organization",
-      "name": "Keys, Codes &amp; Modes™",
-      "url": "https://keyscodesandmodes.com",
-      "logo": {
-        "@type": "ImageObject",
-        "url": "https://keyscodesandmodes.com/assets/kcm-logo.svg"
-      }
-    },
-    "featureList": [
-      "12-Color Chromatic Spectrum™ visualization",
-      "Music Theory Pro panel",
-      "Circle of Fifths interactive panel",
-      "Modal Stencil Player",
-      "KCM Chromatic Universe panel",
-      "Four-panel synchronized harmonic state bus",
-      ".gcis session save and load",
-      "SUNO AI prompt generator",
-      "Live mic pitch detection — chord, scale, arpeggio recognition"
-    ]
-  }
-  </script>
-
-  <!-- ── Fonts ── -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet" />
-
-  <!-- ── Styles ── -->
-  <link rel="stylesheet" href="css/console.css" />
-  <link rel="stylesheet" href="css/suno-panel.css" />
-  <link rel="stylesheet" href="css/responsive.css" />
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-6EGC5ZNZPF"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-6EGC5ZNZPF');
+</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#4A7BA7">
+    <title>Keys, Codes & Modes | Revolutionary Visual Music Theory</title>
+    <meta name="description" content="Transform your musical journey with interactive visual learning. Master music theory, guitar, and composition through our revolutionary 20+ applications.">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="kcm-official-logo-32.png">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Cormorant+Garamond:wght@300;400;600;700&family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            /* OFFICIAL BRAND COLORS - Graphics Standards */
+            --ocean-blue: #4A7BA7;
+            --deep-navy: #2a4d6f;
+            --primary-gold: #F4D03F;
+            --primary-purple: #8B6BA3;
+            --primary-teal: #008080;
+            --primary-coral: #CF7A5A;
+            --dark-bg: #1a1a2e;
+            --darker-bg: #0f0f1e;
+            --light-text: #E8E8E8;
+            --font-display: 'Cinzel', serif;
+            --font-body: 'Montserrat', sans-serif;
+            --font-accent: 'Cormorant Garamond', serif;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: var(--primary-gold);
+            color: var(--dark-bg);
+            padding: 8px 16px;
+            text-decoration: none;
+            font-weight: bold;
+            z-index: 10000;
+        }
+        
+        .skip-link:focus {
+            top: 0;
+        }
+        
+        body {
+            font-family: var(--font-body);
+            background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 50%, #0f0f1e 100%);
+            color: var(--light-text);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+        
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.1;
+            background: 
+                radial-gradient(circle at 20% 50%, var(--ocean-blue) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, var(--primary-gold) 0%, transparent 50%),
+                radial-gradient(circle at 40% 20%, var(--primary-purple) 0%, transparent 50%);
+            animation: bgShift 20s ease infinite;
+        }
+        
+        @keyframes bgShift {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(50px, 30px) scale(1.1); }
+        }
+        
+        /* HEADER WITH OFFICIAL LOGO */
+        header {
+            background: linear-gradient(135deg, 
+                        rgba(74, 123, 167, 0.95) 0%,
+                        rgba(42, 77, 111, 0.95) 100%);
+            border-bottom: 3px solid var(--ocean-blue);
+            box-shadow: 0 4px 20px rgba(74, 123, 167, 0.4);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+        
+        .main-nav {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            text-decoration: none;
+        }
+        
+        .header-logo {
+            width: 120px;
+            height: auto;
+            filter: drop-shadow(0 6px 15px rgba(74, 123, 167, 0.6));
+            animation: gentleFloat 4s ease-in-out infinite;
+            transition: transform 0.3s ease;
+        }
+        
+        .logo-container:hover .header-logo {
+            transform: scale(1.08);
+            animation-play-state: paused;
+        }
+        
+        @keyframes gentleFloat {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-8px) rotate(2deg); }
+        }
+        
+        .logo-text h1 {
+            font-family: var(--font-display);
+            font-size: 1.8rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--primary-gold), var(--ocean-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 3px;
+            margin: 0;
+        }
+        
+        .logo-tagline {
+            font-family: var(--font-accent);
+            font-size: 0.8rem;
+            color: #ccc;
+            font-style: italic;
+            margin-top: 0.25rem;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+            align-items: center;
+        }
+        
+        .nav-links a {
+            color: var(--light-text);
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+        }
+        
+        .nav-links a:hover,
+        .nav-links a:focus {
+            color: var(--primary-gold);
+            background: rgba(244, 208, 63, 0.1);
+        }
+        
+        .cta-btn {
+            background: linear-gradient(135deg, var(--primary-gold), #e6c62f);
+            color: var(--dark-bg) !important;
+            padding: 0.75rem 1.5rem !important;
+            border-radius: 50px !important;
+            font-weight: 700 !important;
+            box-shadow: 0 4px 15px rgba(244, 208, 63, 0.3);
+        }
+        
+        .cta-btn:hover,
+        .cta-btn:focus {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(244, 208, 63, 0.5);
+        }
+        
+        .hero {
+            text-align: center;
+            padding: 6rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .hero h2 {
+            font-family: var(--font-display);
+            font-size: 3.5rem;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, var(--primary-gold), var(--ocean-blue), var(--primary-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.2;
+        }
+        
+        .hero p {
+            font-size: 1.4rem;
+            color: #ccc;
+            margin-bottom: 3rem;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .hero-cta {
+            display: flex;
+            gap: 1.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-gold), #e6c62f);
+            color: var(--dark-bg);
+            padding: 1.25rem 3rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 25px rgba(244, 208, 63, 0.4);
+            display: inline-block;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(244, 208, 63, 0.6);
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            border: 2px solid var(--ocean-blue);
+            color: var(--ocean-blue);
+            padding: 1.25rem 3rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+        
+        .btn-secondary:hover {
+            background: var(--ocean-blue);
+            color: white;
+            transform: translateY(-3px);
+        }
+        
+        .features-section {
+            padding: 5rem 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .section-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+        
+        .section-header h2 {
+            font-family: var(--font-display);
+            font-size: 2.5rem;
+            color: var(--primary-gold);
+            margin-bottom: 1rem;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+        
+        .feature-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(74, 123, 167, 0.3);
+            border-radius: 15px;
+            padding: 2rem;
+            transition: all 0.3s;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary-gold);
+            box-shadow: 0 10px 30px rgba(244, 208, 63, 0.2);
+        }
+        
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        
+        .feature-title {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            color: var(--primary-gold);
+            margin-bottom: 1rem;
+        }
+        
+        .pricing-section {
+            padding: 5rem 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(0,0,0,0.2);
+        }
+        
+        /* FOOTER WITH LOGO */
+        footer {
+            background: rgba(15, 15, 30, 0.95);
+            border-top: 2px solid var(--ocean-blue);
+            padding: 3rem 2rem;
+            text-align: center;
+            margin-top: 5rem;
+        }
+        
+        .footer-logo {
+            width: 100px;
+            height: auto;
+            margin-bottom: 1.5rem;
+            opacity: 0.7;
+        }
+        
+        .copyright {
+            color: #999;
+            font-size: 0.95rem;
+        }
+        
+        .copyright p {
+            margin: 0.5rem 0;
+        }
+        
+        @media (max-width: 968px) {
+            .main-nav {
+                flex-direction: column;
+                text-align: center;
+            }
+            .nav-links {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            .hero h2 {
+                font-size: 2.5rem;
+            }
+            .header-logo {
+                width: 90px;
+            }
+            .logo-text h1 {
+                font-size: 1.4rem;
+            }
+        }
+    </style>
 </head>
 <body>
-
-  <!-- ═══════════════════════════════════════════════════════════════════════ -->
-  <!-- HEADER                                                                  -->
-  <!-- ═══════════════════════════════════════════════════════════════════════ -->
-  <header class="kcm-header" role="banner">
-    <div class="kcm-header__inner">
-      <div class="kcm-header__brand">
-        <span class="kcm-header__mark" aria-hidden="true"></span>
-        <div class="kcm-header__title">
-          <h1>KCM Console</h1>
-          <p class="kcm-header__tagline">A visual operating system for music</p>
-        </div>
-      </div>
-      <nav class="kcm-header__nav" aria-label="Primary">
-        <input
-          type="text"
-          id="kcm-session-title"
-          class="kcm-session-title"
-          value="KCM Session"
-          maxlength="48"
-          aria-label="Session title"
-          spellcheck="false"
-        />
-        <button class="kcm-gcis-btn kcm-gcis-btn--save" id="kcm-save" aria-label="Save session as .gcis file">
-          ⬇ Save .gcis
-        </button>
-        <button class="kcm-gcis-btn kcm-gcis-btn--load" id="kcm-load" aria-label="Load .gcis session file">
-          ⬆ Load .gcis
-        </button>
-        <button class="kcm-stop-btn" id="kcm-stop-all" aria-label="Stop all audio playback">⏹ Stop All</button>
-        <a href="https://keyscodesandmodes.com" rel="noopener">Main Site</a>
-        <a href="https://keyscodesandmodes.com/about.html" rel="noopener">About</a>
-      </nav>
-    </div>
-  </header>
-
-  <!-- ═══════════════════════════════════════════════════════════════════════ -->
-  <!-- MAIN                                                                    -->
-  <!-- ═══════════════════════════════════════════════════════════════════════ -->
-  <main class="kcm-main" id="main">
-
-    <!-- ── Hero ─────────────────────────────────────────────────────────── -->
-    <section class="kcm-hero" aria-labelledby="hero-heading">
-      <div class="kcm-hero__chromatic" aria-hidden="true">
-        <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg" class="kcm-chromatic-clock">
-          <g id="chromatic-wedges"></g>
-          <circle cx="200" cy="200" r="60" fill="var(--bg-deep)" stroke="var(--primary-teal)" stroke-width="2" />
-          <text x="200" y="195" text-anchor="middle" dominant-baseline="central" fill="var(--text-primary)" font-family="Cinzel, serif" font-size="18" font-weight="600">KCM</text>
-          <text x="200" y="215" text-anchor="middle" dominant-baseline="central" fill="var(--text-secondary)" font-family="Montserrat, sans-serif" font-size="10" letter-spacing="2">CONSOLE</text>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <div class="bg-animation"></div>
+    
+    <!-- HEADER WITH OFFICIAL LOGO -->
+    <header>
+        <nav class="main-nav">
+            <a href="index.html" class="logo-container">
+                <svg width="70" height="70" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="header-logo" style="filter: drop-shadow(0 6px 15px rgba(74, 123, 167, 0.6));">
+                    <circle cx="100" cy="100" r="98" fill="#4A7BA7" stroke="#008080" stroke-width="2"/>
+                    <polygon points="100,15 185,185 15,185" fill="#F4D03F" opacity="0.9"/>
+                    <polygon points="100,15 15,185 15,55" fill="#8B6BA3" opacity="0.75"/>
+                    <polygon points="100,15 185,55 185,185" fill="#6FA5A5" opacity="0.75"/>
+                    <polygon points="15,55 100,100 15,185" fill="#CF7A5A" opacity="0.65"/>
+                    <polygon points="185,55 100,100 185,185" fill="#9AAF7A" opacity="0.65"/>
+                    <polygon points="100,55 145,100 100,145 55,100" fill="#E8D77F" opacity="0.6"/>
+                    <circle cx="100" cy="100" r="50" fill="none" stroke="#008080" stroke-width="3"/>
+                    <circle cx="100" cy="100" r="7" fill="#F4D03F"/>
+                    <line x1="40" y1="40" x2="160" y2="160" stroke="#008080" stroke-width="2" opacity="0.3"/>
+                    <line x1="160" y1="40" x2="40" y2="160" stroke="#008080" stroke-width="2" opacity="0.3"/>
+                </svg>
+                <div class="logo-text">
+                    <h1>KEYS, CODES & MODES</h1>
+                    <p class="logo-tagline">A Visual Approach to Understanding Music</p>
+                </div>
+            </a>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="offerings.html">Apps</a></li>
+                <li><a href="offering-password.html">Pricing</a></li>
+                <li><a href="welcome-free-picker-updated.html" class="cta-btn">Start Free</a></li>
+            </ul>
+        </nav>
+    </header>
+    
+    <main id="main-content">
+        <section class="hero">
+            <h2>Transform Your Musical Journey</h2>
+            <p>Experience the visual breakthrough that makes music theory finally click. Master guitar, piano, and composition with our revolutionary 20+ interactive applications.</p>
+            <div class="hero-cta">
+                <a href="welcome-free-picker-updated.html" class="btn-primary">Start Free - Choose 3 Apps</a>
+                <a href="offering-password.html" class="btn-secondary">View Pricing</a>
+            </div>
+        </section>
+        
+        <section class="features-section">
+            <div class="section-header">
+                <h2>Why Keys, Codes & Modes?</h2>
+                <p>The most comprehensive visual music theory platform in the world</p>
+            </div>
+            
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🎨</div>
+                    <h3 class="feature-title">Visual Learning</h3>
+                    <p>See music theory come alive with interactive chromatic circles and dynamic visualizations.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">🎸</div>
+                    <h3 class="feature-title">Instrument Mastery</h3>
+                    <p>Guitar fretboard mappers, piano visualizers, and CAGED system explorers.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">🎼</div>
+                    <h3 class="feature-title">20+ Interactive Apps</h3>
+                    <p>From Circle of Fifths to Music Theory Explorer Pro - complete professional tools.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">🎵</div>
+                    <h3 class="feature-title">Audio Synthesis</h3>
+                    <p>Hear every scale, chord, and progression instantly with real-time audio playback.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">📱</div>
+                    <h3 class="feature-title">Learn Anywhere</h3>
+                    <p>Fully responsive - practice on phone, tablet, or desktop.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">🚀</div>
+                    <h3 class="feature-title">Always Improving</h3>
+                    <p>New apps added monthly based on community feedback.</p>
+                </div>
+            </div>
+        </section>
+        
+        <section class="pricing-section">
+            <div class="section-header">
+                <h2>Start Your Journey Today</h2>
+                <p>Choose your path - from free forever to lifetime access</p>
+            </div>
+            
+            <div style="text-align: center;">
+                <a href="welcome-free-picker-updated.html" class="btn-primary" style="margin-right: 1rem;">Start Free - Pick 3 Apps</a>
+                <a href="offering-password.html" class="btn-secondary">View All Plans</a>
+            </div>
+            
+            <div style="text-align: center; margin-top: 3rem; padding: 2rem; background: rgba(139, 107, 163, 0.1); border-radius: 15px; border: 2px solid var(--primary-purple);">
+                <h3 style="color: var(--primary-gold); font-family: var(--font-display); font-size: 2rem; margin-bottom: 1rem;">
+                    🏆 Founder's Circle - $697 Lifetime Access
+                </h3>
+                <p style="color: #ccc; font-size: 1.2rem; margin-bottom: 1.5rem;">
+                    Lock in lifetime access to EVERYTHING we ever build. First 250 members only.
+                </p>
+                <a href="offering-password.html#founders" class="btn-primary">
+                    Join Founder's Circle →
+                </a>
+            </div>
+        </section>
+    </main>
+    
+    <!-- FOOTER WITH SVG LOGO -->
+    <footer>
+        <svg width="35" height="35" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="footer-logo" style="filter: drop-shadow(0 2px 8px rgba(244, 208, 63, 0.3)); margin-bottom: 1rem;">
+            <circle cx="100" cy="100" r="98" fill="#4A7BA7" stroke="#008080" stroke-width="2"/>
+            <polygon points="100,15 185,185 15,185" fill="#F4D03F" opacity="0.9"/>
+            <polygon points="100,15 15,185 15,55" fill="#8B6BA3" opacity="0.75"/>
+            <polygon points="100,15 185,55 185,185" fill="#6FA5A5" opacity="0.75"/>
+            <polygon points="15,55 100,100 15,185" fill="#CF7A5A" opacity="0.65"/>
+            <polygon points="185,55 100,100 185,185" fill="#9AAF7A" opacity="0.65"/>
+            <polygon points="100,55 145,100 100,145 55,100" fill="#E8D77F" opacity="0.6"/>
+            <circle cx="100" cy="100" r="50" fill="none" stroke="#008080" stroke-width="3"/>
+            <circle cx="100" cy="100" r="7" fill="#F4D03F"/>
+            <line x1="40" y1="40" x2="160" y2="160" stroke="#008080" stroke-width="2" opacity="0.3"/>
+            <line x1="160" y1="40" x2="40" y2="160" stroke="#008080" stroke-width="2" opacity="0.3"/>
         </svg>
-      </div>
-      <div class="kcm-hero__text">
-        <h2 id="hero-heading" class="kcm-hero__heading">KCM Console</h2>
-        <p class="kcm-hero__lede">
-          A visual operating system for music theory. The KCM Console connects
-          four Keys, Codes &amp; Modes applications through a shared harmonic state —
-          Music Theory Pro, Circle of Fifths, Modal Stencil Player, and the Chromatic Universe.
-          Change the root in one panel — every other panel follows in real time.
-        </p>
-        <div class="kcm-hero__meta">
-          <span class="kcm-hero__badge">v1.1 · Live</span>
-          <span class="kcm-hero__version" id="build-version">Build v1.1 · 4 Panels · Mic Engine · 2026</span>
+        <div class="copyright">
+            <p>&copy; 2026 Keys, Codes & Modes. Created by <strong>Benjamin Ryan</strong>.</p>
+            <p style="margin-top: 0.5rem;">Based on the book "Keys, Codes, and Modes: A Visual Approach to Understanding Music"</p>
+            <p style="margin-top: 0.5rem; color: #666;">Santa Barbara, California | All rights reserved</p>
         </div>
-      </div>
-    </section>
-
-    <!-- Panel 1: Music Theory Pro -->
-    <div class="kcm-panel" id="panel-mtp">
-      <div class="kcm-panel__header">
-        <span class="kcm-panel__accent"></span>
-        <h3 class="kcm-panel__title">Music Theory Pro</h3>
-        <div class="kcm-panel__controls">
-          <button class="kcm-panel__btn" data-panel-action="minimize" aria-label="Minimize panel">−</button>
-        </div>
-      </div>
-      <div class="kcm-panel__body">
-        <iframe
-          id="iframe-mtp"
-          class="kcm-panel__iframe"
-          src="music-theory-pro.html"
-          title="Music Theory Pro"
-          allow="autoplay; midi; microphone"
-          loading="lazy"
-        ></iframe>
-      </div>
-    </div>
-
-    <!-- ═══════════════════════════════════════════════════════════════════ -->
-    <!-- 🎙 KCM MIC ENGINE BAR                                              -->
-    <!-- Observatory-grade pitch detection → chord + scale + arpeggio      -->
-    <!-- Broadcasts KCM_STATE live to ALL panels simultaneously             -->
-    <!-- ═══════════════════════════════════════════════════════════════════ -->
-    <div id="kcm-mic-bar"></div>
-
-    <!-- ── Panel grid ──────────────────────────────────────────────────── -->
-    <section class="kcm-panels" aria-label="Application panels">
-
-      <!-- Panel 2: Circle of Fifths -->
-      <div class="kcm-panel" id="panel-cof">
-        <div class="kcm-panel__header">
-          <span class="kcm-panel__accent" style="background:var(--primary-purple);"></span>
-          <h3 class="kcm-panel__title">Circle of Fifths</h3>
-          <div class="kcm-panel__controls">
-            <button class="kcm-panel__btn" data-panel-action="minimize" aria-label="Minimize panel">−</button>
-          </div>
-        </div>
-        <div class="kcm-panel__body">
-          <iframe
-            id="iframe-cof"
-            class="kcm-panel__iframe"
-            src="circle-of-fifths.html"
-            title="Circle of Fifths"
-            allow="autoplay"
-            loading="lazy"
-          ></iframe>
-        </div>
-      </div>
-
-      <!-- Panel 3: Modal Stencil Player -->
-      <div class="kcm-panel" id="panel-msp">
-        <div class="kcm-panel__header">
-          <span class="kcm-panel__accent" style="background:var(--primary-coral);"></span>
-          <h3 class="kcm-panel__title">Modal Stencil Player</h3>
-          <div class="kcm-panel__controls">
-            <button class="kcm-panel__btn" data-panel-action="minimize" aria-label="Minimize panel">−</button>
-          </div>
-        </div>
-        <div class="kcm-panel__body">
-          <iframe
-            id="iframe-msp"
-            class="kcm-panel__iframe"
-            src="modal-stencil-player.html"
-            title="Modal Stencil Player"
-            allow="autoplay"
-            loading="lazy"
-          ></iframe>
-        </div>
-      </div>
-
-      <!-- Panel 4: KCM Chromatic Universe -->
-      <div class="kcm-panel" id="panel-cu">
-        <div class="kcm-panel__header">
-          <span class="kcm-panel__accent" style="background:var(--primary-gold);"></span>
-          <h3 class="kcm-panel__title">Chromatic Universe</h3>
-          <div class="kcm-panel__controls">
-            <button class="kcm-panel__btn" data-panel-action="minimize" aria-label="Minimize panel">−</button>
-          </div>
-        </div>
-        <div class="kcm-panel__body">
-          <iframe
-            id="iframe-cu"
-            class="kcm-panel__iframe"
-            src="kcm-chromatic-universe.html"
-            title="KCM Chromatic Universe"
-            allow="autoplay; midi"
-            loading="lazy"
-          ></iframe>
-        </div>
-      </div>
-
-    </section>
-
-    <!-- ── What ships ─────────────────────────────────────────────────── -->
-    <section class="kcm-status" aria-label="Build status">
-      <h3 class="kcm-status__title">What ships in v1.1</h3>
-      <ul class="kcm-status__list">
-        <li><strong>Four synchronized panels.</strong> Music Theory Pro, Circle of Fifths, Modal Stencil Player, and Chromatic Universe — all driven by a single shared harmonic state.</li>
-        <li><strong>Live mic engine.</strong> Sing or play any instrument — pitch detection lights up the chromatic clock, names the chord, identifies the scale, and tracks arpeggios. All panels follow in real time.</li>
-        <li><strong>Cross-panel synchronization.</strong> Root, mode, scale, and active notes shared in real time. Change anything anywhere — everything follows.</li>
-        <li><strong>.gcis file format.</strong> Save your harmonic state. Load it back later. Portable between sessions.</li>
-        <li><strong>Suno Prompt Generator.</strong> Every root + mode change instantly builds a Suno-ready prompt. One click to copy — paste into suno.com and generate.</li>
-      </ul>
-    </section>
-
-    <!-- ── Bridge test harness (dev only — ?bridge-test=1) ───────────── -->
-    <section class="kcm-bridge-test" aria-label="Bridge test harness" id="bridge-test-panel">
-      <div class="kcm-bridge-test__header">
-        <h3>Bridge Test — postMessage Harness</h3>
-        <span class="kcm-dev__tag">Session 3 · ?bridge-test=1</span>
-      </div>
-      <div class="kcm-bridge-test__grid">
-
-        <div class="kcm-bridge-test__col">
-          <h4>Stub iframe (receives KCM_STATE)</h4>
-          <iframe
-            id="bridge-test-iframe"
-            class="kcm-bridge-test__iframe"
-            title="Bridge test stub"
-            sandbox="allow-scripts"
-            srcdoc="<!DOCTYPE html><html><head><meta charset='UTF-8'><style>body{margin:0;padding:12px;background:#0a0a15;color:#e8e8f8;font:13px/1.5 monospace;}h4{color:#00c0c0;font-family:serif;margin:0 0 8px;font-size:14px;}pre{background:#12121f;border:1px solid rgba(0,128,128,0.3);border-radius:4px;padding:10px;color:#00c0c0;font-size:12px;overflow-x:auto;white-space:pre-wrap;margin:0 0 8px;}.label{color:#F4D03F;font-size:11px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px;}button{padding:6px 12px;background:#1a1a2a;border:1px solid rgba(0,128,128,0.4);border-radius:4px;color:#b0b0cc;font:12px monospace;cursor:pointer;margin-right:6px;}button:hover{background:#008080;color:#0a0a15;}</style></head><body><h4>KCM Stub iframe</h4><div class='label'>Last received KCM_STATE</div><pre id='out'>waiting...</pre><div class='label'>Send patch to Console</div><button id='bf'>root &rarr; F</button><button id='bd'>mode &rarr; dorian</button><button id='bn'>toggle note 65</button><script>window.addEventListener('message',function(e){if(!e.data||e.data.type!=='KCM_STATE')return;document.getElementById('out').textContent=JSON.stringify(e.data.payload,null,2);});function send(p){window.parent.postMessage({type:'KCM_STATE_PATCH',payload:p},'*');}document.getElementById('bf').onclick=function(){send({root:'F'});};document.getElementById('bd').onclick=function(){send({mode:'dorian',scale:[0,2,3,5,7,9,10]});};var on=false;document.getElementById('bn').onclick=function(){on=!on;send({activeNotes:on?[65]:[]});};<\/script></body></html>"
-          ></iframe>
-        </div>
-
-        <div class="kcm-bridge-test__col">
-          <h4>Bridge diagnostics</h4>
-          <pre class="kcm-dev__readout" id="bridge-diag">initialising...</pre>
-          <div class="kcm-dev__btns" style="margin-top:8px;">
-            <button data-bridge-action="register">register iframe</button>
-            <button data-bridge-action="unregister">unregister iframe</button>
-            <button data-bridge-action="origins">log allowed origins</button>
-            <button data-bridge-action="count">log registered count</button>
-          </div>
-        </div>
-
-      </div>
-    </section>
-
-  </main>
-
-  <!-- ═══════════════════════════════════════════════════════════════════════ -->
-  <!-- FOOTER                                                                  -->
-  <!-- ═══════════════════════════════════════════════════════════════════════ -->
-  <footer class="kcm-footer" role="contentinfo">
-    <div class="kcm-footer__inner">
-      <p class="kcm-footer__copy">
-        © 2026 Keys, Codes &amp; Modes™ · 12-Color Chromatic Spectrum™ · FreeStyle® Musical Device (IP properties including related Patent and Trademark Awards).
-      </p>
-      <p class="kcm-footer__contact">
-        Benjamin Ryan · <a href="mailto:ben@keyscodesandmodes.com">ben@keyscodesandmodes.com</a>
-      </p>
-    </div>
-  </footer>
-
-  <!-- ═══════════════════════════════════════════════════════════════════════ -->
-  <!-- SCRIPTS                                                                 -->
-  <!-- Load order matters:                                                     -->
-  <!--   1. console.js  — KCM.bus reactive state                              -->
-  <!--   2. bridge.js   — iframe postMessage adapter                           -->
-  <!--   3. gcis.js     — save/load .gcis sessions                            -->
-  <!--   4. suno-panel  — Suno prompt generator                               -->
-  <!--   5. kcm-mic-engine — mic → pitch → chord/scale/arp → all panels       -->
-  <!-- ═══════════════════════════════════════════════════════════════════════ -->
-  <script src="js/console.js" defer></script>
-  <script src="js/bridge.js" defer></script>
-  <script src="js/gcis.js" defer></script>
-  <script src="js/suno-panel.js" defer></script>
-  <script src="js/kcm-mic-engine.js" defer></script>
-
+    </footer>
 </body>
 </html>
