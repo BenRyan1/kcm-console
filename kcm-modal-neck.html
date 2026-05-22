@@ -497,7 +497,7 @@ function drawCagedOverlay(){
   // Find the root fret offset: place shape so its root string lands on curKey
   // rootStr is 1-indexed from low E; shapeData.frets[s] = fret offset within shape
   // We need to find what position slides the shape so root note = curKey
-  const rootStrIdx=shapeData.rootStr-1; // 0-indexed
+  const rootStrIdx=6-shapeData.rootStr; // string 6=idx0, 5=idx1, 4=idx2
   // Current key chroma; find lowest fret on rootStr that gives curKey
   let offset=winStart; // start from visible window
   // The shape root fret within pattern (index of the root note fret)
@@ -506,12 +506,13 @@ function drawCagedOverlay(){
   // SM[rootStrIdx] + fret ≡ curKey (mod 12)
   const openChroma=SC[rootStrIdx]%12;
   let rootFretAbs=((curKey-openChroma)+12)%12; // first occurrence >= 0
-  if(rootFretAbs===0)rootFretAbs=12; // prefer non-open for movable shapes
+  // keep rootFretAbs=0 valid — open E and open G shapes exist
   // Slide to nearest occurrence near winStart
   while(rootFretAbs<winStart-1)rootFretAbs+=12;
   // Shape offset: root fret in shape pattern (fret value on rootStr)
   const rootFretInShape=shapeFrets[rootStrIdx]; // fret offset within the chord shape
-  const capoFret=rootFretAbs-rootFretInShape; // actual fret of barre/nut
+  let capoFret=rootFretAbs-rootFretInShape; // actual fret of barre/nut
+  if(capoFret<0)capoFret+=12; // wrap negative capo
 
   // Draw a semi-transparent overlay rectangle spanning the shape
   const minF=Math.min(...shapeFrets.filter(f=>f>=0));
@@ -546,33 +547,42 @@ function playStrum(){
   getCtx().resume();
   const btn=document.getElementById('btnStrum');
   btn.classList.add('playing');
-  // Collect one note per string (lowest fret in window, or nut note)
-  // sorted bass→treble, staggered 40ms apart like a real strum
   const perString=[];
-  for(let s=0;s<6;s++){
-    // nut note for this string at current position
-    const nutCh=(SC[s]+winStart)%12;
-    const nutMidi=SM[s]+winStart;
-    const mode=MODES[curMode];
-    const modeSet=new Set(mode.semi.map(x=>(curKey+x)%12));
-    if(modeSet.has(nutCh)){perString.push({s,midi:nutMidi});continue;}
-    // try frets in window
-    let found=null;
-    for(let row=0;row<4;row++){
-      const fret=winStart+row+1;
-      const ch=(SC[s]+fret)%12;
-      if(modeSet.has(ch)){found={s,midi:SM[s]+fret};break;}
+  if(cagedOn&&cagedShape){
+    // CAGED mode: strum the exact shape frets
+    const shapeData=CAGED_SHAPES[cagedType]&&CAGED_SHAPES[cagedType][cagedShape];
+    if(shapeData){
+      const shapeFrets=shapeData.frets;
+      const rootStrIdx=6-shapeData.rootStr;
+      const openChroma=SC[rootStrIdx]%12;
+      let rootFretAbs=((curKey-openChroma)+12)%12;
+      let rootFretInShape=shapeFrets[rootStrIdx];
+      let capoFret=rootFretAbs-rootFretInShape;
+      if(capoFret<0)capoFret+=12;
+      shapeFrets.forEach((sf,s)=>{
+        if(sf<0)return; // muted
+        const actualFret=capoFret+sf;
+        const midi=SM[s]+actualFret;
+        // find closest dot or synthesize
+        const dot=allDots.find(d=>d.s===s&&d.fret===actualFret)||allDots.find(d=>d.s===s&&d.midi===midi);
+        perString.push(dot||{s,fret:actualFret,midi,isSynth:true});
+      });
     }
-    if(found)perString.push(found);
+  } else {
+    // Mode strum: one fretted dot per string, lowest fret wins
+    for(let s=0;s<6;s++){
+      const fretted=allDots.filter(d=>!d.isNut&&d.s===s).sort((a,b)=>a.fret-b.fret);
+      if(fretted.length){perString.push(fretted[0]);continue;}
+      const nut=allDots.find(d=>d.isNut&&d.s===s);
+      if(nut)perString.push(nut);
+    }
   }
   const ctx=getCtx();
   const STRUM_DELAY=0.04; // 40ms between strings
-  perString.forEach((n,i)=>{
+  perString.forEach((dot,i)=>{
     const t=ctx.currentTime+i*STRUM_DELAY;
-    playNote(n.midi,t,0.9);
-    // flash the dot
-    const dot=allDots.find(d=>d.midi===n.midi&&d.s===n.s);
-    if(dot){
+    playNote(dot.midi,t,0.9);
+    if(dot&&!dot.isSynth){
       setTimeout(()=>setActive(dot,true),(i*STRUM_DELAY*1000));
       setTimeout(()=>setActive(dot,false),(i*STRUM_DELAY*1000)+400);
     }
