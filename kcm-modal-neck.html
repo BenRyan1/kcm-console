@@ -42,16 +42,6 @@ svg#neck{display:block;touch-action:manipulation}
 .leg-item{display:flex;align-items:center;gap:3px;font-size:9px;color:#b0b0cc}
 .leg-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
 
-/* CAGED OVERLAY */
-.caged-row{display:flex;gap:4px;width:100%;align-items:center;flex-wrap:wrap;}
-.caged-type{background:#12122a;border:1px solid rgba(0,128,128,0.4);color:#b0b0cc;font-family:'Montserrat',sans-serif;font-size:10px;padding:5px 6px;border-radius:6px;cursor:pointer;flex:1;appearance:none;text-align:center;}
-.caged-type:focus{outline:none;border-color:#00c0c0;}
-.caged-btn{flex:1;background:#12122a;border:1px solid rgba(0,128,128,0.35);color:#446;font-family:'Montserrat',sans-serif;font-size:11px;font-weight:700;padding:8px 4px;border-radius:8px;cursor:pointer;transition:all .2s;touch-action:manipulation;min-height:40px;letter-spacing:1px;}
-.caged-btn:hover{border-color:#00c0c0;color:#00c0c0;}
-.caged-btn.active{background:rgba(244,208,63,0.15);border-color:#F4D03F;color:#F4D03F;box-shadow:0 0 12px rgba(244,208,63,0.3);}
-.caged-off{border-color:rgba(139,107,163,0.4)!important;color:#8B6BA3!important;}
-.caged-off.active{background:rgba(139,107,163,0.15)!important;border-color:#8B6BA3!important;color:#8B6BA3!important;box-shadow:0 0 12px rgba(139,107,163,0.3)!important;}
-
 /* MODE WHEEL */
 .mode-wheel{width:100%;display:flex;flex-direction:column;align-items:center;gap:8px;padding-top:4px;}
 .mode-wheel-title{font-size:7px;color:#008080;letter-spacing:3px;font-weight:700;text-transform:uppercase;text-align:center;}
@@ -120,32 +110,7 @@ svg#neck{display:block;touch-action:manipulation}
   <div class="btn-row" style="margin-top:-4px">
     <button class="btn" id="btnFullNeck" onclick="playFullNeck()" style="border-color:rgba(0,192,192,0.6);color:#00c0c0;font-size:10px;letter-spacing:2px">⬆ FULL NECK ⬆</button>
   </div>
-  <!-- CAGED OVERLAY -->
-  <div style="width:100%;display:flex;flex-direction:column;gap:4px;">
-    <div style="font-size:7px;color:#008080;letter-spacing:3px;font-weight:700;text-align:center;">CAGED OVERLAY &middot; TAP SHAPE TO OVERLAY</div>
-    <div class="caged-row" style="margin-bottom:2px">
-      <div style="display:flex;background:#0d0d22;border:1px solid rgba(0,128,128,0.35);border-radius:7px;overflow:hidden;width:100%">
-        <div id="cmForm" class="spd on" style="flex:1;text-align:center" onclick="setCagedMode('form')">FORM</div>
-        <div id="cmMove" class="spd" style="flex:1;text-align:center" onclick="setCagedMode('movable')">MOVABLE</div>
-      </div>
-    </div>
-    <div class="caged-row">
-      <select class="caged-type" id="cagedType" onchange="cagedType=this.value;if(cagedShape)toggleCaged(cagedShape)">
-        <option value="major">Major</option>
-        <option value="minor">Minor</option>
-        <option value="dom7">Dom 7</option>
-        <option value="maj7">Maj 7</option>
-        <option value="min7">Min 7</option>
-      </select>
-      <button class="caged-btn" id="cb-C" onclick="toggleCaged('C')">C</button>
-      <button class="caged-btn" id="cb-A" onclick="toggleCaged('A')">A</button>
-      <button class="caged-btn" id="cb-G" onclick="toggleCaged('G')">G</button>
-      <button class="caged-btn" id="cb-E" onclick="toggleCaged('E')">E</button>
-      <button class="caged-btn" id="cb-D" onclick="toggleCaged('D')">D</button>
-      <button class="caged-btn caged-off" id="cb-off" onclick="clearCaged()">OFF</button>
-    </div>
-    <button class="btn" id="btnStrum" onclick="playStrum()" style="border-color:rgba(139,107,163,0.6);color:#8B6BA3;font-size:11px;letter-spacing:2px;">&#9836; STRUM</button>
-  </div>
+
   <div class="tempo-row">
     <div class="tempo-lbl">TEMPO</div>
     <div class="tempo-toggle">
@@ -207,105 +172,6 @@ const SPEEDS=[0.65,0.36,0.18];
 const POS_HINTS={0:'open strings · NUT',1:'1st position',2:'2nd position',3:'3rd position',4:'4th position',5:'5th fret',6:'6th position',7:'7th position',8:'8th position',9:'9th position',10:'10th position',11:'11th position',12:'12th fret · octave',13:'13th position',14:'14th position',15:'15th position',16:'16th position',17:'17th fret'};
 let curKey=0,curMode='Ionian',winStart=0,speedIdx=1;
 let audioCtx=null,isPlaying=false,allDots=[];
-// CAGED overlay state
-let cagedShape=null,cagedType='major',cagedOn=false,cagedMode='form'; // 'form' or 'movable'
-// CAGED lookup table — absolute frets for all 12 keys × 5 shapes
-// Strings: [E, A, D, G, B, e] (indices 0-5), -1 = muted
-const CAGED_LOOKUP={
-  major:{
-    'C':{C:[-1,3,2,0,1,0],  A:[-1,3,5,5,5,3],   G:[8,7,5,5,5,8],    E:[8,10,10,9,8,8],   D:[-1,-1,10,12,13,12]},
-    'C#':{C:[-1,4,3,1,2,1], A:[-1,4,6,6,6,4],   G:[9,8,6,6,6,9],    E:[9,11,11,10,9,9],  D:[-1,-1,11,13,14,13]},
-    'D':{C:[-1,5,4,2,3,2],  A:[-1,5,7,7,7,5],   G:[10,9,7,7,7,10],  E:[10,12,12,11,10,10],D:[-1,-1,0,2,3,2]},
-    'D#':{C:[-1,6,5,3,4,3], A:[-1,6,8,8,8,6],   G:[11,10,8,8,8,11], E:[11,13,13,12,11,11],D:[-1,-1,1,3,4,3]},
-    'E':{C:[-1,7,6,4,5,4],  A:[-1,7,9,9,9,7],   G:[12,11,9,9,9,12], E:[0,2,2,1,0,0],      D:[-1,-1,2,4,5,4]},
-    'F':{C:[-1,8,7,5,6,5],  A:[-1,8,10,10,10,8],G:[13,12,10,10,10,13],E:[1,3,3,2,1,1],    D:[-1,-1,3,5,6,5]},
-    'F#':{C:[-1,9,8,6,7,6], A:[-1,9,11,11,11,9],G:[14,13,11,11,11,14],E:[2,4,4,3,2,2],   D:[-1,-1,4,6,7,6]},
-    'G':{C:[-1,10,9,7,8,7], A:[-1,10,12,12,12,10],G:[3,2,0,0,0,3],  E:[3,5,5,4,3,3],     D:[-1,-1,5,7,8,7]},
-    'G#':{C:[-1,11,10,8,9,8],A:[-1,11,13,13,13,11],G:[4,3,1,1,1,4], E:[4,6,6,5,4,4],     D:[-1,-1,6,8,9,8]},
-    'A':{C:[-1,12,11,9,10,9],A:[-1,0,2,2,2,0],  G:[5,4,2,2,2,5],    E:[5,7,7,6,5,5],     D:[-1,-1,7,9,10,9]},
-    'A#':{C:[-1,13,12,10,11,10],A:[-1,1,3,3,3,1],G:[6,5,3,3,3,6],  E:[6,8,8,7,6,6],     D:[-1,-1,8,10,11,10]},
-    'B':{C:[-1,14,13,11,12,11],A:[-1,2,4,4,4,2], G:[7,6,4,4,4,7],   E:[7,9,9,8,7,7],     D:[-1,-1,9,11,12,11]},
-  },
-  minor:{
-    'C':{C:[-1,3,1,0,1,0],  A:[-1,3,5,5,4,3],   G:[8,6,5,5,4,8],    E:[8,10,10,8,8,8],   D:[-1,-1,10,12,13,11]},
-    'C#':{C:[-1,4,2,1,2,1], A:[-1,4,6,6,5,4],   G:[9,7,6,6,5,9],    E:[9,11,11,9,9,9],   D:[-1,-1,11,13,14,12]},
-    'D':{C:[-1,5,3,2,3,2],  A:[-1,5,7,7,6,5],   G:[10,8,7,7,6,10],  E:[10,12,12,10,10,10],D:[-1,-1,0,2,3,1]},
-    'D#':{C:[-1,6,4,3,4,3], A:[-1,6,8,8,7,6],   G:[11,9,8,8,7,11],  E:[11,13,13,11,11,11],D:[-1,-1,1,3,4,2]},
-    'E':{C:[-1,7,5,4,5,4],  A:[-1,7,9,9,8,7],   G:[12,10,9,9,8,12], E:[0,2,2,0,0,0],      D:[-1,-1,2,4,5,3]},
-    'F':{C:[-1,8,6,5,6,5],  A:[-1,8,10,10,9,8], G:[13,11,10,10,9,13],E:[1,3,3,1,1,1],     D:[-1,-1,3,5,6,4]},
-    'F#':{C:[-1,9,7,6,7,6], A:[-1,9,11,11,10,9],G:[14,12,11,11,10,14],E:[2,4,4,2,2,2],   D:[-1,-1,4,6,7,5]},
-    'G':{C:[-1,10,8,7,8,7], A:[-1,10,12,12,11,10],G:[3,1,0,0,0,3],  E:[3,5,5,3,3,3],     D:[-1,-1,5,7,8,6]},
-    'G#':{C:[-1,11,9,8,9,8],A:[-1,11,13,13,12,11],G:[4,2,1,1,1,4],  E:[4,6,6,4,4,4],     D:[-1,-1,6,8,9,7]},
-    'A':{C:[-1,12,10,9,10,9],A:[-1,0,2,2,1,0],  G:[5,3,2,2,1,5],    E:[5,7,7,5,5,5],     D:[-1,-1,7,9,10,8]},
-    'A#':{C:[-1,13,11,10,11,10],A:[-1,1,3,3,2,1],G:[6,4,3,3,2,6],  E:[6,8,8,6,6,6],     D:[-1,-1,8,10,11,9]},
-    'B':{C:[-1,14,12,11,12,11],A:[-1,2,4,4,3,2], G:[7,5,4,4,3,7],   E:[7,9,9,7,7,7],     D:[-1,-1,9,11,12,10]},
-  },
-  dom7:{
-    'C':{C:[-1,3,2,3,1,0],  A:[-1,3,5,3,5,3],   G:[8,7,5,5,5,6],    E:[8,10,8,9,8,8],    D:[-1,-1,10,12,11,12]},
-    'C#':{C:[-1,4,3,4,2,1], A:[-1,4,6,4,6,4],   G:[9,8,6,6,6,7],    E:[9,11,9,10,9,9],   D:[-1,-1,11,13,12,13]},
-    'D':{C:[-1,5,4,5,3,2],  A:[-1,5,7,5,7,5],   G:[10,9,7,7,7,8],   E:[10,12,10,11,10,10],D:[-1,-1,0,2,1,2]},
-    'D#':{C:[-1,6,5,6,4,3], A:[-1,6,8,6,8,6],   G:[11,10,8,8,8,9],  E:[11,13,11,12,11,11],D:[-1,-1,1,3,2,3]},
-    'E':{C:[-1,7,6,7,5,4],  A:[-1,7,9,7,9,7],   G:[12,11,9,9,9,10], E:[0,2,0,1,0,0],      D:[-1,-1,2,4,3,4]},
-    'F':{C:[-1,8,7,8,6,5],  A:[-1,8,10,8,10,8], G:[13,12,10,10,10,11],E:[1,3,1,2,1,1],    D:[-1,-1,3,5,4,5]},
-    'F#':{C:[-1,9,8,9,7,6], A:[-1,9,11,9,11,9], G:[14,13,11,11,11,12],E:[2,4,2,3,2,2],   D:[-1,-1,4,6,5,6]},
-    'G':{C:[-1,10,9,10,8,7],A:[-1,10,12,10,12,10],G:[3,2,0,0,0,1],  E:[3,5,3,4,3,3],     D:[-1,-1,5,7,6,7]},
-    'G#':{C:[-1,11,10,11,9,8],A:[-1,11,13,11,13,11],G:[4,3,1,1,1,2],E:[4,6,4,5,4,4],     D:[-1,-1,6,8,7,8]},
-    'A':{C:[-1,12,11,12,10,9],A:[-1,0,2,0,2,0], G:[5,4,2,2,2,3],    E:[5,7,5,6,5,5],     D:[-1,-1,7,9,8,9]},
-    'A#':{C:[-1,13,12,13,11,10],A:[-1,1,3,1,3,1],G:[6,5,3,3,3,4],  E:[6,8,6,7,6,6],     D:[-1,-1,8,10,9,10]},
-    'B':{C:[-1,14,13,14,12,11],A:[-1,2,4,2,4,2], G:[7,6,4,4,4,5],   E:[7,9,7,8,7,7],     D:[-1,-1,9,11,10,11]},
-  },
-  maj7:{
-    'C':{C:[-1,3,2,0,0,0],  A:[-1,3,5,4,5,3],   G:[8,7,5,5,5,7],    E:[8,10,9,9,8,8],    D:[-1,-1,10,12,12,12]},
-    'C#':{C:[-1,4,3,1,1,1], A:[-1,4,6,5,6,4],   G:[9,8,6,6,6,8],    E:[9,11,10,10,9,9],  D:[-1,-1,11,13,13,13]},
-    'D':{C:[-1,5,4,2,2,2],  A:[-1,5,7,6,7,5],   G:[10,9,7,7,7,9],   E:[10,12,11,11,10,10],D:[-1,-1,0,2,2,2]},
-    'D#':{C:[-1,6,5,3,3,3], A:[-1,6,8,7,8,6],   G:[11,10,8,8,8,10], E:[11,13,12,12,11,11],D:[-1,-1,1,3,3,3]},
-    'E':{C:[-1,7,6,4,4,4],  A:[-1,7,9,8,9,7],   G:[12,11,9,9,9,11], E:[0,2,1,1,0,0],      D:[-1,-1,2,4,4,4]},
-    'F':{C:[-1,8,7,5,5,5],  A:[-1,8,10,9,10,8], G:[13,12,10,10,10,12],E:[1,3,2,2,1,1],    D:[-1,-1,3,5,5,5]},
-    'F#':{C:[-1,9,8,6,6,6], A:[-1,9,11,10,11,9],G:[14,13,11,11,11,13],E:[2,4,3,3,2,2],   D:[-1,-1,4,6,6,6]},
-    'G':{C:[-1,10,9,7,7,7], A:[-1,10,12,11,12,10],G:[3,2,0,0,0,2],  E:[3,5,4,4,3,3],     D:[-1,-1,5,7,7,7]},
-    'G#':{C:[-1,11,10,8,8,8],A:[-1,11,13,12,13,11],G:[4,3,1,1,1,3], E:[4,6,5,5,4,4],     D:[-1,-1,6,8,8,8]},
-    'A':{C:[-1,12,11,9,9,9],A:[-1,0,2,1,2,0],   G:[5,4,2,2,2,4],    E:[5,7,6,6,5,5],     D:[-1,-1,7,9,9,9]},
-    'A#':{C:[-1,13,12,10,10,10],A:[-1,1,3,2,3,1],G:[6,5,3,3,3,5],  E:[6,8,7,7,6,6],     D:[-1,-1,8,10,10,10]},
-    'B':{C:[-1,14,13,11,11,11],A:[-1,2,4,3,4,2], G:[7,6,4,4,4,6],   E:[7,9,8,8,7,7],     D:[-1,-1,9,11,11,11]},
-  },
-  min7:{
-    'C':{C:[-1,3,1,3,1,0],  A:[-1,3,5,3,4,3],   G:[8,6,5,5,4,6],    E:[8,10,8,8,8,8],    D:[-1,-1,10,12,11,11]},
-    'C#':{C:[-1,4,2,4,2,1], A:[-1,4,6,4,5,4],   G:[9,7,6,6,5,7],    E:[9,11,9,9,9,9],    D:[-1,-1,11,13,12,12]},
-    'D':{C:[-1,5,3,5,3,2],  A:[-1,5,7,5,6,5],   G:[10,8,7,7,6,8],   E:[10,12,10,10,10,10],D:[-1,-1,0,2,1,1]},
-    'D#':{C:[-1,6,4,6,4,3], A:[-1,6,8,6,7,6],   G:[11,9,8,8,7,9],   E:[11,13,11,11,11,11],D:[-1,-1,1,3,2,2]},
-    'E':{C:[-1,7,5,7,5,4],  A:[-1,7,9,7,8,7],   G:[12,10,9,9,8,10], E:[0,2,0,0,0,0],      D:[-1,-1,2,4,3,3]},
-    'F':{C:[-1,8,6,8,6,5],  A:[-1,8,10,8,9,8],  G:[13,11,10,10,9,11],E:[1,3,1,1,1,1],     D:[-1,-1,3,5,4,4]},
-    'F#':{C:[-1,9,7,9,7,6], A:[-1,9,11,9,10,9], G:[14,12,11,11,10,12],E:[2,4,2,2,2,2],   D:[-1,-1,4,6,5,5]},
-    'G':{C:[-1,10,8,10,8,7],A:[-1,10,12,10,11,10],G:[3,1,0,0,0,1],  E:[3,5,3,3,3,3],     D:[-1,-1,5,7,6,6]},
-    'G#':{C:[-1,11,9,11,9,8],A:[-1,11,13,11,12,11],G:[4,2,1,1,1,2], E:[4,6,4,4,4,4],     D:[-1,-1,6,8,7,7]},
-    'A':{C:[-1,12,10,12,10,9],A:[-1,0,2,0,1,0], G:[5,3,2,2,1,3],    E:[5,7,5,5,5,5],     D:[-1,-1,7,9,8,8]},
-    'A#':{C:[-1,13,11,13,11,10],A:[-1,1,3,1,2,1],G:[6,4,3,3,2,4],  E:[6,8,6,6,6,6],     D:[-1,-1,8,10,9,9]},
-    'B':{C:[-1,14,12,14,12,11],A:[-1,2,4,2,3,2], G:[7,5,4,4,3,5],   E:[7,9,7,7,7,7],     D:[-1,-1,9,11,10,10]},
-  },
-};
-// OPEN position forms — fixed absolute frets, key-independent
-const CAGED_OPEN_FORMS={
-  major:{ C:[-1,3,2,0,1,0], A:[-1,0,2,2,2,0], G:[3,2,0,0,0,3], E:[0,2,2,1,0,0], D:[-1,-1,0,2,3,2] },
-  minor:{ C:[-1,3,1,0,1,0], A:[-1,0,2,2,1,0], G:[3,1,0,0,0,3], E:[0,2,2,0,0,0], D:[-1,-1,0,2,3,1] },
-  dom7:{ C:[-1,3,2,3,1,0], A:[-1,0,2,0,2,0], G:[3,2,0,0,0,1], E:[0,2,0,1,0,0], D:[-1,-1,0,2,1,2] },
-  maj7:{ C:[-1,3,2,0,0,0], A:[-1,0,2,1,2,0], G:[3,2,0,0,0,2], E:[0,2,1,1,0,0], D:[-1,-1,0,2,2,2] },
-  min7:{ C:[-1,3,1,3,1,0], A:[-1,0,2,0,1,0], G:[3,1,0,0,0,1], E:[0,2,0,0,0,0], D:[-1,-1,0,2,1,1] },
-};
-// Return frets based on mode: FORM=open position, MOVABLE=transposed to curKey
-function getCagedFrets(){
-  const tbl=CAGED_OPEN_FORMS[cagedType];
-  if(!tbl)return null;
-  const openFrets=tbl[cagedShape];
-  if(!openFrets)return null;
-  if(cagedMode==='form'){
-    return{frets:openFrets};
-  } else {
-    // MOVABLE: transpose open form to curKey
-    const CAGED_ROOT={C:0,A:9,G:7,E:4,D:2};
-    const shift=((curKey-CAGED_ROOT[cagedShape])+12)%12;
-    return{frets:openFrets.map(f=>f<0?f:f+shift),shift};
-  }
-}
 const R_ROOT=16,R_NOTE=12;
 function getCtx(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();return audioCtx;}
 function mf(m){return 440*Math.pow(2,(m-69)/12);}
@@ -429,8 +295,6 @@ function draw(){
     }
   }
   buildLegend(modeArr);
-  // CAGED overlay (drawn after dots so it sits on top)
-  if(cagedOn&&cagedShape)drawCagedOverlay();
   // Sync mode wheel spoke highlight
   document.querySelectorAll('.mode-spoke').forEach(el=>el.classList.remove('active'));
   const activeSpoke=document.getElementById('spoke-'+curMode);
@@ -543,121 +407,6 @@ function playMode(descend){
   });
   setTimeout(()=>{isPlaying=false;btn.classList.remove('playing');},seq.length*STEP*1000+300);
 }
-// ── CAGED OVERLAY ────────────────────────────────────────────────────────────
-function setCagedMode(mode){
-  cagedMode=mode;
-  document.getElementById('cmForm').classList.toggle('on',mode==='form');
-  document.getElementById('cmMove').classList.toggle('on',mode==='movable');
-  if(cagedShape)toggleCaged(cagedShape);
-}
-function toggleCaged(shape){
-  if(cagedShape===shape&&cagedOn){clearCaged();return;}
-  cagedShape=shape;cagedOn=true;
-  document.querySelectorAll('.caged-btn').forEach(b=>b.classList.remove('active'));
-  const btn=document.getElementById('cb-'+shape);if(btn)btn.classList.add('active');
-  // Scroll window to show the open form — D starts at fret 2, rest at NUT
-  const cf=getCagedFrets();
-  if(cf){
-    const played=cf.frets.filter(f=>f>=0);
-    if(played.length){
-      const minF=Math.min(...played);
-      winStart=minF===0?0:Math.max(0,minF-1);
-      document.getElementById('posLabel').textContent=winStart===0?'NUT':'Fret '+winStart+'–'+(winStart+3);
-      document.getElementById('posHint').textContent=winStart===0?'open strings':'Capo fret '+winStart;
-    }
-  }
-  draw();
-}
-function clearCaged(){
-  cagedShape=null;cagedOn=false;
-  document.querySelectorAll('.caged-btn').forEach(b=>b.classList.remove('active'));
-  draw();
-}
-function drawCagedOverlay(){
-  if(!cagedOn||!cagedShape)return;
-  const cf=getCagedFrets();if(!cf)return;
-  const {frets}=cf;
-  const svg=document.getElementById('neck');
-  const COLS=6,WIN=4,CW=44,RH=48,LEFT=42,NUT_H=44,TOP=32;
-  const NUT_Y=TOP+NUT_H;
-  // Build chord tone set from the shape's actual fretted notes
-  const chordTones=new Set();
-  frets.forEach((f,s)=>{if(f>=0)chordTones.add((SC[s]+f)%12);});
-  // Now ring EVERY dot on the board whose chroma is in the chord
-  // — nut diamonds and fretted dots
-  allDots.forEach(dot=>{
-    if(!chordTones.has(dot.ch))return;
-    const x=LEFT+CW*dot.s+CW/2;
-    const noteName=dispNote(dot.ch,dot.ch); // note name independent of mode key
-    const fontSize=noteName.length>2?7:9;
-    let y;
-    if(dot.isNut){
-      y=NUT_Y-18;
-    } else {
-      const row=dot.fret-winStart-1;
-      if(row<0||row>=WIN)return;
-      y=NUT_Y+RH*row+RH/2;
-    }
-    svgEl('circle',{cx:x,cy:y,r:16,fill:'rgba(244,208,63,0.25)',stroke:'#F4D03F','stroke-width':2.5,opacity:'1'},svg);
-    svgEl('text',{x,y:y+1,'text-anchor':'middle','dominant-baseline':'central',fill:'#F4D03F','font-family':'Montserrat,sans-serif','font-size':fontSize,'font-weight':700,'pointer-events':'none'},svg).textContent=noteName;
-  });
-  // Shape label
-  const firstFretted=frets.find(f=>f>0)||1;
-  const labelRow=Math.max(0,firstFretted-winStart-1);
-  const labelY=labelRow<WIN?NUT_Y+RH*labelRow+RH/2:NUT_Y+RH;
-  svgEl('text',{x:LEFT+CW*COLS+6,y:labelY,'text-anchor':'start','dominant-baseline':'central',fill:'#F4D03F','font-family':'Cinzel,serif','font-size':10,'font-weight':700},svg).textContent=cagedShape;
-}
-
-// ── STRUM ─────────────────────────────────────────────────────────────────────
-function playStrum(){
-  if(isPlaying)return;
-  getCtx().resume();
-  const btn=document.getElementById('btnStrum');
-  btn.classList.add('playing');
-  const perString=[];
-  if(cagedOn&&cagedShape){
-    // CAGED mode: strum exact transposed shape
-    const cf=getCagedFrets();
-    if(cf){
-      cf.frets.forEach((actualFret,s)=>{
-        if(actualFret<0)return;
-        const midi=SM[s]+actualFret;
-        const dot=allDots.find(d=>d.s===s&&d.fret===actualFret)||allDots.find(d=>d.s===s&&d.midi===midi);
-        perString.push(dot||{s,fret:actualFret,midi,isSynth:true});
-      });
-    }
-  } else {
-    // Mode strum: one fretted dot per string, lowest fret wins
-    for(let s=0;s<6;s++){
-      const fretted=allDots.filter(d=>!d.isNut&&d.s===s).sort((a,b)=>a.fret-b.fret);
-      if(fretted.length){perString.push(fretted[0]);continue;}
-      const nut=allDots.find(d=>d.isNut&&d.s===s);
-      if(nut)perString.push(nut);
-    }
-  }
-  const ctx=getCtx();
-  if(cagedOn&&cagedShape){
-    // CAGED active: all strings simultaneously — pure chord
-    perString.forEach(dot=>{
-      playNote(dot.midi,ctx.currentTime,1.1);
-      if(dot&&!dot.isSynth){setActive(dot,true);setTimeout(()=>setActive(dot,false),600);}
-    });
-    setTimeout(()=>btn.classList.remove('playing'),700);
-  } else {
-    // Mode strum: bass→treble stagger
-    const STRUM_DELAY=0.04;
-    perString.forEach((dot,i)=>{
-      const t=ctx.currentTime+i*STRUM_DELAY;
-      playNote(dot.midi,t,0.9);
-      if(dot&&!dot.isSynth){
-        setTimeout(()=>setActive(dot,true),i*STRUM_DELAY*1000);
-        setTimeout(()=>setActive(dot,false),i*STRUM_DELAY*1000+400);
-      }
-    });
-    setTimeout(()=>btn.classList.remove('playing'),(perString.length*STRUM_DELAY+0.9)*1000);
-  }
-}
-
 // ── PLAY FULL NECK ──────────────────────────────────────────────────────────
 function playFullNeck(){
   if(isPlaying)return;
