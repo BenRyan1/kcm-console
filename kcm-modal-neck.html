@@ -58,15 +58,9 @@ svg#neck{display:block;touch-action:manipulation}
 .mode-spoke:hover .spoke-lbl{color:#b0b0cc;}
 .mode-spoke.active .spoke-lbl{color:rgba(244,208,63,0.8);}
 /* Hover card */
-.spoke-card{position:absolute;bottom:calc(100% + 10px);left:50%;transform:translateX(-50%) scale(0.92);width:188px;background:linear-gradient(135deg,#0e0e28,#080815);border:1px solid rgba(0,128,128,0.45);border-radius:12px;padding:12px 12px 10px;opacity:0;pointer-events:none;transition:all .22s;box-shadow:0 12px 36px rgba(0,0,0,0.7);z-index:100;}
-.mode-spoke:nth-child(1) .spoke-card,.mode-spoke:nth-child(2) .spoke-card{left:0;transform:translateX(0) scale(0.92);}
-.mode-spoke:nth-child(6) .spoke-card,.mode-spoke:nth-child(7) .spoke-card{left:auto;right:0;transform:translateX(0) scale(0.92);}
-.mode-spoke:hover .spoke-card{opacity:1;pointer-events:auto;transform:translateX(-50%) scale(1);}
-.mode-spoke:nth-child(1):hover .spoke-card,.mode-spoke:nth-child(2):hover .spoke-card{transform:translateX(0) scale(1);}
-.mode-spoke:nth-child(6):hover .spoke-card,.mode-spoke:nth-child(7):hover .spoke-card{transform:translateX(0) scale(1);}
-.spoke-card::after{content:'';position:absolute;bottom:-6px;left:50%;transform:translateX(-50%);border:6px solid transparent;border-bottom:none;border-top-color:#008080;}
-.mode-spoke:nth-child(1) .spoke-card::after,.mode-spoke:nth-child(2) .spoke-card::after{left:20px;transform:none;}
-.mode-spoke:nth-child(6) .spoke-card::after,.mode-spoke:nth-child(7) .spoke-card::after{left:auto;right:20px;transform:none;}
+.spoke-card{position:fixed;bottom:auto;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.92);width:min(88vw,220px);background:linear-gradient(135deg,#0e0e28,#080815);border:1px solid rgba(0,128,128,0.45);border-radius:12px;padding:12px 12px 10px;opacity:0;pointer-events:none;transition:all .22s;box-shadow:0 12px 36px rgba(0,0,0,0.85);z-index:1000;}
+.mode-spoke:hover .spoke-card{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1);}
+.spoke-card::after{display:none;}
 .card-header{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
 .card-pip{width:14px;height:14px;border-radius:50%;flex-shrink:0;border:2px solid rgba(255,255,255,0.4);}
 .card-title{font-family:'Cinzel',serif;font-size:12px;font-weight:700;color:#e8e8f8;letter-spacing:1px;}
@@ -113,6 +107,9 @@ svg#neck{display:block;touch-action:manipulation}
     <button class="btn" id="btnArp2u" onclick="playArp(4,false)" style="border-color:rgba(244,208,63,0.5);color:#F4D03F">▲ 1·3·5·7</button>
     <button class="btn" id="btnArp2d" onclick="playArp(4,true)" style="border-color:rgba(244,208,63,0.5);color:#F4D03F">▼ 1·3·5·7</button>
     <button class="btn" id="btnDesc" onclick="playMode(true)">▼ DESCEND</button>
+  </div>
+  <div class="btn-row" style="margin-top:-4px">
+    <button class="btn" id="btnFullNeck" onclick="playFullNeck()" style="border-color:rgba(0,192,192,0.6);color:#00c0c0;font-size:10px;letter-spacing:2px">⬆ FULL NECK ⬆</button>
   </div>
   <div class="tempo-row">
     <div class="tempo-lbl">TEMPO</div>
@@ -282,7 +279,10 @@ function draw(){
       const gc=svgEl('circle',{cx:x,cy:y,r:r+4,fill:'none',stroke:col,'stroke-width':isRoot?2.5:1.5,opacity:isRoot?'0.8':'0.42'},g);
       const mc=svgEl('circle',{cx:x,cy:y,r,fill:col,stroke:isRoot?'#fff':'rgba(255,255,255,0.25)','stroke-width':isRoot?2:0.7},g);
       svgEl('text',{x,y,'text-anchor':'middle','dominant-baseline':'central',fill:useDark?'#111':'#fff','font-family':'Montserrat,sans-serif','font-size':isRoot?10:8,'font-weight':700,style:'pointer-events:none'},g).textContent=dispNote(ch,curKey);
-      svgEl('text',{x,y:y+r+8,'text-anchor':'middle','dominant-baseline':'central',fill:'#4040a0','font-family':'Montserrat,sans-serif','font-size':7,style:'pointer-events:none'},g).textContent=IV[(ch-curKey+12)%12];
+      // Interval label — above the dot, bright, prominent
+      const ivLabel=IV[(ch-curKey+12)%12];
+      const ivCol=isRoot?'#F4D03F':'#00c0c0';
+      svgEl('text',{x,y:y-r-7,'text-anchor':'middle','dominant-baseline':'central',fill:ivCol,'font-family':'Montserrat,sans-serif','font-size':isRoot?9:8,'font-weight':700,style:'pointer-events:none'},g).textContent=ivLabel;
       const dot={isNut:false,s,row,fret,ch,midi,isRoot,mc,gc,g};
       allDots.push(dot);
       const h=()=>{if(isPlaying)return;getCtx().resume();playNote(midi,getCtx().currentTime,0.7);setActive(dot,true);setTimeout(()=>setActive(dot,false),450);};
@@ -403,6 +403,70 @@ function playMode(descend){
   });
   setTimeout(()=>{isPlaying=false;btn.classList.remove('playing');},seq.length*STEP*1000+300);
 }
+// ── PLAY FULL NECK ──────────────────────────────────────────────────────────
+function playFullNeck(){
+  if(isPlaying)return;
+  getCtx().resume();isPlaying=true;
+  const btn=document.getElementById('btnFullNeck');
+  btn.classList.add('playing');
+  const mode=MODES[curMode];
+  const modeSet=new Set(mode.semi.map(s=>(curKey+s)%12));
+  const STEP=SPEEDS[speedIdx],dur=Math.max(0.12,STEP*0.88);
+  const ctx=getCtx();
+  // Build all notes across entire neck (frets 0-17) sorted by midi
+  const allNotes=[];
+  // Open strings (fret 0)
+  for(let s=0;s<6;s++){
+    const ch=SC[s]%12;
+    if(modeSet.has(ch))allNotes.push({midi:SM[s],ch,s,fret:0});
+  }
+  // Frets 1-17
+  for(let fret=1;fret<=17;fret++){
+    for(let s=0;s<6;s++){
+      const ch=(SC[s]+fret)%12;
+      if(!modeSet.has(ch))continue;
+      if(s<5&&(SM[s]+fret)===SM[s+1]&&!modeSet.has((SC[s+1])%12))continue; // skip true dupes of non-mode
+      allNotes.push({midi:SM[s]+fret,ch,s,fret});
+    }
+  }
+  // Sort by midi, group same-pitch, dedupe
+  allNotes.sort((a,b)=>a.midi-b.midi);
+  // Group by midi
+  const groups=[];
+  allNotes.forEach(n=>{
+    const last=groups[groups.length-1];
+    if(last&&last[0].midi===n.midi)last.push(n);
+    else groups.push([n]);
+  });
+  // Find lowest root
+  const ri=groups.findIndex(g=>g.some(n=>n.ch===curKey));
+  const seq=ri>0?[...groups.slice(ri),...groups.slice(0,ri)]:groups;
+
+  let t=ctx.currentTime;
+  let posWin=0;
+  seq.forEach((group,i)=>{
+    const midi=group[0].midi;
+    playNote(midi,t,dur);
+    // Scroll window to show this note and flash dots on board
+    const fret=group[0].fret;
+    const newWin=fret===0?0:Math.max(0,Math.min(17,fret-1));
+    setTimeout(()=>{
+      if(newWin!==posWin){
+        posWin=newWin;winStart=newWin;
+        document.getElementById('posLabel').textContent=winStart===0?'NUT':'Fret '+winStart+'–'+(winStart+3);
+        draw();
+      }
+      // Highlight all dots matching this midi
+      allDots.filter(d=>d.midi===midi).forEach(d=>setActive(d,true));
+    },i*STEP*1000);
+    setTimeout(()=>{
+      allDots.filter(d=>d.midi===midi).forEach(d=>setActive(d,false));
+    },i*STEP*1000+Math.min(300,STEP*700));
+    t+=STEP;
+  });
+  setTimeout(()=>{isPlaying=false;btn.classList.remove('playing');},seq.length*STEP*1000+400);
+}
+
 // Dropdowns
 const kSel=document.getElementById('keySel');
 const mSel=document.getElementById('modeSel');
