@@ -228,28 +228,27 @@ function draw(){
   svgEl('rect',{x:LEFT,y:NUT_Y,width:CW*COLS,height:winStart===0?5:2,fill:winStart===0?'#d8c888':'rgba(80,70,40,0.4)',rx:1},svg);
   // String lines
   for(let s=0;s<=COLS;s++){const x=LEFT+CW*s;svgEl('line',{x1:x,y1:NUT_Y+(winStart===0?5:2),x2:x,y2:NUT_Y+RH*WIN,stroke:'rgba(160,160,190,0.22)','stroke-width':s===0||s===COLS?1.5:0.7},svg);}
-  // Open string diamonds — always shown above NUT bar at every position
+  // Nut diamonds — show the note AT winStart (open string if 0, fretted if shifted)
   for(let s=0;s<COLS;s++){
-    const ch=SC[s]%12;
+    const ch=(SC[s]+winStart)%12;  // actual note at this capo position
+    const midi=SM[s]+winStart;      // actual midi pitch
     const x=LEFT+CW*s+CW/2,y=NUT_Y-18;
     if(!modeSet.has(ch)){
-      // Ghost X for non-mode open strings
+      // Ghost X for non-mode strings at this position
       svgEl('text',{x,y:y+4,'text-anchor':'middle','dominant-baseline':'central',fill:'rgba(80,80,120,0.45)','font-family':'Montserrat,sans-serif','font-size':13,'font-weight':700},svg).textContent='×';
       continue;
     }
-    const isRoot=ch===curKey,col=COL[CHR[ch]],midi=SM[s];
-    const useDark=DARK.includes(CHR[ch]);
-    const sz=isRoot?16:13;  // much larger diamonds
+    const isRoot=ch===curKey,col=COL[CHR[ch]],useDark=DARK.includes(CHR[ch]);
+    const sz=isRoot?16:13;
     const pts=x+','+(y-sz)+' '+(x+sz)+','+y+' '+x+','+(y+sz)+' '+(x-sz)+','+y;
     const nutG=svgEl('g',{},svg);nutG.style.cursor='pointer';
     svgEl('circle',{cx:x,cy:y,r:sz+10,fill:'transparent'},nutG);
     const nutGlow=svgEl('circle',{cx:x,cy:y,r:sz+8,fill:'none',stroke:col,'stroke-width':2,opacity:'0',filter:'url(#glow)'},nutG);
     const el=svgEl('polygon',{points:pts,fill:col,opacity:'0.88',stroke:isRoot?'#fff':'rgba(255,255,255,0.35)','stroke-width':isRoot?2:1},nutG);
-    // Note name inside diamond
     const noteName=dispNote(ch,curKey);
     const fontSize=noteName.length>2?7:isRoot?10:9;
     svgEl('text',{x,y:y+1,'text-anchor':'middle','dominant-baseline':'central',fill:useDark?'#111':'#fff','font-family':'Montserrat,sans-serif','font-size':fontSize,'font-weight':700,'pointer-events':'none'},nutG).textContent=noteName;
-    const dot={isNut:true,s,fret:0,ch,midi,isRoot,el,nutGlow,cx:x,cy:y,sz};
+    const dot={isNut:true,s,fret:winStart,ch,midi,isRoot,el,nutGlow,cx:x,cy:y,sz};
     allDots.push(dot);
     const h=()=>{if(isPlaying)return;getCtx().resume();playNote(midi,getCtx().currentTime,0.65);setActive(dot,true);setTimeout(()=>setActive(dot,false),500);};
     nutG.addEventListener('touchstart',e=>{e.preventDefault();h();},{passive:false});
