@@ -200,43 +200,33 @@ let curKey=0,curMode='Ionian',winStart=0,speedIdx=1;
 let audioCtx=null,isPlaying=false,allDots=[];
 // CAGED overlay state
 let cagedShape=null,cagedType='major',cagedOn=false;
-const CAGED_SHAPES={
+// Open-position template frets (strings 0-5 = E A D G B e)
+const CAGED_OPEN={
   major:{
-    C:{frets:[-1,3,2,0,1,0],rootStr:5},
-    A:{frets:[-1,0,2,2,2,0],rootStr:5},
-    G:{frets:[3,2,0,0,0,3],rootStr:6},
-    E:{frets:[0,2,2,1,0,0],rootStr:6},
-    D:{frets:[-1,-1,0,2,3,2],rootStr:4}
+    C:[-1,3,2,0,1,0], A:[-1,0,2,2,2,0], G:[3,2,0,0,0,3], E:[0,2,2,1,0,0], D:[-1,-1,0,2,3,2]
   },
   minor:{
-    C:{frets:[-1,3,1,0,1,0],rootStr:5},
-    A:{frets:[-1,0,2,2,1,0],rootStr:5},
-    G:{frets:[3,1,0,0,0,3],rootStr:6},
-    E:{frets:[0,2,2,0,0,0],rootStr:6},
-    D:{frets:[-1,-1,0,2,3,1],rootStr:4}
+    C:[-1,3,1,0,1,0], A:[-1,0,2,2,1,0], G:[3,1,0,0,0,3], E:[0,2,2,0,0,0], D:[-1,-1,0,2,3,1]
   },
   dom7:{
-    C:{frets:[-1,3,2,3,1,0],rootStr:5},
-    A:{frets:[-1,0,2,0,2,0],rootStr:5},
-    G:{frets:[3,2,0,0,0,1],rootStr:6},
-    E:{frets:[0,2,0,1,0,0],rootStr:6},
-    D:{frets:[-1,-1,0,2,1,2],rootStr:4}
+    C:[-1,3,2,3,1,0], A:[-1,0,2,0,2,0], G:[3,2,0,0,0,1], E:[0,2,0,1,0,0], D:[-1,-1,0,2,1,2]
   },
   maj7:{
-    C:{frets:[-1,3,2,0,0,0],rootStr:5},
-    A:{frets:[-1,0,2,1,2,0],rootStr:5},
-    G:{frets:[3,2,0,0,0,2],rootStr:6},
-    E:{frets:[0,2,1,1,0,0],rootStr:6},
-    D:{frets:[-1,-1,0,2,2,2],rootStr:4}
+    C:[-1,3,2,0,0,0], A:[-1,0,2,1,2,0], G:[3,2,0,0,0,2], E:[0,2,1,1,0,0], D:[-1,-1,0,2,2,2]
   },
   min7:{
-    C:{frets:[-1,3,1,3,1,0],rootStr:5},
-    A:{frets:[-1,0,2,0,1,0],rootStr:5},
-    G:{frets:[3,1,0,0,0,1],rootStr:6},
-    E:{frets:[0,2,0,0,0,0],rootStr:6},
-    D:{frets:[-1,-1,0,2,1,1],rootStr:4}
+    C:[-1,3,1,3,1,0], A:[-1,0,2,0,1,0], G:[3,1,0,0,0,1], E:[0,2,0,0,0,0], D:[-1,-1,0,2,1,1]
   }
 };
+// Open-position root chroma for each shape
+const CAGED_ROOT={C:0,A:9,G:7,E:4,D:2};
+// Helper: get transposed frets for current key+shape+type
+function getCagedFrets(){
+  const base=CAGED_OPEN[cagedType]&&CAGED_OPEN[cagedType][cagedShape];
+  if(!base)return null;
+  const shift=((curKey-CAGED_ROOT[cagedShape])+12)%12;
+  return{frets:base.map(f=>f<0?f:f+shift),shift};
+}
 const R_ROOT=16,R_NOTE=12;
 function getCtx(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();return audioCtx;}
 function mf(m){return 440*Math.pow(2,(m-69)/12);}
@@ -489,56 +479,27 @@ function clearCaged(){
 }
 function drawCagedOverlay(){
   if(!cagedOn||!cagedShape)return;
-  const shapeData=CAGED_SHAPES[cagedType]&&CAGED_SHAPES[cagedType][cagedShape];
-  if(!shapeData)return;
+  const cf=getCagedFrets();if(!cf)return;
+  const {frets}=cf;
   const svg=document.getElementById('neck');
   const COLS=6,WIN=4,CW=44,RH=48,LEFT=42,NUT_H=44,TOP=32;
   const NUT_Y=TOP+NUT_H;
-  // Find the root fret offset: place shape so its root string lands on curKey
-  // rootStr is 1-indexed from low E; shapeData.frets[s] = fret offset within shape
-  // We need to find what position slides the shape so root note = curKey
-  const rootStrIdx=6-shapeData.rootStr; // string 6=idx0, 5=idx1, 4=idx2
-  // Current key chroma; find lowest fret on rootStr that gives curKey
-  let offset=winStart; // start from visible window
-  // The shape root fret within pattern (index of the root note fret)
-  const shapeFrets=shapeData.frets;
-  // Find capo/offset: the fret where rootStr plays curKey
-  // SM[rootStrIdx] + fret ≡ curKey (mod 12)
-  const openChroma=SC[rootStrIdx]%12;
-  let rootFretAbs=((curKey-openChroma)+12)%12; // first occurrence >= 0
-  // keep rootFretAbs=0 valid — open E and open G shapes exist
-  // Slide to nearest occurrence near winStart
-  while(rootFretAbs<winStart-1)rootFretAbs+=12;
-  // Shape offset: root fret in shape pattern (fret value on rootStr)
-  const rootFretInShape=shapeFrets[rootStrIdx]; // fret offset within the chord shape
-  let capoFret=rootFretAbs-rootFretInShape; // actual fret of barre/nut
-  if(capoFret<0)capoFret+=12; // wrap negative capo
-
-  // Draw a semi-transparent overlay rectangle spanning the shape
-  const minF=Math.min(...shapeFrets.filter(f=>f>=0));
-  const maxF=Math.max(...shapeFrets.filter(f=>f>=0));
-  const spanFrets=maxF-minF+1;
-
-  // Draw highlighted fret positions for each string in the shape
-  shapeFrets.forEach((sf,s)=>{
-    if(sf<0)return; // muted string — draw X
-    const actualFret=capoFret+sf;
-    const row=actualFret-winStart-1; // row in current window (0-3)
+  frets.forEach((actualFret,s)=>{
+    if(actualFret<0)return;
     const x=LEFT+CW*s+CW/2;
     if(actualFret===0){
-      // open string — draw ring at nut
       const y=NUT_Y-18;
-      svgEl('circle',{cx:x,cy:y,r:14,fill:'none',stroke:'rgba(244,208,63,0.7)','stroke-width':2.5,opacity:'0.8','stroke-dasharray':'4,3'},svg);
-    } else if(row>=0&&row<WIN){
-      const y=NUT_Y+RH*row+RH/2;
-      svgEl('circle',{cx:x,cy:y,r:14,fill:'none',stroke:'rgba(244,208,63,0.7)','stroke-width':2.5,opacity:'0.8','stroke-dasharray':'4,3'},svg);
+      svgEl('circle',{cx:x,cy:y,r:14,fill:'none',stroke:'rgba(244,208,63,0.75)','stroke-width':2.5,opacity:'0.9','stroke-dasharray':'4,3'},svg);
+    } else {
+      const row=actualFret-winStart-1;
+      if(row>=0&&row<WIN){
+        const y=NUT_Y+RH*row+RH/2;
+        svgEl('circle',{cx:x,cy:y,r:14,fill:'none',stroke:'rgba(244,208,63,0.75)','stroke-width':2.5,opacity:'0.9','stroke-dasharray':'4,3'},svg);
+      }
     }
   });
-
-  // Label the shape
-  const labelX=LEFT+CW*COLS+6;
-  const labelY=NUT_Y+RH*1;
-  svgEl('text',{x:labelX,y:labelY,'text-anchor':'start','dominant-baseline':'central',fill:'#F4D03F','font-family':'Cinzel,serif','font-size':9,'font-weight':700,opacity:'0.8'},svg).textContent=cagedShape;
+  // Shape label
+  svgEl('text',{x:LEFT+CW*COLS+6,y:NUT_Y+RH,'text-anchor':'start','dominant-baseline':'central',fill:'#F4D03F','font-family':'Cinzel,serif','font-size':9,'font-weight':700,opacity:'0.85'},svg).textContent=cagedShape;
 }
 
 // ── STRUM ─────────────────────────────────────────────────────────────────────
@@ -549,21 +510,12 @@ function playStrum(){
   btn.classList.add('playing');
   const perString=[];
   if(cagedOn&&cagedShape){
-    // CAGED mode: strum the exact shape frets
-    const shapeData=CAGED_SHAPES[cagedType]&&CAGED_SHAPES[cagedType][cagedShape];
-    if(shapeData){
-      const shapeFrets=shapeData.frets;
-      const rootStrIdx=6-shapeData.rootStr;
-      const openChroma=SC[rootStrIdx]%12;
-      let rootFretAbs=((curKey-openChroma)+12)%12;
-      let rootFretInShape=shapeFrets[rootStrIdx];
-      let capoFret=rootFretAbs-rootFretInShape;
-      if(capoFret<0)capoFret+=12;
-      shapeFrets.forEach((sf,s)=>{
-        if(sf<0)return; // muted
-        const actualFret=capoFret+sf;
+    // CAGED mode: strum exact transposed shape
+    const cf=getCagedFrets();
+    if(cf){
+      cf.frets.forEach((actualFret,s)=>{
+        if(actualFret<0)return;
         const midi=SM[s]+actualFret;
-        // find closest dot or synthesize
         const dot=allDots.find(d=>d.s===s&&d.fret===actualFret)||allDots.find(d=>d.s===s&&d.midi===midi);
         perString.push(dot||{s,fret:actualFret,midi,isSynth:true});
       });
@@ -578,16 +530,26 @@ function playStrum(){
     }
   }
   const ctx=getCtx();
-  const STRUM_DELAY=0.04; // 40ms between strings
-  perString.forEach((dot,i)=>{
-    const t=ctx.currentTime+i*STRUM_DELAY;
-    playNote(dot.midi,t,0.9);
-    if(dot&&!dot.isSynth){
-      setTimeout(()=>setActive(dot,true),(i*STRUM_DELAY*1000));
-      setTimeout(()=>setActive(dot,false),(i*STRUM_DELAY*1000)+400);
-    }
-  });
-  setTimeout(()=>btn.classList.remove('playing'),(perString.length*STRUM_DELAY+0.9)*1000);
+  if(cagedOn&&cagedShape){
+    // CAGED active: all strings simultaneously — pure chord
+    perString.forEach(dot=>{
+      playNote(dot.midi,ctx.currentTime,1.1);
+      if(dot&&!dot.isSynth){setActive(dot,true);setTimeout(()=>setActive(dot,false),600);}
+    });
+    setTimeout(()=>btn.classList.remove('playing'),700);
+  } else {
+    // Mode strum: bass→treble stagger
+    const STRUM_DELAY=0.04;
+    perString.forEach((dot,i)=>{
+      const t=ctx.currentTime+i*STRUM_DELAY;
+      playNote(dot.midi,t,0.9);
+      if(dot&&!dot.isSynth){
+        setTimeout(()=>setActive(dot,true),i*STRUM_DELAY*1000);
+        setTimeout(()=>setActive(dot,false),i*STRUM_DELAY*1000+400);
+      }
+    });
+    setTimeout(()=>btn.classList.remove('playing'),(perString.length*STRUM_DELAY+0.9)*1000);
+  }
 }
 
 // ── PLAY FULL NECK ──────────────────────────────────────────────────────────
