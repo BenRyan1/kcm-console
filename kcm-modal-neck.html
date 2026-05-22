@@ -210,7 +210,7 @@ function draw(){
   const svg=document.getElementById('neck');
   svg.innerHTML='';allDots=[];
   const COLS=6,WIN=4;
-  const CW=44,RH=48,LEFT=42,NUT_H=28,TOP=32;
+  const CW=44,RH=48,LEFT=42,NUT_H=44,TOP=32;
   const NUT_Y=TOP+NUT_H;
   const W=LEFT+CW*COLS+18,H=NUT_Y+RH*WIN+14;
   svg.setAttribute('viewBox','0 0 '+W+' '+H);
@@ -231,19 +231,24 @@ function draw(){
   // Open string diamonds — always shown above NUT bar at every position
   for(let s=0;s<COLS;s++){
     const ch=SC[s]%12;
-    const x=LEFT+CW*s+CW/2,y=NUT_Y-11;
+    const x=LEFT+CW*s+CW/2,y=NUT_Y-18;
     if(!modeSet.has(ch)){
       // Ghost X for non-mode open strings
       svgEl('text',{x,y:y+4,'text-anchor':'middle','dominant-baseline':'central',fill:'rgba(80,80,120,0.45)','font-family':'Montserrat,sans-serif','font-size':13,'font-weight':700},svg).textContent='×';
       continue;
     }
     const isRoot=ch===curKey,col=COL[CHR[ch]],midi=SM[s];
-    const sz=isRoot?8:5;
+    const useDark=DARK.includes(CHR[ch]);
+    const sz=isRoot?16:13;  // much larger diamonds
     const pts=x+','+(y-sz)+' '+(x+sz)+','+y+' '+x+','+(y+sz)+' '+(x-sz)+','+y;
     const nutG=svgEl('g',{},svg);nutG.style.cursor='pointer';
-    svgEl('circle',{cx:x,cy:y,r:20,fill:'transparent'},nutG);
+    svgEl('circle',{cx:x,cy:y,r:sz+10,fill:'transparent'},nutG);
     const nutGlow=svgEl('circle',{cx:x,cy:y,r:sz+8,fill:'none',stroke:col,'stroke-width':2,opacity:'0',filter:'url(#glow)'},nutG);
-    const el=svgEl('polygon',{points:pts,fill:col,opacity:'0.85',stroke:isRoot?'#fff':'rgba(255,255,255,0.4)','stroke-width':isRoot?1.5:0.7},nutG);
+    const el=svgEl('polygon',{points:pts,fill:col,opacity:'0.88',stroke:isRoot?'#fff':'rgba(255,255,255,0.35)','stroke-width':isRoot?2:1},nutG);
+    // Note name inside diamond
+    const noteName=dispNote(ch,curKey);
+    const fontSize=noteName.length>2?7:isRoot?10:9;
+    svgEl('text',{x,y:y+1,'text-anchor':'middle','dominant-baseline':'central',fill:useDark?'#111':'#fff','font-family':'Montserrat,sans-serif','font-size':fontSize,'font-weight':700,'pointer-events':'none'},nutG).textContent=noteName;
     const dot={isNut:true,s,fret:0,ch,midi,isRoot,el,nutGlow,cx:x,cy:y,sz};
     allDots.push(dot);
     const h=()=>{if(isPlaying)return;getCtx().resume();playNote(midi,getCtx().currentTime,0.65);setActive(dot,true);setTimeout(()=>setActive(dot,false),500);};
