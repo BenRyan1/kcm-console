@@ -1,6 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script>
+(function(){
+  var token=localStorage.getItem("kcm_access");
+  var granted=localStorage.getItem("kcm_access_granted");
+  if(!token || granted!=="true"){window.location.replace("/gate.html");}
+})();
+</script>
   <!-- ── Core ── -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
