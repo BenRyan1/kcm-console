@@ -8631,22 +8631,17 @@ async function kcmAIAsk(type) {
         seq.forEach(({ pc, oct }, i) => {
             const delay = i * beatMs;
 
-            // Sound
-            const t = setTimeout(() => {
-                window.playNote(pc, oct, noteDur);
-            }, delay);
-            _stencilTimers.push(t);
-
-            // Visual ON — pulse the sphere
+            // Sound + Visual ON — single callback, perfectly in sync
             const tOn = setTimeout(() => {
+                // SOUND
+                window.playNote(pc, oct, noteDur);
+                // SPHERE
                 document.querySelectorAll('.sphere').forEach(s => {
                     const spc = parseInt(s.dataset.note);
                     s.classList.remove('playing');
-                    if (spc === pc) {
-                        s.classList.add('playing');
-                    }
+                    if (spc === pc) s.classList.add('playing');
                 });
-                // Piano flash
+                // PIANO
                 document.querySelectorAll('.white-key,.black-key').forEach(k => {
                     k.style.background = ''; k.style.boxShadow = '';
                     k.style.borderColor = ''; k.style.borderWidth = '';
@@ -8657,9 +8652,15 @@ async function kcmAIAsk(type) {
                     k.style.background  = KCM_COLORS[pc];
                     k.style.borderColor = KCM_COLORS[pc];
                     k.style.borderWidth = '3px';
-                    k.style.boxShadow   = `0 0 20px ${KCM_COLORS[pc]}, 0 0 40px ${KCM_COLORS[pc]}88`;
+                    k.style.boxShadow   = `0 0 22px ${KCM_COLORS[pc]}, 0 0 44px ${KCM_COLORS[pc]}88`;
                 });
-                // Staff
+                // GUITAR
+                document.querySelectorAll('.fb-cell').forEach(cell => {
+                    const cpc = parseInt(cell.dataset.note);
+                    cell.classList.toggle('fb-on',  cpc === pc);
+                    cell.classList.toggle('fb-off', cpc !== pc);
+                });
+                // STAFF
                 if (typeof window.updateStaffNotation === 'function') {
                     window.updateStaffNotation([{ pc, oct }]);
                 }
@@ -8673,7 +8674,7 @@ async function kcmAIAsk(type) {
                     s.classList.add('included');
                     if (pc === rootPc) s.classList.add('active');
                 });
-            }, delay + beatMs * 0.85);
+            }, delay + beatMs * 0.82);
             _stencilTimers.push(tOff);
         });
 
