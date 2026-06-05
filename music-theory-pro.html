@@ -1412,29 +1412,34 @@ input[type="range"]::-webkit-slider-thumb {
 
 /* ── KCM MOBILE SCALE FIX — additive only, zero existing code touched ── */
 @media (max-width: 600px) {
-    /* Scale entire circle down so sphere pixel positions stay intact */
+    /* Wrap circle in a fixed-height container to prevent overflow */
     #chromaticCircle {
-        transform-origin: top center;
-        transform: scale(0.62);
-        margin-bottom: -190px !important;
+        transform-origin: top left;
+        transform: scale(0.72);
+        width: 520px !important;
+        height: 520px !important;
+        margin-left: -30px;
+        margin-bottom: -145px !important;
+        overflow: visible;
     }
     /* Stencil wrap scales to match */
     #kcmStencilWrap {
-        transform-origin: top center;
-        transform: scale(0.62);
-        margin-bottom: -190px !important;
+        transform-origin: top left;
+        transform: scale(0.72);
+        margin-left: -30px;
+        margin-bottom: -145px !important;
     }
     /* Piano scale down */
     .piano-outer {
         transform-origin: top center;
-        transform: scale(0.55);
-        margin-bottom: -120px !important;
+        transform: scale(0.58);
+        margin-bottom: -130px !important;
     }
     /* Guitar scale down */
     #guitarFretboard {
         transform-origin: top center;
-        transform: scale(0.55);
-        margin-bottom: -120px !important;
+        transform: scale(0.60);
+        margin-bottom: -110px !important;
     }
     /* Stencil grid wraps tighter */
     .kcm-stencil-shape-btn { min-width: 58px; padding: 6px 7px; }
