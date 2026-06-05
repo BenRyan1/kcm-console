@@ -1399,7 +1399,7 @@ input[type="range"]::-webkit-slider-thumb {
     .logo-text h1 { font-size: 1rem; }
     nav ul { gap: 0.6rem; }
     nav a { font-size: 0.75rem; }
-    /* circle size handled by transform scale below */
+    #chromaticCircle { width: 300px !important; height: 300px !important; }
     #staffNotation { width: min(300px, 90%); }
     .sphere { width: 38px !important; height: 38px !important; font-size: 9px !important; line-height: 1.1 !important; }
     /* Extra-small: stack tab buttons vertically */
@@ -1644,13 +1644,6 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
 .kcm-stencil-play-btn.descend { background: linear-gradient(135deg, #2980b9, #1a6a9a); }
 
 /* ── KCM MOBILE FIX — true responsive circle ── */
-@media (max-width: 540px) {
-    #chromaticCircle {
-        width: 320px !important;
-        height: 320px !important;
-        transform: none !important;
-        margin: 0.5rem auto !important;
-    }
     .sphere {
         width: 44px !important;
         height: 44px !important;
