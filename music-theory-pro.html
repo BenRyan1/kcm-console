@@ -1409,6 +1409,37 @@ input[type="range"]::-webkit-slider-thumb {
     /* Song Builder playback buttons wrap cleanly */
     #sbPlayBtn, #sbMelodyBtn, #sbFullBtn { font-size: 0.68rem; padding: 0.5rem 0.4rem; }
 }
+
+/* ── KCM MOBILE SCALE FIX — additive only, zero existing code touched ── */
+@media (max-width: 600px) {
+    /* Scale entire circle down so sphere pixel positions stay intact */
+    #chromaticCircle {
+        transform-origin: top center;
+        transform: scale(0.62);
+        margin-bottom: -190px !important;
+    }
+    /* Stencil wrap scales to match */
+    #kcmStencilWrap {
+        transform-origin: top center;
+        transform: scale(0.62);
+        margin-bottom: -190px !important;
+    }
+    /* Piano scale down */
+    .piano-outer {
+        transform-origin: top center;
+        transform: scale(0.55);
+        margin-bottom: -120px !important;
+    }
+    /* Guitar scale down */
+    #guitarFretboard {
+        transform-origin: top center;
+        transform: scale(0.55);
+        margin-bottom: -120px !important;
+    }
+    /* Stencil grid wraps tighter */
+    .kcm-stencil-shape-btn { min-width: 58px; padding: 6px 7px; }
+    .kcm-shape-mini svg { width: 28px; height: 28px; }
+}
 @media (prefers-reduced-motion: reduce) {
     * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
 }
