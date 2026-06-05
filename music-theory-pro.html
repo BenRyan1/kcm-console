@@ -1399,7 +1399,7 @@ input[type="range"]::-webkit-slider-thumb {
     .logo-text h1 { font-size: 1rem; }
     nav ul { gap: 0.6rem; }
     nav a { font-size: 0.75rem; }
-    #chromaticCircle { width: 300px !important; height: 300px !important; }
+    /* circle size handled by transform scale below */
     #staffNotation { width: min(300px, 90%); }
     .sphere { width: 38px !important; height: 38px !important; font-size: 9px !important; line-height: 1.1 !important; }
     /* Extra-small: stack tab buttons vertically */
@@ -1408,70 +1408,9 @@ input[type="range"]::-webkit-slider-thumb {
     #floatingDock { width: 100vw; border-radius: 12px 12px 0 0; }
     /* Song Builder playback buttons wrap cleanly */
     #sbPlayBtn, #sbMelodyBtn, #sbFullBtn { font-size: 0.68rem; padding: 0.5rem 0.4rem; }
-    /* Sphere positions scaled for 300px circle */
-    .sphere[data-note="0"] { left:110px !important; top:-1px !important; }
-    .sphere[data-note="1"] { left:147px !important; top:14pxpx !important; }
-    .sphere[data-note="2"] { left:187px !important; top:54pxpx !important; }
-    .sphere[data-note="3"] { left:202px !important; top:110pxpx !important; }
-    .sphere[data-note="4"] { left:187px !important; top:166pxpx !important; }
-    .sphere[data-note="5"] { left:147px !important; top:206pxpx !important; }
-    .sphere[data-note="6"] { left:91px !important; top:221pxpx !important; }
-    .sphere[data-note="7"] { left:35px !important; top:206pxpx !important; }
-    .sphere[data-note="8"] { left:-5px !important; top:166pxpx !important; }
-    .sphere[data-note="9"] { left:-1px !important; top:110px !important; }
-    .sphere[data-note="10"] { left:-5px !important; top:54pxpx !important; }
-    .sphere[data-note="11"] { left:35px !important; top:14pxpx !important; }
 }
 
-/* ── KCM MOBILE SCALE FIX — additive only, zero existing code touched ── */
-@media (max-width: 600px) {
-    /* Allow horizontal overflow so scaled circle isn't clipped */
-    body { overflow-x: hidden !important; }
 
-    /* Circle scaler wrapper — sits AROUND chromaticCircle */
-    .kcm-circle-scaler {
-        width: 100vw;
-        overflow: visible;
-        display: flex;
-        justify-content: center;
-        align-items: flex-start;
-    }
-
-    /* Circle centered on mobile */
-    #chromaticCircle {
-        margin: 0 auto !important;
-        margin-left: auto !important;
-        margin-right: auto !important;
-        display: block !important;
-        flex-shrink: 0;
-    }
-
-    /* Stencil wrap scales to match */
-    #kcmStencilWrap {
-        transform-origin: center center !important;
-        transform: scale(0.72) !important;
-        margin: 0 auto !important;
-        margin-bottom: -75px !important;
-    }
-
-    /* Piano scale down */
-    .piano-outer {
-        transform-origin: top center;
-        transform: scale(0.55);
-        margin-bottom: -140px !important;
-    }
-
-    /* Guitar scale down */
-    #guitarFretboard {
-        transform-origin: top center;
-        transform: scale(0.58);
-        margin-bottom: -115px !important;
-    }
-
-    /* Stencil grid wraps tighter */
-    .kcm-stencil-shape-btn { min-width: 58px; padding: 6px 7px; }
-    .kcm-shape-mini svg { width: 28px; height: 28px; }
-}
 @media (prefers-reduced-motion: reduce) {
     * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
 }
@@ -1703,6 +1642,34 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
 .kcm-stencil-play-btn:hover { transform: translateY(-2px); filter: brightness(1.15); }
 .kcm-stencil-play-btn.ascend  { background: linear-gradient(135deg, #27ae60, #1e8449); }
 .kcm-stencil-play-btn.descend { background: linear-gradient(135deg, #2980b9, #1a6a9a); }
+
+/* ── KCM MOBILE FIX — true responsive circle ── */
+@media (max-width: 540px) {
+    #chromaticCircle {
+        width: 320px !important;
+        height: 320px !important;
+        transform: none !important;
+        margin: 0.5rem auto !important;
+    }
+    .sphere {
+        width: 44px !important;
+        height: 44px !important;
+        font-size: 9px !important;
+        border-width: 3px !important;
+    }
+    #chromaticCircle .sphere[data-note="0"]  { left:138px !important; top:9px   !important; }
+    #chromaticCircle .sphere[data-note="1"]  { left:203px !important; top:26px  !important; }
+    #chromaticCircle .sphere[data-note="2"]  { left:250px !important; top:73px  !important; }
+    #chromaticCircle .sphere[data-note="3"]  { left:267px !important; top:138px !important; }
+    #chromaticCircle .sphere[data-note="4"]  { left:250px !important; top:203px !important; }
+    #chromaticCircle .sphere[data-note="5"]  { left:203px !important; top:250px !important; }
+    #chromaticCircle .sphere[data-note="6"]  { left:138px !important; top:267px !important; }
+    #chromaticCircle .sphere[data-note="7"]  { left:73px  !important; top:250px !important; }
+    #chromaticCircle .sphere[data-note="8"]  { left:26px  !important; top:203px !important; }
+    #chromaticCircle .sphere[data-note="9"]  { left:9px   !important; top:138px !important; }
+    #chromaticCircle .sphere[data-note="10"] { left:26px  !important; top:73px  !important; }
+    #chromaticCircle .sphere[data-note="11"] { left:73px  !important; top:26px  !important; }
+}
 </style>
 </head>
 <body>
@@ -1763,7 +1730,6 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
             <div id="panelSwapZone" style="width:100%;">
 
                 <!-- PANEL 1: CHROMATIC CIRCLE -->
-                <div class="kcm-circle-scaler">
                 <div id="chromaticCircle" style="margin:0 auto; display:block;" role="region" aria-label="Chromatic circle">
                     <div class="sphere" data-note="0"  style="left:215px;top:30px; background:#FFFF00;color:#000;font-size:16px;line-height:1.2;white-space:pre-line;text-align:center;">C</div>
                     <div class="sphere" data-note="1"  style="left:308px;top:55px; background:#FFC400;color:#000;font-size:13px;line-height:1.2;white-space:pre-line;text-align:center;">C♯&#10;D♭</div>
@@ -1778,7 +1744,6 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                     <div class="sphere" data-note="10" style="left:55px; top:122px;background:#00FF80;color:#000;font-size:13px;line-height:1.2;white-space:pre-line;text-align:center;">A♯&#10;B♭</div>
                     <div class="sphere" data-note="11" style="left:122px;top:55px; background:#80FF00;color:#000;font-size:16px;line-height:1.2;white-space:pre-line;text-align:center;">B</div>
                 </div><!-- end chromaticCircle -->
-                </div><!-- end kcm-circle-scaler -->
 
                 <!-- PANEL 2: PIANO KEYBOARD -->
                 <div id="pianoKeyboard" style="margin:0 auto; width:100%;" role="region" aria-label="Piano keyboard">
@@ -2860,7 +2825,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
             // Fallback: build spheres dynamically
             circle.innerHTML = '';
             const enharmonicLabels = ['C','C♯\nD♭','D','D♯\nE♭','E','F','F♯\nG♭','G','G♯\nA♭','A','A♯\nB♭','B'];
-            const w = circle.offsetWidth || parseInt(getComputedStyle(circle).width) || 500;
+            const w = circle.getBoundingClientRect().width || circle.offsetWidth || 300;
             const radius = w > 340 ? 185 : (w > 280 ? 125 : 110);
             const cx = w / 2;
             for (let i = 0; i < 12; i++) {
