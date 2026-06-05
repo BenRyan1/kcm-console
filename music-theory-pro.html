@@ -1642,27 +1642,6 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
 .kcm-stencil-play-btn:hover { transform: translateY(-2px); filter: brightness(1.15); }
 .kcm-stencil-play-btn.ascend  { background: linear-gradient(135deg, #27ae60, #1e8449); }
 .kcm-stencil-play-btn.descend { background: linear-gradient(135deg, #2980b9, #1a6a9a); }
-
-/* ── KCM MOBILE FIX — true responsive circle ── */
-    .sphere {
-        width: 44px !important;
-        height: 44px !important;
-        font-size: 9px !important;
-        border-width: 3px !important;
-    }
-    #chromaticCircle .sphere[data-note="0"]  { left:138px !important; top:9px   !important; }
-    #chromaticCircle .sphere[data-note="1"]  { left:203px !important; top:26px  !important; }
-    #chromaticCircle .sphere[data-note="2"]  { left:250px !important; top:73px  !important; }
-    #chromaticCircle .sphere[data-note="3"]  { left:267px !important; top:138px !important; }
-    #chromaticCircle .sphere[data-note="4"]  { left:250px !important; top:203px !important; }
-    #chromaticCircle .sphere[data-note="5"]  { left:203px !important; top:250px !important; }
-    #chromaticCircle .sphere[data-note="6"]  { left:138px !important; top:267px !important; }
-    #chromaticCircle .sphere[data-note="7"]  { left:73px  !important; top:250px !important; }
-    #chromaticCircle .sphere[data-note="8"]  { left:26px  !important; top:203px !important; }
-    #chromaticCircle .sphere[data-note="9"]  { left:9px   !important; top:138px !important; }
-    #chromaticCircle .sphere[data-note="10"] { left:26px  !important; top:73px  !important; }
-    #chromaticCircle .sphere[data-note="11"] { left:73px  !important; top:26px  !important; }
-}
 </style>
 </head>
 <body>
@@ -2819,7 +2798,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
             circle.innerHTML = '';
             const enharmonicLabels = ['C','C♯\nD♭','D','D♯\nE♭','E','F','F♯\nG♭','G','G♯\nA♭','A','A♯\nB♭','B'];
             const w = circle.getBoundingClientRect().width || circle.offsetWidth || 0;
-            if (wc -l ~/Desktop/keys-codes-and-modes/music-theory-pro.html || w < 10) { setTimeout(createSpheres, 200); return; }
+            if (!w || w < 10) { setTimeout(createSpheres, 200); return; }
             const radius = w > 340 ? 185 : (w > 280 ? 125 : 110);
             const cx = w / 2;
             for (let i = 0; i < 12; i++) {
