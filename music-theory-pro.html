@@ -1399,15 +1399,28 @@ input[type="range"]::-webkit-slider-thumb {
     .logo-text h1 { font-size: 1rem; }
     nav ul { gap: 0.6rem; }
     nav a { font-size: 0.75rem; }
-    #chromaticCircle { width: 300px; height: 300px; }
+    #chromaticCircle { width: 300px !important; height: 300px !important; }
     #staffNotation { width: min(300px, 90%); }
-    .sphere { width: 44px; height: 44px; font-size: 10px; }
+    .sphere { width: 38px !important; height: 38px !important; font-size: 9px !important; line-height: 1.1 !important; }
     /* Extra-small: stack tab buttons vertically */
     #tabTutor, #tabSong { font-size: 0.65rem; padding: 0.45rem; }
     /* Dock compacts further */
     #floatingDock { width: 100vw; border-radius: 12px 12px 0 0; }
     /* Song Builder playback buttons wrap cleanly */
     #sbPlayBtn, #sbMelodyBtn, #sbFullBtn { font-size: 0.68rem; padding: 0.5rem 0.4rem; }
+    /* Sphere positions scaled for 300px circle */
+    .sphere[data-note="0"] { left:129px !important; top:18px !important; }
+    .sphere[data-note="1"] { left:185px !important; top:33px !important; }
+    .sphere[data-note="2"] { left:225px !important; top:73px !important; }
+    .sphere[data-note="3"] { left:240px !important; top:129px !important; }
+    .sphere[data-note="4"] { left:225px !important; top:185px !important; }
+    .sphere[data-note="5"] { left:185px !important; top:225px !important; }
+    .sphere[data-note="6"] { left:129px !important; top:240px !important; }
+    .sphere[data-note="7"] { left:73px !important; top:225px !important; }
+    .sphere[data-note="8"] { left:33px !important; top:185px !important; }
+    .sphere[data-note="9"] { left:18px !important; top:129px !important; }
+    .sphere[data-note="10"] { left:33px !important; top:73px !important; }
+    .sphere[data-note="11"] { left:73px !important; top:33px !important; }
 }
 
 /* ── KCM MOBILE SCALE FIX — additive only, zero existing code touched ── */
@@ -1424,12 +1437,9 @@ input[type="range"]::-webkit-slider-thumb {
         align-items: flex-start;
     }
 
-    /* Scale circle from its own center — no clipping */
+    /* Circle centered on mobile */
     #chromaticCircle {
-        transform-origin: center center !important;
-        transform: scale(0.72) !important;
         margin: 0 auto !important;
-        margin-bottom: -75px !important;
         flex-shrink: 0;
     }
 
