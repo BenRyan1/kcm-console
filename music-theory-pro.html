@@ -330,37 +330,13 @@ nav a.active { color: var(--primary-teal); }
     text-transform: uppercase;
     letter-spacing: 1.5px;
     transition: all 0.3s;
-    animation: kcmPulse 2s ease-in-out infinite;
 }
-#startAudio:hover { transform: translateY(-3px); box-shadow: 0 10px 35px rgba(231,76,60,0.6); animation: none; }
-#startAudio:disabled { cursor: default; animation: none; opacity: 0.6; }
-@keyframes kcmPulse {
-    0%,100% { box-shadow: 0 6px 25px rgba(231,76,60,0.5); }
-    50%      { box-shadow: 0 8px 40px rgba(231,76,60,0.9), 0 0 0 8px rgba(231,76,60,0.15); }
-}
-/* Audio-gated buttons — dim until audio starts */
-.kcm-needs-audio {
-    opacity: 0.38;
-    cursor: not-allowed !important;
-    filter: grayscale(0.4);
-    transition: opacity 0.4s, filter 0.4s;
-}
-.kcm-needs-audio.kcm-audio-ready {
-    opacity: 1;
-    cursor: pointer !important;
-    filter: none;
-}
-/* Recording-gated buttons — dim until recording exists */
-.kcm-needs-recording {
-    opacity: 0.38;
-    cursor: not-allowed !important;
-    filter: grayscale(0.5);
-    transition: opacity 0.4s, filter 0.4s;
-}
-.kcm-needs-recording.kcm-rec-ready {
-    opacity: 1;
-    cursor: pointer !important;
-    filter: none;
+#startAudio:hover { transform: translateY(-3px); box-shadow: 0 10px 35px rgba(231,76,60,0.6); }
+#startAudio:disabled { cursor: default; opacity: 0.7; }
+#startAudio:not(:disabled) { animation: audioButtonPulse 2s ease-in-out infinite; }
+@keyframes audioButtonPulse {
+    0%, 100% { box-shadow: 0 6px 25px rgba(231,76,60,0.5), 0 0 0 0 rgba(231,76,60,0.4); }
+    50% { box-shadow: 0 6px 25px rgba(231,76,60,0.7), 0 0 0 12px rgba(231,76,60,0); }
 }
 
 /* ============================================================
@@ -607,7 +583,7 @@ nav a.active { color: var(--primary-teal); }
     transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
 }
 #floatingDock.collapsed {
-    transform: translateX(-50%) translateY(calc(100% - 48px));
+    transform: translateX(-50%) translateY(calc(100% - 36px));
 }
 #dockHandle {
     display: flex;
@@ -615,12 +591,11 @@ nav a.active { color: var(--primary-teal); }
     justify-content: space-between;
     background: linear-gradient(90deg,#005555 0%,#008080 50%,#005555 100%);
     border-radius: 12px 12px 0 0;
-    padding: 10px 18px;
+    padding: 6px 18px;
     cursor: pointer;
     user-select: none;
-    border: 1px solid rgba(0,255,255,0.3);
+    border: 1px solid rgba(0,255,255,0.2);
     border-bottom: none;
-    box-shadow: 0 -4px 20px rgba(0,128,128,0.5);
 }
 #dockHandle .dock-title { font-family:var(--font-display); font-size:0.65rem; font-weight:800; letter-spacing:1.5px; text-transform:uppercase; color:#fff; }
 #dockHandle .dock-arrow { font-size:0.75rem; transition:transform 0.3s; color:rgba(255,255,255,0.8); }
@@ -1223,63 +1198,16 @@ select option { background: #1a1a2e; color: white; }
 /* ============================================================
    PROGRESSION CONTROLS
    ============================================================ */
-.harm-hover-wrap {
-    position: relative;
-    display: inline-block;
-}
 .progression-controls {
-    visibility: hidden;
-    opacity: 0;
-    pointer-events: none;
-    position: absolute;
-    bottom: calc(100% + 4px);
-    left: 50%;
-    transform: translateX(-50%);
-    width: 820px;
-    max-width: 92vw;
-    background: rgba(8,8,20,0.97);
-    padding: 1.25rem 1.5rem;
+    display: none;
+    background: rgba(0,0,0,0.5);
+    padding: 1.5rem 1.75rem;
     border-radius: 16px;
-    border: 2px solid rgba(244,208,63,0.45);
-    box-shadow: 0 -8px 40px rgba(0,0,0,0.7), 0 0 0 1px rgba(244,208,63,0.1);
-    z-index: 9000;
-    transition: opacity 0.2s ease, visibility 0.2s ease;
-    /* invisible bridge fills gap between tooltip and button so mouse doesnt escape */
-    padding-bottom: 20px;
+    margin: 1rem auto;
+    max-width: 1000px;
+    border: 2px solid rgba(244,208,63,0.3);
+    box-shadow: 0 6px 25px rgba(0,0,0,0.4);
 }
-.progression-controls::before {
-    content: "";
-    position: absolute;
-    bottom: -14px;
-    left: 0;
-    width: 100%;
-    height: 14px;
-}
-.progression-controls::after {
-    content: "";
-    position: absolute;
-    bottom: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-    border: 10px solid transparent;
-    border-top-color: rgba(244,208,63,0.45);
-    border-bottom: none;
-}
-.progression-controls.prog-hidden {
-    visibility: hidden !important;
-    opacity: 0 !important;
-    pointer-events: none !important;
-}
-/* Show on hover over EITHER the button OR the tooltip itself */
-.harm-hover-wrap:hover .progression-controls,
-.progression-controls:hover {
-    visibility: visible;
-    opacity: 1;
-    pointer-events: auto;
-}
-/* progression pill buttons — fix text spacing */
-.progression-buttons { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
-.prog-btn-label { font-size:0.6rem; opacity:0.65; display:block; text-align:center; margin-top:2px; letter-spacing:0.5px; }
 .progression-controls h4 {
     margin: 0 0 1rem 0;
     text-align: center;
@@ -1510,33 +1438,209 @@ input[type="range"]::-webkit-slider-thumb {
     border-radius: 4px;
 }
 button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(--primary-gold); }
+
+/* ============================================================
+   KCM STENCIL SYSTEM — New CSS Only
+   ============================================================ */
+#kcmStencilPanel {
+    display: none;
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+}
+#kcmStencilPanel.active { display: block; }
+
+/* Stencil outer wrapper — circle + SVG overlay stacked */
+.kcm-stencil-wrap {
+    position: relative;
+    width: 500px;
+    height: 500px;
+    margin: 0 auto;
+}
+#kcmStencilSVG {
+    position: absolute;
+    top: 0; left: 0;
+    width: 500px; height: 500px;
+    pointer-events: none;
+    z-index: 10;
+    overflow: visible;
+}
+/* Stencil ghost circle behind for sizing reference */
+.kcm-stencil-circle-bg {
+    position: absolute;
+    top: 0; left: 0;
+    width: 500px; height: 500px;
+    border-radius: 50%;
+    pointer-events: none;
+}
+/* Category tabs */
+.kcm-stencil-tabs {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    margin-bottom: 0.85rem;
+    flex-wrap: wrap;
+}
+.kcm-stencil-tab {
+    padding: 7px 20px;
+    font-family: var(--font-display);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+    border-radius: 20px;
+    border: 2px solid rgba(0,128,128,0.4);
+    background: rgba(0,128,128,0.08);
+    color: #c0e0e0;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+}
+.kcm-stencil-tab:hover,
+.kcm-stencil-tab.active {
+    background: var(--primary-teal);
+    border-color: var(--primary-teal);
+    color: #fff;
+    box-shadow: 0 0 14px rgba(0,128,128,0.55);
+}
+/* Stencil shape grid */
+.kcm-stencil-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 1rem;
+    min-height: 90px;
+}
+.kcm-stencil-shape-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 10px;
+    background: rgba(0,0,0,0.4);
+    border: 2px solid rgba(0,128,128,0.25);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    min-width: 72px;
+}
+.kcm-stencil-shape-btn:hover {
+    border-color: var(--primary-teal);
+    background: rgba(0,128,128,0.15);
+    transform: translateY(-2px);
+}
+.kcm-stencil-shape-btn.active {
+    border-color: var(--primary-gold);
+    background: rgba(244,208,63,0.12);
+    box-shadow: 0 0 12px rgba(244,208,63,0.4);
+}
+.kcm-shape-mini svg {
+    display: block;
+}
+.kcm-shape-label {
+    font-family: var(--font-display);
+    font-size: 0.55rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    color: #c0c0e0;
+    text-align: center;
+    line-height: 1.2;
+}
+.kcm-stencil-shape-btn.active .kcm-shape-label { color: var(--primary-gold); }
+
+/* Key ring */
+.kcm-key-ring {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    justify-content: center;
+    margin-bottom: 1rem;
+}
+.kcm-key-pill {
+    padding: 5px 9px;
+    font-family: var(--font-display);
+    font-size: 0.7rem;
+    font-weight: 800;
+    border-radius: 8px;
+    border: 1.5px solid rgba(244,208,63,0.35);
+    background: rgba(244,208,63,0.07);
+    color: #d0d0e8;
+    cursor: pointer;
+    transition: all 0.15s;
+    min-width: 34px;
+    text-align: center;
+}
+.kcm-key-pill:hover,
+.kcm-key-pill.active {
+    background: var(--primary-gold);
+    border-color: var(--primary-gold);
+    color: #0a0a15;
+    box-shadow: 0 0 10px rgba(244,208,63,0.5);
+}
+
+/* Label block inside stencil */
+#kcmStencilLabel {
+    text-align: center;
+    margin: 0.75rem auto 0.5rem;
+    padding: 0.65rem 1.25rem;
+    background: rgba(0,0,0,0.5);
+    border: 2px solid rgba(244,208,63,0.3);
+    border-radius: 14px;
+    max-width: 480px;
+    line-height: 1.6;
+}
+#kcmStencilLabel .sl-name {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-weight: 900;
+    color: var(--primary-gold);
+    letter-spacing: 1px;
+}
+#kcmStencilLabel .sl-notes {
+    font-family: var(--font-body);
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #e8e8f8;
+    letter-spacing: 0.5px;
+}
+#kcmStencilLabel .sl-intervals {
+    font-family: var(--font-body);
+    font-size: 0.75rem;
+    color: var(--primary-teal);
+    font-weight: 600;
+}
+#kcmStencilLabel .sl-degrees {
+    font-family: var(--font-display);
+    font-size: 0.72rem;
+    color: var(--primary-purple);
+    font-weight: 700;
+}
+
+/* Play buttons */
+.kcm-stencil-play-row {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 0.5rem;
+    flex-wrap: wrap;
+}
+.kcm-stencil-play-btn {
+    padding: 0.7rem 2.2rem;
+    font-family: var(--font-display);
+    font-size: 0.82rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+}
+.kcm-stencil-play-btn:hover { transform: translateY(-2px); filter: brightness(1.15); }
+.kcm-stencil-play-btn.ascend  { background: linear-gradient(135deg, #27ae60, #1e8449); }
+.kcm-stencil-play-btn.descend { background: linear-gradient(135deg, #2980b9, #1a6a9a); }
 </style>
-<!-- ── CREPE ML pitch detection ──────────────────────────────────────
-     ml5.js includes CREPE pitch detection built-in, CDN-available,
-     no CORS issues. Exposes window.ml5 global.
-     TF.js also loaded as ml5 dependency.
-     _loadCREPE() wraps ml5.pitchDetection() in our estimatePitch() API.
-     Graceful fallback: if ml5 unavailable, FFT path used silently.
-     Suppress duplicate TF.js backend registration warnings from ml5 v0.12.2.
-──────────────────────────────────────────────────────────────────── -->
-<script>
-// Suppress ml5/TF.js "backend already registered" console warnings (cosmetic, harmless)
-(function() {
-    const _warn = console.warn.bind(console);
-    console.warn = function() {
-        const msg = arguments[0] && arguments[0].toString ? arguments[0].toString() : '';
-        if (msg.includes('backend was already registered') ||
-            msg.includes('Platform browser has already been set') ||
-            msg.includes('Overwriting the platform')) return;
-        _warn.apply(console, arguments);
-    };
-    // Restore after ml5 loads
-    window.addEventListener('load', function() {
-        setTimeout(() => { console.warn = _warn; }, 3000);
-    });
-})();
-</script>
-<script src="https://cdn.jsdelivr.net/npm/ml5@0.12.2/dist/ml5.min.js"></script>
 </head>
 <body>
 
@@ -1566,7 +1670,8 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
 <div class="app-title-banner">
     <h2>🎵 Music Theory Explorer Pro</h2>
     <p>Interactive Music Learning · Chromatic Circle · Piano · Guitar · Ear Training · MIDI Support</p>
-    <button id="startAudio" aria-label="Press to start audio">🔊 PRESS TO START</button>
+    <button id="startAudio" aria-label="Start audio engine">🔊 START AUDIO ENGINE</button>
+    <p style="font-size:0.72rem; color:rgba(232,232,232,0.55); margin-top:0.5rem; font-family:var(--font-body);">👆 Click this first to enable sound</p>
 </div>
 
 <!-- ============================================================
@@ -1648,10 +1753,7 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                 <!-- PANEL 5: SING / PITCH DETECTOR -->
                 <div id="singPanel" role="region" aria-label="Pitch detector" style="display:none;">
                     <h2 style="font-family:var(--font-display);font-size:1.2rem;font-weight:900;color:var(--primary-gold);margin-bottom:0.4rem;text-align:center;">🎤 SING OR PLAY — Watch Your Music Come Alive</h2>
-                    <p style="text-align:center;font-size:0.75rem;color:#b0b0cc;margin-bottom:0.5rem;">Sing, hum, or play any note — lights up on circle, keyboard, guitar & staff in real time</p>
-                    <div style="text-align:center;margin-bottom:0.75rem;">
-                        <span id="singCrepeBadge" style="display:inline-block;font-size:0.6rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:3px 12px;border-radius:20px;background:rgba(0,128,128,0.12);border:1px solid rgba(0,128,128,0.3);color:#008080;font-family:var(--font-body);">FFT MODE</span>
-                    </div>
+                    <p style="text-align:center;font-size:0.75rem;color:#b0b0cc;margin-bottom:0.75rem;">Sing, hum, or play any note — lights up on circle, keyboard, guitar & staff in real time</p>
 
                     <!-- Live readout row -->
                     <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:0.75rem;">
@@ -1686,13 +1788,6 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                         <div style="display:flex;justify-content:space-between;font-size:0.58rem;color:#555;margin-top:2px;"><span>♭ Flat</span><span style="color:#00FF80;">● In Tune</span><span>Sharp ♯</span></div>
                     </div>
 
-                    <!-- Polyphonic chord display -->
-                    <div id="polyChordDisplay" style="display:none;margin:0 auto 0.75rem;max-width:480px;background:rgba(0,0,0,0.35);border:2px solid rgba(244,208,63,0.3);border-radius:14px;padding:0.75rem 1rem;text-align:center;">
-                        <div style="font-size:0.5rem;font-weight:700;letter-spacing:1.5px;color:var(--primary-gold);text-transform:uppercase;margin-bottom:6px;">🎸 CHORD DETECTED</div>
-                        <div id="polyChordName" style="font-family:var(--font-display);font-size:1.6rem;font-weight:900;color:var(--primary-gold);letter-spacing:2px;margin-bottom:4px;">—</div>
-                        <div id="polyChordNotes" style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:6px;"></div>
-                    </div>
-
                     <!-- Control buttons row -->
                     <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:0.75rem;">
                         <button id="singStartBtn" style="padding:0.65rem 1.5rem;font-family:var(--font-display);font-size:0.82rem;font-weight:800;background:linear-gradient(135deg,#008080,#005555);border:2px solid #008080;border-radius:12px;color:#fff;cursor:pointer;letter-spacing:1px;transition:all 0.2s;">🎤 START LISTENING</button>
@@ -1718,6 +1813,48 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                     </div>
                 </div>
 
+
+                <!-- PANEL 6: KCM STENCIL SYSTEM -->
+                <div id="kcmStencilPanel" role="region" aria-label="KCM Stencil System">
+
+                    <h3 style="text-align:center; margin:0 0 0.85rem 0; font-family:var(--font-display); font-size:1.15rem; font-weight:800; color:var(--primary-gold); letter-spacing:1px;">✦ KCM STENCIL SYSTEM™</h3>
+
+                    <!-- Category Tabs -->
+                    <div class="kcm-stencil-tabs">
+                        <button class="kcm-stencil-tab active" data-cat="scales">Scales</button>
+                        <button class="kcm-stencil-tab" data-cat="modes">Modes</button>
+                        <button class="kcm-stencil-tab" data-cat="chords">Chords</button>
+                    </div>
+
+                    <!-- Shape Grid -->
+                    <div class="kcm-stencil-grid" id="kcmStencilGrid"></div>
+
+                    <!-- Key Ring -->
+                    <div class="kcm-key-ring" id="kcmKeyRing"></div>
+
+                    <!-- Circle + SVG Overlay -->
+                    <div class="kcm-stencil-wrap" id="kcmStencilWrap">
+                        <!-- The 12 spheres are cloned here by JS — circle only, no interaction -->
+                        <div id="kcmStencilCircle" style="position:absolute;top:0;left:0;width:500px;height:500px;"></div>
+                        <!-- SVG stencil overlay -->
+                        <svg id="kcmStencilSVG" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg"></svg>
+                    </div>
+
+                    <!-- Label Block -->
+                    <div id="kcmStencilLabel">
+                        <div class="sl-name" id="slName">— Select a Stencil —</div>
+                        <div class="sl-notes" id="slNotes">&nbsp;</div>
+                        <div class="sl-intervals" id="slIntervals">&nbsp;</div>
+                        <div class="sl-degrees" id="slDegrees">&nbsp;</div>
+                    </div>
+
+                    <!-- Play Buttons -->
+                    <div class="kcm-stencil-play-row">
+                        <button class="kcm-stencil-play-btn ascend"  id="kcmStencilAscend">▲ ASCEND</button>
+                        <button class="kcm-stencil-play-btn descend" id="kcmStencilDescend">▼ DESCEND</button>
+                    </div>
+
+                </div><!-- end kcmStencilPanel -->
             </div><!-- end panelSwapZone -->
 
             <!-- ── STAFF NOTATION — always visible below swap zone ── -->
@@ -1748,9 +1885,10 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                 <button class="view-btn" data-view="keyboard">🎹 Piano</button>
                 <button class="view-btn" data-view="ear">👂 Ear</button>
                 <button class="view-btn" data-view="sing">🎤 Sing</button>
+                <button class="view-btn" data-view="stencil">✦ Stencil</button>
                 <button class="view-btn key-selector-btn" id="keyPickerBtn" onclick="toggleKeyPicker()" aria-haspopup="true" aria-expanded="false">🎵 Key: <span id="keyPickerLabel">C</span></button>
-                <button id="globalPlayBtn" class="view-action-btn kcm-needs-audio" title="Press 🔊 PRESS TO START first" style="background:linear-gradient(135deg,#27ae60,#1e8449); border-color:#27ae60; color:#fff; font-weight:800;">▶ Play</button>
-                <button id="globalStopBtn" class="view-action-btn kcm-needs-audio" title="Press 🔊 PRESS TO START first" style="background:linear-gradient(135deg,#e74c3c,#c0392b); border-color:#e74c3c; color:#fff; font-weight:800;">■ Stop</button>
+                <button id="globalPlayBtn" class="view-action-btn" style="background:linear-gradient(135deg,#27ae60,#1e8449); border-color:#27ae60; color:#fff; font-weight:800;">▶ Play</button>
+                <button id="globalStopBtn" class="view-action-btn" style="background:linear-gradient(135deg,#e74c3c,#c0392b); border-color:#e74c3c; color:#fff; font-weight:800;">■ Stop</button>
             </div>
 
             <!-- ── KEY PICKER PANEL ─────────────────────────────── -->
@@ -1763,7 +1901,7 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
             </div>
 
             <div style="display:flex; justify-content:center; margin-bottom:0.5rem;">
-                <button class="level-btn kcm-needs-audio" id="playChromaticBtn" title="Press 🔊 PRESS TO START first" style="background:linear-gradient(135deg, var(--primary-teal) 0%, #006666 100%); border-color:var(--primary-teal); color:#fff; min-width:220px; font-size:0.85rem; letter-spacing:1px; box-shadow:var(--teal-glow);">🎹 CHROMATIC SCALE</button>
+                <button class="level-btn" id="playChromaticBtn" style="background:linear-gradient(135deg, var(--primary-teal) 0%, #006666 100%); border-color:var(--primary-teal); color:#fff; min-width:220px; font-size:0.85rem; letter-spacing:1px; box-shadow:var(--teal-glow);">🎹 CHROMATIC SCALE</button>
             </div>
 
             <div class="level-selector" role="group" aria-label="Learning mode selector">
@@ -1775,36 +1913,32 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                 <button class="level-btn"         data-level="6"         title="6 Notes">Whole Tone</button>
                 <button class="level-btn"         data-level="scales"    title="7 Notes">Scales</button>
                 <button class="level-btn"         data-level="modes"     title="7 Notes · Modes">Modes</button>
-                <div class="harm-hover-wrap">
-                    <button class="level-btn"         data-level="harm"      title="Harmonized">Harmonized</button>
-                    <!-- HOVER TOOLTIP: Chord Progressions -->
-                    <div class="progression-controls" id="progressionControls" aria-live="polite">
-                        <h4>🎼 Chord Progressions in Key of <span id="progressionKey">C</span></h4>
-                        <div style="text-align:center; font-size:0.75rem; opacity:0.8; margin-bottom:0.85rem; font-weight:600;">
-                            Using <span id="progressionChordType">Triads</span> · Scale: <span id="progressionScaleType">Major</span>
-                        </div>
-                        <div style="text-align:center; margin-bottom:0.85rem;">
-                            <button class="play-btn kcm-needs-audio" id="playAllChordsBtn" title="Press 🔊 PRESS TO START first" style="margin:0 auto; display:inline-flex;">🎹 Play All Scale Chords</button>
-                        </div>
-                        <div class="progression-buttons" id="progressionButtons"></div>
-                    </div>
-                </div>
+                <button class="level-btn"         data-level="harm"      title="Harmonized">Harmonized</button>
                 <button class="level-btn"         data-level="freeplay"  title="Free Play">Free Play</button>
             </div>
 
             <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
-                <button class="play-btn kcm-needs-audio" id="playUpBtn" title="Press 🔊 PRESS TO START first" style="flex:1; max-width:160px;">↑ Ascending</button>
-                <button class="play-btn kcm-needs-audio" id="playDownBtn" title="Press 🔊 PRESS TO START first" style="flex:1; max-width:160px;">↓ Descending</button>
-                <button class="play-btn kcm-needs-audio" id="playScaleBtn" title="Press 🔊 PRESS TO START first" style="flex:1; max-width:160px;">♫ Full Scale</button>
-                <button class="play-btn kcm-needs-audio" id="playChordBtn" title="Press 🔊 PRESS TO START first" style="flex:1; max-width:160px;">♪ Play Chord</button>
-                <button class="play-btn kcm-needs-audio" id="stopPlayBtn" title="Press 🔊 PRESS TO START first" style="flex:1; max-width:130px; background:linear-gradient(135deg,#7f8c8d,#555); border-color:#7f8c8d;">⏹ Stop</button>
+                <button class="play-btn" id="playUpBtn" style="flex:1; max-width:160px;">↑ Ascending</button>
+                <button class="play-btn" id="playDownBtn" style="flex:1; max-width:160px;">↓ Descending</button>
+                <button class="play-btn" id="playScaleBtn" style="flex:1; max-width:160px;">♫ Full Scale</button>
+                <button class="play-btn" id="playChordBtn" style="flex:1; max-width:160px;">♪ Play Chord</button>
+                <button class="play-btn" id="stopPlayBtn" style="flex:1; max-width:130px; background:linear-gradient(135deg,#7f8c8d,#555); border-color:#7f8c8d;">⏹ Stop</button>
             </div>
 
         </div><!-- end views swap zone -->
     </div><!-- end info-panel -->
 
     <!-- PROGRESSION CONTROLS — shown only for Harmonized Major/Minor -->
-    <!-- progressionControls moved into harm-hover-wrap tooltip -->
+    <div class="progression-controls" id="progressionControls" aria-live="polite" style="display:none;">
+        <h4>🎼 Chord Progressions in Key of <span id="progressionKey">C</span></h4>
+        <div style="text-align:center; font-size:0.75rem; opacity:0.8; margin-bottom:0.85rem; font-weight:600;">
+            Using <span id="progressionChordType">Triads</span> · Scale: <span id="progressionScaleType">Major</span>
+        </div>
+        <div style="text-align:center; margin-bottom:0.85rem;">
+            <button class="play-btn" id="playAllChordsBtn" style="margin:0 auto; display:inline-flex;">🎹 Play All Scale Chords</button>
+        </div>
+        <div class="progression-buttons" id="progressionButtons"></div>
+    </div>
 
     <!-- CHORD VOICING DISPLAY PANEL — shown below progressions in Harmonized mode -->
     <div id="chordVoicingPanel" style="display:none; margin:1rem auto; max-width:860px; background:rgba(0,0,0,0.35); border:2px solid rgba(0,128,128,0.3); border-radius:16px; padding:1.25rem 1.5rem;">
@@ -1816,7 +1950,7 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
 
     <!-- TWO-COLUMN CONTROLS PANEL -->
     <div class="info-panel">
-        <h3 id="status" role="status" aria-live="polite">Press 🔊 PRESS TO START to begin!</h3>
+        <h3 id="status" role="status" aria-live="polite">Click START AUDIO ENGINE to begin!</h3>
 
         <div class="two-col-controls">
 
@@ -2078,11 +2212,11 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
         <div style="background:rgba(0,0,0,0.4); padding:1.5rem; border-radius:12px; margin-top:1.5rem; border:2px solid rgba(0,128,128,0.2);">
             <h4 style="margin:0 0 1rem 0; text-align:center; font-family:var(--font-display); font-size:1rem; font-weight:700; color:var(--primary-gold); text-transform:uppercase; letter-spacing:1px;">🎙️ Recording Studio</h4>
             <div style="display:flex; gap:10px; margin-bottom:1rem; flex-wrap:wrap; justify-content:center;">
-                <button class="rec-btn kcm-needs-audio" id="recordBtn" aria-pressed="false" title="Press 🔊 PRESS TO START first">⏺ Record</button>
-                <button class="rec-btn kcm-needs-audio kcm-needs-recording" id="playRecBtn" title="Record something first">▶ Playback</button>
+                <button class="rec-btn" id="recordBtn" aria-pressed="false">⏺ Record</button>
+                <button class="rec-btn" id="playRecBtn">▶ Playback</button>
                 <button class="rec-btn" id="clearRecBtn" style="background:linear-gradient(135deg, #e67e22 0%, #d35400 100%);">🗑 Clear</button>
-                <button class="rec-btn kcm-needs-audio kcm-needs-recording" id="downloadRecBtn" title="Record something first" style="background:linear-gradient(135deg, var(--primary-purple) 0%, #6a4f8c 100%);">💾 MIDI</button>
-                <button class="rec-btn kcm-needs-audio" id="downloadWAVBtn" title="Press 🔊 PRESS TO START first — then Record to capture audio" style="background:linear-gradient(135deg, #1abc9c 0%, #16a085 100%);">🎧 WAV</button>
+                <button class="rec-btn" id="downloadRecBtn" style="background:linear-gradient(135deg, var(--primary-purple) 0%, #6a4f8c 100%);">💾 MIDI</button>
+                <button class="rec-btn" id="downloadWAVBtn" style="background:linear-gradient(135deg, #1abc9c 0%, #16a085 100%);" title="Record audio to WAV — start Recording first, then click this to capture">🎧 WAV</button>
             </div>
             <div style="text-align:center; font-size:0.68rem; color:#b0b0cc; margin-bottom:0.5rem; line-height:1.4;">
                 ⏺ Record captures note events for MIDI · 🎧 WAV captures the actual audio output
@@ -2345,7 +2479,7 @@ window.addEventListener('unhandledrejection', function(event) {
                         if (freeplayHint) freeplayHint.style.display = currentLevel === 'freeplay' ? 'block' : 'none';
                         const progressionControls = document.getElementById('progressionControls');
                         if ((currentLevel === 'harmMajor' || currentLevel === 'harmMinor') && currentView !== 'ear') {
-                            progressionControls.classList.remove('prog-hidden');
+                            progressionControls.style.display = 'block';
                             updateProgressionButtons();
                             const keySpan = document.getElementById('progressionKey');
                             const typeSpan = document.getElementById('progressionChordType');
@@ -2354,7 +2488,7 @@ window.addEventListener('unhandledrejection', function(event) {
                             if (typeSpan) typeSpan.textContent = currentHarmChordType === '7th' ? 'Seventh Chords (4-note)' : 'Triads (3-note)';
                             if (scaleSpan) scaleSpan.textContent = currentLevel === 'harmMinor' ? 'Natural Minor' : 'Major';
                         } else {
-                            progressionControls.classList.add('prog-hidden');
+                            progressionControls.style.display = 'none';
                         }
                         if (currentLevel === 'freeplay') {
                             multiSelectNotes.clear(); selectedNotes = new Set(); window.currentPatternIntervals = [];
@@ -2377,7 +2511,7 @@ window.addEventListener('unhandledrejection', function(event) {
 
                 const el = (id) => document.getElementById(id);
                 if (el('playChromaticBtn')) el('playChromaticBtn').onclick = () => {
-                    if (!audioReady) { alert('Press PRESS TO START first!'); return; }
+                    if (!audioReady) { alert('Click START AUDIO ENGINE first!'); return; }
                     try {
                         const freqs = [261.63,277.18,293.66,311.13,329.63,349.23,369.99,392.00,415.30,440.00,466.16,493.88];
                         const beatMs  = 60000 / currentBPM;
@@ -2445,7 +2579,7 @@ window.addEventListener('unhandledrejection', function(event) {
                     updateGuitarDisplay();
                 };
                 if (el('globalPlayBtn')) el('globalPlayBtn').onclick = () => {
-                    if (!audioReady) { alert('Press PRESS TO START first!'); return; }
+                    if (!audioReady) { alert('Click START AUDIO ENGINE first!'); return; }
                     playSelection('up');
                 };
                 if (el('globalStopBtn')) el('globalStopBtn').onclick = () => {
@@ -2464,7 +2598,7 @@ window.addEventListener('unhandledrejection', function(event) {
                 if (el('newQuizBtn')) el('newQuizBtn').onclick = generateQuiz;
                 if (el('recordBtn')) el('recordBtn').onclick = startRecording;
                 if (el('playRecBtn')) el('playRecBtn').onclick = playbackRecording;
-                if (el('clearRecBtn')) el('clearRecBtn').onclick = () => { recordedNotes = []; const s = el('recordingStatus'); if (s) s.textContent = '🗑 Recording cleared'; document.querySelectorAll('.kcm-needs-recording').forEach(b => b.classList.remove('kcm-rec-ready')); };
+                if (el('clearRecBtn')) el('clearRecBtn').onclick = () => { recordedNotes = []; const s = el('recordingStatus'); if (s) s.textContent = '🗑 Recording cleared'; };
                 if (el('downloadRecBtn')) el('downloadRecBtn').onclick = downloadMIDI;
                 if (el('downloadWAVBtn')) el('downloadWAVBtn').onclick = startWAVRecording;
                 const tempoSlider = el('tempoSlider');
@@ -2595,30 +2729,13 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                     audioReady = true;
                     // Set up master bus for WAV recording capture
                     window._kcmMasterBus = audioContext.createGain();
-                    window._kcmMasterBus.gain.value = 0.85;
-                    // Compressor — prevents clipping on chords/arpeggios
-                    const _comp = audioContext.createDynamicsCompressor();
-                    _comp.threshold.value = -18;  // start compressing at -18dBFS
-                    _comp.knee.value      = 8;    // soft knee
-                    _comp.ratio.value     = 4;    // 4:1 ratio
-                    _comp.attack.value    = 0.003; // 3ms attack
-                    _comp.release.value   = 0.18;  // 180ms release
-                    // Limiter — hard ceiling at -1dBFS
-                    const _lim = audioContext.createDynamicsCompressor();
-                    _lim.threshold.value  = -1;
-                    _lim.knee.value       = 0;
-                    _lim.ratio.value      = 20;
-                    _lim.attack.value     = 0.001;
-                    _lim.release.value    = 0.05;
-                    window._kcmMasterBus.connect(_comp);
-                    _comp.connect(_lim);
-                    _lim.connect(audioContext.destination);
-                    window._kcmComp = _comp; window._kcmLim = _lim;
+                    window._kcmMasterBus.gain.value = 1.0;
+                    window._kcmMasterBus.connect(audioContext.destination);
                     // Auto-load samples if a non-synth instrument is already selected
                     if (currentInstrument !== 'synth') setTimeout(() => _loadSoundFont(currentInstrument), 200);
                     const btn = document.getElementById('startAudio');
                     if (btn) {
-                        btn.textContent = '✓ READY TO PLAY';
+                        btn.textContent = '✓ AUDIO READY';
                         btn.style.background = 'linear-gradient(135deg, #27ae60 0%, #229954 100%)';
                         btn.style.boxShadow = '0 6px 25px rgba(39,174,96,0.6)';
                         btn.disabled = true;
@@ -2627,8 +2744,6 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                     if (dab) { dab.textContent = '✓ Audio Ready'; dab.style.background = 'linear-gradient(135deg,#27ae60,#1e8449)'; }
                     const status = document.getElementById('status');
                     if (status) status.textContent = '✨ Ready! Click notes or use controls';
-                    // ── Unlock all audio-gated buttons ──
-                    document.querySelectorAll('.kcm-needs-audio').forEach(b => b.classList.add('kcm-audio-ready'));
                     try { trackEvent('audio_started', {}); } catch(e) {}
                 });
                 // Keep context alive on iOS — resume on any touch
@@ -2821,7 +2936,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 lbl.dataset.stringIdx = s;
                 lbl.setAttribute('aria-label', `${names[s]} string`);
                 lbl.onclick = () => {
-                    if (!audioReady) { alert('Press PRESS TO START first!'); return; }
+                    if (!audioReady) { alert('Click START AUDIO ENGINE first!'); return; }
                     playNote(tuning[s], octs[s], 0.8);
                 };
                 headerRow.appendChild(lbl);
@@ -2866,7 +2981,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 cell.appendChild(dot);
 
                 cell.onclick = () => {
-                    if (!audioReady) { alert('Press PRESS TO START first!'); return; }
+                    if (!audioReady) { alert('Click START AUDIO ENGINE first!'); return; }
                     playNote(tuning[s], octs[s], 0.8);
                 };
                 nutRow.appendChild(cell);
@@ -2919,14 +3034,8 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                     cell.appendChild(dot);
 
                     cell.onclick = () => {
-                        if (!audioReady) { alert('Press PRESS TO START first!'); return; }
-                        // Route through handleNoteClick so interval mode, harmonized mode,
-                        // freeplay, and the interval popup all work from the guitar fretboard
-                        if (typeof handleNoteClick === 'function') {
-                            handleNoteClick(pc, oct);
-                        } else {
-                            playNote(pc, oct, 0.8);
-                        }
+                        if (!audioReady) { alert('Click START AUDIO ENGINE first!'); return; }
+                        playNote(pc, oct, 0.8);
                     };
                     row.appendChild(cell);
                 }
@@ -2940,7 +3049,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         // ── Note click handler ────────────────────────────────────
         function handleNoteClick(noteIndex, noteOctave) {
             try {
-                if (!audioReady) { alert('Press PRESS TO START first!'); return; }
+                if (!audioReady) { alert('Please click START AUDIO ENGINE first!'); return; }
                 if (typeof noteIndex !== 'number' || noteIndex < 0 || noteIndex > 11) return;
                 const _oct = (typeof noteOctave === 'number') ? noteOctave : currentOctave;
 
@@ -2990,7 +3099,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 // ANY click when size===2 resets. Clicking root while waiting for 2nd also resets.
                 if (currentLevel === '2') {
                     // Guard: audio must be ready
-                    if (!audioReady) { alert('Press PRESS TO START first!'); return; }
+                    if (!audioReady) { alert('Click START AUDIO ENGINE first!'); return; }
                     // Ensure context is running (STOP button suspends it)
                     if (audioContext.state === 'suspended') audioContext.resume();
 
@@ -3443,7 +3552,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         // ── playSelection: sequencer ───────────────────────────────
         function playSelection(mode) {
             try {
-                if (!audioReady) { alert('Press PRESS TO START first!'); return; }
+                if (!audioReady) { alert('Click START AUDIO ENGINE first!'); return; }
                 _cancelAllPlay();
                 if (selectedNotes.size === 0) { alert('No notes selected!'); return; }
 
@@ -4119,23 +4228,17 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         // ── Recording ─────────────────────────────────────────────
         function startRecording() {
             try {
-                if (!audioReady) { alert('Press PRESS TO START first!'); return; }
+                if (!audioReady) { alert('Click START AUDIO ENGINE first!'); return; }
                 const btn = document.getElementById('recordBtn');
                 const status = document.getElementById('recordingStatus');
                 if (!isRecording) {
                     isRecording = true; recordedNotes = []; recordingStartTime = Date.now();
                     if (btn) { btn.textContent = '⏹ Stop'; btn.classList.add('recording'); btn.setAttribute('aria-pressed','true'); }
                     if (status) status.textContent = '⏺ Recording...';
-                    // Dim playback/download while new recording is in progress
-                    document.querySelectorAll('.kcm-needs-recording').forEach(b => b.classList.remove('kcm-rec-ready'));
                 } else {
                     isRecording = false;
                     if (btn) { btn.textContent = '⏺ Record'; btn.classList.remove('recording'); btn.setAttribute('aria-pressed','false'); }
                     if (status) status.textContent = `✓ Recorded ${recordedNotes.length} notes`;
-                    // Unlock playback/download buttons now that we have notes
-                    if (recordedNotes.length > 0) {
-                        document.querySelectorAll('.kcm-needs-recording').forEach(b => b.classList.add('kcm-rec-ready'));
-                    }
                 }
             } catch(e) { console.error('Recording error:', e); }
         }
@@ -4216,23 +4319,15 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 // Since all _playAt / _playSynth / _playSample connect to audioContext.destination,
                 // we redirect them through a master bus instead.
                 window._kcmMasterBus = audioContext.createGain();
-                window._kcmMasterBus.gain.value = 0.85;
-                const _comp2 = audioContext.createDynamicsCompressor();
-                _comp2.threshold.value=-18;_comp2.knee.value=8;_comp2.ratio.value=4;
-                _comp2.attack.value=0.003;_comp2.release.value=0.18;
-                const _lim2 = audioContext.createDynamicsCompressor();
-                _lim2.threshold.value=-1;_lim2.knee.value=0;_lim2.ratio.value=20;
-                _lim2.attack.value=0.001;_lim2.release.value=0.05;
-                window._kcmMasterBus.connect(_comp2);
-                _comp2.connect(_lim2);
-                _lim2.connect(audioContext.destination);
-                _lim2.connect(_wavDest);
+                window._kcmMasterBus.gain.value = 1.0;
+                window._kcmMasterBus.connect(audioContext.destination);
+                window._kcmMasterBus.connect(_wavDest);
             } catch(e) { console.error('WAV dest error:', e); }
         }
 
         function startWAVRecording() {
             try {
-                if (!audioReady) { alert('Press PRESS TO START first!'); return; }
+                if (!audioReady) { alert('Click START AUDIO ENGINE first!'); return; }
                 if (_wavRecording) { stopWAVRecording(); return; }
 
                 _ensureWAVDest();
@@ -5181,6 +5276,9 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 if (ear)     ear.style.display     = currentView === 'ear'      ? 'block' : 'none';
                 const sing = el('singPanel');
                 if (sing)    sing.style.display    = currentView === 'sing'     ? 'block' : 'none';
+                // ── KCM STENCIL PANEL ──
+                const stencil = el('kcmStencilPanel');
+                if (stencil) stencil.style.display = currentView === 'stencil' ? 'block' : 'none';
                 // Stop pitch detection when leaving sing view
                 if (currentView !== 'sing' && typeof stopSingMode === 'function') stopSingMode();
                 if (staff)   staff.style.display   = 'block'; // always visible
@@ -5189,8 +5287,8 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 updateStaffNotation(staffNotes.length > 0 ? staffNotes : [rootNote]);
                 const pc = el('progressionControls');
                 if ((currentLevel==='harmMajor'||currentLevel==='harmMinor') && currentView!=='ear') {
-                    if (pc) { pc.classList.remove('prog-hidden'); updateProgressionButtons(); }
-                } else { if (pc) pc.classList.add('prog-hidden'); }
+                    if (pc) { pc.style.display='block'; updateProgressionButtons(); }
+                } else { if (pc) pc.style.display='none'; }
             } catch(e) { console.error('Update view error:', e); }
         }
 
@@ -5278,8 +5376,8 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 progressions.forEach(prog => {
                     const btn = document.createElement('button');
                     btn.className = 'level-btn';
-                    btn.style.cssText = 'padding:8px 16px;font-size:0.72rem;min-width:auto;text-align:center;line-height:1.2;';
-                    btn.innerHTML = `<span style="font-weight:800;letter-spacing:0.5px;">${prog.name}</span><span style="display:block;font-size:0.58rem;opacity:0.65;margin-top:2px;font-weight:500;letter-spacing:0.3px;">${prog.desc}</span>`;
+                    btn.style.cssText = 'padding:8px 14px;font-size:0.68rem;min-width:auto;';
+                    btn.innerHTML = `${prog.name}<br><small style="opacity:0.75;font-size:0.58rem;">${prog.desc}</small>`;
                     btn.onclick = () => playProgression(prog.degrees); container.appendChild(btn);
                 });
             } catch(e) { console.error('Progression buttons error:', e); }
@@ -5289,7 +5387,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
 
         function playProgression(degrees) {
             try {
-                if (!audioReady) { alert('Press PRESS TO START first!'); return; }
+                if (!audioReady) { alert('Click START AUDIO ENGINE first!'); return; }
                 _cancelAllPlay(); // stop any existing progression
                 const isMajor = currentLevel === 'harmMajor';
                 const use7th = currentHarmChordType === '7th';
@@ -5360,7 +5458,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
 
         function playAllScaleChords() {
             try {
-                if (!audioReady) { alert('Press PRESS TO START first!'); return; }
+                if (!audioReady) { alert('Click START AUDIO ENGINE first!'); return; }
                 playProgression([0,1,2,3,4,5,6]);
             } catch(e) { console.error('Play all chords error:', e); }
         }
@@ -5395,277 +5493,8 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
             setTimeout(() => playSelection('up'), 200);
         };
 
-        // Expose currentLevel setter for dock (dockSwitchHarm needs to write into IIFE scope)
-        window._setCurrentLevel = function(level, opts) {
-            opts = opts || {};
-            currentLevel = level;
-            if (level === 'harmMajor' || level === 'harmMinor') {
-                window.currentHarmKey = level;
-                currentHarmDegree    = typeof opts.degree === 'number' ? opts.degree : 0;
-                currentHarmChordType = opts.chordType || currentHarmChordType || 'triad';
-            }
-            clearAllHighlights();
-            updateDisplay();
-            updateView();
-            if (typeof updateControls === 'function') updateControls();
-        };
-
-        // Expose harm degree setter so dock degree buttons work correctly
-        window._setHarmDegree = function(deg) {
-            currentHarmDegree = deg;
-            updateDisplay();
-            setTimeout(() => { if (typeof playHarmChordAscending === 'function') playHarmChordAscending(); }, 150);
-        };
-
-        // Expose harm chord type setter so dock Triads/7ths buttons work correctly
-        window._setHarmChordType = function(type) {
-            currentHarmChordType = type;
-            updateDisplay();
-            setTimeout(() => { if (typeof playHarmChordAscending === 'function') playHarmChordAscending(); }, 150);
-        };
-
 
         // ══════════════════════════════════════════════════════════════
-
-        // ── Polyphonic chord detection engine (module-level) ──
-        // POLYPHONIC CHORD DETECTION ENGINE
-        // Transplanted from polyphonic-guitar-detector.html
-        // Runs alongside monophonic SING loop — detects full chords
-        // ══════════════════════════════════════════════════════════════
-
-        // ══════════════════════════════════════════════════════════════
-        // POLYPHONIC CHORD DETECTION ENGINE v2
-        // HPS (Harmonic Product Spectrum) + Chroma Vectors
-        // ══════════════════════════════════════════════════════════════
-
-        const _POLY_NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
-
-        // Extended chord library — scored by commonality (higher = prefer)
-        const _POLY_CHORDS = [
-            // Power / dyads
-            {n:'Power 5',  p:[0,7],          score:1},
-            // Triads
-            {n:'Major',    p:[0,4,7],         score:10},
-            {n:'Minor',    p:[0,3,7],         score:10},
-            {n:'Sus2',     p:[0,2,7],         score:7},
-            {n:'Sus4',     p:[0,5,7],         score:7},
-            {n:'Diminished',p:[0,3,6],        score:6},
-            {n:'Augmented', p:[0,4,8],        score:5},
-            // 7ths
-            {n:'Major 7',  p:[0,4,7,11],      score:9},
-            {n:'Dom 7',    p:[0,4,7,10],      score:9},
-            {n:'Minor 7',  p:[0,3,7,10],      score:9},
-            {n:'Min/Maj 7',p:[0,3,7,11],      score:7},
-            {n:'Half-Dim', p:[0,3,6,10],      score:6},
-            {n:'Dim 7',    p:[0,3,6,9],       score:6},
-            {n:'Dom 7sus4',p:[0,5,7,10],      score:6},
-            // 6ths
-            {n:'Major 6',  p:[0,4,7,9],       score:7},
-            {n:'Minor 6',  p:[0,3,7,9],       score:7},
-            // Add chords
-            {n:'Add 9',    p:[0,2,4,7],       score:7},
-            {n:'Min Add9', p:[0,2,3,7],       score:6},
-            // 9ths
-            {n:'Major 9',  p:[0,2,4,7,11],    score:8},
-            {n:'Dom 9',    p:[0,2,4,7,10],    score:8},
-            {n:'Minor 9',  p:[0,2,3,7,10],    score:8},
-        ];
-
-        // ── HPS: Harmonic Product Spectrum ─────────────────────────
-        // Multiplies spectrum by downsampled versions (÷2, ÷3, ÷4, ÷5)
-        // Fundamentals reinforce, harmonics cancel — far better than peak-picking
-        function _polyHPS(floatData, sr, bufLen, numHarmonics=5) {
-            const hps = new Float32Array(bufLen);
-            // Convert dB to linear magnitude
-            for (let i = 0; i < bufLen; i++) {
-                hps[i] = Math.pow(10, floatData[i] / 20);
-            }
-            // Multiply by downsampled copies
-            for (let h = 2; h <= numHarmonics; h++) {
-                for (let i = 0; i < Math.floor(bufLen / h); i++) {
-                    hps[i] *= Math.pow(10, floatData[i * h] / 20);
-                }
-            }
-            return hps;
-        }
-
-        // ── CHROMA VECTOR ───────────────────────────────────────────
-        // Collapses all octaves into 12 pitch classes
-        // Eliminates octave confusion — C2 and C4 both vote for 'C'
-        function _polyChroma(hpsData, sr, bufLen) {
-            const chroma = new Float32Array(12).fill(0);
-            const binHz  = sr / (bufLen * 2);
-
-            for (let i = 2; i < bufLen; i++) {
-                const freq = i * binHz;
-                if (freq < 60 || freq > 1400) continue; // guitar range
-                if (hpsData[i] <= 0) continue;
-                // Map frequency to pitch class
-                const midi = 69 + 12 * Math.log2(freq / 440);
-                const pc   = ((Math.round(midi) % 12) + 12) % 12;
-                chroma[pc] += hpsData[i];
-            }
-
-            // Normalize chroma to 0–1
-            const maxC = Math.max(...chroma);
-            if (maxC > 0) for (let i = 0; i < 12; i++) chroma[i] /= maxC;
-            return chroma;
-        }
-
-        // ── CHORD MATCHING from chroma ──────────────────────────────
-        // Uses cosine-similarity style scoring against chord templates
-        function _polyMatchChord(chroma) {
-            let bestScore = -Infinity, bestChord = null, bestRoot = 0;
-
-            for (let root = 0; root < 12; root++) {
-                for (const chord of _POLY_CHORDS) {
-                    // Build binary template for this chord at this root
-                    const template = new Float32Array(12).fill(0);
-                    chord.p.forEach(interval => { template[(root + interval) % 12] = 1; });
-
-                    // Score = dot product of chroma × template × commonality weight
-                    let dot = 0, tNorm = 0, cNorm = 0;
-                    for (let i = 0; i < 12; i++) {
-                        dot   += chroma[i] * template[i];
-                        tNorm += template[i] * template[i];
-                        cNorm += chroma[i]   * chroma[i];
-                    }
-                    const cosine = (tNorm > 0 && cNorm > 0)
-                        ? dot / (Math.sqrt(tNorm) * Math.sqrt(cNorm)) : 0;
-
-                    // Penalty for notes present in chroma but not in chord
-                    let penalty = 0;
-                    for (let i = 0; i < 12; i++) {
-                        if (template[i] === 0 && chroma[i] > 0.4) penalty += chroma[i] * 0.3;
-                    }
-
-                    const total = cosine * chord.score - penalty;
-                    if (total > bestScore) {
-                        bestScore = total;
-                        bestChord = chord;
-                        bestRoot  = root;
-                    }
-                }
-            }
-
-            // Confidence threshold — below this it's probably just noise
-            if (bestScore < 1.8) return null;
-
-            // Build active note set from winning chord + root
-            const noteSet = new Set();
-            bestChord.p.forEach(interval => {
-                noteSet.add(_POLY_NOTE_NAMES[(bestRoot + interval) % 12]);
-            });
-
-            return {
-                root:  _POLY_NOTE_NAMES[bestRoot],
-                name:  bestChord.n,
-                notes: noteSet,
-                score: bestScore
-            };
-        }
-
-        // ── TEMPORAL SMOOTHING ──────────────────────────────────────
-        // Chroma is averaged across frames to reduce flicker
-        const _POLY_SMOOTH_A  = 0.65; // decay of previous frame
-        const _POLY_SMOOTH_B  = 0.35; // weight of new frame
-
-        // Stability tracking
-        const _POLY_STABLE_FRAMES = 5;
-
-        function _polyAnalyse() {
-            if (!_singActive || !_singAnalyser) return;
-
-            const bufLen  = _singAnalyser.frequencyBinCount;
-            const sr      = _singAudioCtx.sampleRate;
-            const fltData = new Float32Array(bufLen);
-            _singAnalyser.getFloatFrequencyData(fltData);
-
-            // Silence gate
-            let maxDb = -Infinity;
-            for (let i = 0; i < bufLen; i++) if (fltData[i] > maxDb) maxDb = fltData[i];
-            if (maxDb < -55) {
-                // Fade chroma smoothly to silence
-                for (let i = 0; i < 12; i++) _polyChromaSmooth[i] *= 0.7;
-                _polyStableCount = 0;
-                _polyShowChord(null, new Set());
-                return;
-            }
-
-            // HPS — get fundamental-reinforced spectrum
-            const hps    = _polyHPS(fltData, sr, bufLen, 5);
-
-            // Chroma vector — collapse octaves into 12 pitch classes
-            const chroma = _polyChroma(hps, sr, bufLen);
-
-            // Temporal smoothing — blend with previous frame
-            for (let i = 0; i < 12; i++) {
-                _polyChromaSmooth[i] = _POLY_SMOOTH_A * _polyChromaSmooth[i]
-                                     + _POLY_SMOOTH_B * chroma[i];
-            }
-
-            // Match chord against smoothed chroma
-            const result = _polyMatchChord(_polyChromaSmooth);
-
-            // Stability gate — chord must win N consecutive frames
-            const key = result ? result.root + result.name : '';
-            if (key === _polyLastChordKey) { _polyStableCount++; }
-            else { _polyStableCount = 0; _polyLastChordKey = key; }
-
-            if (_polyStableCount >= _POLY_STABLE_FRAMES) {
-                _polyShowChord(result, result ? result.notes : new Set());
-                if (result) {
-                    try {
-                        window.parent.postMessage({
-                            type: 'KCM_STATE',
-                            payload: {
-                                activeNotes: [...result.notes].map(n => _POLY_NOTE_NAMES.indexOf(n)),
-                                chordName:   result.root + ' ' + result.name
-                            }
-                        }, '*');
-                    } catch(_) {}
-                }
-            }
-        }
-
-        function _polyShowChord(chord, noteSet) {
-            const display = document.getElementById('polyChordDisplay');
-            const nameEl  = document.getElementById('polyChordName');
-            const notesEl = document.getElementById('polyChordNotes');
-            if (!display) return;
-
-            if (!chord) { display.style.display = 'none'; return; }
-
-            display.style.display = 'block';
-            const rootIdx = _POLY_NOTE_NAMES.indexOf(chord.root);
-            nameEl.textContent = chord.root + ' ' + chord.name;
-            nameEl.style.color = _SING_COLORS[rootIdx] || '#F4D03F';
-            nameEl.style.textShadow = `0 0 20px ${_SING_COLORS[rootIdx]}88`;
-
-            notesEl.innerHTML = '';
-            [...noteSet]
-                .sort((a,b) => _POLY_NOTE_NAMES.indexOf(a) - _POLY_NOTE_NAMES.indexOf(b))
-                .forEach(n => {
-                    const idx   = _POLY_NOTE_NAMES.indexOf(n);
-                    const badge = document.createElement('div');
-                    badge.textContent = n;
-                    const isRoot = (n === chord.root);
-                    badge.style.cssText = [
-                        `background:${_SING_COLORS[idx]}`,
-                        `color:#000`,
-                        `padding:4px 12px`,
-                        `border-radius:20px`,
-                        `font-family:var(--font-display)`,
-                        `font-size:${isRoot ? '0.95rem' : '0.8rem'}`,
-                        `font-weight:800`,
-                        isRoot ? `box-shadow:0 0 12px ${_SING_COLORS[idx]},0 0 24px ${_SING_COLORS[idx]}88` : '',
-                        isRoot ? `transform:scale(1.15)` : '',
-                    ].join(';');
-                    notesEl.appendChild(badge);
-                });
-        }
-
-
         // 🎤 SING MODE — Observatory-grade FFT pitch detection
         // No ScriptProcessor — uses AnalyserNode + requestAnimationFrame
         // Same engine as KCM Sound Observatory v29
@@ -5676,11 +5505,6 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         let _singLastNote = -1, _singLastDetect = 0;
         let _singSmooth = new Array(12).fill(0);
         let _singLockNote = null, _singLockCount = 0, _singLockFreq = 0, _singLockOct = -1;
-
-        // Poly chord detection state — declared here so stopSingMode can always access them
-        let _polyChromaSmooth = new Float32Array(12).fill(0);
-        let _polyLastChordKey = '';
-        let _polyStableCount  = 0;
 
         // Note event list
         let _singEvents = [];
@@ -5704,14 +5528,6 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         // KCM colors + note names for SING display
         const _SING_COLORS     = ['#FFFF00','#FFC400','#FF8000','#FF4000','#FF0000','#C4007F','#8000FF','#4000FF','#0000FF','#007FFF','#00FF80','#80FF00'];
         const _SING_NOTE_NAMES = ['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
-
-        // ── CREPE ML pitch detection state ───────────────────────────
-        // _SING_CONFIDENCE_MIN: CREPE confidence threshold (0–1).
-        // Frames below this are treated as silence. 0.70 = high confidence.
-        // Tune down to 0.60 in noisy rooms; up to 0.80 for cleaner gate.
-        const _SING_CONFIDENCE_MIN = 0.70;
-        let   _crepeModel  = null;   // loaded async after AudioContext created
-        let   _crepeReady  = false;  // true once model is loaded and usable
 
         // WAV recording
         let _singWavRecorder = null, _singWavChunks = [], _singWavRecording = false;
@@ -5872,66 +5688,6 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
             if (status) { status.textContent = 'Listening…'; status.style.color = '#666'; }
         }
 
-        // ── CREPE ML pitch detection loader ──────────────────────────────
-        // ml5.js wraps CREPE pitch detection with a clean callback API.
-        // ml5.pitchDetection() hosts model weights on its own CDN — no CORS.
-        // estimatePitch() shimmed to return { frequency, confidence } promise.
-        // On success: _crepeReady=true, badge → 'ML PITCH ✓' green.
-        // On failure: _crepeReady stays false, FFT path used silently.
-        async function _loadCREPE(audioCtx) {
-            const badge = document.getElementById('singCrepeBadge');
-            try {
-                if (typeof ml5 === 'undefined') {
-                    console.warn('[KCM CREPE] ml5 not loaded — using FFT fallback');
-                    if (badge) { badge.textContent = 'FFT MODE'; badge.style.borderColor = 'rgba(255,128,0,0.4)'; badge.style.color = '#FF8000'; }
-                    return;
-                }
-                _crepeReady = false;
-                _crepeModel = null;
-                if (badge) { badge.textContent = 'ML LOADING…'; badge.style.color = '#F4D03F'; badge.style.borderColor = 'rgba(244,208,63,0.4)'; }
-
-                // ml5.pitchDetection uses CREPE under the hood
-                // AudioContext must be passed so it can tap the mic stream
-                await new Promise((resolve, reject) => {
-                    const timeout = setTimeout(() => reject(new Error('ml5 load timeout')), 15000);
-                    _crepeModel = ml5.pitchDetection(
-                        'https://cdn.jsdelivr.net/npm/@magenta/music@1.23.1/es6/checkpoints/pitch/',
-                        audioCtx,
-                        _singStream,
-                        () => { clearTimeout(timeout); resolve(); }
-                    );
-                });
-
-                // Wrap ml5 getPitch() in our estimatePitch() interface
-                _crepeModel.estimatePitch = () => new Promise((resolve) => {
-                    _crepeModel.getPitch((err, freq) => {
-                        if (err || !freq || freq < 60 || freq > 1300) { resolve(null); return; }
-                        // ml5 CREPE doesn't expose confidence directly — use RMS as proxy
-                        const buf = new Float32Array(_SING_FFT);
-                        if (_singAnalyser) _singAnalyser.getFloatTimeDomainData(buf);
-                        let sq = 0; for (let i = 0; i < buf.length; i++) sq += buf[i]**2;
-                        const rms = Math.sqrt(sq / buf.length);
-                        const confidence = Math.min(1, rms / 0.02); // scale RMS to 0-1
-                        resolve({ frequency: freq, confidence });
-                    });
-                });
-
-                _crepeReady = true;
-                console.log('[KCM CREPE] ml5 CREPE model ready ✓');
-                if (badge) {
-                    badge.textContent = 'ML PITCH ✓';
-                    badge.style.background = 'rgba(0,224,128,0.12)';
-                    badge.style.borderColor = 'rgba(0,224,128,0.3)';
-                    badge.style.color = '#00e080';
-                }
-            } catch(e) {
-                console.warn('[KCM CREPE] Load failed, FFT fallback active:', e.message);
-                _crepeReady = false;
-                _crepeModel = null;
-                if (badge) { badge.textContent = 'FFT MODE'; badge.style.borderColor = 'rgba(255,128,0,0.4)'; badge.style.color = '#FF8000'; }
-            }
-        }
-
         async function startSingMode() {
             try {
                 if (_singActive) { stopSingMode(); return; }
@@ -5964,11 +5720,6 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 _singAudioCtx = new (window.AudioContext||window.webkitAudioContext)();
                 if (_singAudioCtx.state === 'suspended') await _singAudioCtx.resume();
 
-                // ── Load CREPE ML model (async, non-blocking) ─────────────────
-                // Runs in background while mic warms up. Updates badge when ready.
-                // Falls back to FFT path silently if unavailable.
-                _loadCREPE(_singAudioCtx);
-
                 _singAnalyser = _singAudioCtx.createAnalyser();
                 _singAnalyser.fftSize = _SING_FFT;
                 _singAnalyser.smoothingTimeConstant = 0.0; // we do our own smoothing
@@ -5998,71 +5749,13 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 }, 800);
 
                 // ── Observatory RAF detection loop ──────────────────────
-
-        // ══════════════════════════════════════════════════════════════
                 function _singLoop() {
                     if (!_singActive) return;
                     _singRaf = requestAnimationFrame(_singLoop);
-                    _polyAnalyse(); // Polyphonic chord detection — always runs regardless of CREPE
                     const now = Date.now();
                     if (now - _singLastDetect < _SING_COOLDOWN) return;
                     _singLastDetect = now;
 
-                    // ── CREPE ML path ─────────────────────────────────────────
-                    // When model is loaded, use ML-based pitch estimation.
-                    // CREPE returns { frequency, confidence } or null.
-                    // Confidence replaces the RMS silence gate for the ML path.
-                    if (_crepeReady && _crepeModel) {
-                        _crepeModel.estimatePitch().then(pitch => {
-                            if (!_singActive) return;
-                            if (!pitch || pitch.confidence < _SING_CONFIDENCE_MIN) {
-                                // Below confidence threshold — treat as silence
-                                for (let i = 0; i < 12; i++) _singSmooth[i] *= 0.4;
-                                if (_singLastNote !== -1) { _singClearDisplays(); _singLastNote = -1; }
-                                if (_singRecording && _singHeldNote) {
-                                    clearTimeout(_singHeldTimer);
-                                    _singHeldTimer = setTimeout(() => _singCommitHeld(Date.now()), _SING_HOLD_GAP);
-                                }
-                                return;
-                            }
-                            // Good pitch — derive pc/oct from frequency and update displays
-                            const freq = pitch.frequency;
-                            let { pc, oct, midiNote, cents } = _freqToNote(freq);
-
-                            // Octave hysteresis — same logic as FFT path
-                            if (_singLockOct >= 0 && _singLockOct !== oct) {
-                                const prevMidi = (_singLockOct + 1) * 12 + pc;
-                                const centsDiff = Math.abs(_singFreqToMidi(freq) - prevMidi) * 100;
-                                if (centsDiff < 150) { oct = _singLockOct; midiNote = prevMidi; }
-                            }
-                            _singLockOct = oct;
-
-                            // Stability gate — reuse LOCK_FRAMES logic
-                            if (pc === _singLockNote) { _singLockCount++; }
-                            else { _singLockNote = pc; _singLockCount = 1; _singLockFreq = freq; }
-                            _singLockFreq = freq * 0.3 + (_singLockFreq || freq) * 0.7;
-
-                            if (_singLockCount >= _SING_LOCK_FRAMES) {
-                                if (pc !== _singLastNote) { _singLastNote = pc; _singUpdateDisplays(pc, oct, _singLockFreq, cents); }
-                                if (_singRecording) {
-                                    clearTimeout(_singHeldTimer);
-                                    if (!_singHeldNote || _singHeldNote.midiNote !== midiNote) {
-                                        _singCommitHeld(Date.now());
-                                        const _vel = Math.round(Math.min(110, Math.max(50, 50 + pitch.confidence * 60)));
-                                        _singHeldNote = { pc, oct, midiNote, freq: _singLockFreq, vel: _vel, startTs: Date.now() };
-                                    }
-                                    if (_singHeldNote) _singHeldNote.freq = _singLockFreq;
-                                }
-                            }
-                        }).catch(e => {
-                            // CREPE inference error — don't crash the loop
-                            console.warn('[KCM CREPE] estimatePitch error:', e.message);
-                        });
-                        return; // CREPE path handled async — return here
-                    }
-
-                    // ── FFT fallback path (original) ──────────────────────────
-                    // Used when CREPE hasn't loaded or failed to initialize.
                     _singAnalyser.getFloatTimeDomainData(_singTdb);
                     _singAnalyser.getFloatFrequencyData(_singFdb);
                     const binHz = _singAudioCtx.sampleRate / _SING_FFT;
@@ -6243,8 +5936,6 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
             if (_singWavRecording) _singStopWAV();
             if (_singAnalyser)  { try { _singAnalyser.disconnect();  } catch(e){} _singAnalyser = null; }
             if (_singStream)    { _singStream.getTracks().forEach(t => t.stop()); _singStream = null; }
-            _polyLastChordKey = ''; _polyStableCount = 0;
-            if (typeof _polyShowChord === 'function') _polyShowChord(null, new Set());
             if (_singAudioCtx)  { try { _singAudioCtx.close(); } catch(e){} _singAudioCtx = null; }
             _singSmooth = new Array(12).fill(0);
             _singClearDisplays();
@@ -6320,25 +6011,8 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                     await audioContext.resume();
                     audioReady = true;
                     window._kcmMasterBus = audioContext.createGain();
-                    window._kcmMasterBus.gain.value = 0.85;
-                    // Compressor — prevents clipping on chords/arpeggios
-                    const _comp = audioContext.createDynamicsCompressor();
-                    _comp.threshold.value = -18;  // start compressing at -18dBFS
-                    _comp.knee.value      = 8;    // soft knee
-                    _comp.ratio.value     = 4;    // 4:1 ratio
-                    _comp.attack.value    = 0.003; // 3ms attack
-                    _comp.release.value   = 0.18;  // 180ms release
-                    // Limiter — hard ceiling at -1dBFS
-                    const _lim = audioContext.createDynamicsCompressor();
-                    _lim.threshold.value  = -1;
-                    _lim.knee.value       = 0;
-                    _lim.ratio.value      = 20;
-                    _lim.attack.value     = 0.001;
-                    _lim.release.value    = 0.05;
-                    window._kcmMasterBus.connect(_comp);
-                    _comp.connect(_lim);
-                    _lim.connect(audioContext.destination);
-                    window._kcmComp = _comp; window._kcmLim = _lim;
+                    window._kcmMasterBus.gain.value = 1.0;
+                    window._kcmMasterBus.connect(audioContext.destination);
                 } catch(e) { console.warn('[SING] singPlayback audio init:', e); return; }
             } else if (audioContext.state === 'suspended') {
                 await audioContext.resume();
@@ -6721,15 +6395,6 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
 <!-- ============================================================
      FLOATING CONTROL DOCK
      ============================================================ -->
-<button id="dockToggleBtn" onclick="toggleDock()" title="Toggle Control Dock"
-    style="position:fixed;bottom:16px;right:16px;z-index:10000;
-           background:linear-gradient(135deg,#005555,#008080);
-           color:#fff;border:2px solid rgba(0,255,255,0.4);
-           border-radius:50px;padding:8px 16px;
-           font-family:'Cinzel',serif;font-size:0.65rem;font-weight:800;
-           letter-spacing:1px;cursor:pointer;
-           box-shadow:0 4px 20px rgba(0,128,128,0.5);
-           transition:all 0.2s;">🎛 DOCK</button>
 <div id="floatingDock" class="collapsed">
     <div id="dockHandle" onclick="toggleDock()">
         <span class="dock-title">🎛 KCM Control Dock</span>
@@ -6763,7 +6428,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 🎵 Key: <span id="dockKeyLabel">C</span>
             </button>
             <div class="dock-divider"></div>
-            <button class="dock-play-btn kcm-needs-audio" onclick="document.getElementById('globalPlayBtn').click()" title="Press 🔊 Start Audio first" style="background:linear-gradient(135deg,#27ae60,#1e8449);">▶ Play</button>
+            <button class="dock-play-btn" onclick="document.getElementById('globalPlayBtn').click()" style="background:linear-gradient(135deg,#27ae60,#1e8449);">▶ Play</button>
             <button class="dock-play-btn" onclick="document.getElementById('globalStopBtn').click()" style="background:linear-gradient(135deg,#e74c3c,#c0392b);">■ Stop</button>
         </div>
 
@@ -6805,10 +6470,10 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
             <button class="dock-play-btn" style="background:linear-gradient(135deg,#008080,#005555);" onclick="if(typeof playChromaticBtn!=='undefined')playChromaticBtn.click(); else document.getElementById('playChromaticBtn').click();">🎹 Chromatic</button>
             <div class="dock-divider"></div>
             <!-- Playback — context-aware for Harm modes -->
-            <button class="dock-play-btn kcm-needs-audio" id="dockPlayAllBtn" title="Press 🔊 Start Audio first" style="background:linear-gradient(135deg,#27ae60,#1e8449);" onclick="dockSmartPlay('all')">▶ Play</button>
-            <button class="dock-play-btn kcm-needs-audio" id="dockAscBtn"    title="Press 🔊 Start Audio first" style="background:linear-gradient(135deg,#7f8c8d,#555);"    onclick="dockSmartPlay('up')">↑ Asc</button>
-            <button class="dock-play-btn kcm-needs-audio" id="dockDescBtn"   title="Press 🔊 Start Audio first" style="background:linear-gradient(135deg,#7f8c8d,#555);"    onclick="dockSmartPlay('down')">↓ Desc</button>
-            <button class="dock-play-btn kcm-needs-audio" id="dockChordBtn2" title="Press 🔊 Start Audio first" style="background:linear-gradient(135deg,#8B6BA3,#6a4f8c);" onclick="dockSmartPlay('chord')">♪ Chord</button>
+            <button class="dock-play-btn" id="dockPlayAllBtn" style="background:linear-gradient(135deg,#27ae60,#1e8449);" onclick="dockSmartPlay('all')">▶ Play</button>
+            <button class="dock-play-btn" id="dockAscBtn"    style="background:linear-gradient(135deg,#7f8c8d,#555);"    onclick="dockSmartPlay('up')">↑ Asc</button>
+            <button class="dock-play-btn" id="dockDescBtn"   style="background:linear-gradient(135deg,#7f8c8d,#555);"    onclick="dockSmartPlay('down')">↓ Desc</button>
+            <button class="dock-play-btn" id="dockChordBtn2" style="background:linear-gradient(135deg,#8B6BA3,#6a4f8c);" onclick="dockSmartPlay('chord')">♪ Chord</button>
             <button class="dock-play-btn" style="background:linear-gradient(135deg,#e74c3c,#c0392b);" onclick="document.getElementById('globalStopBtn').click()">■ Stop</button>
             <div class="dock-divider"></div>
             <!-- Octave -->
@@ -6945,33 +6610,29 @@ function dockSetView(el, view) {
 
 function dockSetLevel(el, level) {
     // Resolve unified 'harm' to actual type
-    const effectiveLevel = level === 'harm' ? (window.currentHarmKey || 'harmMajor') : level;
-    if (level === 'harm' && !window.currentHarmKey) window.currentHarmKey = 'harmMajor';
-
+    if (level === 'harm') {
+        if (!window.currentHarmKey) window.currentHarmKey = 'harmMajor';
+        // Don't override level — let the main button click handler do it
+    }
     // Update dock buttons
     document.querySelectorAll('.dock-level-btn').forEach(b => b.classList.remove('active'));
     el.classList.add('active');
-
-    // Show/hide sub-menus
+    // Show/hide degree sub-menu
+    const effectiveLevel = level === 'harm' ? (window.currentHarmKey || 'harmMajor') : level;
     dockShowDegrees(effectiveLevel);
+    // Show/hide scales sub-menu
     const isScaleLevel = (level === 'scales' || level === '5' || level === '6' || level === '7' || level === 'minor');
     if (typeof dockShowScales === 'function') dockShowScales(isScaleLevel);
+    // Show/hide mode sub-menu
     dockShowModes(effectiveLevel);
+    // Update play button labels for Harm vs regular modes
     dockUpdatePlayLabels(effectiveLevel);
-
-    // Click the matching main level button — this triggers all main-panel setup
+    // Click the matching main level button
     const mainBtn = document.querySelector(`.level-btn[data-level="${level}"]`);
-    if (mainBtn) {
-        mainBtn.click();
-        // Ensure main btn visual is active (click handler removes/adds active)
-        setTimeout(() => {
-            document.querySelectorAll('.level-btn[data-level]').forEach(b => b.classList.remove('active'));
-            mainBtn.classList.add('active');
-        }, 20);
-    } else if (typeof window._setCurrentLevel === 'function') {
-        // Fallback if main button not found
-        window._setCurrentLevel(effectiveLevel);
-    }
+    if (mainBtn) mainBtn.click();
+    // Also sync the main level-btn visual
+    document.querySelectorAll('.level-btn[data-level]').forEach(b => b.classList.remove('active'));
+    if (mainBtn) mainBtn.classList.add('active');
 }
 
 function dockChangeBPM(delta) {
@@ -7098,15 +6759,14 @@ function dockSwitchHarm(key) {
     // Switch the degree display
     dockShowDegrees(key);
     if (typeof dockUpdateProgressions === 'function') dockUpdateProgressions(key === 'harmMinor');
-    // ── Update IIFE-scoped currentLevel via the exposed setter (not direct assignment) ──
-    if (typeof window._setCurrentLevel === 'function') {
-        window._setCurrentLevel(key, { degree: 0 });
-    }
+    // Update app state
+    currentLevel = key;
+    currentHarmDegree = 0;
     if (typeof dockUpdatePlayLabels === 'function') dockUpdatePlayLabels(key);
-    setTimeout(() => { if (typeof window.playHarmChordAscending === 'function') window.playHarmChordAscending(); }, 200);
-    // Also click the matching main panel level button to keep full UI in sync
-    const mainHarmBtn = document.querySelector('.level-btn[data-level="harm"]');
-    if (mainHarmBtn && !mainHarmBtn.classList.contains('active')) mainHarmBtn.click();
+    if (typeof window.updateDisplay === 'function') window.updateDisplay();
+    setTimeout(() => { if (typeof playHarmChordAscending === 'function') window.playHarmChordAscending(); }, 200);
+    // Sync main panel controls
+    setTimeout(() => { if (typeof updateControls === 'function') window.updateControls(); }, 50);
 }
 
 function dockShowDegrees(level) {
@@ -7116,8 +6776,6 @@ function dockShowDegrees(level) {
     // Sync Major/Minor toggle buttons
     const majBtn = document.getElementById('dockHarmMajorBtn');
     const minBtn = document.getElementById('dockHarmMinorBtn');
-    // Treat bare 'harm' as harmMajor (default) when switching in from dock
-    if (level === 'harm') level = window.currentHarmKey || 'harmMajor';
     if (level === 'harmMajor') {
         row.style.display = 'flex';
         maj.style.display = 'flex';
@@ -7204,35 +6862,42 @@ function dockSetMode(el, mode) {
 
 function dockSetDegree(el, deg) {
     // Update active state in whichever group is visible
-    const appLevel = (typeof window.currentLevel === 'string') ? window.currentLevel : '';
-    const isMinor  = appLevel === 'harmMinor' || window.currentHarmKey === 'harmMinor';
-    const group = isMinor
+    // Determine current level by checking which dock-level-btn is active
+    const activeLvlBtn = document.querySelector('.dock-level-btn.active');
+    const _lvl = activeLvlBtn ? activeLvlBtn.dataset.dockLevel : 'harmMajor';
+    const group = _lvl === 'harmMinor'
         ? document.getElementById('dockMinorDegrees')
         : document.getElementById('dockMajorDegrees');
-    if (group) group.querySelectorAll('.dock-deg-btn').forEach(b => b.classList.remove('active'));
+    group.querySelectorAll('.dock-deg-btn').forEach(b => b.classList.remove('active'));
     el.classList.add('active');
-    // Set via exposed setter (works even when main deg-btn doesn't exist yet)
-    if (typeof window._setHarmDegree === 'function') {
-        window._setHarmDegree(deg);
+    // Also click matching main deg-btn to keep in sync
+    const mainBtn = document.querySelector(`.deg-btn[data-deg="${deg}"]`);
+    if (mainBtn) {
+        mainBtn.click();
     } else {
-        // Belt-and-suspenders: try main panel button
-        const mainBtn = document.querySelector(`.deg-btn[data-deg="${deg}"]`);
-        if (mainBtn) mainBtn.click();
+        // Fallback: set directly and play
+        if (typeof currentHarmDegree !== 'undefined') {
+            currentHarmDegree = deg;
+            if (typeof updateDisplay === 'function') window.updateDisplay();
+            setTimeout(() => { if (typeof playHarmChordAscending === 'function') window.playHarmChordAscending(); }, 200);
+        }
     }
 }
 
 function dockSetChordType(type) {
-    const triadBtn = document.getElementById('dockTriadBtn');
-    const btn7th   = document.getElementById('dock7thBtn');
-    if (triadBtn) { triadBtn.style.background = type==='triad' ? 'rgba(0,128,128,0.4)' : ''; triadBtn.style.borderColor = type==='triad' ? 'var(--primary-teal)' : ''; }
-    if (btn7th)   { btn7th.style.background   = type==='7th'   ? 'rgba(0,128,128,0.4)' : ''; btn7th.style.borderColor   = type==='7th'   ? 'var(--primary-teal)' : ''; }
-    // Use exposed setter to write into IIFE scope
-    if (typeof window._setHarmChordType === 'function') {
-        window._setHarmChordType(type);
-    } else {
-        // Fallback: try main panel select
-        const sel = document.getElementById('harmTypeSelect');
-        if (sel) { sel.value = type; sel.dispatchEvent(new Event('change')); }
+    document.getElementById('dockTriadBtn').style.background = type==='triad' ? 'rgba(0,128,128,0.4)' : '';
+    document.getElementById('dockTriadBtn').style.borderColor = type==='triad' ? 'var(--primary-teal)' : '';
+    document.getElementById('dock7thBtn').style.background   = type==='7th'   ? 'rgba(0,128,128,0.4)' : '';
+    document.getElementById('dock7thBtn').style.borderColor  = type==='7th'   ? 'var(--primary-teal)' : '';
+    // Sync with main chord type select
+    const sel = document.getElementById('harmTypeSelect');
+    if (sel) { sel.value = type; sel.dispatchEvent(new Event('change')); }
+    else {
+        if (typeof currentHarmChordType !== 'undefined') {
+            currentHarmChordType = type;
+            if (typeof updateDisplay === 'function') window.updateDisplay();
+            setTimeout(() => { if (typeof playHarmChordAscending === 'function') window.playHarmChordAscending(); }, 200);
+        }
     }
 }
 // Mirror octave display
@@ -7420,16 +7085,13 @@ function dockGetLevel() {
 
 function dockSmartPlay(mode) {
     const lvl = dockGetLevel();
-    // Resolve 'harm' → check actual currentLevel (harmMajor/harmMinor) set by app
-    const appLevel = (typeof window.currentLevel === 'string') ? window.currentLevel : lvl;
-    const isHarm = lvl === 'harm' || appLevel === 'harmMajor' || appLevel === 'harmMinor'
-                   || lvl === 'harmMajor' || lvl === 'harmMinor';
+    const isHarm = lvl === 'harmMajor' || lvl === 'harmMinor';
     if (mode === 'all') {
         if (isHarm) {
+            // Play all 7 scale-degree chords in sequence
             dockPlayAllScaleChords();
         } else {
-            const btn = document.getElementById('globalPlayBtn');
-            if (btn) btn.click();
+            document.getElementById('globalPlayBtn').click();
         }
         return;
     }
@@ -7438,7 +7100,7 @@ function dockSmartPlay(mode) {
             dockPlayCurrentDegreeChord();
         } else if (typeof playSelection === 'function') {
             playSelection('chord');
-        } else { const b = document.getElementById('playChordBtn'); if(b) b.click(); }
+        }
         return;
     }
     if (mode === 'up') {
@@ -7446,15 +7108,16 @@ function dockSmartPlay(mode) {
             dockPlayCurrentDegreeArp();
         } else if (typeof playSelection === 'function') {
             playSelection('up');
-        } else { const b = document.getElementById('playUpBtn'); if(b) b.click(); }
+        }
         return;
     }
     if (mode === 'down') {
         if (isHarm) {
+            // Descending arpeggio of current degree chord
             dockPlayCurrentDegreeArpDown();
         } else if (typeof playSelection === 'function') {
             playSelection('down');
-        } else { const b = document.getElementById('playDownBtn'); if(b) b.click(); }
+        }
         return;
     }
 }
@@ -7493,7 +7156,7 @@ function dockPlayAllScaleChords() {
 
 // ── Update dock button labels when entering/leaving Harm mode ────
 function dockUpdatePlayLabels(level) {
-    const isHarm  = level === 'harmMajor' || level === 'harmMinor' || level === 'harm';
+    const isHarm  = level === 'harmMajor' || level === 'harmMinor';
     const isModes = level === 'modes';
     const allBtn   = document.getElementById('dockPlayAllBtn');
     const ascBtn   = document.getElementById('dockAscBtn');
@@ -7647,11 +7310,11 @@ async function _guideFireClaude(userPrompt) {
     if (dot)      dot.style.background   = '#F4D03F';
 
     try {
-        const res = await fetch('https://snowy-rain-84a5.ben-03b.workers.dev/ai', {
+        const res = await fetch('https://api.anthropic.com/v1/messages', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                model: 'claude-sonnet-4-5',
+                model: 'claude-sonnet-4-20250514',
                 max_tokens: 400,
                 system: typeof _getKCMContext === 'function' ? _getKCMContext() : 'You are the KCM AI Music Theory Tutor. Be warm, concise, and educational.',
                 messages: [{ role: 'user', content: userPrompt }]
@@ -7898,11 +7561,11 @@ Make the melody genuinely musical — use stepwise motion with occasional leaps,
 Create a complete, expressive composition. Make the chord progression interesting and appropriate to the mode. The melody should be singable and emotionally resonant with the "${feel}" feel. Use the KCM color system throughout.`;
 
     try {
-        const res = await fetch('https://snowy-rain-84a5.ben-03b.workers.dev/ai', {
+        const res = await fetch('https://api.anthropic.com/v1/messages', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                model: 'claude-sonnet-4-5',
+                model: 'claude-sonnet-4-20250514',
                 max_tokens: 4000,
                 system: systemPrompt,
                 messages: [{ role: 'user', content: userPrompt }]
@@ -8385,11 +8048,11 @@ async function kcmAIAsk(type) {
     if (dot)      { dot.style.background = '#F4D03F'; }
 
     try {
-        const res = await fetch('https://snowy-rain-84a5.ben-03b.workers.dev/ai', {
+        const res = await fetch('https://api.anthropic.com/v1/messages', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                model: 'claude-sonnet-4-5',
+                model: 'claude-sonnet-4-20250514',
                 max_tokens: 1000,
                 system: _getKCMContext(),
                 messages: [{ role: 'user', content: userPrompt }]
@@ -8473,6 +8136,606 @@ async function kcmAIAsk(type) {
     document.addEventListener('scroll', hideTip, true);
     document.addEventListener('click',  hideTip);
 })();
+
+// ============================================================
+// KCM STENCIL SYSTEM™ — JavaScript Engine
+// New addition only. Zero modifications to existing MTP code.
+// © 2026 Keys, Codes & Modes™ | Benjamin Ryan
+// ============================================================
+(function() {
+    'use strict';
+
+    // ── KCM Color constants (mirror of MTP) ──────────────────
+    const KCM_COLORS = ['#FFFF00','#FFC400','#FF8000','#FF4000','#FF0000','#C4007F','#8000FF','#4000FF','#0000FF','#007FFF','#00FF80','#80FF00'];
+    const KCM_TEXT   = ['#000','#000','#000','#fff','#fff','#fff','#fff','#fff','#fff','#fff','#000','#000'];
+    const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+    const NOTE_FLAT  = ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
+    const FLAT_KEYS  = [1,3,5,8,10]; // keys that prefer flats
+
+    function noteName(pc, rootPc) {
+        return FLAT_KEYS.includes(rootPc) ? NOTE_FLAT[pc] : NOTE_NAMES[pc];
+    }
+
+    // ── Circle geometry ──────────────────────────────────────
+    // Circle center and radius for 500x500 SVG matching sphere positions
+    const CX = 250, CY = 250, R_OUTER = 215, R_INNER = 108;
+
+    // 12 note positions (C=0 at top, clockwise)
+    function noteAngle(pc) { return (pc * 30 - 90) * Math.PI / 180; }
+    function notePos(pc) {
+        const a = noteAngle(pc);
+        return { x: CX + R_OUTER * Math.cos(a), y: CY + R_OUTER * Math.sin(a) };
+    }
+    function innerPos(angleDeg) {
+        const a = (angleDeg - 90) * Math.PI / 180;
+        return { x: CX + R_INNER * Math.cos(a), y: CY + R_INNER * Math.sin(a) };
+    }
+
+    // ── Stencil library ──────────────────────────────────────
+    const STENCIL_LIBRARY = {
+        scales: [
+            { id:'major',         name:'Major',           intervals:[0,2,4,5,7,9,11],  intervals_str:'W W H W W W H', degrees:'1 2 3 4 5 6 7',   color:'#F4D03F' },
+            { id:'naturalMinor',  name:'Natural Minor',   intervals:[0,2,3,5,7,8,10],  intervals_str:'W H W W H W W', degrees:'1 2 b3 4 5 b6 b7',color:'#8B6BA3' },
+            { id:'harmonicMinor', name:'Harmonic Minor',  intervals:[0,2,3,5,7,8,11],  intervals_str:'W H W W H A H', degrees:'1 2 b3 4 5 b6 7',  color:'#CF7A5A' },
+            { id:'melodicMinor',  name:'Melodic Minor',   intervals:[0,2,3,5,7,9,11],  intervals_str:'W H W W W W H', degrees:'1 2 b3 4 5 6 7',   color:'#00c0c0' },
+            { id:'majorPenta',    name:'Major Penta',     intervals:[0,2,4,7,9],        intervals_str:'W W WH W WH',   degrees:'1 2 3 5 6',         color:'#F4D03F' },
+            { id:'minorPenta',    name:'Minor Penta',     intervals:[0,3,5,7,10],       intervals_str:'WH W W WH W',   degrees:'1 b3 4 5 b7',       color:'#8B6BA3' },
+            { id:'blues',         name:'Blues',           intervals:[0,3,5,6,7,10],     intervals_str:'WH W H H WH W', degrees:'1 b3 4 b5 5 b7',    color:'#007FFF' },
+            { id:'wholeTone',     name:'Whole Tone',      intervals:[0,2,4,6,8,10],     intervals_str:'W W W W W W',   degrees:'1 2 3 #4 #5 b7',    color:'#00FF80' },
+            { id:'dimWH',         name:'Diminished (WH)', intervals:[0,2,3,5,6,8,9,11], intervals_str:'W H W H W H W H',degrees:'1 2 b3 4 b5 b6 6 7',color:'#FF4000' },
+            { id:'dimHW',         name:'Diminished (HW)', intervals:[0,1,3,4,6,7,9,10], intervals_str:'H W H W H W H W',degrees:'1 b2 b3 3 b5 5 6 b7',color:'#FF0000' },
+        ],
+        modes: [
+            { id:'ionian',      name:'Ionian',      intervals:[0,2,4,5,7,9,11],  intervals_str:'W W H W W W H', degrees:'1 2 3 4 5 6 7',    color:'#F4D03F' },
+            { id:'dorian',      name:'Dorian',      intervals:[0,2,3,5,7,9,10],  intervals_str:'W H W W W H W', degrees:'1 2 b3 4 5 6 b7',  color:'#00c0c0' },
+            { id:'phrygian',    name:'Phrygian',    intervals:[0,1,3,5,7,8,10],  intervals_str:'H W W W H W W', degrees:'1 b2 b3 4 5 b6 b7',color:'#FF4000' },
+            { id:'lydian',      name:'Lydian',      intervals:[0,2,4,6,7,9,11],  intervals_str:'W W W H W W H', degrees:'1 2 3 #4 5 6 7',   color:'#8000FF' },
+            { id:'mixolydian',  name:'Mixolydian',  intervals:[0,2,4,5,7,9,10],  intervals_str:'W W H W W H W', degrees:'1 2 3 4 5 6 b7',   color:'#FF8000' },
+            { id:'aeolian',     name:'Aeolian',     intervals:[0,2,3,5,7,8,10],  intervals_str:'W H W W H W W', degrees:'1 2 b3 4 5 b6 b7', color:'#8B6BA3' },
+            { id:'locrian',     name:'Locrian',     intervals:[0,1,3,5,6,8,10],  intervals_str:'H W W H W W W', degrees:'1 b2 b3 4 b5 b6 b7',color:'#FF0000' },
+        ],
+        chords: [
+            // Triads
+            { id:'major_triad',   name:'Major',       intervals:[0,4,7],       intervals_str:'1-3-5',     degrees:'1 3 5',      color:'#F4D03F' },
+            { id:'minor_triad',   name:'Minor',       intervals:[0,3,7],       intervals_str:'1-b3-5',    degrees:'1 b3 5',     color:'#8B6BA3' },
+            { id:'dim_triad',     name:'Diminished',  intervals:[0,3,6],       intervals_str:'1-b3-b5',   degrees:'1 b3 b5',    color:'#FF4000' },
+            { id:'aug_triad',     name:'Augmented',   intervals:[0,4,8],       intervals_str:'1-3-#5',    degrees:'1 3 #5',     color:'#FF8000' },
+            // 7ths
+            { id:'maj7',          name:'Major 7',     intervals:[0,4,7,11],    intervals_str:'1-3-5-7',   degrees:'1 3 5 7',    color:'#F4D03F' },
+            { id:'min7',          name:'Minor 7',     intervals:[0,3,7,10],    intervals_str:'1-b3-5-b7', degrees:'1 b3 5 b7',  color:'#8B6BA3' },
+            { id:'dom7',          name:'Dominant 7',  intervals:[0,4,7,10],    intervals_str:'1-3-5-b7',  degrees:'1 3 5 b7',   color:'#FF8000' },
+            { id:'dim7',          name:'Dim 7',       intervals:[0,3,6,9],     intervals_str:'1-b3-b5-bb7',degrees:'1 b3 b5 bb7',color:'#FF0000' },
+            { id:'halfdim7',      name:'Half Dim 7',  intervals:[0,3,6,10],    intervals_str:'1-b3-b5-b7',degrees:'1 b3 b5 b7', color:'#CF7A5A' },
+            { id:'augmaj7',       name:'Aug Maj 7',   intervals:[0,4,8,11],    intervals_str:'1-3-#5-7',  degrees:'1 3 #5 7',   color:'#00FF80' },
+            // Extended
+            { id:'maj9',          name:'Major 9',     intervals:[0,4,7,11,2],  intervals_str:'1-3-5-7-9', degrees:'1 3 5 7 9',  color:'#F4D03F' },
+            { id:'min9',          name:'Minor 9',     intervals:[0,3,7,10,2],  intervals_str:'1-b3-5-b7-9',degrees:'1 b3 5 b7 9',color:'#8B6BA3' },
+            { id:'dom9',          name:'Dominant 9',  intervals:[0,4,7,10,2],  intervals_str:'1-3-5-b7-9',degrees:'1 3 5 b7 9', color:'#FF8000' },
+            { id:'maj11',         name:'Major 11',    intervals:[0,4,7,11,2,5],intervals_str:'1-3-5-7-9-11',degrees:'1 3 5 7 9 11',color:'#00c0c0' },
+            { id:'dom13',         name:'Dom 13',      intervals:[0,4,7,10,2,5,9],intervals_str:'1-3-5-b7-9-11-13',degrees:'1 3 5 b7 9 11 13',color:'#007FFF' },
+        ]
+    };
+
+    // ── State ────────────────────────────────────────────────
+    let currentCat       = 'scales';
+    let currentStencil   = null;
+    let currentStencilRoot = 0;   // 0 = C
+    let stencilRotateDeg = 0;     // current rotation in degrees (0=C at top)
+    let isDragging       = false;
+    let dragStartAngle   = 0;
+    let dragStartRot     = 0;
+
+    // ── Build mini SVG preview for shape button ───────────────
+    function buildMiniStar(intervals, color) {
+        const s = 36, c = 18, r = 14, ri = 7;
+        const pts = intervals.map(iv => {
+            const a = (iv * 30 - 90) * Math.PI / 180;
+            return { x: c + r * Math.cos(a), y: c + r * Math.sin(a) };
+        });
+        // inner vertices between each outer point
+        let pathD = '';
+        const n = pts.length;
+        if (n < 3) {
+            // chord: just dots
+            pts.forEach(p => { pathD += `M ${p.x} ${p.y} `; });
+        } else {
+            // star: outer->inner->outer...
+            for (let i = 0; i < n; i++) {
+                const p1 = pts[i];
+                const p2 = pts[(i+1) % n];
+                const midAngle = Math.atan2((p1.y+p2.y)/2 - c, (p1.x+p2.x)/2 - c);
+                const innerX = c + ri * Math.cos(midAngle);
+                const innerY = c + ri * Math.sin(midAngle);
+                if (i === 0) pathD += `M ${p1.x.toFixed(1)} ${p1.y.toFixed(1)} `;
+                pathD += `L ${innerX.toFixed(1)} ${innerY.toFixed(1)} L ${p2.x.toFixed(1)} ${p2.y.toFixed(1)} `;
+            }
+            pathD += 'Z';
+        }
+        return `<svg width="${s}" height="${s}" viewBox="0 0 ${s} ${s}" xmlns="http://www.w3.org/2000/svg">
+            <path d="${pathD}" fill="${color}55" stroke="${color}" stroke-width="1.5" stroke-linejoin="round"/>
+            ${pts.map(p=>`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="2.5" fill="${color}"/>`).join('')}
+        </svg>`;
+    }
+
+    // ── Render shape grid ────────────────────────────────────
+    function renderGrid() {
+        const grid = document.getElementById('kcmStencilGrid');
+        if (!grid) return;
+        const list = STENCIL_LIBRARY[currentCat] || [];
+        grid.innerHTML = list.map(s => `
+            <button class="kcm-stencil-shape-btn${currentStencil && currentStencil.id===s.id?' active':''}"
+                data-stencil-id="${s.id}" data-cat="${currentCat}">
+                <div class="kcm-shape-mini">${buildMiniStar(s.intervals, s.color)}</div>
+                <div class="kcm-shape-label">${s.name}</div>
+            </button>
+        `).join('');
+        grid.querySelectorAll('.kcm-stencil-shape-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const id  = this.dataset.stencilId;
+                const cat = this.dataset.cat;
+                const def = STENCIL_LIBRARY[cat].find(x => x.id === id);
+                if (def) selectStencil(def);
+            });
+        });
+    }
+
+    // ── Build key ring ───────────────────────────────────────
+    function buildKeyRing() {
+        const ring = document.getElementById('kcmKeyRing');
+        if (!ring) return;
+        const names = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+        ring.innerHTML = names.map((n,i) => `
+            <button class="kcm-key-pill${i===currentStencilRoot?' active':''}" data-pc="${i}">${n}</button>
+        `).join('');
+        ring.querySelectorAll('.kcm-key-pill').forEach(btn => {
+            btn.addEventListener('click', function() {
+                currentStencilRoot = parseInt(this.dataset.pc);
+                ring.querySelectorAll('.kcm-key-pill').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                // Sync MTP root note
+                if (typeof window._setKeyGlobal === 'function') window._setKeyGlobal(currentStencilRoot);
+                stencilRotateDeg = currentStencilRoot * 30;
+                drawStencil();
+                updateLabelBlock();
+            });
+        });
+    }
+
+    // ── Draw stencil SVG ─────────────────────────────────────
+    function drawStencil() {
+        const svg = document.getElementById('kcmStencilSVG');
+        if (!svg) return;
+        svg.innerHTML = '';
+
+        if (!currentStencil) return;
+
+        const intervals = currentStencil.intervals;
+        const color     = currentStencil.color;
+        const rootPc    = currentStencilRoot;
+        const n         = intervals.length;
+
+        // Resolve actual pitch classes
+        const pcs = intervals.map(iv => (rootPc + iv) % 12);
+
+        // Outer points: positions of each note on the circle
+        const outerPts = pcs.map(pc => {
+            const a = noteAngle(pc);
+            return { x: CX + R_OUTER * Math.cos(a), y: CY + R_OUTER * Math.sin(a), pc };
+        });
+
+        // Inner vertices: midpoint angle between consecutive outer points, at inner radius
+        function innerVertex(p1, p2) {
+            const a1 = Math.atan2(p1.y - CY, p1.x - CX);
+            const a2 = Math.atan2(p2.y - CY, p2.x - CX);
+            // Pick shorter arc
+            let mid = (a1 + a2) / 2;
+            if (Math.abs(a2 - a1) > Math.PI) mid += Math.PI;
+            return { x: CX + R_INNER * Math.cos(mid), y: CY + R_INNER * Math.sin(mid) };
+        }
+
+        // Build star path: outer → inner → outer → inner ...
+        let pathParts = [];
+        for (let i = 0; i < n; i++) {
+            const op  = outerPts[i];
+            const op2 = outerPts[(i+1) % n];
+            const ip  = innerVertex(op, op2);
+            if (i === 0) pathParts.push(`M ${op.x.toFixed(2)} ${op.y.toFixed(2)}`);
+            pathParts.push(`L ${ip.x.toFixed(2)} ${ip.y.toFixed(2)}`);
+            pathParts.push(`L ${op2.x.toFixed(2)} ${op2.y.toFixed(2)}`);
+        }
+        pathParts.push('Z');
+        const pathD = pathParts.join(' ');
+
+        // ── Draw inner circle guide (subtle) ──
+        const innerCircle = document.createElementNS('http://www.w3.org/2000/svg','circle');
+        innerCircle.setAttribute('cx', CX); innerCircle.setAttribute('cy', CY);
+        innerCircle.setAttribute('r', R_INNER);
+        innerCircle.setAttribute('fill','none');
+        innerCircle.setAttribute('stroke', color + '22');
+        innerCircle.setAttribute('stroke-width','1');
+        innerCircle.setAttribute('stroke-dasharray','4 4');
+        svg.appendChild(innerCircle);
+
+        // ── Draw star fill ──
+        const fill = document.createElementNS('http://www.w3.org/2000/svg','path');
+        fill.setAttribute('d', pathD);
+        fill.setAttribute('fill', color + '22');
+        fill.setAttribute('stroke', color);
+        fill.setAttribute('stroke-width','2.5');
+        fill.setAttribute('stroke-linejoin','round');
+        fill.setAttribute('opacity','0.9');
+        svg.appendChild(fill);
+
+        // ── Connecting lines from center to each outer point ──
+        outerPts.forEach((op, i) => {
+            const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+            line.setAttribute('x1', CX); line.setAttribute('y1', CY);
+            line.setAttribute('x2', op.x.toFixed(2)); line.setAttribute('y2', op.y.toFixed(2));
+            line.setAttribute('stroke', i===0 ? '#F4D03F' : color);
+            line.setAttribute('stroke-width', i===0 ? '2' : '1');
+            line.setAttribute('stroke-dasharray', i===0 ? 'none' : '5 4');
+            line.setAttribute('opacity','0.35');
+            svg.appendChild(line);
+        });
+
+        // ── Draw outer point circles (note dots) ──
+        outerPts.forEach((op, i) => {
+            const isRoot = (i === 0);
+            // Glow ring for root
+            if (isRoot) {
+                const glow = document.createElementNS('http://www.w3.org/2000/svg','circle');
+                glow.setAttribute('cx', op.x.toFixed(2)); glow.setAttribute('cy', op.y.toFixed(2));
+                glow.setAttribute('r','28');
+                glow.setAttribute('fill','#F4D03F11');
+                glow.setAttribute('stroke','#F4D03F');
+                glow.setAttribute('stroke-width','1.5');
+                glow.setAttribute('opacity','0.6');
+                svg.appendChild(glow);
+            }
+            const dot = document.createElementNS('http://www.w3.org/2000/svg','circle');
+            dot.setAttribute('cx', op.x.toFixed(2)); dot.setAttribute('cy', op.y.toFixed(2));
+            dot.setAttribute('r', isRoot ? '18' : '13');
+            dot.setAttribute('fill', KCM_COLORS[op.pc]);
+            dot.setAttribute('stroke', isRoot ? '#F4D03F' : 'rgba(255,255,255,0.6)');
+            dot.setAttribute('stroke-width', isRoot ? '3.5' : '2');
+            dot.setAttribute('filter', isRoot ? 'url(#rootGlow)' : '');
+            svg.appendChild(dot);
+
+            // Degree label inside dot
+            const txt = document.createElementNS('http://www.w3.org/2000/svg','text');
+            txt.setAttribute('x', op.x.toFixed(2)); txt.setAttribute('y', (op.y + 4.5).toFixed(2));
+            txt.setAttribute('text-anchor','middle');
+            txt.setAttribute('font-size', isRoot ? '11' : '9');
+            txt.setAttribute('font-weight','900');
+            txt.setAttribute('font-family','Montserrat,sans-serif');
+            txt.setAttribute('fill', KCM_TEXT[op.pc]);
+            txt.setAttribute('pointer-events','none');
+            // Show degree
+            const degLabels = currentStencil.degrees.split(' ');
+            txt.textContent = degLabels[i] || String(i+1);
+            svg.appendChild(txt);
+        });
+
+        // ── Inner vertex dots (subtle) ──
+        for (let i = 0; i < n; i++) {
+            const ip = innerVertex(outerPts[i], outerPts[(i+1) % n]);
+            const idot = document.createElementNS('http://www.w3.org/2000/svg','circle');
+            idot.setAttribute('cx', ip.x.toFixed(2)); idot.setAttribute('cy', ip.y.toFixed(2));
+            idot.setAttribute('r','4');
+            idot.setAttribute('fill', color + '55');
+            idot.setAttribute('stroke', color + '88');
+            idot.setAttribute('stroke-width','1');
+            svg.appendChild(idot);
+        }
+
+        // ── SVG defs: glow filter ──
+        const defs = document.createElementNS('http://www.w3.org/2000/svg','defs');
+        defs.innerHTML = `<filter id="rootGlow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="4" result="blur"/>
+            <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+        </filter>`;
+        svg.insertBefore(defs, svg.firstChild);
+
+        // ── Drag handle: invisible circle over the SVG for rotation drag ──
+        const dragTarget = document.createElementNS('http://www.w3.org/2000/svg','circle');
+        dragTarget.setAttribute('cx', CX); dragTarget.setAttribute('cy', CY);
+        dragTarget.setAttribute('r', R_OUTER + 10);
+        dragTarget.setAttribute('fill','transparent');
+        dragTarget.setAttribute('stroke','none');
+        dragTarget.setAttribute('style','cursor:grab; pointer-events:all;');
+        dragTarget.setAttribute('id','kcmStencilDragTarget');
+        svg.appendChild(dragTarget);
+        svg.style.pointerEvents = 'all';
+
+        // Wire drag on the SVG drag target
+        setupDrag();
+
+        // Highlight spheres in MTP circle + sync panels
+        highlightMTPNotes(pcs);
+    }
+
+    // ── Drag to rotate ───────────────────────────────────────
+    function setupDrag() {
+        const svg = document.getElementById('kcmStencilSVG');
+        if (!svg || svg._dragWired) return;
+        svg._dragWired = true;
+
+        function getAngle(e) {
+            const rect = svg.getBoundingClientRect();
+            const touch = e.touches ? e.touches[0] : e;
+            const x = touch.clientX - rect.left - (rect.width  * CX / 500);
+            const y = touch.clientY - rect.top  - (rect.height * CY / 500);
+            return Math.atan2(y, x) * 180 / Math.PI;
+        }
+
+        function onStart(e) {
+            isDragging = true;
+            dragStartAngle = getAngle(e);
+            dragStartRot   = stencilRotateDeg;
+            svg.style.cursor = 'grabbing';
+            e.preventDefault();
+        }
+        function onMove(e) {
+            if (!isDragging) return;
+            e.preventDefault();
+            const diff = getAngle(e) - dragStartAngle;
+            let newRot = dragStartRot + diff;
+            // Snap to nearest 30°
+            const snapped = Math.round(newRot / 30) * 30;
+            const newRoot = ((Math.round(snapped / 30) % 12) + 12) % 12;
+            if (newRoot !== currentStencilRoot) {
+                currentStencilRoot = newRoot;
+                stencilRotateDeg   = newRoot * 30;
+                // Sync key ring
+                document.querySelectorAll('.kcm-key-pill').forEach(b => {
+                    b.classList.toggle('active', parseInt(b.dataset.pc) === currentStencilRoot);
+                });
+                if (typeof window._setKeyGlobal === 'function') window._setKeyGlobal(currentStencilRoot);
+                drawStencil();
+                updateLabelBlock();
+            }
+        }
+        function onEnd() {
+            isDragging = false;
+            svg.style.cursor = 'grab';
+        }
+
+        svg.addEventListener('mousedown',  onStart);
+        svg.addEventListener('touchstart', onStart, { passive: false });
+        window.addEventListener('mousemove',  onMove);
+        window.addEventListener('touchmove',  onMove, { passive: false });
+        window.addEventListener('mouseup',    onEnd);
+        window.addEventListener('touchend',   onEnd);
+    }
+
+    // ── Highlight notes on MTP circle + piano + guitar ───────
+    function highlightMTPNotes(pcs) {
+        // Light the spheres
+        document.querySelectorAll('.sphere').forEach(s => {
+            const pc = parseInt(s.dataset.note);
+            s.classList.remove('active','included','excluded','playing');
+            if (pc === pcs[0]) {
+                s.classList.add('active');
+            } else if (pcs.includes(pc)) {
+                s.classList.add('included');
+            } else {
+                s.classList.add('excluded');
+            }
+        });
+        // Sync piano + guitar via MTP window functions
+        if (typeof window.updatePianoDisplay  === 'function') {
+            // Temporarily override revealedNotes — we use a soft approach
+            // by directly styling piano keys
+            const allKeys = document.querySelectorAll('.white-key, .black-key');
+            allKeys.forEach(k => {
+                const pc = parseInt(k.dataset.note);
+                k.style.background  = '';
+                k.style.borderColor = '';
+                k.style.borderWidth = '';
+                k.style.boxShadow   = '';
+                if (pc === pcs[0]) {
+                    const col = KCM_COLORS[pc];
+                    k.style.background  = col;
+                    k.style.borderColor = col;
+                    k.style.borderWidth = '3px';
+                    k.style.boxShadow   = `0 0 18px ${col}, 0 0 36px ${col}88`;
+                } else if (pcs.includes(pc)) {
+                    const col = KCM_COLORS[pc];
+                    k.style.background  = col;
+                    k.style.borderColor = col;
+                    k.style.borderWidth = '2px';
+                    k.style.boxShadow   = `0 0 12px ${col}cc`;
+                }
+            });
+        }
+        if (typeof window.updateGuitarDisplay === 'function') {
+            const pcSet = new Set(pcs);
+            document.querySelectorAll('.fb-cell').forEach(cell => {
+                const pc = parseInt(cell.dataset.note);
+                cell.classList.toggle('fb-on',  pcSet.has(pc));
+                cell.classList.toggle('fb-off', !pcSet.has(pc));
+            });
+        }
+        if (typeof window.updateStaffNotation === 'function') {
+            window.updateStaffNotation(pcs);
+        }
+    }
+
+    // ── Update label block ───────────────────────────────────
+    function updateLabelBlock() {
+        const nameEl      = document.getElementById('slName');
+        const notesEl     = document.getElementById('slNotes');
+        const intervalsEl = document.getElementById('slIntervals');
+        const degreesEl   = document.getElementById('slDegrees');
+        if (!nameEl) return;
+
+        if (!currentStencil) {
+            nameEl.textContent      = '— Select a Stencil —';
+            notesEl.innerHTML       = '&nbsp;';
+            intervalsEl.innerHTML   = '&nbsp;';
+            degreesEl.innerHTML     = '&nbsp;';
+            return;
+        }
+
+        const rootPc  = currentStencilRoot;
+        const rootStr = NOTE_NAMES[rootPc];
+        const pcs     = currentStencil.intervals.map(iv => (rootPc + iv) % 12);
+        const noteStr = pcs.map(pc => noteName(pc, rootPc)).join('  ');
+
+        nameEl.textContent      = `${rootStr} ${currentStencil.name}`;
+        notesEl.textContent     = noteStr;
+        intervalsEl.textContent = currentStencil.intervals_str;
+        degreesEl.textContent   = currentStencil.degrees;
+    }
+
+    // ── Select a stencil ────────────────────────────────────
+    function selectStencil(def) {
+        currentStencil = def;
+        renderGrid();
+        drawStencil();
+        updateLabelBlock();
+    }
+
+    // ── Playback — self-contained sequencer using window.playNote ────
+    const _stencilTimers = [];
+    function _stencilCancelAll() {
+        while (_stencilTimers.length) clearTimeout(_stencilTimers.pop());
+    }
+    function stencilPlay(direction) {
+        if (!currentStencil) { alert('Select a stencil first!'); return; }
+        if (typeof window.playNote !== 'function') {
+            alert('Click START AUDIO ENGINE first!'); return;
+        }
+
+        _stencilCancelAll();
+
+        const rootPc   = currentStencilRoot;
+        const intervals = currentStencil.intervals;
+
+        // Build ascending pitch sequence with proper octaves
+        const upSeq = [];
+        let oct = 4, prevMidi = -1;
+        intervals.forEach(iv => {
+            const pc   = (rootPc + iv) % 12;
+            let midi   = (oct + 1) * 12 + pc;
+            while (midi <= prevMidi) { oct++; midi = (oct + 1) * 12 + pc; }
+            upSeq.push({ pc, oct });
+            prevMidi = midi;
+        });
+
+        const seq    = direction === 'down' ? [...upSeq].reverse() : upSeq;
+        const bpm    = typeof window.currentBPM !== 'undefined' ? window.currentBPM : 100;
+        const beatMs = 60000 / bpm;
+        const noteDur = (beatMs * 0.78) / 1000;
+
+        seq.forEach(({ pc, oct }, i) => {
+            const delay = i * beatMs;
+
+            // Sound
+            const t = setTimeout(() => {
+                window.playNote(pc, oct, noteDur);
+            }, delay);
+            _stencilTimers.push(t);
+
+            // Visual ON — pulse the sphere
+            const tOn = setTimeout(() => {
+                document.querySelectorAll('.sphere').forEach(s => {
+                    const spc = parseInt(s.dataset.note);
+                    s.classList.remove('playing');
+                    if (spc === pc) {
+                        s.classList.add('playing');
+                    }
+                });
+                // Piano flash
+                document.querySelectorAll('.white-key,.black-key').forEach(k => {
+                    k.style.background = ''; k.style.boxShadow = '';
+                    k.style.borderColor = ''; k.style.borderWidth = '';
+                });
+                document.querySelectorAll(
+                    `.white-key[data-note="${pc}"], .black-key[data-note="${pc}"]`
+                ).forEach(k => {
+                    k.style.background  = KCM_COLORS[pc];
+                    k.style.borderColor = KCM_COLORS[pc];
+                    k.style.borderWidth = '3px';
+                    k.style.boxShadow   = `0 0 20px ${KCM_COLORS[pc]}, 0 0 40px ${KCM_COLORS[pc]}88`;
+                });
+                // Staff
+                if (typeof window.updateStaffNotation === 'function') {
+                    window.updateStaffNotation([{ pc, oct }]);
+                }
+            }, delay);
+            _stencilTimers.push(tOn);
+
+            // Visual OFF
+            const tOff = setTimeout(() => {
+                document.querySelectorAll(`.sphere[data-note="${pc}"]`).forEach(s => {
+                    s.classList.remove('playing');
+                    s.classList.add('included');
+                    if (pc === rootPc) s.classList.add('active');
+                });
+            }, delay + beatMs * 0.85);
+            _stencilTimers.push(tOff);
+        });
+
+        // Restore full highlight after sequence ends
+        const tEnd = setTimeout(() => {
+            highlightMTPNotes(intervals.map(iv => (rootPc + iv) % 12));
+            if (typeof window.updateStaffNotation === 'function') {
+                window.updateStaffNotation(intervals.map(iv => (rootPc + iv) % 12));
+            }
+        }, seq.length * beatMs + 200);
+        _stencilTimers.push(tEnd);
+    }
+
+    // ── Wire view toggle for stencil tab ─────────────────────
+    function wireViewToggle() {
+        // MTP's updateView function already handles show/hide of panels.
+        // We need to patch it to also handle the stencil panel.
+        const origUpdateView = window.updateView;
+        // updateView already patched directly in MTP function above — no wrapper needed
+    }
+
+    // ── Init ─────────────────────────────────────────────────
+    function initStencil() {
+        // Build tabs
+        document.querySelectorAll('.kcm-stencil-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.kcm-stencil-tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                currentCat = this.dataset.cat;
+                currentStencil = null;
+                renderGrid();
+                updateLabelBlock();
+                const svg = document.getElementById('kcmStencilSVG');
+                if (svg) svg.innerHTML = '';
+            });
+        });
+
+        buildKeyRing();
+        renderGrid();
+        updateLabelBlock();
+
+        // Play buttons
+        const ascBtn  = document.getElementById('kcmStencilAscend');
+        const descBtn = document.getElementById('kcmStencilDescend');
+        if (ascBtn)  ascBtn.addEventListener('click',  () => stencilPlay('up'));
+        if (descBtn) descBtn.addEventListener('click', () => stencilPlay('down'));
+
+        wireViewToggle();
+    }
+
+    // Wait for MTP to finish init before wiring
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => setTimeout(initStencil, 400));
+    } else {
+        setTimeout(initStencil, 400);
+    }
+
+})();
+// ============================================================
+// END KCM STENCIL SYSTEM™
+// ============================================================
+
 </script>
 
 </body>
