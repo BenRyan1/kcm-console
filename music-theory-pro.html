@@ -2787,6 +2787,8 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         function createSpheres() {
             const circle = document.getElementById('chromaticCircle');
             if (!circle) return;
+            var _w = circle.getBoundingClientRect().width;
+            if (_w < 10) { setTimeout(createSpheres, 80); return; }
             // If spheres already pre-rendered in HTML, reposition + wire up click handlers
             const existing = circle.querySelectorAll('.sphere');
             if (existing.length === 12) {
