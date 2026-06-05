@@ -1399,7 +1399,7 @@ input[type="range"]::-webkit-slider-thumb {
     .logo-text h1 { font-size: 1rem; }
     nav ul { gap: 0.6rem; }
     nav a { font-size: 0.75rem; }
-    #chromaticCircle { width: 300px !important; height: 300px !important; }
+    /* circle size handled by transform scale below */
     #staffNotation { width: min(300px, 90%); }
     .sphere { width: 38px !important; height: 38px !important; font-size: 9px !important; line-height: 1.1 !important; }
     /* Extra-small: stack tab buttons vertically */
@@ -1642,6 +1642,16 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
 .kcm-stencil-play-btn:hover { transform: translateY(-2px); filter: brightness(1.15); }
 .kcm-stencil-play-btn.ascend  { background: linear-gradient(135deg, #27ae60, #1e8449); }
 .kcm-stencil-play-btn.descend { background: linear-gradient(135deg, #2980b9, #1a6a9a); }
+
+/* ── KCM MOBILE FIX — true responsive circle ── */
+@media (max-width: 540px) {
+    #chromaticCircle {
+        width: 300px !important;
+        height: 300px !important;
+        transform: none !important;
+        margin: 0.5rem auto !important;
+    }
+}
 </style>
 </head>
 <body>
@@ -2421,7 +2431,7 @@ window.addEventListener('unhandledrejection', function(event) {
                         if (initialNotes.length > 0) updateStaffNotation(initialNotes);
                         else updateStaffNotation([rootNote]);
                     } catch(e) { console.error('Deferred init error:', e); }
-                }, 1000);
+                }, 200);
             } catch(e) { console.error('Init error:', e); }
         }
 
@@ -2777,18 +2787,26 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         function createSpheres() {
             const circle = document.getElementById('chromaticCircle');
             if (!circle) return;
-            // If spheres already pre-rendered in HTML, just wire up click handlers
+            // If spheres already pre-rendered in HTML, reposition + wire up click handlers
             const existing = circle.querySelectorAll('.sphere');
             if (existing.length === 12) {
                 existing.forEach(s => {
                     const i = parseInt(s.dataset.note);
-                    s.setAttribute('role', 'button');
-                    s.setAttribute('tabindex', '0');
-                    s.setAttribute('aria-label', `Note ${noteNames[i]}`);
+                    // CSS transform orbit — works on any circle size, no JS measurement needed
+                    const deg = i * 30; // 0=C at top, clockwise
+                    s.style.position = 'absolute';
+                    s.style.top = '50%';
+                    s.style.left = '50%';
+                    const orbitTransform = `rotate(${deg}deg) translateY(-42%) rotate(-${deg}deg) translate(-50%, -50%)`;
+                    s.style.transform = orbitTransform;
+                    s.dataset.orbit = orbitTransform;
                     s.style.lineHeight = '1.2';
                     s.style.whiteSpace = 'pre-line';
                     s.style.textAlign = 'center';
                     s.style.fontSize = s.textContent.includes('\n') ? '13px' : '16px';
+                    s.setAttribute('role', 'button');
+                    s.setAttribute('tabindex', '0');
+                    s.setAttribute('aria-label', `Note ${noteNames[i]}`);
                     s.onclick = () => handleNoteClick(i);
                     s.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleNoteClick(i); }};
                 });
@@ -2797,8 +2815,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
             // Fallback: build spheres dynamically
             circle.innerHTML = '';
             const enharmonicLabels = ['C','C♯\nD♭','D','D♯\nE♭','E','F','F♯\nG♭','G','G♯\nA♭','A','A♯\nB♭','B'];
-            const w = circle.getBoundingClientRect().width || circle.offsetWidth || 0;
-            if (!w || w < 10) { setTimeout(createSpheres, 200); return; }
+            const w = circle.offsetWidth || parseInt(getComputedStyle(circle).width) || 500;
             const radius = w > 340 ? 185 : (w > 280 ? 125 : 110);
             const cx = w / 2;
             for (let i = 0; i < 12; i++) {
@@ -3804,7 +3821,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                         sphere.style.boxShadow = '';
                         sphere.style.opacity   = '';
                         sphere.style.filter    = '';
-                        sphere.style.transform = '';
+                        sphere.style.transform = sphere.dataset.orbit || '';
                         const noteIndex = parseInt(sphere.dataset.note);
                         if (wasExcluded || !selectedNotes.has(noteIndex)) {
                             sphere.classList.add('excluded');
