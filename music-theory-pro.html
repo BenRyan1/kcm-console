@@ -2449,7 +2449,7 @@ window.addEventListener('unhandledrejection', function(event) {
                         if (initialNotes.length > 0) updateStaffNotation(initialNotes);
                         else updateStaffNotation([rootNote]);
                     } catch(e) { console.error('Deferred init error:', e); }
-                }, 200);
+                }, 1000);
             } catch(e) { console.error('Init error:', e); }
         }
 
@@ -2825,7 +2825,8 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
             // Fallback: build spheres dynamically
             circle.innerHTML = '';
             const enharmonicLabels = ['C','C♯\nD♭','D','D♯\nE♭','E','F','F♯\nG♭','G','G♯\nA♭','A','A♯\nB♭','B'];
-            const w = circle.getBoundingClientRect().width || circle.offsetWidth || 300;
+            const w = circle.getBoundingClientRect().width || circle.offsetWidth || 0;
+            if (wc -l ~/Desktop/keys-codes-and-modes/music-theory-pro.html || w < 10) { setTimeout(createSpheres, 200); return; }
             const radius = w > 340 ? 185 : (w > 280 ? 125 : 110);
             const cx = w / 2;
             for (let i = 0; i < 12; i++) {
