@@ -1412,42 +1412,49 @@ input[type="range"]::-webkit-slider-thumb {
 
 /* ── KCM MOBILE SCALE FIX — additive only, zero existing code touched ── */
 @media (max-width: 600px) {
-    /* Force full width layout */
-    body { min-width: 100vw !important; overflow-x: hidden; }
-    .app-container, .main-content, #panelSwapZone { 
-        width: 100vw !important; 
-        max-width: 100vw !important;
-        padding-left: 0 !important;
-        padding-right: 0 !important;
+    /* Allow horizontal overflow so scaled circle isn't clipped */
+    body { overflow-x: hidden !important; }
+
+    /* Circle scaler wrapper — sits AROUND chromaticCircle */
+    .kcm-circle-scaler {
+        width: 100vw;
+        overflow: visible;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
     }
-    /* Circle — scale from center so all notes stay visible */
+
+    /* Scale circle from its own center — no clipping */
     #chromaticCircle {
-        display: block;
+        transform-origin: center center !important;
+        transform: scale(0.72) !important;
         margin: 0 auto !important;
-        transform-origin: top center;
-        transform: scale(0.65);
-        margin-bottom: -180px !important;
+        margin-bottom: -75px !important;
+        flex-shrink: 0;
     }
+
     /* Stencil wrap scales to match */
     #kcmStencilWrap {
-        display: block;
+        transform-origin: center center !important;
+        transform: scale(0.72) !important;
         margin: 0 auto !important;
-        transform-origin: top center;
-        transform: scale(0.65);
-        margin-bottom: -180px !important;
+        margin-bottom: -75px !important;
     }
+
     /* Piano scale down */
     .piano-outer {
         transform-origin: top center;
         transform: scale(0.55);
         margin-bottom: -140px !important;
     }
+
     /* Guitar scale down */
     #guitarFretboard {
         transform-origin: top center;
         transform: scale(0.58);
         margin-bottom: -115px !important;
     }
+
     /* Stencil grid wraps tighter */
     .kcm-stencil-shape-btn { min-width: 58px; padding: 6px 7px; }
     .kcm-shape-mini svg { width: 28px; height: 28px; }
@@ -1743,6 +1750,7 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
             <div id="panelSwapZone" style="width:100%;">
 
                 <!-- PANEL 1: CHROMATIC CIRCLE -->
+                <div class="kcm-circle-scaler">
                 <div id="chromaticCircle" style="margin:0 auto; display:block;" role="region" aria-label="Chromatic circle">
                     <div class="sphere" data-note="0"  style="left:215px;top:30px; background:#FFFF00;color:#000;font-size:16px;line-height:1.2;white-space:pre-line;text-align:center;">C</div>
                     <div class="sphere" data-note="1"  style="left:308px;top:55px; background:#FFC400;color:#000;font-size:13px;line-height:1.2;white-space:pre-line;text-align:center;">C♯&#10;D♭</div>
@@ -1756,7 +1764,8 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                     <div class="sphere" data-note="9"  style="left:30px; top:215px;background:#007FFF;color:#fff;font-size:16px;line-height:1.2;white-space:pre-line;text-align:center;">A</div>
                     <div class="sphere" data-note="10" style="left:55px; top:122px;background:#00FF80;color:#000;font-size:13px;line-height:1.2;white-space:pre-line;text-align:center;">A♯&#10;B♭</div>
                     <div class="sphere" data-note="11" style="left:122px;top:55px; background:#80FF00;color:#000;font-size:16px;line-height:1.2;white-space:pre-line;text-align:center;">B</div>
-                </div>
+                </div><!-- end chromaticCircle -->
+                </div><!-- end kcm-circle-scaler -->
 
                 <!-- PANEL 2: PIANO KEYBOARD -->
                 <div id="pianoKeyboard" style="margin:0 auto; width:100%;" role="region" aria-label="Piano keyboard">
