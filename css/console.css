@@ -539,6 +539,9 @@ body.bridge-test-mode #bridge-test-panel {
 .kcm-panel__body {
   flex: 1;
   overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
 }
 .kcm-panel.is-minimized .kcm-panel__body {
   height: 0;
