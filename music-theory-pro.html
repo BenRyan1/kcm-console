@@ -8635,8 +8635,10 @@ async function kcmAIAsk(type) {
         degreesEl.textContent   = currentStencil.degrees;
         const semiEl = document.getElementById('slSemitones');
         if (semiEl) {
-            const semi = currentStencil.intervals_str.replace(/WH/g,'3').replace(/W/g,'2').replace(/H/g,'1').replace(/A/g,'3');
-            semiEl.textContent = semi;
+            const ivs = currentStencil.intervals;
+            const steps = [];
+            for (let i = 1; i < ivs.length; i++) steps.push(((ivs[i]-ivs[i-1]+12)%12));
+            semiEl.textContent = steps.join('  ');
         }
     }
 
