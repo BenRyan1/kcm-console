@@ -8631,15 +8631,13 @@ async function kcmAIAsk(type) {
 
         nameEl.textContent      = `${rootStr} ${currentStencil.name}`;
         notesEl.textContent     = noteStr;
-        intervalsEl.textContent = currentStencil.intervals_str;
+        const ivs = currentStencil.intervals;
+        const steps = [];
+        for (let i = 1; i < ivs.length; i++) steps.push(((ivs[i]-ivs[i-1]+12)%12));
+        intervalsEl.textContent = steps.join('  ');
         degreesEl.textContent   = currentStencil.degrees;
         const semiEl = document.getElementById('slSemitones');
-        if (semiEl) {
-            const ivs = currentStencil.intervals;
-            const steps = [];
-            for (let i = 1; i < ivs.length; i++) steps.push(((ivs[i]-ivs[i-1]+12)%12));
-            semiEl.textContent = steps.join('  ');
-        }
+        if (semiEl) semiEl.textContent = steps.join('  ');
     }
 
     // ── Select a stencil ────────────────────────────────────
