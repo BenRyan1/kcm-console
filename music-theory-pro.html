@@ -1470,9 +1470,10 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
     overflow: visible;
 }
 @media (max-width: 540px) {
-    .kcm-stencil-wrap { width: 220px; height: 220px; }
-    #kcmStencilSVG { width: 220px; height: 220px; }
-    .kcm-stencil-circle-bg { width: 220px; height: 220px; }
+    .kcm-stencil-wrap { width: 220px !important; height: 220px !important; overflow: hidden; margin: 0 auto; }
+    #kcmStencilSVG { width: 220px !important; height: 220px !important; }
+    .kcm-stencil-circle-bg { width: 220px !important; height: 220px !important; }
+    #kcmStencilPanel { overflow: hidden; width: 100%; }
 }
 /* Stencil ghost circle behind for sizing reference */
 .kcm-stencil-circle-bg {
