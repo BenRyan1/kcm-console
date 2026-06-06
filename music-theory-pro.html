@@ -225,7 +225,10 @@ body {
     line-height: 1.6;
     min-height: 100vh;
     touch-action: manipulation;
+    overflow-x: hidden;
+    width: 100%;
 }
+html { overflow-x: hidden; }
 
 /* ============================================================
    SITE HEADER (matches keyscodesandmodes.com)
@@ -308,6 +311,8 @@ nav a.active { color: var(--primary-teal); }
     max-width: 1400px;
     margin: 0 auto;
     padding: 1.5rem 1.5rem 3rem;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 /* ============================================================
@@ -332,11 +337,11 @@ nav a.active { color: var(--primary-teal); }
     transition: all 0.3s;
 }
 #startAudio:hover { transform: translateY(-3px); box-shadow: 0 10px 35px rgba(231,76,60,0.6); }
-#startAudio:disabled { cursor: default; opacity: 0.7; }
-#startAudio:not(:disabled) { animation: audioButtonPulse 2s ease-in-out infinite; }
-@keyframes audioButtonPulse {
-    0%, 100% { box-shadow: 0 6px 25px rgba(231,76,60,0.5), 0 0 0 0 rgba(231,76,60,0.4); }
-    50% { box-shadow: 0 6px 25px rgba(231,76,60,0.7), 0 0 0 12px rgba(231,76,60,0); }
+#startAudio:disabled { cursor: default; opacity: 0.7; animation: none !important; }
+#startAudio:not(:disabled) { animation: audioButtonBlink 1s step-end infinite; }
+@keyframes audioButtonBlink {
+    0%, 100% { opacity: 1; box-shadow: 0 6px 25px rgba(231,76,60,0.8), 0 0 20px rgba(231,76,60,0.6); }
+    50%       { opacity: 0.25; box-shadow: none; }
 }
 
 /* ============================================================
@@ -1380,8 +1385,9 @@ input[type="range"]::-webkit-slider-thumb {
     nav ul { gap: 1rem; justify-content: center; }
     nav a { font-size: 0.82rem; }
     .app-title-banner h2 { font-size: 1.5rem; }
-    .app-container { padding: 1rem 0.75rem 2rem; }
+    .app-container { padding: 1rem 0.5rem 2rem; }
     #chromaticCircle { width: 340px; height: 340px; }
+    #startAudio { width: 92%; padding: 1rem 1rem; font-size: 1rem; }
     #staffNotation { width: min(340px, 90%); }
     .sphere { width: 50px; height: 50px; font-size: 11px; }
     .view-btn { font-size: 0.72rem; padding: 0.55rem 0.85rem; }
@@ -1697,7 +1703,7 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
 <div class="app-title-banner">
     <h2>🎵 Music Theory Explorer Pro</h2>
     <p>Interactive Music Learning · Chromatic Circle · Piano · Guitar · Ear Training · MIDI Support</p>
-    <button id="startAudio" aria-label="Start audio engine">🔊 START AUDIO ENGINE</button>
+    <button id="startAudio" aria-label="Start audio engine">🔊 Press Here First — To Start Audio Engine</button>
     <p style="font-size:0.72rem; color:rgba(232,232,232,0.55); margin-top:0.5rem; font-family:var(--font-body);">👆 Click this first to enable sound</p>
 </div>
 
@@ -1851,6 +1857,7 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                         <button class="kcm-stencil-tab active" data-cat="scales">Scales</button>
                         <button class="kcm-stencil-tab" data-cat="modes">Modes</button>
                         <button class="kcm-stencil-tab" data-cat="chords">Chords</button>
+                        <button class="kcm-stencil-tab" data-cat="thirteenths">13ths</button>
                     </div>
 
                     <!-- Shape Grid -->
@@ -8634,7 +8641,7 @@ async function kcmAIAsk(type) {
         const ivs = currentStencil.intervals;
         const steps = [];
         for (let i = 1; i < ivs.length; i++) steps.push(((ivs[i]-ivs[i-1]+12)%12));
-        if (currentCat === 'chords') {
+        if (currentCat === 'chords' || currentCat === 'thirteenths') {
             intervalsEl.textContent = currentStencil.intervals_str;
         } else {
             const WH = {1:'H',2:'W',3:'WH',4:'3H',5:'4H'};
