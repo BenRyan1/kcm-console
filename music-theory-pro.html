@@ -2820,7 +2820,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                     const _x = _cx + _rad * Math.cos(_ang);
                     const _y = _cy + _rad * Math.sin(_ang);
                     const _sz = parseFloat(getComputedStyle(s).width) || 44;
-                    s.style.position = 'absolute';
+                    s.style.position = 'absolute'; s.style.boxShadow = '0 0 0 3px #0a0a15';
                     s.style.left = (_x - _sz/2) + 'px';
                     s.style.top  = (_y - _sz/2) + 'px';
                     s.style.transform = '';
