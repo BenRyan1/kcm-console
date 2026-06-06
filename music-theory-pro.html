@@ -2796,12 +2796,16 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                     const i = parseInt(s.dataset.note);
                     // CSS transform orbit — works on any circle size, no JS measurement needed
                     const deg = i * 30; // 0=C at top, clockwise
+                    const _r = circle.getBoundingClientRect().width;
+                    const _rad = _r * 0.38;
+                    const _ang = (deg - 90) * Math.PI / 180;
+                    const _x = _r/2 + _rad * Math.cos(_ang);
+                    const _y = _r/2 + _rad * Math.sin(_ang);
+                    const _sz = 44;
                     s.style.position = 'absolute';
-                    s.style.top = '50%';
-                    s.style.left = '50%';
-                    const orbitTransform = `rotate(${deg}deg) translateY(-42%) rotate(-${deg}deg) translate(-50%, -50%)`;
-                    s.style.transform = orbitTransform;
-                    s.dataset.orbit = orbitTransform;
+                    s.style.left = (_x - _sz/2) + 'px';
+                    s.style.top  = (_y - _sz/2) + 'px';
+                    s.style.transform = '';
                     s.style.lineHeight = '1.2';
                     s.style.whiteSpace = 'pre-line';
                     s.style.textAlign = 'center';
