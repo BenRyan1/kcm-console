@@ -1872,6 +1872,7 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                         <div class="sl-name" id="slName">— Select a Stencil —</div>
                         <div class="sl-notes" id="slNotes">&nbsp;</div>
                         <div class="sl-intervals" id="slIntervals">&nbsp;</div>
+                        <div class="sl-semitones" id="slSemitones">&nbsp;</div>
                         <div class="sl-degrees" id="slDegrees">&nbsp;</div>
                     </div>
 
@@ -8631,6 +8632,11 @@ async function kcmAIAsk(type) {
         notesEl.textContent     = noteStr;
         intervalsEl.textContent = currentStencil.intervals_str;
         degreesEl.textContent   = currentStencil.degrees;
+        const semiEl = document.getElementById('slSemitones');
+        if (semiEl) {
+            const semi = currentStencil.intervals_str.replace(/WH/g,'3').replace(/W/g,'2').replace(/H/g,'1').replace(/A/g,'3');
+            semiEl.textContent = semi;
+        }
     }
 
     // ── Select a stencil ────────────────────────────────────
