@@ -1467,6 +1467,11 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
     z-index: 10;
     overflow: visible;
 }
+@media (max-width: 540px) {
+    .kcm-stencil-wrap { width: 220px; height: 220px; }
+    #kcmStencilSVG { width: 220px; height: 220px; }
+    .kcm-stencil-circle-bg { width: 220px; height: 220px; }
+}
 /* Stencil ghost circle behind for sizing reference */
 .kcm-stencil-circle-bg {
     position: absolute;
@@ -1474,6 +1479,12 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
     width: 500px; height: 500px;
     border-radius: 50%;
     pointer-events: none;
+}
+@media (max-width: 540px) {
+    .kcm-stencil-wrap { width: 220px; height: 220px; }
+    #kcmStencilSVG { width: 220px; height: 220px; }
+    .kcm-stencil-circle-bg { width: 220px; height: 220px; }
+    #kcmStencilPanel { max-width: 100%; }
 }
 /* Category tabs */
 .kcm-stencil-tabs {
