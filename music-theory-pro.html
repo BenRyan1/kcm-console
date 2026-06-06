@@ -2810,7 +2810,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         function createSpheres() {
             const circle = document.getElementById('chromaticCircle');
             if (!circle) return;
-            var _w = circle.getBoundingClientRect().width;
+            var _w = circle.getBoundingClientRect().width || circle.offsetWidth || parseInt(getComputedStyle(circle).width) || 0;
             if (_w < 10) { setTimeout(createSpheres, 80); return; }
             // If spheres already pre-rendered in HTML, reposition + wire up click handlers
             const existing = circle.querySelectorAll('.sphere');
@@ -2826,7 +2826,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                     const _cy = _r / 2;
                     const _x = _cx + _rad * Math.cos(_ang);
                     const _y = _cy + _rad * Math.sin(_ang);
-                    const _sz = parseFloat(getComputedStyle(s).width) || 44;
+                    const _sz = s.getBoundingClientRect().width || parseFloat(getComputedStyle(s).width) || s.offsetWidth || 50;
                     s.style.position = 'absolute';
                     s.style.left = (_x - _sz/2) + 'px';
                     s.style.top  = (_y - _sz/2) + 'px';
