@@ -160,11 +160,12 @@ a:focus-visible { outline: 2px solid var(--primary-gold); outline-offset: 3px; }
 
 }
 @media (max-width: 768px) {
-  .kcm-main { padding: var(--space-sm) 0; }
-  .kcm-panels { margin: var(--space-sm) 0; }
+  .kcm-main { padding: 0.5rem 0; max-width: 100vw; }
+  .kcm-panels { margin: 0.5rem 0; }
+  .kcm-panel { border-radius: 0; margin-left: 0; margin-right: 0; }
 }
 @media (max-width: 540px) {
-  .kcm-main { padding: 0 0; width: 100vw; max-width: 100vw; }
+  .kcm-main { padding: 0; width: 100vw; max-width: 100vw; }
   .kcm-header__inner { padding: 0 0.5rem; gap: 0.5rem; }
   .kcm-panel__iframe { height: 700px; }
   .kcm-panel { border-radius: 0; margin: 0; width: 100vw; }
