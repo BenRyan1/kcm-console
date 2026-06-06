@@ -8634,7 +8634,12 @@ async function kcmAIAsk(type) {
         const ivs = currentStencil.intervals;
         const steps = [];
         for (let i = 1; i < ivs.length; i++) steps.push(((ivs[i]-ivs[i-1]+12)%12));
-        intervalsEl.textContent = steps.join('  ');
+        if (currentCat === 'chords') {
+            intervalsEl.textContent = currentStencil.intervals_str;
+        } else {
+            const WH = {1:'H',2:'W',3:'WH',4:'3H',5:'4H'};
+            intervalsEl.textContent = steps.map(s => WH[s]||s).join('  ');
+        }
         degreesEl.textContent   = currentStencil.degrees;
         const semiEl = document.getElementById('slSemitones');
         if (semiEl) semiEl.textContent = steps.join('  ');
