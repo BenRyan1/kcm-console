@@ -8442,6 +8442,8 @@ async function kcmAIAsk(type) {
             dot.setAttribute('stroke', isRoot ? '#F4D03F' : 'rgba(255,255,255,0.6)');
             dot.setAttribute('stroke-width', isRoot ? '3.5' : '2');
             dot.setAttribute('filter', isRoot ? 'url(#rootGlow)' : '');
+            dot.setAttribute('data-pc', op.pc);
+            dot.classList.add('stencil-note-dot');
             svg.appendChild(dot);
 
             // Degree label inside dot
@@ -8684,6 +8686,14 @@ async function kcmAIAsk(type) {
                     s.classList.remove('playing');
                     if (spc === pc) s.classList.add('playing');
                 });
+                // STENCIL DOT
+                document.querySelectorAll('.stencil-note-dot').forEach(d => {
+                    const dpc = parseInt(d.getAttribute('data-pc'));
+                    d.setAttribute('filter', dpc === pc ? 'url(#rootGlow)' : '');
+                    d.setAttribute('stroke', dpc === pc ? '#ffffff' : 'rgba(255,255,255,0.6)');
+                    d.setAttribute('stroke-width', dpc === pc ? '4' : '2');
+                    d.setAttribute('opacity', dpc === pc ? '1' : '0.6');
+                });
                 // PIANO
                 document.querySelectorAll('.white-key,.black-key').forEach(k => {
                     k.style.background = ''; k.style.boxShadow = '';
@@ -8716,6 +8726,17 @@ async function kcmAIAsk(type) {
                     s.classList.remove('playing');
                     s.classList.add('included');
                     if (pc === rootPc) s.classList.add('active');
+                });
+                // Restore stencil dot
+                document.querySelectorAll('.stencil-note-dot').forEach(d => {
+                    const dpc = parseInt(d.getAttribute('data-pc'));
+                    if (dpc === pc) {
+                        const isR = dpc === rootPc;
+                        d.setAttribute('filter', isR ? 'url(#rootGlow)' : '');
+                        d.setAttribute('stroke', isR ? '#F4D03F' : 'rgba(255,255,255,0.6)');
+                        d.setAttribute('stroke-width', isR ? '3.5' : '2');
+                        d.setAttribute('opacity', '1');
+                    }
                 });
             }, delay + beatMs * 0.82);
             _stencilTimers.push(tOff);
