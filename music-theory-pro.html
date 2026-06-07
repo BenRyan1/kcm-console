@@ -2621,19 +2621,16 @@ window.addEventListener('unhandledrejection', function(event) {
                 if (el('staffPlayBtn')) el('staffPlayBtn').onclick = () => {
                     if (!audioReady) { alert('Click START AUDIO ENGINE first!'); return; }
                     if (typeof window._stencilPlayUp === 'function' && window.currentStencil) {
-                        // Stencil shape is active — use stencil sequencer
+                        // Stencil shape active — use stencil sequencer
                         const bpm    = typeof currentBPM !== 'undefined' ? currentBPM : 100;
                         const beatMs = 60000 / bpm;
                         const len    = window.currentStencil.intervals.length;
                         window._stencilPlayUp();
                         setTimeout(() => window._stencilPlayDownNoCancel(), len * beatMs + 300);
                     } else {
-                        // Regular MTP view — play up then down
+                        // Regular MTP — 'scale' mode plays full up then down in one sequence
                         if (selectedNotes.size === 0) { alert('No notes selected!'); return; }
-                        playSelection('up');
-                        const bpm    = typeof currentBPM !== 'undefined' ? currentBPM : 100;
-                        const beatMs = 60000 / bpm;
-                        setTimeout(() => playSelection('down', true), selectedNotes.size * beatMs + 400);
+                        playSelection('scale');
                     }
                 };
                 if (el('globalStopBtn')) el('globalStopBtn').onclick = () => {
