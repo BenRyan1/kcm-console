@@ -1887,6 +1887,7 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                     <div class="kcm-stencil-play-row">
                         <button class="kcm-stencil-play-btn ascend"  id="kcmStencilAscend">▲ ASCEND</button>
                         <button class="kcm-stencil-play-btn descend" id="kcmStencilDescend">▼ DESCEND</button>
+                        <button class="kcm-stencil-play-btn" id="kcmStencilSimul" style="background:linear-gradient(135deg,#8B6BA3,#6a4f8c);">● SIMUL</button>
                     </div>
 
                 </div><!-- end kcmStencilPanel -->
@@ -1900,10 +1901,10 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                 <div style="display:flex;align-items:center;gap:0;">
                     <svg id="staffSVG" viewBox="0 0 220 135" preserveAspectRatio="xMidYMid meet" aria-hidden="true" style="flex-shrink:0;width:55%;"></svg>
                     <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:0 12px;">
-                        <button onclick="document.getElementById('globalPlayBtn').click()"
+                        <button id="staffPlayBtn"
                             style="width:100%;padding:10px 0;background:linear-gradient(135deg,#27ae60,#1e8449);color:#fff;border:2px solid #27ae60;border-radius:8px;font-family:'Cinzel',serif;font-size:0.8rem;font-weight:800;letter-spacing:1.5px;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 12px rgba(39,174,96,0.3);"
                             onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 20px rgba(39,174,96,0.5)'"
-                            onmouseout="this.style.transform='';this.style.boxShadow='0 4px 12px rgba(39,174,96,0.3)'">▶ PLAY</button>
+                            onmouseout="this.style.transform='';this.style.boxShadow='0 4px 12px rgba(39,174,96,0.3)'">▲▼ PLAY</button>
                         <button onclick="document.getElementById('globalStopBtn').click()"
                             style="width:100%;padding:10px 0;background:linear-gradient(135deg,#e74c3c,#c0392b);color:#fff;border:2px solid #e74c3c;border-radius:8px;font-family:'Cinzel',serif;font-size:0.8rem;font-weight:800;letter-spacing:1.5px;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 12px rgba(231,76,60,0.3);"
                             onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 20px rgba(231,76,60,0.5)'"
@@ -8824,11 +8825,73 @@ async function kcmAIAsk(type) {
         renderGrid();
         updateLabelBlock();
 
+    function stencilPlaySimul() {
+        if (!currentStencil) { alert('Select a stencil first!'); return; }
+        if (typeof window.playNote !== 'function') { alert('Click START AUDIO ENGINE first!'); return; }
+        _stencilCancelAll();
+        const rootPc   = currentStencilRoot;
+        const intervals = currentStencil.intervals;
+        // Build ascending sequence with correct octaves
+        const upSeq = [];
+        let oct = 4, prevMidi = -1;
+        intervals.forEach(iv => {
+            const pc = (rootPc + iv) % 12;
+            let midi = (oct + 1) * 12 + pc;
+            while (midi <= prevMidi) { oct++; midi = (oct + 1) * 12 + pc; }
+            upSeq.push({ pc, oct });
+            prevMidi = midi;
+        });
+        // Light up all notes at once
+        const allPcs = upSeq.map(n => n.pc);
+        upSeq.forEach(({ pc, oct }) => window.playNote(pc, oct, 2.5));
+        // Visual ON — all at once
+        document.querySelectorAll('.sphere').forEach(s => {
+            const spc = parseInt(s.dataset.note);
+            if (allPcs.includes(spc)) s.classList.add('playing');
+        });
+        document.querySelectorAll('.stencil-note-dot').forEach(d => {
+            const dpc = parseInt(d.getAttribute('data-pc'));
+            if (allPcs.includes(dpc)) {
+                d.setAttribute('filter', 'url(#rootGlow)');
+                d.setAttribute('stroke', '#ffffff');
+                d.setAttribute('stroke-width', '4');
+                d.setAttribute('opacity', '1');
+            }
+        });
+        document.querySelectorAll('.white-key,.black-key').forEach(k => {
+            const kpc = parseInt(k.dataset.note);
+            if (allPcs.includes(kpc)) {
+                k.style.background  = KCM_COLORS[kpc];
+                k.style.borderColor = KCM_COLORS[kpc];
+                k.style.borderWidth = '3px';
+                k.style.boxShadow   = `0 0 22px ${KCM_COLORS[kpc]}, 0 0 44px ${KCM_COLORS[kpc]}88`;
+            }
+        });
+        if (typeof window.updateStaffNotation === 'function') window.updateStaffNotation(allPcs);
+        // Visual OFF after 2.5s
+        const tOff = setTimeout(() => {
+            highlightMTPNotes(allPcs);
+            if (typeof window.updateStaffNotation === 'function') window.updateStaffNotation(allPcs);
+        }, 2600);
+        _stencilTimers.push(tOff);
+    }
+
         // Play buttons
-        const ascBtn  = document.getElementById('kcmStencilAscend');
-        const descBtn = document.getElementById('kcmStencilDescend');
-        if (ascBtn)  ascBtn.addEventListener('click',  () => stencilPlay('up'));
-        if (descBtn) descBtn.addEventListener('click', () => stencilPlay('down'));
+        const ascBtn   = document.getElementById('kcmStencilAscend');
+        const descBtn  = document.getElementById('kcmStencilDescend');
+        const simulBtn = document.getElementById('kcmStencilSimul');
+        const staffPlayBtn = document.getElementById('staffPlayBtn');
+        if (ascBtn)   ascBtn.addEventListener('click',  () => stencilPlay('up'));
+        if (descBtn)  descBtn.addEventListener('click', () => stencilPlay('down'));
+        if (simulBtn) simulBtn.addEventListener('click', () => stencilPlaySimul());
+        if (staffPlayBtn) staffPlayBtn.addEventListener('click', () => {
+            if (!audioReady && typeof audioReady !== 'undefined') { alert('Click START AUDIO ENGINE first!'); return; }
+            playSelection('up');
+            const bpm = typeof currentBPM !== 'undefined' ? currentBPM : 100;
+            const beatMs = 60000 / bpm;
+            const len = typeof selectedNotes !== 'undefined' && selectedNotes ? selectedNotes.length : 7;
+            setTimeout(() => playSelection('down'), len * beatMs + 400);
+        });
 
         wireViewToggle();
     }
