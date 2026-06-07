@@ -2618,6 +2618,14 @@ window.addEventListener('unhandledrejection', function(event) {
                     if (!audioReady) { alert('Click START AUDIO ENGINE first!'); return; }
                     playSelection('up');
                 };
+                if (el('staffPlayBtn')) el('staffPlayBtn').onclick = () => {
+                    if (!audioReady) { alert('Click START AUDIO ENGINE first!'); return; }
+                    playSelection('up');
+                    const bpm = typeof currentBPM !== 'undefined' ? currentBPM : 100;
+                    const beatMs = 60000 / bpm;
+                    const len = selectedNotes ? selectedNotes.size : 7;
+                    setTimeout(() => playSelection('down'), len * beatMs + 400);
+                };
                 if (el('globalStopBtn')) el('globalStopBtn').onclick = () => {
                     try {
                         _cancelAllPlay();
@@ -8880,18 +8888,9 @@ async function kcmAIAsk(type) {
         const ascBtn   = document.getElementById('kcmStencilAscend');
         const descBtn  = document.getElementById('kcmStencilDescend');
         const simulBtn = document.getElementById('kcmStencilSimul');
-        const staffPlayBtn = document.getElementById('staffPlayBtn');
         if (ascBtn)   ascBtn.addEventListener('click',  () => stencilPlay('up'));
         if (descBtn)  descBtn.addEventListener('click', () => stencilPlay('down'));
         if (simulBtn) simulBtn.addEventListener('click', () => stencilPlaySimul());
-        if (staffPlayBtn) staffPlayBtn.addEventListener('click', () => {
-            if (!audioReady && typeof audioReady !== 'undefined') { alert('Click START AUDIO ENGINE first!'); return; }
-            playSelection('up');
-            const bpm = typeof currentBPM !== 'undefined' ? currentBPM : 100;
-            const beatMs = 60000 / bpm;
-            const len = typeof selectedNotes !== 'undefined' && selectedNotes ? selectedNotes.length : 7;
-            setTimeout(() => playSelection('down'), len * beatMs + 400);
-        });
 
         wireViewToggle();
     }
