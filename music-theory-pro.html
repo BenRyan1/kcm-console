@@ -8399,6 +8399,17 @@ async function kcmAIAsk(type) {
         if (!svg) return;
         svg.innerHTML = '';
 
+        // Reference circle — always visible, shows the chromatic boundary
+        const refCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        refCircle.setAttribute('cx', CX);
+        refCircle.setAttribute('cy', CY);
+        refCircle.setAttribute('r', R_OUTER);
+        refCircle.setAttribute('fill', 'none');
+        refCircle.setAttribute('stroke', 'rgba(0,192,192,0.25)');
+        refCircle.setAttribute('stroke-width', '1.5');
+        refCircle.setAttribute('stroke-dasharray', '4 6');
+        svg.appendChild(refCircle);
+
         if (!currentStencil) return;
 
         const intervals = currentStencil.intervals;
