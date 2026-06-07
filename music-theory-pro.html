@@ -2620,16 +2620,20 @@ window.addEventListener('unhandledrejection', function(event) {
                 };
                 if (el('staffPlayBtn')) el('staffPlayBtn').onclick = () => {
                     if (!audioReady) { alert('Click START AUDIO ENGINE first!'); return; }
-                    if (typeof window._stencilPlayUp === 'function') {
-                        // Use stencil sequencer — same code as ASCEND/DESCEND buttons
+                    if (typeof window._stencilPlayUp === 'function' && window.currentStencil) {
+                        // Stencil shape is active — use stencil sequencer
                         const bpm    = typeof currentBPM !== 'undefined' ? currentBPM : 100;
                         const beatMs = 60000 / bpm;
-                        const len    = (window.currentStencil && window.currentStencil.intervals)
-                                       ? window.currentStencil.intervals.length : selectedNotes.size || 7;
+                        const len    = window.currentStencil.intervals.length;
                         window._stencilPlayUp();
                         setTimeout(() => window._stencilPlayDownNoCancel(), len * beatMs + 300);
                     } else {
+                        // Regular MTP view — play up then down
+                        if (selectedNotes.size === 0) { alert('No notes selected!'); return; }
                         playSelection('up');
+                        const bpm    = typeof currentBPM !== 'undefined' ? currentBPM : 100;
+                        const beatMs = 60000 / bpm;
+                        setTimeout(() => playSelection('down'), selectedNotes.size * beatMs + 400);
                     }
                 };
                 if (el('globalStopBtn')) el('globalStopBtn').onclick = () => {
@@ -6503,7 +6507,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 🎵 Key: <span id="dockKeyLabel">C</span>
             </button>
             <div class="dock-divider"></div>
-            <button class="dock-play-btn" onclick="document.getElementById('globalPlayBtn').click()" style="background:linear-gradient(135deg,#27ae60,#1e8449);">▶ Play</button>
+            <button class="dock-play-btn" onclick="document.getElementById('staffPlayBtn').click()" style="background:linear-gradient(135deg,#27ae60,#1e8449);">▶ Play</button>
             <button class="dock-play-btn" onclick="document.getElementById('globalStopBtn').click()" style="background:linear-gradient(135deg,#e74c3c,#c0392b);">■ Stop</button>
         </div>
 
