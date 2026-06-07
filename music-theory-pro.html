@@ -2633,7 +2633,7 @@ window.addEventListener('unhandledrejection', function(event) {
                         playSelection('up');
                         const bpm    = typeof currentBPM !== 'undefined' ? currentBPM : 100;
                         const beatMs = 60000 / bpm;
-                        setTimeout(() => playSelection('down'), selectedNotes.size * beatMs + 400);
+                        setTimeout(() => playSelection('down', true), selectedNotes.size * beatMs + 400);
                     }
                 };
                 if (el('globalStopBtn')) el('globalStopBtn').onclick = () => {
@@ -3628,10 +3628,10 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         }
 
         // ── playSelection: sequencer ───────────────────────────────
-        function playSelection(mode) {
+        function playSelection(mode, noCancel) {
             try {
                 if (!audioReady) { alert('Click START AUDIO ENGINE first!'); return; }
-                _cancelAllPlay();
+                if (!noCancel) _cancelAllPlay();
                 if (selectedNotes.size === 0) { alert('No notes selected!'); return; }
 
                 // iOS: ensure context is running
