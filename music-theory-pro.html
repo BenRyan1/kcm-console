@@ -2620,52 +2620,17 @@ window.addEventListener('unhandledrejection', function(event) {
                 };
                 if (el('staffPlayBtn')) el('staffPlayBtn').onclick = () => {
                     if (!audioReady) { alert('Click START AUDIO ENGINE first!'); return; }
-                    if (selectedNotes.size === 0) { alert('No notes selected!'); return; }
-                    _cancelAllPlay();
-                    if (audioContext.state === 'suspended') audioContext.resume();
-                    const beatMs  = 60000 / currentBPM;
-                    const beatSec = beatMs / 1000;
-                    const noteDur = beatSec * 0.78;
-                    const now     = audioContext.currentTime;
-                    // Build ascending sequence
-                    const allPcs = Array.from(selectedNotes).sort((a,b)=>a-b);
-                    const rIdx   = allPcs.indexOf(rootNote);
-                    const ordered = rIdx >= 0 ? [...allPcs.slice(rIdx), ...allPcs.slice(0,rIdx)] : [...allPcs];
-                    const upSeq = [];
-                    let oct = 4, prevMidi = -1;
-                    ordered.forEach(pc => {
-                        let midi = (oct+1)*12 + pc;
-                        while (midi <= prevMidi) { oct++; midi = (oct+1)*12 + pc; }
-                        upSeq.push({ pc, oct });
-                        prevMidi = midi;
-                    });
-                    const downSeq = [...upSeq].reverse();
-                    const fullSeq = [...upSeq, ...downSeq];
-                    revealedNotes = new Set([rootNote]);
-                    updateGuitarDisplay(); updatePianoDisplay(); updateSphereDisplay();
-                    fullSeq.forEach(({ pc, oct }, i) => {
-                        const offsetMs = i * beatMs;
-                        _playAt(pc, oct, now + offsetMs/1000, noteDur, 0.25);
-                        _schedPlay(() => {
-                            updateStaffNotation([{ pc, oct }]);
-                            const sp = document.querySelector(`.sphere[data-note="${pc}"]`);
-                            if (sp) { sp.classList.remove('excluded','included','active'); sp.classList.add('playing'); }
-                            document.querySelectorAll('.white-key,.black-key').forEach(k => { k.style.background=''; k.style.boxShadow=''; k.style.borderColor=''; k.style.borderWidth=''; });
-                            document.querySelectorAll(`.white-key[data-note="${pc}"][data-octave="${oct}"],.black-key[data-note="${pc}"][data-octave="${oct}"]`).forEach(k => {
-                                k.style.background=colors[pc]; k.style.borderColor=colors[pc]; k.style.borderWidth='3px'; k.style.boxShadow=`0 0 24px ${colors[pc]}, 0 0 48px ${colors[pc]}88`;
-                            });
-                        }, offsetMs);
-                        _schedPlay(() => {
-                            updateStaffNotation([]);
-                            const sp = document.querySelector(`.sphere[data-note="${pc}"]`);
-                            if (sp) { sp.classList.remove('playing'); sp.classList.add(selectedNotes.has(pc)?'included':'excluded'); if(pc===rootNote) sp.classList.add('active'); }
-                            document.querySelectorAll(`.white-key[data-note="${pc}"][data-octave="${oct}"],.black-key[data-note="${pc}"][data-octave="${oct}"]`).forEach(k => { k.style.background=''; k.style.boxShadow=''; k.style.borderColor=''; k.style.borderWidth=''; });
-                        }, offsetMs + beatMs * 0.80);
-                    });
-                    _schedPlay(() => {
-                        revealedNotes = new Set(selectedNotes);
-                        updateGuitarDisplay(); updatePianoDisplay(); updateSphereDisplay(); clearStaffHighlights();
-                    }, fullSeq.length * beatMs + 300);
+                    if (typeof window._stencilPlayUp === 'function') {
+                        // Use stencil sequencer — same code as ASCEND/DESCEND buttons
+                        const bpm    = typeof currentBPM !== 'undefined' ? currentBPM : 100;
+                        const beatMs = 60000 / bpm;
+                        const len    = (window.currentStencil && window.currentStencil.intervals)
+                                       ? window.currentStencil.intervals.length : selectedNotes.size || 7;
+                        window._stencilPlayUp();
+                        setTimeout(() => window._stencilPlayDownNoCancel(), len * beatMs + 300);
+                    } else {
+                        playSelection('up');
+                    }
                 };
                 if (el('globalStopBtn')) el('globalStopBtn').onclick = () => {
                     try {
@@ -8740,13 +8705,13 @@ async function kcmAIAsk(type) {
     function _stencilCancelAll() {
         while (_stencilTimers.length) clearTimeout(_stencilTimers.pop());
     }
-    function stencilPlay(direction) {
+    function stencilPlay(direction, noCancel) {
         if (!currentStencil) { alert('Select a stencil first!'); return; }
         if (typeof window.playNote !== 'function') {
             alert('Click START AUDIO ENGINE first!'); return;
         }
 
-        _stencilCancelAll();
+        if (!noCancel) _stencilCancelAll();
 
         const rootPc   = currentStencilRoot;
         const intervals = currentStencil.intervals;
@@ -8932,6 +8897,11 @@ async function kcmAIAsk(type) {
         if (ascBtn)   ascBtn.addEventListener('click',  () => stencilPlay('up'));
         if (descBtn)  descBtn.addEventListener('click', () => stencilPlay('down'));
         if (simulBtn) simulBtn.addEventListener('click', () => stencilPlaySimul());
+        // Expose for staff play button
+        window._stencilPlayUp   = () => stencilPlay('up');
+        window._stencilPlayDown = () => stencilPlay('down');
+        window._stencilPlayDownNoCancel = () => stencilPlay('down', true);
+        Object.defineProperty(window, 'currentStencil', { get: () => currentStencil, configurable: true });
 
         wireViewToggle();
     }
