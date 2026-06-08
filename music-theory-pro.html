@@ -8312,6 +8312,7 @@ async function kcmAIAsk(type) {
     // ── State ────────────────────────────────────────────────
     let currentCat       = 'scales';
     let currentStencil   = null;
+    window.currentStencil = null;
     let currentStencilRoot = 0;   // 0 = C
     let stencilRotateDeg = 0;     // current rotation in degrees (0=C at top)
     let isDragging       = false;
@@ -8701,12 +8702,22 @@ async function kcmAIAsk(type) {
         }
         degreesEl.textContent   = currentStencil.degrees;
         const semiEl = document.getElementById('slSemitones');
-        if (semiEl) semiEl.textContent = steps.join('  ');
+        if (semiEl) {
+            if (currentCat === 'chords' || currentCat === 'thirteenths') {
+                semiEl.textContent = '';
+                semiEl.style.display = 'none';
+            } else {
+                const WH = {1:'H',2:'W',3:'WH',4:'3H',5:'4H',6:'TT'};
+                semiEl.textContent = steps.map(s => WH[s]||s).join('  ');
+                semiEl.style.display = '';
+            }
+        }
     }
 
     // ── Select a stencil ────────────────────────────────────
     function selectStencil(def) {
         currentStencil = def;
+        window.currentStencil = def;
         renderGrid();
         drawStencil();
         updateLabelBlock();
@@ -8913,7 +8924,6 @@ async function kcmAIAsk(type) {
         window._stencilPlayUp   = () => stencilPlay('up');
         window._stencilPlayDown = () => stencilPlay('down');
         window._stencilPlayDownNoCancel = () => stencilPlay('down', true);
-        Object.defineProperty(window, 'currentStencil', { get: () => currentStencil, configurable: true });
 
         wireViewToggle();
     }
