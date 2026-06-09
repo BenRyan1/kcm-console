@@ -8694,23 +8694,19 @@ async function kcmAIAsk(type) {
         const ivs = currentStencil.intervals;
         const steps = [];
         for (let i = 1; i < ivs.length; i++) steps.push(((ivs[i]-ivs[i-1]+12)%12));
-        if (currentCat === 'chords' || currentCat === 'thirteenths') {
-            intervalsEl.textContent = currentStencil.intervals_str;
-        } else {
-            const WH = {1:'H',2:'W',3:'WH',4:'3H',5:'4H'};
-            intervalsEl.textContent = steps.map(s => WH[s]||s).join('  ');
-        }
+        const WH = {1:'H',2:'W',3:'WH',4:'3H',5:'4H',6:'TT'};
+
+        // Line 3: W/H step names — always, all categories
+        intervalsEl.textContent = steps.map(s => WH[s]||s).join('  ');
+
+        // Line 4: degrees — always
         degreesEl.textContent   = currentStencil.degrees;
+
+        // Line 5: semitone numbers (2=W, 1=H) — always, all categories
         const semiEl = document.getElementById('slSemitones');
         if (semiEl) {
-            if (currentCat === 'chords' || currentCat === 'thirteenths') {
-                semiEl.textContent = '';
-                semiEl.style.display = 'none';
-            } else {
-                const WH = {1:'H',2:'W',3:'WH',4:'3H',5:'4H',6:'TT'};
-                semiEl.textContent = steps.map(s => WH[s]||s).join('  ');
-                semiEl.style.display = '';
-            }
+            semiEl.textContent   = steps.join('  ');
+            semiEl.style.display = '';
         }
     }
 
