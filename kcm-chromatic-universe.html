@@ -1878,7 +1878,7 @@ function renderLayers() {
         </div>
         <div class="layer-btns">
           <button class="layer-btn ${layer.muted?'muted':''}" onclick="muteLayer(${layer.id})">${layer.muted?'🔇':'🔊'}</button>
-          <button class="layer-btn" style="color:#00c0c0" id="mic-btn-${layer.id}" onclick="listenForRhythm(${layer.id})" title="Tap mic, speak rhythm">🎤</button>
+          <button onclick="listenForRhythm(${layer.id})" id="mic-btn-${layer.id}" style="background:#008080;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:12px;font-weight:bold;cursor:pointer;letter-spacing:1px">🎤 MIC</button>
           <button class="layer-btn" onclick="removeLayer(${layer.id})">✕</button>
         </div>
       </div>
