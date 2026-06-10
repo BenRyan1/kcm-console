@@ -2358,7 +2358,7 @@ async function listenForRhythm(layerId) {
   window._vrdLa=la;window._vrdMa=ma;window._vrdHa=ha;
   const btn=document.getElementById('mic-btn-'+layerId);
   if(btn){btn.textContent='⏹';btn.style.boxShadow='0 0 10px #00c0c0';}
-  showToast('🎤 Speak your rhythm! Tap 🎤 again to lock in.');
+  showToast('🎤 LISTENING — speak now! Auto-stops in 5 sec');
   const buf=new Uint8Array(an.frequencyBinCount);
   const lb=new Uint8Array(la.frequencyBinCount);
   const mb=new Uint8Array(ma.frequencyBinCount);
@@ -2371,7 +2371,7 @@ async function listenForRhythm(layerId) {
     let s=0;for(let i=0;i<buf.length;i++)s+=(buf[i]/255)**2;
     const rms=Math.sqrt(s/buf.length);
     const now=performance.now();
-    if(rms>0.15&&prev<=0.15&&now-window._vrdLast>90){
+    if(rms>0.04&&prev<=0.04&&now-window._vrdLast>90){
       la.getByteFrequencyData(lb);ma.getByteFrequencyData(mb);ha.getByteFrequencyData(hb);
       const le=lb.reduce((a,v)=>a+v,0)/lb.length;
       const me=mb.reduce((a,v)=>a+v,0)/mb.length;
