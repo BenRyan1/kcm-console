@@ -2986,75 +2986,112 @@ async function vrdCalibrateNoise() {
 }
 
 // ── CONTINUOUS DETECTION LOOP ──
-// Uses TRUE PEAK DETECTION:
-// 1. Energy must cross threshold from below (rising edge)
-// 2. Then we wait for the peak (energy starts falling)
-// 3. Only then record the onset — one event per sound, no duplicates
-// 4. Each band has its own state machine: IDLE → ATTACK → PEAK → LOCKOUT
+// DOMINANT BAND DETECTION:
+// When a sound occurs, ALL bands get energy. We only credit the band
+// that has the HIGHEST energy RELATIVE to its own noise floor.
+// One onset per sound event — the dominant band wins, others are locked out.
 function vrdDetectLoop() {
   if (!VRD.stream) return;
 
   const bandBufs = VRD.layers.map(vl => new Uint8Array(vl.analyser.frequencyBinCount));
+  const masterBuf = new Uint8Array(VRD.masterAn.frequencyBinCount);
 
-  // Per-band state machine
-  const STATE = { IDLE:0, ATTACK:1, LOCKOUT:2 };
-  const bandState   = VRD.layers.map(() => STATE.IDLE);
-  const lockoutTime = VRD.layers.map(() => 0);
-  const LOCKOUT_MS  = 150; // minimum ms between onsets per band
+  // Global event state — one onset at a time across ALL bands
+  let globalState   = 'IDLE';   // IDLE | ATTACK | LOCKOUT
+  let globalLockout = 0;
+  let peakEnergies  = new Array(VRD.layers.length).fill(0);
+  let attackStart   = 0;
+  const LOCKOUT_MS  = 200;  // ms between any two onsets
+  const ATTACK_MAX  = 80;   // ms max to find peak after threshold cross
 
   function tick() {
     if (!VRD.stream) return;
     VRD.animFrame = requestAnimationFrame(tick);
     const now = performance.now();
 
-    VRD.layers.forEach((vl, bandIdx) => {
-      vl.analyser.getByteFrequencyData(bandBufs[bandIdx]);
-
-      // RMS energy for this band only
-      const buf = bandBufs[bandIdx];
+    // Read all band energies
+    const energies = VRD.layers.map((vl, i) => {
+      vl.analyser.getByteFrequencyData(bandBufs[i]);
       let sum = 0;
-      for (let i = 0; i < buf.length; i++) sum += (buf[i]/255) ** 2;
-      const energy = Math.sqrt(sum / buf.length);
-
-      // Always update meter
-      if (vl.listening) {
-        const pct = Math.min(100, (energy / Math.max(vl.threshold, 0.005)) * 60);
-        vrdMeterUpdate_byIndex(bandIdx, pct);
-      }
-
-      // State machine
-      if (bandState[bandIdx] === STATE.LOCKOUT) {
-        if (now - lockoutTime[bandIdx] > LOCKOUT_MS) {
-          bandState[bandIdx] = STATE.IDLE;
-        }
-      }
-
-      if (vl.listening && bandState[bandIdx] !== STATE.LOCKOUT) {
-        if (bandState[bandIdx] === STATE.IDLE) {
-          // Wait for energy to cross threshold — rising edge
-          if (energy > vl.threshold && energy > vl.prevEnergy) {
-            bandState[bandIdx] = STATE.ATTACK;
-          }
-        } else if (bandState[bandIdx] === STATE.ATTACK) {
-          // We're in the attack — wait for peak (energy starts falling)
-          if (energy < vl.prevEnergy || energy > vl.threshold * 4) {
-            // Peak found — record ONE onset
-            vl.onsets.push({ time: now, energy: vl.prevEnergy });
-            const rsLayer = RS.layers[bandIdx];
-            if (rsLayer) vrdFlash(rsLayer.id, vl.onsets.length);
-            bandState[bandIdx] = STATE.LOCKOUT;
-            lockoutTime[bandIdx] = now;
-          }
-        }
-      }
-
-      // Reset to IDLE if energy drops well below threshold
-      if (energy < vl.threshold * 0.3 && bandState[bandIdx] === STATE.ATTACK) {
-        bandState[bandIdx] = STATE.IDLE;
-      }
-
-      vl.prevEnergy = energy;
+      for (let j = 0; j < bandBufs[i].length; j++) sum += (bandBufs[i][j]/255)**2;
+      return Math.sqrt(sum / bandBufs[i].length);
     });
+
+    // Master RMS — is anything happening at all?
+    VRD.masterAn.getByteFrequencyData(masterBuf);
+    let mSum = 0;
+    for (let i = 0; i < masterBuf.length; i++) mSum += (masterBuf[i]/255)**2;
+    const masterRms = Math.sqrt(mSum / masterBuf.length);
+
+    // Update meters for listening layers
+    VRD.layers.forEach((vl, i) => {
+      if (vl.listening) {
+        const pct = Math.min(100, (energies[i] / Math.max(vl.threshold, 0.005)) * 50);
+        vrdMeterUpdate_byIndex(i, pct);
+      }
+    });
+
+    // ── GLOBAL STATE MACHINE ──
+    if (globalState === 'LOCKOUT') {
+      if (now - globalLockout > LOCKOUT_MS) globalState = 'IDLE';
+      VRD.layers.forEach(vl => { vl.prevEnergy = energies[VRD.layers.indexOf(vl)]; });
+      return;
+    }
+
+    // Normalized energy = energy / noise_floor for each band
+    // This tells us which band is most "excited" relative to its baseline
+    const normalized = energies.map((e, i) => {
+      const floor = Math.max(VRD.layers[i].noiseFloor, 0.001);
+      return e / floor;
+    });
+
+    const maxNorm = Math.max(...normalized);
+
+    if (globalState === 'IDLE') {
+      // Check if any listening band is significantly above its noise floor
+      const anyListening = VRD.layers.some(vl => vl.listening);
+      if (!anyListening) { VRD.layers.forEach((vl,i) => vl.prevEnergy = energies[i]); return; }
+
+      if (masterRms > 0.02 && maxNorm > 3.0) {
+        // Sound event starting — begin attack phase
+        globalState = 'ATTACK';
+        attackStart = now;
+        peakEnergies = [...normalized];
+      }
+    } else if (globalState === 'ATTACK') {
+      // Track peak normalized energies during attack window
+      normalized.forEach((n, i) => { if (n > peakEnergies[i]) peakEnergies[i] = n; });
+
+      // Commit when: master RMS starts falling OR attack window exceeded
+      const masterFalling = masterRms < VRD.layers[0].prevEnergy * 0.7;
+      const windowDone    = (now - attackStart) > ATTACK_MAX;
+
+      if (masterFalling || windowDone) {
+        // Find dominant band among LISTENING layers only
+        let domIdx = -1, domScore = 0;
+        VRD.layers.forEach((vl, i) => {
+          if (vl.listening && peakEnergies[i] > domScore) {
+            domScore = peakEnergies[i];
+            domIdx = i;
+          }
+        });
+
+        if (domIdx >= 0 && domScore > 3.0) {
+          const vl = VRD.layers[domIdx];
+          vl.onsets.push({ time: now, energy: energies[domIdx] });
+          const rsLayer = RS.layers[domIdx];
+          if (rsLayer) vrdFlash(rsLayer.id, vl.onsets.length);
+        }
+
+        globalState = 'LOCKOUT';
+        globalLockout = now;
+        peakEnergies.fill(0);
+      }
+    }
+
+    // Store master RMS in layer 0's prevEnergy for falling detection
+    if (VRD.layers[0]) VRD.layers[0].prevEnergy = masterRms;
+    energies.forEach((e, i) => { VRD.layers[i].prevEnergy = e; });
   }
   tick();
 }
