@@ -1974,7 +1974,19 @@ function initRhythmAudio() {
 }
 
 function playRhythmSound(type, when) {
+  // Auto-init audio if not ready — use VRD's context if available
+  if (!RS.audioCtx) {
+    if (VRD.audioCtx) {
+      RS.audioCtx = VRD.audioCtx;
+      RS.masterGain = RS.audioCtx.createGain();
+      RS.masterGain.gain.value = 0.7;
+      RS.masterGain.connect(RS.audioCtx.destination);
+    } else {
+      initRhythmAudio();
+    }
+  }
   if (!RS.audioCtx) return;
+  if (RS.audioCtx.state === 'suspended') RS.audioCtx.resume();
   const ctx = RS.audioCtx, now = when || ctx.currentTime;
 
   function noise(dur) {
@@ -2926,6 +2938,13 @@ async function vrdOpenSharedStream() {
 
   vrdDetectLoop();
   populateMicDevices();
+  // Share AudioContext with RS for playback sounds
+  if (!RS.audioCtx) {
+    RS.audioCtx = VRD.audioCtx;
+    RS.masterGain = RS.audioCtx.createGain();
+    RS.masterGain.gain.value = 0.7;
+    RS.masterGain.connect(RS.audioCtx.destination);
+  }
   showToast('🎤 Mic ready — tap RECORD ALL or any layer 🎤');
 }
 
@@ -3026,9 +3045,10 @@ function vrdDetectLoop() {
 // ── SINGLE LAYER LISTEN ──
 function listenForRhythm(layerId) {
   if (!VRD.stream) {
-    const banner = document.getElementById('micPermBanner');
-    if (banner) banner.classList.add('visible');
-    showToast('🎤 Tap "Allow" above to enable microphone first');
+    // Auto-open stream then start this layer
+    vrdOpenSharedStream().then(() => {
+      if (VRD.stream) listenForRhythm(layerId);
+    });
     return;
   }
   const rsLayerIdx = RS.layers.findIndex(l => l.id === layerId);
@@ -3048,9 +3068,10 @@ function listenForRhythm(layerId) {
 // ── RECORD ALL ──
 function vrdRecordAll() {
   if (!VRD.stream) {
-    const banner = document.getElementById('micPermBanner');
-    if (banner) banner.classList.add('visible');
-    showToast('🎤 Tap "Allow" above to enable microphone first');
+    // Stream not open — open it then auto-start recording
+    vrdOpenSharedStream().then(() => {
+      if (VRD.stream) vrdStartAllLayers();
+    });
     return;
   }
   const activeCount = Math.min(RS.layers.length, VRD_BANDS.length);
@@ -3063,6 +3084,13 @@ function vrdRecordAll() {
     return;
   }
 
+  vrdStartAllLayers();
+}
+
+function vrdStartAllLayers() {
+  const activeCount = Math.min(RS.layers.length, VRD_BANDS.length);
+  // Make sure audio for playback is ready too
+  initRhythmAudio();
   VRD.layers.slice(0, activeCount).forEach((vl, idx) => {
     vl.onsets = []; vl.prevEnergy = 0; vl.listening = true;
     const rsLayer = RS.layers[idx];
@@ -3070,8 +3098,7 @@ function vrdRecordAll() {
     clearTimeout(vl.timer);
     vl.timer = setTimeout(() => { if (vl.listening) vrdCommitLayer(idx, RS.layers[idx]?.id); }, 8000);
   });
-
-  showToast('🎤 ALL recording — BOOM CHA TAK… tap STOP to lock in!');
+  showToast('🎤 ALL recording — say BOOM CHA TAK… tap STOP to lock in!');
   const btn = document.getElementById('recordAllBtn');
   if (btn) { btn.textContent = '⏹ STOP & LOCK ALL'; btn.classList.add('recording'); }
 }
