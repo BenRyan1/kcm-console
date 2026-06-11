@@ -3008,7 +3008,7 @@ function vrdDetectLoop() {
   let globalLockout = 0;
   let peakEnergies  = new Array(VRD.layers.length).fill(0);
   let attackStart   = 0;
-  const LOCKOUT_MS  = 450;  // ms between any two onsets
+  const LOCKOUT_MS  = 600;  // ms between any two onsets
   const ATTACK_MAX  = 120;  // ms max to find peak after threshold cross
 
   function tick() {
@@ -3059,7 +3059,7 @@ function vrdDetectLoop() {
       const anyListening = VRD.layers.some(vl => vl.listening);
       if (!anyListening) { VRD.layers.forEach((vl,i) => vl.prevEnergy = energies[i]); return; }
 
-      if (masterRms > 0.03 && maxNorm > 5.0) {
+      if (masterRms > 0.04 && maxNorm > 6.0) {
         // Sound event starting — begin attack phase
         globalState = 'ATTACK';
         attackStart = now;
@@ -3083,7 +3083,7 @@ function vrdDetectLoop() {
           }
         });
 
-        if (domIdx >= 0 && domScore > 5.0) {
+        if (domIdx >= 0 && domScore > 6.0) {
           const vl = VRD.layers[domIdx];
           vl.onsets.push({ time: now, energy: energies[domIdx] });
           const rsLayer = RS.layers[domIdx];
