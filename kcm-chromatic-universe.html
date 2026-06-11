@@ -2954,17 +2954,21 @@ async function vrdCalibrateNoise() {
     const samples = VRD_BANDS.map(() => []);
     const bufs = VRD.layers.map(vl => new Uint8Array(vl.analyser.frequencyBinCount));
     let count = 0;
-    const maxSamples = 30; // ~600ms at 60fps
+    const maxSamples = 60; // ~1 second at 60fps
 
     function sample() {
       if (count >= maxSamples) {
-        // Compute per-band noise floor and set threshold = floor * 3.0
+        // Per-band sensitivity multipliers — high bands need lower threshold
+        // because high freq has naturally less energy than low freq
+        const bandMult = [1.8, 1.8, 1.6, 1.4, 1.2, 1.1];
+        const bandMin  = [0.03, 0.025, 0.02, 0.015, 0.01, 0.008];
         VRD.layers.forEach((vl, i) => {
           const arr = samples[i];
           const avg = arr.reduce((a,b) => a+b, 0) / arr.length;
           const max = Math.max(...arr);
           vl.noiseFloor = avg;
-          vl.threshold  = Math.max(0.04, max * 3.0); // 3x peak noise
+          // threshold = just above noise peak, scaled per band
+          vl.threshold = Math.max(bandMin[i], (avg + max) * bandMult[i] * 0.5);
         });
         resolve();
         return;
@@ -2982,60 +2986,73 @@ async function vrdCalibrateNoise() {
 }
 
 // ── CONTINUOUS DETECTION LOOP ──
+// Uses TRUE PEAK DETECTION:
+// 1. Energy must cross threshold from below (rising edge)
+// 2. Then we wait for the peak (energy starts falling)
+// 3. Only then record the onset — one event per sound, no duplicates
+// 4. Each band has its own state machine: IDLE → ATTACK → PEAK → LOCKOUT
 function vrdDetectLoop() {
   if (!VRD.stream) return;
 
-  const masterBuf = new Uint8Array(VRD.masterAn.frequencyBinCount);
-  const bandBufs  = VRD.layers.map(vl => new Uint8Array(vl.analyser.frequencyBinCount));
+  const bandBufs = VRD.layers.map(vl => new Uint8Array(vl.analyser.frequencyBinCount));
+
+  // Per-band state machine
+  const STATE = { IDLE:0, ATTACK:1, LOCKOUT:2 };
+  const bandState   = VRD.layers.map(() => STATE.IDLE);
+  const lockoutTime = VRD.layers.map(() => 0);
+  const LOCKOUT_MS  = 150; // minimum ms between onsets per band
 
   function tick() {
     if (!VRD.stream) return;
     VRD.animFrame = requestAnimationFrame(tick);
-
-    // Master level meter (all active layers)
-    VRD.masterAn.getByteFrequencyData(masterBuf);
-    let mSum = 0;
-    for (let i = 0; i < masterBuf.length; i++) mSum += (masterBuf[i]/255)**2;
-    const masterRms = Math.sqrt(mSum / masterBuf.length);
-    const masterPct = Math.min(100, masterRms * 500);
-
     const now = performance.now();
 
     VRD.layers.forEach((vl, bandIdx) => {
-      // FIX 3: show per-band energy on meter, not master RMS
       vl.analyser.getByteFrequencyData(bandBufs[bandIdx]);
-      const bSum = bandBufs[bandIdx].reduce((a,v) => a+v, 0);
-      const energy = bSum / bandBufs[bandIdx].length / 255;
 
+      // RMS energy for this band only
+      const buf = bandBufs[bandIdx];
+      let sum = 0;
+      for (let i = 0; i < buf.length; i++) sum += (buf[i]/255) ** 2;
+      const energy = Math.sqrt(sum / buf.length);
+
+      // Always update meter
       if (vl.listening) {
-        // Per-band meter — shows actual band energy
-        const bandPct = Math.min(100, (energy / Math.max(vl.threshold, 0.01)) * 40);
-        vrdMeterUpdate_byIndex(bandIdx, bandPct);
+        const pct = Math.min(100, (energy / Math.max(vl.threshold, 0.005)) * 60);
+        vrdMeterUpdate_byIndex(bandIdx, pct);
+      }
 
-        const gap = vl.onsets.length > 0
-          ? now - vl.onsets[vl.onsets.length-1].time
-          : 9999;
+      // State machine
+      if (bandState[bandIdx] === STATE.LOCKOUT) {
+        if (now - lockoutTime[bandIdx] > LOCKOUT_MS) {
+          bandState[bandIdx] = STATE.IDLE;
+        }
+      }
 
-        // FIX 4: Adaptive min gap — tighten after first few onsets
-        const adaptiveGap = vl.onsets.length > 2
-          ? Math.max(60, VRD.minGap * 0.7)
-          : VRD.minGap;
-
-        // FIX 7: Peak detection — local max above threshold
-        // Trigger when: above threshold AND energy is RISING (higher than prev)
-        // AND sufficient gap since last onset
-        const isRising = energy > vl.prevEnergy;
-        const aboveThresh = energy > vl.threshold; // FIX 1: per-band threshold
-
-        if (aboveThresh && isRising && gap > adaptiveGap) {
-          // Double-check: make sure it's a real peak not noise
-          if (energy > vl.noiseFloor * 2.5) {
-            vl.onsets.push({ time: now, energy });
+      if (vl.listening && bandState[bandIdx] !== STATE.LOCKOUT) {
+        if (bandState[bandIdx] === STATE.IDLE) {
+          // Wait for energy to cross threshold — rising edge
+          if (energy > vl.threshold && energy > vl.prevEnergy) {
+            bandState[bandIdx] = STATE.ATTACK;
+          }
+        } else if (bandState[bandIdx] === STATE.ATTACK) {
+          // We're in the attack — wait for peak (energy starts falling)
+          if (energy < vl.prevEnergy || energy > vl.threshold * 4) {
+            // Peak found — record ONE onset
+            vl.onsets.push({ time: now, energy: vl.prevEnergy });
             const rsLayer = RS.layers[bandIdx];
             if (rsLayer) vrdFlash(rsLayer.id, vl.onsets.length);
+            bandState[bandIdx] = STATE.LOCKOUT;
+            lockoutTime[bandIdx] = now;
           }
         }
       }
+
+      // Reset to IDLE if energy drops well below threshold
+      if (energy < vl.threshold * 0.3 && bandState[bandIdx] === STATE.ATTACK) {
+        bandState[bandIdx] = STATE.IDLE;
+      }
+
       vl.prevEnergy = energy;
     });
   }
