@@ -3001,7 +3001,7 @@ function vrdDetectLoop() {
   let globalLockout = 0;
   let peakEnergies  = new Array(VRD.layers.length).fill(0);
   let attackStart   = 0;
-  const LOCKOUT_MS  = 350;  // ms between any two onsets
+  const LOCKOUT_MS  = 450;  // ms between any two onsets
   const ATTACK_MAX  = 120;  // ms max to find peak after threshold cross
 
   function tick() {
@@ -3183,11 +3183,13 @@ function vrdCommitLayer(bandIdx, layerId) {
   }
 
   // Fit to best step grid
-  const candidates = [4, 8, 12, 16, 24, 32, 48, 64];
+  const candidates = [12, 16, 24, 32, 48, 64]; // minimum 12 steps
   let bestN = RS.globalSteps, bestScore = Infinity;
   for (const n of candidates) {
     if (n >= k) {
-      const score = Math.abs(n - k * 2.5);
+      // Prefer 16 as the default musical grid
+      const preference = (n === 16) ? 0.8 : 1.0;
+      const score = Math.abs(n - k * 2.0) * preference;
       if (score < bestScore) { bestScore = score; bestN = n; }
     }
   }
