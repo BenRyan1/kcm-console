@@ -2735,6 +2735,7 @@ function clearLayer(layerId) {
   const l = RS.layers.find(l => l.id === layerId);
   if (!l) return;
   l.pulses  = 0;
+  l.soundLocked = false;
   l.pattern = bjorklund(l.steps, 0);
   // Reset beat counter display
   const cnt = document.getElementById('vrd-count-' + layerId);
@@ -2760,7 +2761,7 @@ function clearAllLayers() {
 
 function setLayerSound(layerId, sound) {
   const l = RS.layers.find(l => l.id === layerId);
-  if (l) l.soundType = sound;
+  if (l) { l.soundType = sound; l.soundLocked = true; }
 }
 
 // Populate mic device dropdown from browser
@@ -2871,12 +2872,18 @@ function vrdInitPanel() {
 // CHA  = hi-hat, "ch/sh" sounds        ~2800-7000Hz
 // TICK = cymbal shimmer, "ts/t" sounds ~7000Hz+
 const VRD_BANDS = [
-  { name:'BOOM', type:'lowpass',  freq:150,  Q:1.2, sound:'kick',  label:'💥 BOOM', fftSize:2048 },
-  { name:'BASS', type:'bandpass', freq:220,  Q:1.0, sound:'kick',  label:'🥁 BASS', fftSize:2048 },
-  { name:'MID',  type:'bandpass', freq:550,  Q:0.9, sound:'conga', label:'🪘 MID',  fftSize:1024 },
-  { name:'SNAP', type:'bandpass', freq:1800, Q:0.9, sound:'snare', label:'👆 SNAP', fftSize:512  },
-  { name:'CHA',  type:'bandpass', freq:4000, Q:0.8, sound:'hihat', label:'🔔 CHA',  fftSize:512  },
-  { name:'TICK', type:'highpass', freq:7000, Q:0.8, sound:'openhat',label:'🎵 TICK', fftSize:256  }
+  // Layer 1: BOOM — low chest resonance of "B" in BOOM (~80-200Hz)
+  { name:'BOOM', type:'lowpass',  freq:200,  Q:1.0, sound:'kick',  label:'💥 BOOM', fftSize:2048 },
+  // Layer 2: CHA — high sibilance of "CH/SH" sounds (~3000-6000Hz)
+  { name:'CHA',  type:'bandpass', freq:4000, Q:0.7, sound:'hihat', label:'🔔 CHA',  fftSize:512  },
+  // Layer 3: TAK — mid-high consonant crack of "T/K" sounds (~700-2000Hz)
+  { name:'TAK',  type:'bandpass', freq:1200, Q:0.8, sound:'snare', label:'👆 TAK',  fftSize:512  },
+  // Layer 4: DUK — mid body of "D/G" sounds (~200-600Hz)
+  { name:'DUK',  type:'bandpass', freq:380,  Q:0.9, sound:'conga', label:'🪘 DUK',  fftSize:1024 },
+  // Layer 5: TICK — very high shimmer (~6000Hz+)
+  { name:'TICK', type:'highpass', freq:6000, Q:0.8, sound:'rim',   label:'🎵 TICK', fftSize:256  },
+  // Layer 6: MID — broad mid for anything else
+  { name:'MID',  type:'bandpass', freq:600,  Q:0.6, sound:'wood',  label:'🥁 MID',  fftSize:1024 }
 ];
 
 const VRD = {
@@ -3194,7 +3201,8 @@ function vrdCommitLayer(bandIdx, layerId) {
     }
   }
 
-  layer.soundType = VRD_BANDS[bandIdx]?.sound || 'click';
+  // Only auto-assign sound if user hasn't manually chosen one
+  if (!layer.soundLocked) layer.soundType = VRD_BANDS[bandIdx]?.sound || 'click';
   layer.pulses    = Math.min(k, bestN);
   layer.steps     = bestN;
   layer.pattern   = bjorklund(bestN, layer.pulses);
