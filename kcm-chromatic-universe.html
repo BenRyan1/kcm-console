@@ -1878,7 +1878,6 @@ function renderLayers() {
         </div>
         <div class="layer-btns">
           <button class="layer-btn ${layer.muted?'muted':''}" onclick="muteLayer(${layer.id})">${layer.muted?'🔇':'🔊'}</button>
-          <button onclick="listenForRhythm(${layer.id})" id="mic-btn-${layer.id}" style="background:#008080;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:12px;font-weight:bold;cursor:pointer;letter-spacing:1px">🎤 MIC</button>
           <button class="layer-btn" onclick="removeLayer(${layer.id})">✕</button>
         </div>
       </div>
@@ -2330,92 +2329,6 @@ function etExit() {
 function etRestart() {
   document.getElementById('etResults').style.display='none';
   document.getElementById('etSettings').style.display='block';
-}
-
-
-async function listenForRhythm(layerId) {
-  if (window._vrdListening && window._vrdLayerId===layerId){vrdCommit(layerId);return;}
-  if (window._vrdListening) vrdStop();
-  let stream;
-  try{stream=await navigator.mediaDevices.getUserMedia({audio:true});}
-  catch(e){showToast('🎤 Allow mic access in browser settings');return;}
-  const ctx=RS.audioCtx||new(window.AudioContext||window.webkitAudioContext)();
-  if(ctx.state==='suspended')await ctx.resume();
-  window._vrdStream=stream;window._vrdListening=true;window._vrdLayerId=layerId;
-  window._vrdOnsets=[];window._vrdBands={low:0,mid:0,high:0};window._vrdLast=0;
-  const src=ctx.createMediaStreamSource(stream);
-  const an=ctx.createAnalyser();an.fftSize=512;src.connect(an);
-  window._vrdSrc=src;
-  const lf=ctx.createBiquadFilter();lf.type='lowpass';lf.frequency.value=300;
-  const mf=ctx.createBiquadFilter();mf.type='bandpass';mf.frequency.value=1000;
-  const hf=ctx.createBiquadFilter();hf.type='highpass';hf.frequency.value=3000;
-  const la=ctx.createAnalyser();la.fftSize=256;
-  const ma=ctx.createAnalyser();ma.fftSize=256;
-  const ha=ctx.createAnalyser();ha.fftSize=256;
-  src.connect(lf);lf.connect(la);
-  src.connect(mf);mf.connect(ma);
-  src.connect(hf);hf.connect(ha);
-  window._vrdLa=la;window._vrdMa=ma;window._vrdHa=ha;
-  const btn=document.getElementById('mic-btn-'+layerId);
-  if(btn){btn.textContent='⏹';btn.style.boxShadow='0 0 10px #00c0c0';}
-  showToast('🎤 LISTENING — speak now! Auto-stops in 5 sec');
-  const buf=new Uint8Array(an.frequencyBinCount);
-  const lb=new Uint8Array(la.frequencyBinCount);
-  const mb=new Uint8Array(ma.frequencyBinCount);
-  const hb=new Uint8Array(ha.frequencyBinCount);
-  let prev=0;
-  function tick(){
-    if(!window._vrdListening)return;
-    window._vrdRaf=requestAnimationFrame(tick);
-    an.getByteFrequencyData(buf);
-    let s=0;for(let i=0;i<buf.length;i++)s+=(buf[i]/255)**2;
-    const rms=Math.sqrt(s/buf.length);
-    const now=performance.now();
-    if(rms>0.04&&prev<=0.04&&now-window._vrdLast>90){
-      la.getByteFrequencyData(lb);ma.getByteFrequencyData(mb);ha.getByteFrequencyData(hb);
-      const le=lb.reduce((a,v)=>a+v,0)/lb.length;
-      const me=mb.reduce((a,v)=>a+v,0)/mb.length;
-      const he=hb.reduce((a,v)=>a+v,0)/hb.length;
-      window._vrdBands.low+=le;window._vrdBands.mid+=me;window._vrdBands.high+=he;
-      window._vrdOnsets.push(now);window._vrdLast=now;
-      const b=document.getElementById('mic-btn-'+layerId);
-      if(b){b.textContent='●';b.style.color='#F4D03F';
-        setTimeout(()=>{if(window._vrdListening){b.textContent='⏹';b.style.color='#00c0c0';}},150);}
-    }
-    prev=rms;
-  }
-  tick();
-  window._vrdTimer=setTimeout(()=>{if(window._vrdListening&&window._vrdLayerId===layerId)vrdCommit(layerId);},5000);
-}
-function vrdCommit(layerId){
-  vrdStop();
-  const layer=RS.layers.find(l=>l.id===layerId);
-  if(!layer)return;
-  const k=window._vrdOnsets.length;
-  if(k<2){showToast('⚠️ Only '+k+' beat heard — try again!');vrdReset(layerId);return;}
-  const ns=[8,12,16,24,32];let bn=RS.globalSteps,bs=Infinity;
-  for(const n of ns){if(n>=k){const sc=Math.abs(n-k*2);if(sc<bs){bs=sc;bn=n;}}}
-  const t=window._vrdBands;
-  const dom=t.low>=t.mid&&t.low>=t.high?'low':t.mid>=t.high?'mid':'high';
-  const sm={low:'kick',mid:'click',high:'hihat'};
-  layer.soundType=sm[dom];layer.pulses=Math.min(k,bn);layer.steps=bn;
-  layer.pattern=bjorklund(bn,layer.pulses);
-  if(bn!==RS.globalSteps){RS.globalSteps=bn;const sv=document.getElementById('stepsVal');if(sv)sv.textContent=bn;}
-  renderLayers();drawRhythmViz();vrdReset(layerId);
-  const lbl={low:'BOOM→kick',mid:'TAK→click',high:'CHA→hihat'};
-  showToast('✅ '+k+' beats → E('+layer.pulses+','+bn+') · '+lbl[dom]);
-}
-function vrdStop(){
-  window._vrdListening=false;
-  cancelAnimationFrame(window._vrdRaf);
-  clearTimeout(window._vrdTimer);
-  try{if(window._vrdSrc)window._vrdSrc.disconnect();}catch(e){}
-  if(window._vrdStream)window._vrdStream.getTracks().forEach(t=>t.stop());
-  window._vrdStream=null;window._vrdOnsets=[];
-}
-function vrdReset(layerId){
-  const b=document.getElementById('mic-btn-'+layerId);
-  if(b){b.textContent='🎤';b.style.boxShadow='';b.style.color='#00c0c0';}
 }
 
 </script>
