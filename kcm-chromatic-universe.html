@@ -3001,8 +3001,8 @@ function vrdDetectLoop() {
   let globalLockout = 0;
   let peakEnergies  = new Array(VRD.layers.length).fill(0);
   let attackStart   = 0;
-  const LOCKOUT_MS  = 200;  // ms between any two onsets
-  const ATTACK_MAX  = 80;   // ms max to find peak after threshold cross
+  const LOCKOUT_MS  = 350;  // ms between any two onsets
+  const ATTACK_MAX  = 120;  // ms max to find peak after threshold cross
 
   function tick() {
     if (!VRD.stream) return;
@@ -3052,7 +3052,7 @@ function vrdDetectLoop() {
       const anyListening = VRD.layers.some(vl => vl.listening);
       if (!anyListening) { VRD.layers.forEach((vl,i) => vl.prevEnergy = energies[i]); return; }
 
-      if (masterRms > 0.02 && maxNorm > 3.0) {
+      if (masterRms > 0.03 && maxNorm > 5.0) {
         // Sound event starting — begin attack phase
         globalState = 'ATTACK';
         attackStart = now;
@@ -3063,7 +3063,7 @@ function vrdDetectLoop() {
       normalized.forEach((n, i) => { if (n > peakEnergies[i]) peakEnergies[i] = n; });
 
       // Commit when: master RMS starts falling OR attack window exceeded
-      const masterFalling = masterRms < VRD.layers[0].prevEnergy * 0.7;
+      const masterFalling = masterRms < (VRD._prevMasterRms || 0) * 0.7;
       const windowDone    = (now - attackStart) > ATTACK_MAX;
 
       if (masterFalling || windowDone) {
@@ -3076,7 +3076,7 @@ function vrdDetectLoop() {
           }
         });
 
-        if (domIdx >= 0 && domScore > 3.0) {
+        if (domIdx >= 0 && domScore > 5.0) {
           const vl = VRD.layers[domIdx];
           vl.onsets.push({ time: now, energy: energies[domIdx] });
           const rsLayer = RS.layers[domIdx];
@@ -3089,8 +3089,8 @@ function vrdDetectLoop() {
       }
     }
 
-    // Store master RMS in layer 0's prevEnergy for falling detection
-    if (VRD.layers[0]) VRD.layers[0].prevEnergy = masterRms;
+    // Store for next frame falling detection
+    VRD._prevMasterRms = masterRms;
     energies.forEach((e, i) => { VRD.layers[i].prevEnergy = e; });
   }
   tick();
