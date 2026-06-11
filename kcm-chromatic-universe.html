@@ -1948,7 +1948,7 @@ const RS = {
 };
 
 const LAYER_COLORS = ['#F4D03F','#008080','#CF7A5A','#8B6BA3','#4A7BA7','#9AAF7A'];
-const LAYER_SOUNDS = ['click','kick','hihat','tone','wood','rim'];
+const LAYER_SOUNDS = ['kick','snare','hihat','bass','conga','rim','openhat','cymbal','wood','click'];
 let layerIdCtr = 0;
 
 function initRhythmIfNeeded() {
@@ -1975,32 +1975,135 @@ function initRhythmAudio() {
 
 function playRhythmSound(type, when) {
   if (!RS.audioCtx) return;
-  const ctx = RS.audioCtx, now = when||ctx.currentTime;
-  if (type==='click'||type==='rim') {
-    const buf=ctx.createBuffer(1,ctx.sampleRate*0.05,ctx.sampleRate);
-    const d=buf.getChannelData(0);
-    for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*Math.exp(-i/(ctx.sampleRate*0.01));
-    const src=ctx.createBufferSource(); src.buffer=buf;
-    const g=ctx.createGain(); g.gain.value=type==='rim'?0.4:0.7;
-    src.connect(g); g.connect(RS.masterGain); src.start(now);
-  } else if (type==='kick') {
-    const osc=ctx.createOscillator(), g=ctx.createGain();
-    osc.frequency.setValueAtTime(120,now); osc.frequency.exponentialRampToValueAtTime(30,now+0.12);
-    g.gain.setValueAtTime(0.9,now); g.gain.exponentialRampToValueAtTime(0.001,now+0.2);
-    osc.connect(g); g.connect(RS.masterGain); osc.start(now); osc.stop(now+0.22);
-  } else if (type==='tone') {
-    const osc=ctx.createOscillator(), g=ctx.createGain();
-    osc.frequency.value=440; g.gain.setValueAtTime(0.3,now); g.gain.exponentialRampToValueAtTime(0.001,now+0.12);
-    osc.connect(g); g.connect(RS.masterGain); osc.start(now); osc.stop(now+0.14);
-  } else {
-    const buf=ctx.createBuffer(1,ctx.sampleRate*0.04,ctx.sampleRate);
-    const d=buf.getChannelData(0);
-    for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*Math.exp(-i/(ctx.sampleRate*0.008));
-    const src=ctx.createBufferSource(); src.buffer=buf;
-    const flt=ctx.createBiquadFilter(); flt.type=type==='hihat'?'highpass':'bandpass';
-    flt.frequency.value=type==='hihat'?8000:600;
-    const g=ctx.createGain(); g.gain.value=0.5;
-    src.connect(flt); flt.connect(g); g.connect(RS.masterGain); src.start(now);
+  const ctx = RS.audioCtx, now = when || ctx.currentTime;
+
+  function noise(dur) {
+    const buf = ctx.createBuffer(1, ctx.sampleRate * dur, ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    const src = ctx.createBufferSource(); src.buffer = buf; return src;
+  }
+  function gain(val, end, dur) {
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(val, now);
+    if (end !== null) g.gain.exponentialRampToValueAtTime(end, now + dur);
+    return g;
+  }
+  function osc(freq, type2) {
+    const o = ctx.createOscillator(); o.type = type2 || 'sine';
+    o.frequency.value = freq; return o;
+  }
+  function filt(type2, freq, q) {
+    const f = ctx.createBiquadFilter(); f.type = type2;
+    f.frequency.value = freq; if (q) f.Q.value = q; return f;
+  }
+  function out(node, vol) { node.connect(ctx.createGain()); }
+
+  switch(type) {
+
+    case 'kick': {
+      // Deep bass drum — pitch sweep 120→28Hz
+      const o = osc(120); const g = gain(1.0, 0.001, 0.25);
+      o.frequency.setValueAtTime(120, now);
+      o.frequency.exponentialRampToValueAtTime(28, now + 0.12);
+      g.gain.setValueAtTime(1.0, now);
+      g.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+      // Add click transient
+      const n = noise(0.01); const ng = gain(0.8, 0.001, 0.01);
+      const nf = filt('highpass', 1200);
+      n.connect(nf); nf.connect(ng); ng.connect(RS.masterGain); n.start(now);
+      o.connect(g); g.connect(RS.masterGain); o.start(now); o.stop(now + 0.3);
+      break;
+    }
+
+    case 'bass': {
+      // Sub bass thud — lower and longer than kick
+      const o = osc(80); const g = gain(0.9, 0.001, 0.4);
+      o.frequency.setValueAtTime(80, now);
+      o.frequency.exponentialRampToValueAtTime(20, now + 0.2);
+      g.gain.setValueAtTime(0.9, now);
+      g.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+      o.connect(g); g.connect(RS.masterGain); o.start(now); o.stop(now + 0.45);
+      break;
+    }
+
+    case 'snare': {
+      // Snare — tonal body + noise burst
+      const o = osc(200); const og = gain(0.5, 0.001, 0.15);
+      o.frequency.setValueAtTime(200, now);
+      o.frequency.exponentialRampToValueAtTime(100, now + 0.06);
+      og.gain.setValueAtTime(0.5, now); og.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+      o.connect(og); og.connect(RS.masterGain); o.start(now); o.stop(now + 0.18);
+      const n = noise(0.18); const nf = filt('bandpass', 3000, 0.8);
+      const ng = gain(0.6, 0.001, 0.18);
+      n.connect(nf); nf.connect(ng); ng.connect(RS.masterGain); n.start(now);
+      break;
+    }
+
+    case 'hihat': {
+      // Closed hi-hat — short metallic noise
+      const n = noise(0.08); const f = filt('highpass', 7000);
+      const f2 = filt('bandpass', 10000, 0.5);
+      const g = gain(0.55, 0.001, 0.07);
+      n.connect(f); f.connect(f2); f2.connect(g); g.connect(RS.masterGain); n.start(now);
+      break;
+    }
+
+    case 'openhat': {
+      // Open hi-hat — longer metallic decay
+      const n = noise(0.4); const f = filt('highpass', 6000);
+      const g = gain(0.45, 0.001, 0.38);
+      n.connect(f); f.connect(g); g.connect(RS.masterGain); n.start(now);
+      break;
+    }
+
+    case 'cymbal': {
+      // Crash cymbal — wide noise, long shimmer
+      const n = noise(1.2); const f = filt('highpass', 5000);
+      const f2 = filt('peaking', 8000, 0.6);
+      const g = gain(0.5, 0.001, 1.1);
+      n.connect(f); f.connect(f2); f2.connect(g); g.connect(RS.masterGain); n.start(now);
+      // Add shimmer tone
+      const o = osc(6000, 'sine'); const og = gain(0.08, 0.001, 1.0);
+      o.connect(og); og.connect(RS.masterGain); o.start(now); o.stop(now + 1.2);
+      break;
+    }
+
+    case 'rim': {
+      // Rimshot — sharp mid crack
+      const n = noise(0.04); const f = filt('bandpass', 1800, 2.0);
+      const g = gain(0.7, 0.001, 0.04);
+      n.connect(f); f.connect(g); g.connect(RS.masterGain); n.start(now);
+      break;
+    }
+
+    case 'conga': {
+      // Conga slap — mid-high tonal drum
+      const o = osc(250); const g = gain(0.7, 0.001, 0.18);
+      o.frequency.setValueAtTime(250, now);
+      o.frequency.exponentialRampToValueAtTime(180, now + 0.06);
+      g.gain.setValueAtTime(0.7, now); g.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+      o.connect(g); g.connect(RS.masterGain); o.start(now); o.stop(now + 0.22);
+      break;
+    }
+
+    case 'wood': {
+      // Wood block — short mid percussive click
+      const o = osc(900, 'square'); const g = gain(0.5, 0.001, 0.06);
+      const f = filt('bandpass', 900, 3.0);
+      g.gain.setValueAtTime(0.5, now); g.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
+      o.connect(f); f.connect(g); g.connect(RS.masterGain); o.start(now); o.stop(now + 0.08);
+      break;
+    }
+
+    case 'click':
+    default: {
+      // Click / metronome tick
+      const n = noise(0.02); const f = filt('highpass', 3000);
+      const g = gain(0.6, 0.001, 0.015);
+      n.connect(f); f.connect(g); g.connect(RS.masterGain); n.start(now);
+      break;
+    }
   }
 }
 
@@ -2595,12 +2698,23 @@ function setVrdSensitivity(val) {
 
 // Build sound <option> HTML safely — no nested template literals
 function buildSoundOptions(currentSound) {
-  var sounds = ['kick','hihat','click','wood','rim','tone'];
+  var sounds = [
+    ['kick',    '💥 Kick Drum'],
+    ['bass',    '🔊 Bass Drum'],
+    ['snare',   '🥁 Snare'],
+    ['hihat',   '🔔 Hi-Hat (closed)'],
+    ['openhat', '🎵 Hi-Hat (open)'],
+    ['cymbal',  '✨ Cymbal Crash'],
+    ['conga',   '🪘 Conga'],
+    ['rim',     '👆 Rimshot'],
+    ['wood',    '🪵 Wood Block'],
+    ['click',   '• Click']
+  ];
   var html = '';
   for (var i = 0; i < sounds.length; i++) {
-    var s = sounds[i];
-    var sel = (s === currentSound) ? ' selected' : '';
-    html += '<option value="' + s + '"' + sel + '>' + s + '</option>';
+    var val = sounds[i][0], lbl = sounds[i][1];
+    var sel = (val === currentSound) ? ' selected' : '';
+    html += '<option value="' + val + '"' + sel + '>' + lbl + '</option>';
   }
   return html;
 }
@@ -2731,45 +2845,45 @@ function vrdInitPanel() {
 }
 
 // ═══════════════════════════════════════════
-//  KCM VOCAL RHYTHM DETECTOR (VRD) v3
-//  SIMULTANEOUS 6-LAYER ARCHITECTURE
-//  One shared mic stream → all layers record at once
-//  Each layer has its own band analyser + onset buffer
+//  KCM VOCAL RHYTHM DETECTOR (VRD) v4
+//  7 FIXES: adaptive threshold, noise floor calibration,
+//  zero smoothing, per-band fftSize, peak detection,
+//  per-band meters, adaptive gap
 // ═══════════════════════════════════════════
 
-// 6 frequency bands — one per layer
+// 6 frequency bands — tuned for percussion voice syllables
+// BOOM = chest resonance of "B" sound  ~80-150Hz
+// BASS = body of kick/conga            ~150-280Hz
+// MID  = snare body, mid tom           ~280-900Hz
+// SNAP = snare crack, rim, consonants  ~900-2800Hz
+// CHA  = hi-hat, "ch/sh" sounds        ~2800-7000Hz
+// TICK = cymbal shimmer, "ts/t" sounds ~7000Hz+
 const VRD_BANDS = [
-  { name:'BOOM',   type:'lowpass',   freq:120,   Q:0.8, sound:'kick',  label:'💥 BOOM'  },
-  { name:'BASS',   type:'bandpass',  freq:200,   Q:0.8, sound:'kick',  label:'🥁 BASS'  },
-  { name:'MID',    type:'bandpass',  freq:600,   Q:0.7, sound:'wood',  label:'🪘 MID'   },
-  { name:'SNAP',   type:'bandpass',  freq:1800,  Q:0.7, sound:'click', label:'👆 SNAP'  },
-  { name:'CHA',    type:'bandpass',  freq:4500,  Q:0.8, sound:'hihat', label:'🔔 CHA'   },
-  { name:'TICK',   type:'highpass',  freq:7000,  Q:0.8, sound:'rim',   label:'🎵 TICK'  }
+  { name:'BOOM', type:'lowpass',  freq:150,  Q:1.2, sound:'kick',  label:'💥 BOOM', fftSize:2048 },
+  { name:'BASS', type:'bandpass', freq:220,  Q:1.0, sound:'kick',  label:'🥁 BASS', fftSize:2048 },
+  { name:'MID',  type:'bandpass', freq:550,  Q:0.9, sound:'conga', label:'🪘 MID',  fftSize:1024 },
+  { name:'SNAP', type:'bandpass', freq:1800, Q:0.9, sound:'snare', label:'👆 SNAP', fftSize:512  },
+  { name:'CHA',  type:'bandpass', freq:4000, Q:0.8, sound:'hihat', label:'🔔 CHA',  fftSize:512  },
+  { name:'TICK', type:'highpass', freq:7000, Q:0.8, sound:'openhat',label:'🎵 TICK', fftSize:256  }
 ];
 
 const VRD = {
-  stream:       null,
-  audioCtx:     null,
-  source:       null,
-  masterAn:     null,   // full-band analyser for level meter
-  // Per-layer state (indexed by layer array position 0-5)
-  layers: [],           // { analyser, filter, onsets, bandTotals, listening, timer }
-  globalListening: false,
-  animFrame:    null,
-  prevRms:      0,
-  threshold:    0.06,
-  minGap:       80
+  stream: null, audioCtx: null, source: null, masterAn: null,
+  layers: [],
+  animFrame: null,
+  threshold:  0.06,  // base — overridden per band after calibration
+  minGap:     100,
+  noiseFloor: [],    // per-band noise floor measured at stream open
+  preferredDeviceId: null
 };
 
-// Open one shared mic stream — call once after permission granted
+// ── OPEN SHARED STREAM ──
 async function vrdOpenSharedStream() {
-  if (VRD.stream) return; // already open
+  if (VRD.stream) return;
   try {
-    const audioConstraints = {
-      echoCancellation: false, noiseSuppression: false, autoGainControl: false
-    };
-    if (VRD.preferredDeviceId) audioConstraints.deviceId = { exact: VRD.preferredDeviceId };
-    VRD.stream = await navigator.mediaDevices.getUserMedia({ audio: audioConstraints });
+    const constraints = { echoCancellation:false, noiseSuppression:false, autoGainControl:false };
+    if (VRD.preferredDeviceId) constraints.deviceId = { exact: VRD.preferredDeviceId };
+    VRD.stream = await navigator.mediaDevices.getUserMedia({ audio: constraints });
   } catch(e) {
     const banner = document.getElementById('micPermBanner');
     if (banner) banner.classList.add('visible');
@@ -2786,73 +2900,122 @@ async function vrdOpenSharedStream() {
   VRD.masterAn.smoothingTimeConstant = 0.5;
   VRD.source.connect(VRD.masterAn);
 
-  // Build one band analyser per band (up to 6)
-  VRD.layers = VRD_BANDS.map((band, i) => {
+  // Build per-band analysers with correct fftSize and ZERO smoothing
+  VRD.layers = VRD_BANDS.map((band) => {
     const filt = VRD.audioCtx.createBiquadFilter();
     filt.type = band.type;
     filt.frequency.value = band.freq;
     filt.Q.value = band.Q;
     const an = VRD.audioCtx.createAnalyser();
-    an.fftSize = 512;
-    an.smoothingTimeConstant = 0.35;
+    an.fftSize = band.fftSize;
+    an.smoothingTimeConstant = 0;  // FIX 2: zero smoothing — raw transients only
     VRD.source.connect(filt);
     filt.connect(an);
     return {
-      analyser:   an,
-      filter:     filt,
-      onsets:     [],
-      prevEnergy: 0,
-      listening:  false,
-      timer:      null
+      analyser: an, filter: filt,
+      onsets: [], prevEnergy: 0, peakEnergy: 0,
+      listening: false, timer: null,
+      noiseFloor: 0.01,  // will be calibrated
+      threshold:  0.06   // will be calibrated per band
     };
   });
 
-  // Start the continuous detection loop
+  // FIX 5: Calibrate noise floor — listen 600ms before allowing detection
+  showToast('🎤 Calibrating mic… stay quiet for 1 second');
+  await vrdCalibrateNoise();
+
   vrdDetectLoop();
-  populateMicDevices(); // populate mic selector now that permission is granted
-  showToast('🎤 Mic ready — tap 🎤 on any layer or use RECORD ALL');
+  populateMicDevices();
+  showToast('🎤 Mic ready — tap RECORD ALL or any layer 🎤');
 }
 
-// Continuous detection loop — runs always while stream is open
+// FIX 5: Measure ambient noise per band, set adaptive threshold
+async function vrdCalibrateNoise() {
+  return new Promise(resolve => {
+    const samples = VRD_BANDS.map(() => []);
+    const bufs = VRD.layers.map(vl => new Uint8Array(vl.analyser.frequencyBinCount));
+    let count = 0;
+    const maxSamples = 30; // ~600ms at 60fps
+
+    function sample() {
+      if (count >= maxSamples) {
+        // Compute per-band noise floor and set threshold = floor * 3.0
+        VRD.layers.forEach((vl, i) => {
+          const arr = samples[i];
+          const avg = arr.reduce((a,b) => a+b, 0) / arr.length;
+          const max = Math.max(...arr);
+          vl.noiseFloor = avg;
+          vl.threshold  = Math.max(0.04, max * 3.0); // 3x peak noise
+        });
+        resolve();
+        return;
+      }
+      VRD.layers.forEach((vl, i) => {
+        vl.analyser.getByteFrequencyData(bufs[i]);
+        const e = bufs[i].reduce((a,v) => a+v, 0) / bufs[i].length / 255;
+        samples[i].push(e);
+      });
+      count++;
+      requestAnimationFrame(sample);
+    }
+    sample();
+  });
+}
+
+// ── CONTINUOUS DETECTION LOOP ──
 function vrdDetectLoop() {
   if (!VRD.stream) return;
 
   const masterBuf = new Uint8Array(VRD.masterAn.frequencyBinCount);
-  const bandBufs  = VRD.layers.map(l => new Uint8Array(l.analyser.frequencyBinCount));
+  const bandBufs  = VRD.layers.map(vl => new Uint8Array(vl.analyser.frequencyBinCount));
 
   function tick() {
     if (!VRD.stream) return;
     VRD.animFrame = requestAnimationFrame(tick);
 
-    // Master RMS for global level meter
+    // Master level meter (all active layers)
     VRD.masterAn.getByteFrequencyData(masterBuf);
-    let sum = 0;
-    for (let i = 0; i < masterBuf.length; i++) sum += (masterBuf[i]/255)**2;
-    const masterRms = Math.sqrt(sum / masterBuf.length);
-
-    // Update level meter on whichever layers are actively listening
-    const pct = Math.min(100, masterRms * 600);
-    VRD.layers.forEach((vl, i) => {
-      if (vl.listening) vrdMeterUpdate_byIndex(i, pct);
-    });
+    let mSum = 0;
+    for (let i = 0; i < masterBuf.length; i++) mSum += (masterBuf[i]/255)**2;
+    const masterRms = Math.sqrt(mSum / masterBuf.length);
+    const masterPct = Math.min(100, masterRms * 500);
 
     const now = performance.now();
 
-    // Per-band onset detection
     VRD.layers.forEach((vl, bandIdx) => {
-      if (!vl.listening) return;
-
+      // FIX 3: show per-band energy on meter, not master RMS
       vl.analyser.getByteFrequencyData(bandBufs[bandIdx]);
       const bSum = bandBufs[bandIdx].reduce((a,v) => a+v, 0);
       const energy = bSum / bandBufs[bandIdx].length / 255;
 
-      // Rising edge in THIS band's energy
-      const gap = vl.onsets.length > 0 ? now - vl.onsets[vl.onsets.length-1].time : 9999;
-      if (energy > VRD.threshold && vl.prevEnergy <= VRD.threshold && gap > VRD.minGap) {
-        vl.onsets.push({ time: now, energy });
-        // Flash the mic button for this layer
-        const rsLayer = RS.layers[bandIdx];
-        if (rsLayer) vrdFlash(rsLayer.id, vl.onsets.length);
+      if (vl.listening) {
+        // Per-band meter — shows actual band energy
+        const bandPct = Math.min(100, (energy / Math.max(vl.threshold, 0.01)) * 40);
+        vrdMeterUpdate_byIndex(bandIdx, bandPct);
+
+        const gap = vl.onsets.length > 0
+          ? now - vl.onsets[vl.onsets.length-1].time
+          : 9999;
+
+        // FIX 4: Adaptive min gap — tighten after first few onsets
+        const adaptiveGap = vl.onsets.length > 2
+          ? Math.max(60, VRD.minGap * 0.7)
+          : VRD.minGap;
+
+        // FIX 7: Peak detection — local max above threshold
+        // Trigger when: above threshold AND energy is RISING (higher than prev)
+        // AND sufficient gap since last onset
+        const isRising = energy > vl.prevEnergy;
+        const aboveThresh = energy > vl.threshold; // FIX 1: per-band threshold
+
+        if (aboveThresh && isRising && gap > adaptiveGap) {
+          // Double-check: make sure it's a real peak not noise
+          if (energy > vl.noiseFloor * 2.5) {
+            vl.onsets.push({ time: now, energy });
+            const rsLayer = RS.layers[bandIdx];
+            if (rsLayer) vrdFlash(rsLayer.id, vl.onsets.length);
+          }
+        }
       }
       vl.prevEnergy = energy;
     });
@@ -2860,44 +3023,29 @@ function vrdDetectLoop() {
   tick();
 }
 
-// Tap 🎤 on a single layer
+// ── SINGLE LAYER LISTEN ──
 function listenForRhythm(layerId) {
   if (!VRD.stream) {
-    // Stream not open yet — request permission first
     const banner = document.getElementById('micPermBanner');
     if (banner) banner.classList.add('visible');
     showToast('🎤 Tap "Allow" above to enable microphone first');
     return;
   }
-
   const rsLayerIdx = RS.layers.findIndex(l => l.id === layerId);
   if (rsLayerIdx < 0 || rsLayerIdx >= VRD.layers.length) return;
   const vl = VRD.layers[rsLayerIdx];
 
-  if (vl.listening) {
-    // Tap again = commit this layer
-    vrdCommitLayer(rsLayerIdx, layerId);
-    return;
-  }
+  if (vl.listening) { vrdCommitLayer(rsLayerIdx, layerId); return; }
 
-  // Start listening on this layer
-  vl.onsets     = [];
-  vl.prevEnergy = 0;
-  vl.listening  = true;
-
+  vl.onsets = []; vl.prevEnergy = 0; vl.listening = true;
   vrdButtonState(layerId, 'listening');
   vrdMeterShow_byId(layerId, true);
-  const bandName = VRD_BANDS[rsLayerIdx]?.label || '🎤';
-  showToast(`${bandName} — speak! Tap 🎤 again to lock in.`);
-
-  // Auto-commit after 8s
+  showToast((VRD_BANDS[rsLayerIdx]?.label || '🎤') + ' — speak! Tap 🎤 again to lock in.');
   clearTimeout(vl.timer);
-  vl.timer = setTimeout(() => {
-    if (vl.listening) vrdCommitLayer(rsLayerIdx, layerId);
-  }, 8000);
+  vl.timer = setTimeout(() => { if (vl.listening) vrdCommitLayer(rsLayerIdx, layerId); }, 8000);
 }
 
-// RECORD ALL — all layers listen simultaneously
+// ── RECORD ALL ──
 function vrdRecordAll() {
   if (!VRD.stream) {
     const banner = document.getElementById('micPermBanner');
@@ -2905,40 +3053,30 @@ function vrdRecordAll() {
     showToast('🎤 Tap "Allow" above to enable microphone first');
     return;
   }
-
   const activeCount = Math.min(RS.layers.length, VRD_BANDS.length);
-  let anyListening = VRD.layers.slice(0, activeCount).some(vl => vl.listening);
+  const anyListening = VRD.layers.slice(0, activeCount).some(vl => vl.listening);
 
   if (anyListening) {
-    // Commit all active layers
     RS.layers.slice(0, activeCount).forEach((rsLayer, idx) => {
       if (VRD.layers[idx]?.listening) vrdCommitLayer(idx, rsLayer.id);
     });
     return;
   }
 
-  // Start all layers simultaneously
   VRD.layers.slice(0, activeCount).forEach((vl, idx) => {
-    vl.onsets     = [];
-    vl.prevEnergy = 0;
-    vl.listening  = true;
+    vl.onsets = []; vl.prevEnergy = 0; vl.listening = true;
     const rsLayer = RS.layers[idx];
-    if (rsLayer) {
-      vrdButtonState(rsLayer.id, 'listening');
-      vrdMeterShow_byId(rsLayer.id, true);
-    }
+    if (rsLayer) { vrdButtonState(rsLayer.id, 'listening'); vrdMeterShow_byId(rsLayer.id, true); }
     clearTimeout(vl.timer);
-    vl.timer = setTimeout(() => {
-      if (vl.listening) vrdCommitLayer(idx, RS.layers[idx]?.id);
-    }, 8000);
+    vl.timer = setTimeout(() => { if (vl.listening) vrdCommitLayer(idx, RS.layers[idx]?.id); }, 8000);
   });
 
-  showToast('🎤 ALL LAYERS recording — say BOOM CHA TAK… tap STOP to lock in all patterns!');
-
+  showToast('🎤 ALL recording — BOOM CHA TAK… tap STOP to lock in!');
   const btn = document.getElementById('recordAllBtn');
   if (btn) { btn.textContent = '⏹ STOP & LOCK ALL'; btn.classList.add('recording'); }
 }
 
+// ── COMMIT LAYER ──
 function vrdCommitLayer(bandIdx, layerId) {
   const vl = VRD.layers[bandIdx];
   if (!vl) return;
@@ -2952,7 +3090,6 @@ function vrdCommitLayer(bandIdx, layerId) {
   vrdButtonState(layerId, 'idle');
   vrdMeterShow_byId(layerId, false);
 
-  // Reset Record All button if none still listening
   const anyStillListening = VRD.layers.some(l => l.listening);
   if (!anyStillListening) {
     const btn = document.getElementById('recordAllBtn');
@@ -2960,7 +3097,7 @@ function vrdCommitLayer(bandIdx, layerId) {
   }
 
   if (k < 1) {
-    showToast(`⚠️ Layer ${bandIdx+1}: no beats — try again, speak louder`);
+    showToast('⚠️ Layer ' + (bandIdx+1) + ': no beats — speak louder or raise Sensitivity');
     return;
   }
 
@@ -2987,11 +3124,10 @@ function vrdCommitLayer(bandIdx, layerId) {
 
   renderLayers();
   drawRhythmViz();
-
-  const bandLabel = VRD_BANDS[bandIdx]?.label || '';
-  showToast(`✅ ${bandLabel} · ${k} hits → E(${layer.pulses},${bestN})`);
+  showToast('✅ ' + (VRD_BANDS[bandIdx]?.label||'') + ' · ' + k + ' hits → E(' + layer.pulses + ',' + bestN + ')');
 }
 
+// ── CLOSE STREAM ──
 function vrdCloseStream() {
   VRD.layers.forEach(vl => { vl.listening = false; clearTimeout(vl.timer); });
   cancelAnimationFrame(VRD.animFrame);
@@ -3005,8 +3141,8 @@ function vrdCloseStream() {
 
 // ── HELPERS ──
 function vrdFlash(layerId, count) {
-  const btn = document.getElementById('mic-btn-' + layerId);
-  const cnt = document.getElementById('vrd-count-' + layerId);
+  const btn  = document.getElementById('mic-btn-' + layerId);
+  const cnt  = document.getElementById('vrd-count-' + layerId);
   const fill = document.getElementById('vrd-fill-' + layerId);
   if (btn)  { btn.textContent = '●'; btn.classList.add('beat-flash'); }
   if (cnt)  cnt.textContent = count;
@@ -3014,8 +3150,8 @@ function vrdFlash(layerId, count) {
   setTimeout(() => {
     const b = document.getElementById('mic-btn-' + layerId);
     const f = document.getElementById('vrd-fill-' + layerId);
-    const vl = VRD.layers[RS.layers.findIndex(l=>l.id===layerId)];
-    if (b && vl?.listening) { b.textContent = '⏹'; b.classList.remove('beat-flash'); }
+    const idx = RS.layers.findIndex(l => l.id === layerId);
+    if (b && idx >= 0 && VRD.layers[idx]?.listening) { b.textContent = '⏹'; b.classList.remove('beat-flash'); }
     if (f) f.classList.remove('loud');
   }, 120);
 }
@@ -3037,21 +3173,18 @@ function vrdButtonState(layerId, state) {
   const btn = document.getElementById('mic-btn-' + layerId);
   if (!btn) return;
   if (state === 'listening') {
-    btn.textContent = '⏹';
-    btn.classList.add('listening');
-    btn.title = 'Tap again to lock in your rhythm';
+    btn.textContent = '⏹'; btn.classList.add('listening');
+    btn.title = 'Tap again to lock in';
   } else {
-    btn.textContent = '🎤';
-    btn.classList.remove('listening', 'beat-flash');
+    btn.textContent = '🎤'; btn.classList.remove('listening', 'beat-flash');
     btn.title = 'Tap to speak a rhythm';
   }
 }
 
-// Legacy stubs (keep so nothing else breaks)
+// Legacy stubs
 function vrdStop() { vrdCloseStream(); }
 function vrdMeterShow(id, show) { vrdMeterShow_byId(id, show); }
 function vrdMeterUpdate(id, pct) {}
-
 </script>
 </body>
 </html>
