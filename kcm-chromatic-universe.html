@@ -586,6 +586,154 @@ input[type="range"] {
 }
 .layer-btn:hover { background: var(--teal-dim); border-color: var(--teal); color: var(--text); }
 .layer-btn.muted { color: var(--coral); border-color: var(--coral); background: rgba(207,122,90,0.1); }
+.mic-btn {
+  color: #00c0c0;
+  font-size: 16px;
+  min-width: 36px;
+}
+.mic-btn:hover { background: rgba(0,192,192,0.2); border-color: #00c0c0; }
+.mic-btn.listening {
+  background: rgba(0,192,192,0.25);
+  border-color: #00c0c0;
+  box-shadow: 0 0 10px #00c0c0;
+  animation: micpulse 0.8s infinite;
+}
+.mic-btn.beat-flash { color: #F4D03F !important; }
+/* STEP PRESET BUTTONS */
+.step-preset-btn {
+  flex: 1;
+  padding: 5px 4px;
+  background: rgba(0,128,128,0.1);
+  border: 1px solid rgba(0,128,128,0.3);
+  border-radius: 5px;
+  color: #b0b0cc;
+  font-size: 0.8rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.step-preset-btn:hover { background: rgba(0,192,192,0.2); color: #e8e8f8; }
+.step-preset-btn.active { background: rgba(0,192,192,0.2); border-color: #00c0c0; color: #00c0c0; }
+
+/* CLEAR ALL BUTTON */
+.clear-all-btn {
+  width: 100%;
+  margin-top: 4px;
+  padding: 7px;
+  background: rgba(244,208,63,0.08);
+  border: 1px solid rgba(244,208,63,0.3);
+  border-radius: 8px;
+  color: #F4D03F;
+  font-size: 0.8rem;
+  font-weight: bold;
+  cursor: pointer;
+  letter-spacing: 0.05em;
+  transition: all 0.2s;
+}
+.clear-all-btn:hover { background: rgba(244,208,63,0.18); }
+
+/* RECORD ALL BUTTON */
+.record-all-btn {
+  width: 100%;
+  margin-top: 0.5rem;
+  padding: 10px;
+  background: linear-gradient(135deg, rgba(0,128,128,0.3), rgba(0,192,192,0.15));
+  border: 1px solid #00c0c0;
+  border-radius: 8px;
+  color: #00c0c0;
+  font-size: 0.9rem;
+  font-weight: bold;
+  cursor: pointer;
+  letter-spacing: 0.05em;
+  transition: all 0.2s;
+}
+.record-all-btn:hover { background: rgba(0,192,192,0.25); }
+.record-all-btn.recording {
+  background: linear-gradient(135deg, rgba(244,208,63,0.25), rgba(207,122,90,0.15));
+  border-color: #F4D03F;
+  color: #F4D03F;
+  animation: recpulse 1s infinite;
+}
+@keyframes recpulse {
+  0%,100% { box-shadow: 0 0 6px rgba(244,208,63,0.4); }
+  50%      { box-shadow: 0 0 18px rgba(244,208,63,0.8); }
+}
+
+/* MIC PERMISSION BANNER */
+.mic-permission-banner {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  background: rgba(0,192,192,0.08);
+  border: 1px solid rgba(0,192,192,0.35);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+.mic-permission-banner.visible { display: flex; }
+.mic-permission-banner .mic-perm-icon { font-size: 1.5rem; }
+.mic-permission-banner .mic-perm-text { flex: 1; min-width: 160px; }
+.mic-permission-banner .mic-perm-text strong { color: #00c0c0; display: block; font-size: 0.85rem; margin-bottom: 2px; }
+.mic-permission-banner .mic-perm-text span { color: #b0b0cc; font-size: 0.75rem; }
+.mic-perm-btns { display: flex; gap: 6px; }
+.mic-perm-yes {
+  background: #008080; color: #fff;
+  border: none; border-radius: 6px;
+  padding: 6px 14px; font-size: 0.8rem;
+  cursor: pointer; font-weight: bold;
+  transition: background 0.2s;
+}
+.mic-perm-yes:hover { background: #00c0c0; }
+.mic-perm-never {
+  background: transparent; color: #b0b0cc;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 6px; padding: 6px 10px;
+  font-size: 0.75rem; cursor: pointer;
+}
+.mic-perm-never:hover { color: #e8e8f8; border-color: rgba(255,255,255,0.3); }
+.mic-perm-status {
+  font-size: 0.72rem; padding: 3px 8px;
+  border-radius: 4px; display: none;
+}
+.mic-perm-status.granted { display: inline-block; background: rgba(0,192,192,0.15); color: #00c0c0; }
+.mic-perm-status.denied  { display: inline-block; background: rgba(207,122,90,0.15); color: #CF7A5A; }
+
+.vrd-meter-wrap {
+  margin-top: 6px;
+  display: none;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.65rem;
+  color: #b0b0cc;
+}
+.vrd-meter-wrap.active { display: flex; }
+.vrd-meter-bar {
+  flex: 1;
+  height: 8px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid rgba(0,192,192,0.2);
+}
+.vrd-meter-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #008080, #00c0c0);
+  border-radius: 4px;
+  transition: width 0.05s;
+}
+.vrd-meter-fill.loud { background: linear-gradient(90deg, #F4D03F, #CF7A5A); }
+.vrd-onset-count {
+  min-width: 18px;
+  text-align: right;
+  color: #F4D03F;
+  font-weight: bold;
+}
+@keyframes micpulse {
+  0%,100% { box-shadow: 0 0 6px #00c0c0; }
+  50%      { box-shadow: 0 0 16px #00c0c0; }
+}
 
 .layer-sliders { display: flex; flex-direction: column; gap: 0.4rem; }
 
@@ -1005,15 +1153,51 @@ input[type="range"] {
       <div>
         <div class="ctrl-card">
           <div class="ctrl-card-title">Rhythm Layers</div>
+
+          <!-- MIC PERMISSION BANNER -->
+          <div class="mic-permission-banner" id="micPermBanner">
+            <div class="mic-perm-icon">🎤</div>
+            <div class="mic-perm-text">
+              <strong>Microphone Access Needed</strong>
+              <span>To speak rhythms into the Euclidean circle, allow mic access.</span>
+            </div>
+            <div class="mic-perm-btns">
+              <button class="mic-perm-yes" onclick="vrdRequestMic('always')">✅ Allow Always</button>
+              <button class="mic-perm-yes" style="background:#1a4a4a;" onclick="vrdRequestMic('once')">This Time</button>
+              <button class="mic-perm-never" onclick="vrdDenyMic()">Never</button>
+            </div>
+            <span class="mic-perm-status" id="micPermStatus"></span>
+          </div>
+
           <div id="layerList"></div>
           <button class="btn btn-teal btn-full" onclick="addLayer()" style="margin-top:0.25rem;">+ Add Layer</button>
+          <button class="record-all-btn" id="recordAllBtn" onclick="vrdRecordAll()">🎤 RECORD ALL LAYERS</button>
+          <button class="clear-all-btn" onclick="clearAllLayers()">🗑 CLEAR ALL</button>
         </div>
         <div class="ctrl-card">
           <div class="ctrl-card-title">Steps</div>
           <div class="ctrl-group">
-            <label class="ctrl-label" for="globalStepsSlider">Global Steps: <span id="stepsVal">16</span></label>
-            <input type="range" id="globalStepsSlider" min="4" max="32" value="16" step="1"
-              oninput="setSteps(this.value)">
+            <label class="ctrl-label">Grid: <span id="stepsVal" style="color:#00c0c0;font-weight:bold;">16</span> steps</label>
+            <div style="display:flex;gap:5px;margin-bottom:6px;">
+              <button class="step-preset-btn active" id="spb-12"  onclick="setStepsPreset(12)">12</button>
+              <button class="step-preset-btn active" id="spb-16"  onclick="setStepsPreset(16)">16</button>
+              <button class="step-preset-btn"        id="spb-32"  onclick="setStepsPreset(32)">32</button>
+              <button class="step-preset-btn"        id="spb-64"  onclick="setStepsPreset(64)">64</button>
+            </div>
+            <input type="range" id="globalStepsSlider" min="4" max="64" value="16" step="1"
+              oninput="setSteps(this.value)" style="accent-color:#00c0c0;">
+          </div>
+          <div class="ctrl-group" style="margin-top:6px;">
+            <label class="ctrl-label">🎤 Mic Sensitivity: <span id="vrdSensVal">Medium</span></label>
+            <input type="range" id="vrdSensSlider" min="1" max="5" value="3" step="1"
+              oninput="setVrdSensitivity(this.value)" style="accent-color:#00c0c0;">
+          </div>
+          <div class="ctrl-group" style="margin-top:6px;">
+            <label class="ctrl-label">🎙️ Microphone</label>
+            <select id="micDeviceSelect" onchange="setMicDevice(this.value)"
+              style="width:100%;background:#1a1a2e;color:#e8e8f8;border:1px solid rgba(0,128,128,0.3);border-radius:6px;padding:4px 6px;font-size:0.75rem;">
+              <option value="">Default Microphone</option>
+            </select>
           </div>
         </div>
       </div>
@@ -1169,7 +1353,7 @@ function switchPanel(name) {
   document.getElementById('panel-' + name).classList.add('active');
   document.getElementById('tab-' + name).classList.add('active');
   document.getElementById('tab-' + name).setAttribute('aria-selected','true');
-  if (name === 'rhythm') initRhythmIfNeeded();
+  if (name === 'rhythm') { initRhythmIfNeeded(); vrdInitPanel(); }
 }
 
 // ═══════════════════════════════════════════
@@ -1765,7 +1949,11 @@ function initRhythmIfNeeded() {
   if (RS.rInitDone) return;
   RS.rInitDone = true;
   buildPolyPicker();
-  addLayer(); addLayer();
+  addLayer(); addLayer(); addLayer();
+  // Bobby Sanabria default sounds
+  if (RS.layers[0]) RS.layers[0].soundType = 'kick';   // BOOM
+  if (RS.layers[1]) RS.layers[1].soundType = 'hihat';  // CHA
+  if (RS.layers[2]) RS.layers[2].soundType = 'click';  // TAK
   renderLayers();
   drawRhythmViz();
 }
@@ -1835,15 +2023,16 @@ function bjorklund(steps, pulses) {
 // ── LAYERS ──
 function createLayer(steps, pulses, cIdx, sound) {
   const id=++layerIdCtr, color=LAYER_COLORS[cIdx%LAYER_COLORS.length];
-  return {id, steps:steps||RS.globalSteps, pulses:pulses||RS.selectedPoly,
-    pattern:bjorklund(steps||RS.globalSteps, pulses||RS.selectedPoly),
+  const p = pulses||0;  // START BLANK — voice fills it
+  return {id, steps:steps||RS.globalSteps, pulses:p,
+    pattern:bjorklund(steps||RS.globalSteps, p),
     color, soundType:sound||LAYER_SOUNDS[cIdx%LAYER_SOUNDS.length], muted:false};
 }
 
 function addLayer() {
   if(RS.layers.length>=6){showToast('⚠️ Max 6 layers');return;}
   const idx=RS.layers.length;
-  RS.layers.push(createLayer(RS.globalSteps,RS.selectedPoly,idx,LAYER_SOUNDS[idx]));
+  RS.layers.push(createLayer(RS.globalSteps, 0, idx, LAYER_SOUNDS[idx]));
   renderLayers(); drawRhythmViz();
   if(RS.layers.length>1) showToast('✅ Layer '+RS.layers.length+' added');
 }
@@ -1875,9 +2064,16 @@ function renderLayers() {
         <div class="layer-name-row">
           <div class="layer-dot" style="background:${layer.color}"></div>
           <span class="layer-name" style="color:${layer.color}">Layer ${idx+1}</span>
+          <span style="font-size:0.65rem;color:#b0b0cc;margin-left:4px;">${VRD_BANDS[idx]?.label||''}</span>
         </div>
         <div class="layer-btns">
+          <select onchange="setLayerSound(${layer.id},this.value)"
+            style="background:#0d0d1a;color:${layer.color};border:1px solid ${layer.color}55;border-radius:4px;font-size:0.65rem;padding:1px 3px;max-width:72px;">
+            ${buildSoundOptions(layer.soundType)}
+          </select>
+          <button class="layer-btn mic-btn" id="mic-btn-${layer.id}" onclick="listenForRhythm(${layer.id})" title="Tap to speak a rhythm">🎤</button>
           <button class="layer-btn ${layer.muted?'muted':''}" onclick="muteLayer(${layer.id})">${layer.muted?'🔇':'🔊'}</button>
+          <button class="layer-btn" onclick="clearLayer(${layer.id})" title="Clear this layer" style="color:#F4D03F;font-size:11px;">CLR</button>
           <button class="layer-btn" onclick="removeLayer(${layer.id})">✕</button>
         </div>
       </div>
@@ -1887,6 +2083,11 @@ function renderLayers() {
           <input type="range" min="1" max="${layer.steps}" value="${layer.pulses}" step="1"
             oninput="updateLayerPulses(${layer.id},this.value)" style="accent-color:${layer.color}">
           <span class="val" id="lpv-${layer.id}" style="color:${layer.color}">${layer.pulses}</span>
+        </div>
+        <div class="vrd-meter-wrap" id="vrd-meter-${layer.id}">
+          <span>🎤</span>
+          <div class="vrd-meter-bar"><div class="vrd-meter-fill" id="vrd-fill-${layer.id}"></div></div>
+          <span class="vrd-onset-count" id="vrd-count-${layer.id}">0</span>
         </div>
       </div>`;
     container.appendChild(card);
@@ -1973,6 +2174,12 @@ function setRhythmTempo(val) {
 }
 
 function setSteps(val) {
+  // Highlight matching preset button if it's a standard value
+  const n = parseInt(val);
+  [12,16,32,64].forEach(v => {
+    const b = document.getElementById('spb-' + v);
+    if (b) b.classList.toggle('active', v === n);
+  });
   RS.globalSteps=parseInt(val);
   document.getElementById('stepsVal').textContent=val;
   RS.layers.forEach(l=>{l.steps=RS.globalSteps;l.pattern=bjorklund(l.steps,Math.min(l.pulses,l.steps));});
@@ -2330,6 +2537,490 @@ function etRestart() {
   document.getElementById('etResults').style.display='none';
   document.getElementById('etSettings').style.display='block';
 }
+
+
+// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════
+//  STEP PRESET + SENSITIVITY + MIC DEVICE
+// ═══════════════════════════════════════════
+
+function setStepsPreset(n) {
+  setSteps(n);
+  const slider = document.getElementById('globalStepsSlider');
+  if (slider) slider.value = n;
+  // Update active button state
+  [12,16,32,64].forEach(v => {
+    const b = document.getElementById('spb-' + v);
+    if (b) b.classList.toggle('active', v === n);
+  });
+}
+
+function setVrdSensitivity(val) {
+  const map    = {1:0.04, 2:0.06, 3:0.09, 4:0.13, 5:0.18};
+  const labels = {1:'Very High', 2:'High', 3:'Medium', 4:'Low', 5:'Very Low'};
+  VRD.threshold = map[val] || 0.09;
+  const el = document.getElementById('vrdSensVal');
+  if (el) el.textContent = labels[val] || 'Medium';
+}
+
+// Build sound <option> HTML safely — no nested template literals
+function buildSoundOptions(currentSound) {
+  var sounds = ['kick','hihat','click','wood','rim','tone'];
+  var html = '';
+  for (var i = 0; i < sounds.length; i++) {
+    var s = sounds[i];
+    var sel = (s === currentSound) ? ' selected' : '';
+    html += '<option value="' + s + '"' + sel + '>' + s + '</option>';
+  }
+  return html;
+}
+
+function clearLayer(layerId) {
+  const l = RS.layers.find(l => l.id === layerId);
+  if (!l) return;
+  l.pulses  = 0;
+  l.pattern = bjorklund(l.steps, 0);
+  // Reset beat counter display
+  const cnt = document.getElementById('vrd-count-' + layerId);
+  if (cnt) cnt.textContent = '0';
+  renderLayers();
+  drawRhythmViz();
+}
+
+function clearAllLayers() {
+  RS.layers.forEach(l => {
+    l.pulses  = 0;
+    l.pattern = bjorklund(l.steps, 0);
+  });
+  // Reset all beat counters
+  RS.layers.forEach(l => {
+    const cnt = document.getElementById('vrd-count-' + l.id);
+    if (cnt) cnt.textContent = '0';
+  });
+  renderLayers();
+  drawRhythmViz();
+  showToast('🗑 All layers cleared — ready for voice input');
+}
+
+function setLayerSound(layerId, sound) {
+  const l = RS.layers.find(l => l.id === layerId);
+  if (l) l.soundType = sound;
+}
+
+// Populate mic device dropdown from browser
+async function populateMicDevices() {
+  const sel = document.getElementById('micDeviceSelect');
+  if (!sel) return;
+  try {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const mics = devices.filter(d => d.kind === 'audioinput');
+    sel.innerHTML = '<option value="">Default Microphone</option>';
+    mics.forEach(d => {
+      const opt = document.createElement('option');
+      opt.value = d.deviceId;
+      opt.textContent = d.label || ('Microphone ' + (mics.indexOf(d)+1));
+      sel.appendChild(opt);
+    });
+  } catch(e) {}
+}
+
+function setMicDevice(deviceId) {
+  VRD.preferredDeviceId = deviceId || null;
+  // If stream is already open, restart it with new device
+  if (VRD.stream) {
+    vrdCloseStream();
+    setTimeout(() => vrdOpenSharedStream(), 200);
+  }
+}
+
+// ═══════════════════════════════════════════
+//  MIC PERMISSION MANAGER
+// ═══════════════════════════════════════════
+const MicPerm = {
+  state: localStorage.getItem('kcm_mic_perm') || 'unknown'
+};
+
+function vrdCheckPermission() {
+  const banner = document.getElementById('micPermBanner');
+  if (!banner) return;
+  if (MicPerm.state === 'denied') { banner.classList.remove('visible'); return; }
+  if (MicPerm.state === 'granted') { banner.classList.remove('visible'); return; }
+  if (navigator.permissions) {
+    navigator.permissions.query({ name: 'microphone' }).then(result => {
+      if (result.state === 'granted') {
+        MicPerm.state = 'granted';
+        localStorage.setItem('kcm_mic_perm', 'granted');
+        banner.classList.remove('visible');
+        vrdOpenSharedStream(); // auto-open stream if already granted
+      } else if (result.state === 'denied') {
+        banner.classList.remove('visible');
+        showToast('🎤 Mic blocked in browser — go to Site Settings → Microphone → Allow');
+      } else {
+        banner.classList.add('visible');
+      }
+      result.onchange = () => vrdCheckPermission();
+    }).catch(() => { banner.classList.add('visible'); });
+  } else {
+    banner.classList.add('visible');
+  }
+}
+
+async function vrdRequestMic(mode) {
+  const banner = document.getElementById('micPermBanner');
+  const status = document.getElementById('micPermStatus');
+  try {
+    // Test request to trigger browser prompt
+    const test = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
+    });
+    test.getTracks().forEach(t => t.stop());
+    MicPerm.state = 'granted';
+    if (mode === 'always') localStorage.setItem('kcm_mic_perm', 'granted');
+    if (banner) banner.classList.remove('visible');
+    showToast('✅ Mic enabled — tap 🎤 RECORD ALL or any layer to start!');
+    vrdOpenSharedStream();
+  } catch(e) {
+    if (status) { status.textContent = '❌ Access denied'; status.className = 'mic-perm-status denied'; }
+    showToast('❌ Mic blocked — open Chrome Settings → Site Settings → Microphone → Allow this site');
+  }
+}
+
+function vrdDenyMic() {
+  MicPerm.state = 'denied';
+  localStorage.setItem('kcm_mic_perm', 'denied');
+  const banner = document.getElementById('micPermBanner');
+  if (banner) banner.classList.remove('visible');
+}
+
+function vrdInitPanel() {
+  setTimeout(() => {
+    vrdCheckPermission();
+    // If already granted, open the shared stream right away
+    if (MicPerm.state === 'granted') vrdOpenSharedStream();
+  }, 300);
+}
+
+// ═══════════════════════════════════════════
+//  KCM VOCAL RHYTHM DETECTOR (VRD) v3
+//  SIMULTANEOUS 6-LAYER ARCHITECTURE
+//  One shared mic stream → all layers record at once
+//  Each layer has its own band analyser + onset buffer
+// ═══════════════════════════════════════════
+
+// 6 frequency bands — one per layer
+const VRD_BANDS = [
+  { name:'BOOM',   type:'lowpass',   freq:120,   Q:0.8, sound:'kick',  label:'💥 BOOM'  },
+  { name:'BASS',   type:'bandpass',  freq:200,   Q:0.8, sound:'kick',  label:'🥁 BASS'  },
+  { name:'MID',    type:'bandpass',  freq:600,   Q:0.7, sound:'wood',  label:'🪘 MID'   },
+  { name:'SNAP',   type:'bandpass',  freq:1800,  Q:0.7, sound:'click', label:'👆 SNAP'  },
+  { name:'CHA',    type:'bandpass',  freq:4500,  Q:0.8, sound:'hihat', label:'🔔 CHA'   },
+  { name:'TICK',   type:'highpass',  freq:7000,  Q:0.8, sound:'rim',   label:'🎵 TICK'  }
+];
+
+const VRD = {
+  stream:       null,
+  audioCtx:     null,
+  source:       null,
+  masterAn:     null,   // full-band analyser for level meter
+  // Per-layer state (indexed by layer array position 0-5)
+  layers: [],           // { analyser, filter, onsets, bandTotals, listening, timer }
+  globalListening: false,
+  animFrame:    null,
+  prevRms:      0,
+  threshold:    0.06,
+  minGap:       80
+};
+
+// Open one shared mic stream — call once after permission granted
+async function vrdOpenSharedStream() {
+  if (VRD.stream) return; // already open
+  try {
+    const audioConstraints = {
+      echoCancellation: false, noiseSuppression: false, autoGainControl: false
+    };
+    if (VRD.preferredDeviceId) audioConstraints.deviceId = { exact: VRD.preferredDeviceId };
+    VRD.stream = await navigator.mediaDevices.getUserMedia({ audio: audioConstraints });
+  } catch(e) {
+    const banner = document.getElementById('micPermBanner');
+    if (banner) banner.classList.add('visible');
+    showToast('🎤 Tap "Allow" above to enable microphone');
+    return;
+  }
+
+  VRD.audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 44100 });
+  if (VRD.audioCtx.state === 'suspended') await VRD.audioCtx.resume();
+
+  VRD.source   = VRD.audioCtx.createMediaStreamSource(VRD.stream);
+  VRD.masterAn = VRD.audioCtx.createAnalyser();
+  VRD.masterAn.fftSize = 1024;
+  VRD.masterAn.smoothingTimeConstant = 0.5;
+  VRD.source.connect(VRD.masterAn);
+
+  // Build one band analyser per band (up to 6)
+  VRD.layers = VRD_BANDS.map((band, i) => {
+    const filt = VRD.audioCtx.createBiquadFilter();
+    filt.type = band.type;
+    filt.frequency.value = band.freq;
+    filt.Q.value = band.Q;
+    const an = VRD.audioCtx.createAnalyser();
+    an.fftSize = 512;
+    an.smoothingTimeConstant = 0.35;
+    VRD.source.connect(filt);
+    filt.connect(an);
+    return {
+      analyser:   an,
+      filter:     filt,
+      onsets:     [],
+      prevEnergy: 0,
+      listening:  false,
+      timer:      null
+    };
+  });
+
+  // Start the continuous detection loop
+  vrdDetectLoop();
+  populateMicDevices(); // populate mic selector now that permission is granted
+  showToast('🎤 Mic ready — tap 🎤 on any layer or use RECORD ALL');
+}
+
+// Continuous detection loop — runs always while stream is open
+function vrdDetectLoop() {
+  if (!VRD.stream) return;
+
+  const masterBuf = new Uint8Array(VRD.masterAn.frequencyBinCount);
+  const bandBufs  = VRD.layers.map(l => new Uint8Array(l.analyser.frequencyBinCount));
+
+  function tick() {
+    if (!VRD.stream) return;
+    VRD.animFrame = requestAnimationFrame(tick);
+
+    // Master RMS for global level meter
+    VRD.masterAn.getByteFrequencyData(masterBuf);
+    let sum = 0;
+    for (let i = 0; i < masterBuf.length; i++) sum += (masterBuf[i]/255)**2;
+    const masterRms = Math.sqrt(sum / masterBuf.length);
+
+    // Update level meter on whichever layers are actively listening
+    const pct = Math.min(100, masterRms * 600);
+    VRD.layers.forEach((vl, i) => {
+      if (vl.listening) vrdMeterUpdate_byIndex(i, pct);
+    });
+
+    const now = performance.now();
+
+    // Per-band onset detection
+    VRD.layers.forEach((vl, bandIdx) => {
+      if (!vl.listening) return;
+
+      vl.analyser.getByteFrequencyData(bandBufs[bandIdx]);
+      const bSum = bandBufs[bandIdx].reduce((a,v) => a+v, 0);
+      const energy = bSum / bandBufs[bandIdx].length / 255;
+
+      // Rising edge in THIS band's energy
+      const gap = vl.onsets.length > 0 ? now - vl.onsets[vl.onsets.length-1].time : 9999;
+      if (energy > VRD.threshold && vl.prevEnergy <= VRD.threshold && gap > VRD.minGap) {
+        vl.onsets.push({ time: now, energy });
+        // Flash the mic button for this layer
+        const rsLayer = RS.layers[bandIdx];
+        if (rsLayer) vrdFlash(rsLayer.id, vl.onsets.length);
+      }
+      vl.prevEnergy = energy;
+    });
+  }
+  tick();
+}
+
+// Tap 🎤 on a single layer
+function listenForRhythm(layerId) {
+  if (!VRD.stream) {
+    // Stream not open yet — request permission first
+    const banner = document.getElementById('micPermBanner');
+    if (banner) banner.classList.add('visible');
+    showToast('🎤 Tap "Allow" above to enable microphone first');
+    return;
+  }
+
+  const rsLayerIdx = RS.layers.findIndex(l => l.id === layerId);
+  if (rsLayerIdx < 0 || rsLayerIdx >= VRD.layers.length) return;
+  const vl = VRD.layers[rsLayerIdx];
+
+  if (vl.listening) {
+    // Tap again = commit this layer
+    vrdCommitLayer(rsLayerIdx, layerId);
+    return;
+  }
+
+  // Start listening on this layer
+  vl.onsets     = [];
+  vl.prevEnergy = 0;
+  vl.listening  = true;
+
+  vrdButtonState(layerId, 'listening');
+  vrdMeterShow_byId(layerId, true);
+  const bandName = VRD_BANDS[rsLayerIdx]?.label || '🎤';
+  showToast(`${bandName} — speak! Tap 🎤 again to lock in.`);
+
+  // Auto-commit after 8s
+  clearTimeout(vl.timer);
+  vl.timer = setTimeout(() => {
+    if (vl.listening) vrdCommitLayer(rsLayerIdx, layerId);
+  }, 8000);
+}
+
+// RECORD ALL — all layers listen simultaneously
+function vrdRecordAll() {
+  if (!VRD.stream) {
+    const banner = document.getElementById('micPermBanner');
+    if (banner) banner.classList.add('visible');
+    showToast('🎤 Tap "Allow" above to enable microphone first');
+    return;
+  }
+
+  const activeCount = Math.min(RS.layers.length, VRD_BANDS.length);
+  let anyListening = VRD.layers.slice(0, activeCount).some(vl => vl.listening);
+
+  if (anyListening) {
+    // Commit all active layers
+    RS.layers.slice(0, activeCount).forEach((rsLayer, idx) => {
+      if (VRD.layers[idx]?.listening) vrdCommitLayer(idx, rsLayer.id);
+    });
+    return;
+  }
+
+  // Start all layers simultaneously
+  VRD.layers.slice(0, activeCount).forEach((vl, idx) => {
+    vl.onsets     = [];
+    vl.prevEnergy = 0;
+    vl.listening  = true;
+    const rsLayer = RS.layers[idx];
+    if (rsLayer) {
+      vrdButtonState(rsLayer.id, 'listening');
+      vrdMeterShow_byId(rsLayer.id, true);
+    }
+    clearTimeout(vl.timer);
+    vl.timer = setTimeout(() => {
+      if (vl.listening) vrdCommitLayer(idx, RS.layers[idx]?.id);
+    }, 8000);
+  });
+
+  showToast('🎤 ALL LAYERS recording — say BOOM CHA TAK… tap STOP to lock in all patterns!');
+
+  const btn = document.getElementById('recordAllBtn');
+  if (btn) { btn.textContent = '⏹ STOP & LOCK ALL'; btn.classList.add('recording'); }
+}
+
+function vrdCommitLayer(bandIdx, layerId) {
+  const vl = VRD.layers[bandIdx];
+  if (!vl) return;
+  clearTimeout(vl.timer);
+  vl.listening = false;
+
+  const layer = RS.layers.find(l => l.id === layerId);
+  if (!layer) return;
+
+  const k = vl.onsets.length;
+  vrdButtonState(layerId, 'idle');
+  vrdMeterShow_byId(layerId, false);
+
+  // Reset Record All button if none still listening
+  const anyStillListening = VRD.layers.some(l => l.listening);
+  if (!anyStillListening) {
+    const btn = document.getElementById('recordAllBtn');
+    if (btn) { btn.textContent = '🎤 RECORD ALL'; btn.classList.remove('recording'); }
+  }
+
+  if (k < 1) {
+    showToast(`⚠️ Layer ${bandIdx+1}: no beats — try again, speak louder`);
+    return;
+  }
+
+  // Fit to best step grid
+  const candidates = [4, 8, 12, 16, 24, 32, 48, 64];
+  let bestN = RS.globalSteps, bestScore = Infinity;
+  for (const n of candidates) {
+    if (n >= k) {
+      const score = Math.abs(n - k * 2.5);
+      if (score < bestScore) { bestScore = score; bestN = n; }
+    }
+  }
+
+  layer.soundType = VRD_BANDS[bandIdx]?.sound || 'click';
+  layer.pulses    = Math.min(k, bestN);
+  layer.steps     = bestN;
+  layer.pattern   = bjorklund(bestN, layer.pulses);
+
+  if (bestN !== RS.globalSteps) {
+    RS.globalSteps = bestN;
+    const sv = document.getElementById('stepsVal');
+    if (sv) sv.textContent = bestN;
+  }
+
+  renderLayers();
+  drawRhythmViz();
+
+  const bandLabel = VRD_BANDS[bandIdx]?.label || '';
+  showToast(`✅ ${bandLabel} · ${k} hits → E(${layer.pulses},${bestN})`);
+}
+
+function vrdCloseStream() {
+  VRD.layers.forEach(vl => { vl.listening = false; clearTimeout(vl.timer); });
+  cancelAnimationFrame(VRD.animFrame);
+  try { if (VRD.source) VRD.source.disconnect(); } catch(e){}
+  VRD.layers.forEach(vl => { try { vl.analyser.disconnect(); vl.filter.disconnect(); } catch(e){} });
+  VRD.layers = [];
+  if (VRD.stream) { VRD.stream.getTracks().forEach(t => t.stop()); VRD.stream = null; }
+  try { if (VRD.audioCtx) VRD.audioCtx.close(); } catch(e){}
+  VRD.audioCtx = null; VRD.source = null; VRD.masterAn = null;
+}
+
+// ── HELPERS ──
+function vrdFlash(layerId, count) {
+  const btn = document.getElementById('mic-btn-' + layerId);
+  const cnt = document.getElementById('vrd-count-' + layerId);
+  const fill = document.getElementById('vrd-fill-' + layerId);
+  if (btn)  { btn.textContent = '●'; btn.classList.add('beat-flash'); }
+  if (cnt)  cnt.textContent = count;
+  if (fill) fill.classList.add('loud');
+  setTimeout(() => {
+    const b = document.getElementById('mic-btn-' + layerId);
+    const f = document.getElementById('vrd-fill-' + layerId);
+    const vl = VRD.layers[RS.layers.findIndex(l=>l.id===layerId)];
+    if (b && vl?.listening) { b.textContent = '⏹'; b.classList.remove('beat-flash'); }
+    if (f) f.classList.remove('loud');
+  }, 120);
+}
+
+function vrdMeterShow_byId(layerId, show) {
+  const wrap = document.getElementById('vrd-meter-' + layerId);
+  if (wrap) wrap.classList.toggle('active', show);
+  if (!show) { const f = document.getElementById('vrd-fill-' + layerId); if (f) f.style.width='0%'; }
+}
+
+function vrdMeterUpdate_byIndex(bandIdx, pct) {
+  const rsLayer = RS.layers[bandIdx];
+  if (!rsLayer) return;
+  const fill = document.getElementById('vrd-fill-' + rsLayer.id);
+  if (fill) fill.style.width = Math.min(100, pct) + '%';
+}
+
+function vrdButtonState(layerId, state) {
+  const btn = document.getElementById('mic-btn-' + layerId);
+  if (!btn) return;
+  if (state === 'listening') {
+    btn.textContent = '⏹';
+    btn.classList.add('listening');
+    btn.title = 'Tap again to lock in your rhythm';
+  } else {
+    btn.textContent = '🎤';
+    btn.classList.remove('listening', 'beat-flash');
+    btn.title = 'Tap to speak a rhythm';
+  }
+}
+
+// Legacy stubs (keep so nothing else breaks)
+function vrdStop() { vrdCloseStream(); }
+function vrdMeterShow(id, show) { vrdMeterShow_byId(id, show); }
+function vrdMeterUpdate(id, pct) {}
 
 </script>
 </body>
