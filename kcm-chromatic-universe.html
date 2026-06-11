@@ -1233,6 +1233,12 @@ input[type="range"] {
             <button class="btn btn-ghost btn-full" onclick="loadEuclidPreset('cinquillo')" style="font-size:0.7rem;">Cinquillo (5,8)</button>
             <button class="btn btn-ghost btn-full" onclick="loadEuclidPreset('polyrhythm34')" style="font-size:0.7rem;">3 over 4 Polyrhythm</button>
             <button class="btn btn-ghost btn-full" onclick="loadEuclidPreset('polyrhythm45')" style="font-size:0.7rem;">4 over 5 Polyrhythm</button>
+            <button class="btn btn-ghost btn-full" onclick="loadEuclidPreset('bembé')" style="font-size:0.7rem;">Bembé (7,12) · Afro-Cuban</button>
+            <button class="btn btn-ghost btn-full" onclick="loadEuclidPreset('shiko')" style="font-size:0.7rem;">Shiko (4,16) · West African</button>
+            <button class="btn btn-ghost btn-full" onclick="loadEuclidPreset('soukous')" style="font-size:0.7rem;">Soukous (6,16) · Congo</button>
+            <button class="btn btn-ghost btn-full" onclick="loadEuclidPreset('samba')" style="font-size:0.7rem;">Samba (3,16)+(5,16) · Brazil</button>
+            <button class="btn btn-ghost btn-full" onclick="loadEuclidPreset('trap')" style="font-size:0.7rem;">Trap (3,16)+(7,16) · Hip-Hop</button>
+            <button class="btn btn-ghost btn-full" onclick="loadEuclidPreset('rumba')" style="font-size:0.7rem;">Rumba Clave (3,16) · Cuba</button>
           </div>
         </div>
       </div>
@@ -2309,6 +2315,19 @@ function loadEuclidPreset(name) {
     cinquillo:   [[8,5]],
     polyrhythm34:[[12,3],[16,4]],
     polyrhythm45:[[20,4],[16,5]],
+    // ── NEW PRESETS ──
+    // Bembé: 7 strokes in 12 — the heartbeat of Afro-Cuban religion
+    'bembé':      [[12,7],[12,5],[12,3]],
+    // Shiko: West African bell pattern — 4 in 16
+    shiko:        [[16,4],[16,3]],
+    // Soukous: Congolese guitar rhythm — 6 in 16
+    soukous:      [[16,6],[16,4],[16,2]],
+    // Samba: Brazilian kick + surdo layered
+    samba:        [[16,3],[16,5],[16,2]],
+    // Trap: modern hip-hop kick + hi-hat grid
+    trap:         [[16,3],[16,7],[16,5]],
+    // Rumba Clave: 3-side of the 3-2 in 16 steps
+    rumba:        [[16,3],[16,2],[16,5]],
   };
   const p=presets[name]; if(!p) return;
   RS.layers=[];
@@ -2317,7 +2336,18 @@ function loadEuclidPreset(name) {
     RS.layers.push(createLayer(steps,pulses,i,LAYER_SOUNDS[i]));
   });
   renderLayers(); drawRhythmViz();
-  showToast('✅ '+name+' loaded');
+  const labels = {
+    clave32:'3–2 Son Clave', clave23:'2–3 Son Clave',
+    tresillo:'Tresillo', cinquillo:'Cinquillo',
+    polyrhythm34:'3 over 4 Polyrhythm', polyrhythm45:'4 over 5 Polyrhythm',
+    'bembé':'Bembé — Afro-Cuban (7,12)',
+    shiko:'Shiko — West African (4,16)',
+    soukous:'Soukous — Congo (6,16)',
+    samba:'Samba — Brazil (3+5,16)',
+    trap:'Trap — Hip-Hop (3+7,16)',
+    rumba:'Rumba Clave — Cuba (3,16)'
+  };
+  showToast('✅ ' + (labels[name] || name) + ' loaded');
 }
 
 
