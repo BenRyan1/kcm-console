@@ -2994,112 +2994,107 @@ async function vrdCalibrateNoise() {
 }
 
 // ── CONTINUOUS DETECTION LOOP ──
-// DOMINANT BAND DETECTION:
-// When a sound occurs, ALL bands get energy. We only credit the band
-// that has the HIGHEST energy RELATIVE to its own noise floor.
-// One onset per sound event — the dominant band wins, others are locked out.
+// NEW APPROACH: Pure onset detection on master RMS
+// Every distinct sound event gets counted ONCE
+// Frequency band used only to ASSIGN which layer gets credit
+// This is far more reliable than trying to separate voice frequencies
 function vrdDetectLoop() {
   if (!VRD.stream) return;
 
-  const bandBufs = VRD.layers.map(vl => new Uint8Array(vl.analyser.frequencyBinCount));
   const masterBuf = new Uint8Array(VRD.masterAn.frequencyBinCount);
+  const bandBufs  = VRD.layers.map(vl => new Uint8Array(vl.analyser.frequencyBinCount));
 
-  // Global event state — one onset at a time across ALL bands
-  let globalState   = 'IDLE';   // IDLE | ATTACK | LOCKOUT
+  let globalState   = 'IDLE';
   let globalLockout = 0;
-  let peakEnergies  = new Array(VRD.layers.length).fill(0);
+  let prevMasterRms = 0;
+  let peakMasterRms = 0;
   let attackStart   = 0;
-  const LOCKOUT_MS  = 900;  // ms between any two onsets — covers full BOOM decay
-  const ATTACK_MAX  = 120;  // ms max to find peak after threshold cross
+  let peakBandEnergy = VRD.layers.map(() => 0);
+
+  const LOCKOUT_MS = 700;   // min ms between any two onsets
+  const ATTACK_MAX = 100;   // ms to find peak after onset starts
 
   function tick() {
     if (!VRD.stream) return;
     VRD.animFrame = requestAnimationFrame(tick);
     const now = performance.now();
 
-    // Read all band energies
-    const energies = VRD.layers.map((vl, i) => {
-      vl.analyser.getByteFrequencyData(bandBufs[i]);
-      let sum = 0;
-      for (let j = 0; j < bandBufs[i].length; j++) sum += (bandBufs[i][j]/255)**2;
-      return Math.sqrt(sum / bandBufs[i].length);
-    });
-
-    // Master RMS — is anything happening at all?
+    // Master RMS — one clean signal for onset detection
     VRD.masterAn.getByteFrequencyData(masterBuf);
     let mSum = 0;
     for (let i = 0; i < masterBuf.length; i++) mSum += (masterBuf[i]/255)**2;
     const masterRms = Math.sqrt(mSum / masterBuf.length);
 
-    // Update meters for listening layers
+    // Read band energies for assignment
+    const bandEnergy = VRD.layers.map((vl, i) => {
+      vl.analyser.getByteFrequencyData(bandBufs[i]);
+      let s = 0;
+      for (let j = 0; j < bandBufs[i].length; j++) s += bandBufs[i][j];
+      return s / bandBufs[i].length / 255;
+    });
+
+    // Update meters
     VRD.layers.forEach((vl, i) => {
       if (vl.listening) {
-        const pct = Math.min(100, (energies[i] / Math.max(vl.threshold, 0.005)) * 50);
+        const pct = Math.min(100, (masterRms / 0.05) * 60);
         vrdMeterUpdate_byIndex(i, pct);
       }
     });
 
-    // ── GLOBAL STATE MACHINE ──
+    // Noise floor from calibration — use layer 0's as master baseline
+    const masterFloor = VRD.layers[0]?.noiseFloor || 0.01;
+    const masterThresh = Math.max(0.04, masterFloor * 6.0);
+
     if (globalState === 'LOCKOUT') {
-      if (now - globalLockout > LOCKOUT_MS) globalState = 'IDLE';
-      VRD.layers.forEach(vl => { vl.prevEnergy = energies[VRD.layers.indexOf(vl)]; });
-      return;
-    }
-
-    // Normalized energy = energy / noise_floor for each band
-    // This tells us which band is most "excited" relative to its baseline
-    const normalized = energies.map((e, i) => {
-      const floor = Math.max(VRD.layers[i].noiseFloor, 0.001);
-      return e / floor;
-    });
-
-    const maxNorm = Math.max(...normalized);
-
-    if (globalState === 'IDLE') {
-      // Check if any listening band is significantly above its noise floor
-      const anyListening = VRD.layers.some(vl => vl.listening);
-      if (!anyListening) { VRD.layers.forEach((vl,i) => vl.prevEnergy = energies[i]); return; }
-
-      if (masterRms > 0.06 && maxNorm > 8.0) {
-        // Sound event starting — begin attack phase
-        globalState = 'ATTACK';
-        attackStart = now;
-        peakEnergies = [...normalized];
+      if (now - globalLockout > LOCKOUT_MS) {
+        globalState = 'IDLE';
+        peakBandEnergy = VRD.layers.map(() => 0);
+      }
+    } else if (globalState === 'IDLE') {
+      // Onset: master RMS crosses threshold rising
+      if (masterRms > masterThresh && masterRms > prevMasterRms * 1.3) {
+        const anyListening = VRD.layers.some(vl => vl.listening);
+        if (anyListening) {
+          globalState = 'ATTACK';
+          attackStart = now;
+          peakMasterRms = masterRms;
+          peakBandEnergy = [...bandEnergy];
+        }
       }
     } else if (globalState === 'ATTACK') {
-      // Track peak normalized energies during attack window
-      normalized.forEach((n, i) => { if (n > peakEnergies[i]) peakEnergies[i] = n; });
+      // Track peak band energies during attack
+      bandEnergy.forEach((e, i) => {
+        if (e > peakBandEnergy[i]) peakBandEnergy[i] = e;
+      });
+      if (masterRms > peakMasterRms) peakMasterRms = masterRms;
 
-      // Commit when: master RMS starts falling OR attack window exceeded
-      const masterFalling = masterRms < (VRD._prevMasterRms || 0) * 0.7;
-      const windowDone    = (now - attackStart) > ATTACK_MAX;
+      // Commit on: falling edge OR attack window exceeded
+      const falling = masterRms < peakMasterRms * 0.6;
+      const timeout = (now - attackStart) > ATTACK_MAX;
 
-      if (masterFalling || windowDone) {
-        // Find dominant band among LISTENING layers only
+      if (falling || timeout) {
+        // Find dominant band relative to its noise floor
         let domIdx = -1, domScore = 0;
         VRD.layers.forEach((vl, i) => {
-          if (vl.listening && peakEnergies[i] > domScore) {
-            domScore = peakEnergies[i];
-            domIdx = i;
-          }
+          if (!vl.listening) return;
+          const floor = Math.max(vl.noiseFloor || 0.001, 0.001);
+          const score = peakBandEnergy[i] / floor;
+          if (score > domScore) { domScore = score; domIdx = i; }
         });
 
-        if (domIdx >= 0 && domScore > 8.0) {
+        if (domIdx >= 0 && peakMasterRms > masterThresh) {
           const vl = VRD.layers[domIdx];
-          vl.onsets.push({ time: now, energy: energies[domIdx] });
+          vl.onsets.push({ time: now, energy: peakMasterRms });
           const rsLayer = RS.layers[domIdx];
           if (rsLayer) vrdFlash(rsLayer.id, vl.onsets.length);
         }
 
         globalState = 'LOCKOUT';
         globalLockout = now;
-        peakEnergies.fill(0);
       }
     }
 
-    // Store for next frame falling detection
-    VRD._prevMasterRms = masterRms;
-    energies.forEach((e, i) => { VRD.layers[i].prevEnergy = e; });
+    prevMasterRms = masterRms;
   }
   tick();
 }
