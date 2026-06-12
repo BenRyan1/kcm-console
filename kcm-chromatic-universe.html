@@ -1958,8 +1958,8 @@ function initRhythmIfNeeded() {
   addLayer(); addLayer(); addLayer();
   // Bobby Sanabria default sounds
   if (RS.layers[0]) RS.layers[0].soundType = 'kick';   // BOOM
-  if (RS.layers[1]) RS.layers[1].soundType = 'hihat';  // CHA
-  if (RS.layers[2]) RS.layers[2].soundType = 'click';  // TAK
+  if (RS.layers[1]) RS.layers[1].soundType = 'snare';  // TAK
+  if (RS.layers[2]) RS.layers[2].soundType = 'hihat';  // CHA
   renderLayers();
   drawRhythmViz();
 }
@@ -2874,10 +2874,10 @@ function vrdInitPanel() {
 const VRD_BANDS = [
   // Layer 1: BOOM — low chest resonance of "B" in BOOM (~80-200Hz)
   { name:'BOOM', type:'lowpass',  freq:200,  Q:1.0, sound:'kick',  label:'💥 BOOM', fftSize:2048 },
-  // Layer 2: CHA — "CH" voice peaks at ~1500-2500Hz (not 4kHz as previously set)
-  { name:'CHA',  type:'bandpass', freq:2000, Q:0.8, sound:'hihat', label:'🔔 CHA',  fftSize:512  },
-  // Layer 3: TAK — "T/K" click at ~3000-4000Hz
+  // Layer 2: TAK — higher freq band (~3000-4000Hz)
   { name:'TAK',  type:'bandpass', freq:3500, Q:0.8, sound:'snare', label:'👆 TAK',  fftSize:512  },
+  // Layer 3: CHA — "CH" voice peaks at ~1500-2500Hz
+  { name:'CHA',  type:'bandpass', freq:2000, Q:0.8, sound:'hihat', label:'🔔 CHA',  fftSize:512  },
   // Layer 4: DUK — mid body "D/G" (~300-600Hz)
   { name:'DUK',  type:'bandpass', freq:400,  Q:0.9, sound:'conga', label:'🪘 DUK',  fftSize:1024 },
   // Layer 5: TICK — very high shimmer (~6000Hz+)
