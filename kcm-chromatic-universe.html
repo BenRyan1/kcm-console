@@ -3260,7 +3260,7 @@ function vrdFlash(layerId, count) {
   const cnt  = document.getElementById('vrd-count-' + layerId);
   const fill = document.getElementById('vrd-fill-' + layerId);
   if (btn)  { btn.textContent = '●'; btn.classList.add('beat-flash'); }
-  if (cnt)  cnt.textContent = count;
+  const _lo = RS.layers[RS.layers.findIndex(l=>l.id===layerId)] && VRD.layers[RS.layers.findIndex(l=>l.id===layerId)]?.onsets?.slice(-1)[0]; if (cnt) cnt.textContent = count + (_lo?.centroid !== undefined ? " C:" + _lo.centroid.toFixed(0) : "");
   if (fill) fill.classList.add('loud');
   setTimeout(() => {
     const b = document.getElementById('mic-btn-' + layerId);
