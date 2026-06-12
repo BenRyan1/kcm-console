@@ -2874,16 +2874,16 @@ function vrdInitPanel() {
 const VRD_BANDS = [
   // Layer 1: BOOM — low chest resonance of "B" in BOOM (~80-200Hz)
   { name:'BOOM', type:'lowpass',  freq:200,  Q:1.0, sound:'kick',  label:'💥 BOOM', fftSize:2048 },
-  // Layer 2: CHA — high sibilance of "CH/SH" sounds (~3000-6000Hz)
-  { name:'CHA',  type:'bandpass', freq:4000, Q:0.7, sound:'hihat', label:'🔔 CHA',  fftSize:512  },
-  // Layer 3: TAK — mid-high consonant crack of "T/K" sounds (~700-2000Hz)
-  { name:'TAK',  type:'bandpass', freq:1200, Q:0.8, sound:'snare', label:'👆 TAK',  fftSize:512  },
-  // Layer 4: DUK — mid body of "D/G" sounds (~200-600Hz)
-  { name:'DUK',  type:'bandpass', freq:380,  Q:0.9, sound:'conga', label:'🪘 DUK',  fftSize:1024 },
+  // Layer 2: CHA — "CH" voice peaks at ~1500-2500Hz (not 4kHz as previously set)
+  { name:'CHA',  type:'bandpass', freq:2000, Q:0.8, sound:'hihat', label:'🔔 CHA',  fftSize:512  },
+  // Layer 3: TAK — "T/K" click at ~3000-4000Hz
+  { name:'TAK',  type:'bandpass', freq:3500, Q:0.8, sound:'snare', label:'👆 TAK',  fftSize:512  },
+  // Layer 4: DUK — mid body "D/G" (~300-600Hz)
+  { name:'DUK',  type:'bandpass', freq:400,  Q:0.9, sound:'conga', label:'🪘 DUK',  fftSize:1024 },
   // Layer 5: TICK — very high shimmer (~6000Hz+)
   { name:'TICK', type:'highpass', freq:6000, Q:0.8, sound:'rim',   label:'🎵 TICK', fftSize:256  },
-  // Layer 6: MID — broad mid for anything else
-  { name:'MID',  type:'bandpass', freq:600,  Q:0.6, sound:'wood',  label:'🥁 MID',  fftSize:1024 }
+  // Layer 6: MID — broad mid catch-all
+  { name:'MID',  type:'bandpass', freq:700,  Q:0.6, sound:'wood',  label:'🥁 MID',  fftSize:1024 }
 ];
 
 const VRD = {
@@ -2968,14 +2968,15 @@ async function vrdCalibrateNoise() {
         // Per-band sensitivity multipliers — high bands need lower threshold
         // because high freq has naturally less energy than low freq
         const bandMult = [1.8, 1.8, 1.6, 1.4, 1.2, 1.1];
-        const bandMin  = [0.03, 0.025, 0.02, 0.015, 0.01, 0.008];
+        const bandMin  = [0.05, 0.04,  0.04, 0.03,  0.02, 0.015];
+        // Extra multiplier for CHA band (idx 1) — voice "CHA" has long decay
+        const extraMult = [1.2, 1.8, 1.4, 1.2, 1.2, 1.2];
         VRD.layers.forEach((vl, i) => {
           const arr = samples[i];
           const avg = arr.reduce((a,b) => a+b, 0) / arr.length;
           const max = Math.max(...arr);
           vl.noiseFloor = avg;
-          // threshold = just above noise peak, scaled per band
-          vl.threshold = Math.max(bandMin[i], (avg + max) * bandMult[i] * 0.5);
+          vl.threshold = Math.max(bandMin[i], (avg + max) * bandMult[i] * 0.5 * extraMult[i]);
         });
         resolve();
         return;
@@ -3008,7 +3009,7 @@ function vrdDetectLoop() {
   let globalLockout = 0;
   let peakEnergies  = new Array(VRD.layers.length).fill(0);
   let attackStart   = 0;
-  const LOCKOUT_MS  = 600;  // ms between any two onsets
+  const LOCKOUT_MS  = 800;  // ms between any two onsets — longer than syllable decay
   const ATTACK_MAX  = 120;  // ms max to find peak after threshold cross
 
   function tick() {
@@ -3059,7 +3060,7 @@ function vrdDetectLoop() {
       const anyListening = VRD.layers.some(vl => vl.listening);
       if (!anyListening) { VRD.layers.forEach((vl,i) => vl.prevEnergy = energies[i]); return; }
 
-      if (masterRms > 0.04 && maxNorm > 6.0) {
+      if (masterRms > 0.06 && maxNorm > 8.0) {
         // Sound event starting — begin attack phase
         globalState = 'ATTACK';
         attackStart = now;
@@ -3083,7 +3084,7 @@ function vrdDetectLoop() {
           }
         });
 
-        if (domIdx >= 0 && domScore > 6.0) {
+        if (domIdx >= 0 && domScore > 8.0) {
           const vl = VRD.layers[domIdx];
           vl.onsets.push({ time: now, energy: energies[domIdx] });
           const rsLayer = RS.layers[domIdx];
