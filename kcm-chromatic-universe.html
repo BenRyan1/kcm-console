@@ -3019,7 +3019,7 @@ function vrdDetectLoop() {
   // masterAn fftSize=1024, sampleRate=44100 → binWidth = 44100/1024 ≈ 43Hz per bin
   // BOOM voice: centroid below ~400Hz = bin 9
   // CHA voice:  centroid above ~400Hz = bin 9+
-  const CENTROID_SPLIT = 30; // bin 30 = ~1290Hz — calibrate from debug toasts
+  const CENTROID_SPLIT = 50; // bin 30 = ~1290Hz — calibrate from debug toasts
 
   function getSpectralCentroid(buf) {
     let weightedSum = 0, totalEnergy = 0;
