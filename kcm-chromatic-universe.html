@@ -3084,7 +3084,7 @@ function vrdDetectLoop() {
 
         } else if (listening.length > 1) {
           // Multiple layers — use centroid to classify
-          if (centroid <= CENTROID_SPLIT) {
+          if (centroid > CENTROID_SPLIT) {
             // LOW centroid = BOOM → Layer 1 (index 0)
             const l = listening.find(({ i }) => i === 0);
             if (l) targetIdx = 0;
