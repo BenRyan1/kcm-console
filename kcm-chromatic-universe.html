@@ -2994,107 +2994,135 @@ async function vrdCalibrateNoise() {
 }
 
 // ── CONTINUOUS DETECTION LOOP ──
-// NEW APPROACH: Pure onset detection on master RMS
-// Every distinct sound event gets counted ONCE
-// Frequency band used only to ASSIGN which layer gets credit
-// This is far more reliable than trying to separate voice frequencies
+// SPECTRAL CENTROID CLASSIFICATION:
+// 1. Detect every onset using master RMS (one clean trigger per sound)
+// 2. At moment of onset, calculate spectral centroid of that sound
+// 3. Low centroid = BOOM → Layer 1
+//    High centroid = CHA/TAK → Layer 2 or 3
+// This works because BOOM has energy concentrated low,
+// CHA has energy concentrated high — regardless of overall volume
 function vrdDetectLoop() {
   if (!VRD.stream) return;
 
   const masterBuf = new Uint8Array(VRD.masterAn.frequencyBinCount);
-  const bandBufs  = VRD.layers.map(vl => new Uint8Array(vl.analyser.frequencyBinCount));
 
-  let globalState   = 'IDLE';
-  let globalLockout = 0;
-  let prevMasterRms = 0;
-  let peakMasterRms = 0;
-  let attackStart   = 0;
-  let peakBandEnergy = VRD.layers.map(() => 0);
+  let state      = 'IDLE';
+  let lockoutEnd = 0;
+  let prevRms    = 0;
+  let peakRms    = 0;
+  let riseStart  = 0;
 
-  const LOCKOUT_MS = 700;   // min ms between any two onsets
-  const ATTACK_MAX = 100;   // ms to find peak after onset starts
+  const LOCKOUT_MS = 500;
+  const RISE_MS    = 30;  // fast response — capture onset character early
+
+  // Spectral centroid thresholds (bin index)
+  // masterAn fftSize=1024, sampleRate=44100 → binWidth = 44100/1024 ≈ 43Hz per bin
+  // BOOM voice: centroid below ~400Hz = bin 9
+  // CHA voice:  centroid above ~400Hz = bin 9+
+  const CENTROID_SPLIT = 30; // bin 30 = ~1290Hz — calibrate from debug toasts
+
+  function getSpectralCentroid(buf) {
+    let weightedSum = 0, totalEnergy = 0;
+    for (let i = 0; i < buf.length; i++) {
+      const e = buf[i] / 255;
+      weightedSum += i * e;
+      totalEnergy += e;
+    }
+    return totalEnergy > 0 ? weightedSum / totalEnergy : 0;
+  }
 
   function tick() {
     if (!VRD.stream) return;
     VRD.animFrame = requestAnimationFrame(tick);
     const now = performance.now();
 
-    // Master RMS — one clean signal for onset detection
     VRD.masterAn.getByteFrequencyData(masterBuf);
-    let mSum = 0;
-    for (let i = 0; i < masterBuf.length; i++) mSum += (masterBuf[i]/255)**2;
-    const masterRms = Math.sqrt(mSum / masterBuf.length);
+    let sum = 0;
+    for (let i = 0; i < masterBuf.length; i++) sum += (masterBuf[i]/255)**2;
+    const rms = Math.sqrt(sum / masterBuf.length);
 
-    // Read band energies for assignment
-    const bandEnergy = VRD.layers.map((vl, i) => {
-      vl.analyser.getByteFrequencyData(bandBufs[i]);
-      let s = 0;
-      for (let j = 0; j < bandBufs[i].length; j++) s += bandBufs[i][j];
-      return s / bandBufs[i].length / 255;
-    });
-
-    // Update meters
-    VRD.layers.forEach((vl, i) => {
-      if (vl.listening) {
-        const pct = Math.min(100, (masterRms / 0.05) * 60);
-        vrdMeterUpdate_byIndex(i, pct);
-      }
-    });
-
-    // Noise floor from calibration — use layer 0's as master baseline
-    const masterFloor = VRD.layers[0]?.noiseFloor || 0.01;
-    const masterThresh = Math.max(0.04, masterFloor * 6.0);
-
-    if (globalState === 'LOCKOUT') {
-      if (now - globalLockout > LOCKOUT_MS) {
-        globalState = 'IDLE';
-        peakBandEnergy = VRD.layers.map(() => 0);
-      }
-    } else if (globalState === 'IDLE') {
-      // Onset: master RMS crosses threshold rising
-      if (masterRms > masterThresh && masterRms > prevMasterRms * 1.3) {
-        const anyListening = VRD.layers.some(vl => vl.listening);
-        if (anyListening) {
-          globalState = 'ATTACK';
-          attackStart = now;
-          peakMasterRms = masterRms;
-          peakBandEnergy = [...bandEnergy];
-        }
-      }
-    } else if (globalState === 'ATTACK') {
-      // Track peak band energies during attack
-      bandEnergy.forEach((e, i) => {
-        if (e > peakBandEnergy[i]) peakBandEnergy[i] = e;
+    // Update ALL listening layer meters with master RMS
+    const anyListening = VRD.layers.some(vl => vl.listening);
+    if (anyListening) {
+      VRD.layers.forEach((vl, i) => {
+        if (vl.listening) vrdMeterUpdate_byIndex(i, Math.min(100, rms * 500));
       });
-      if (masterRms > peakMasterRms) peakMasterRms = masterRms;
-
-      // Commit on: falling edge OR attack window exceeded
-      const falling = masterRms < peakMasterRms * 0.6;
-      const timeout = (now - attackStart) > ATTACK_MAX;
-
-      if (falling || timeout) {
-        // Find dominant band relative to its noise floor
-        let domIdx = -1, domScore = 0;
-        VRD.layers.forEach((vl, i) => {
-          if (!vl.listening) return;
-          const floor = Math.max(vl.noiseFloor || 0.001, 0.001);
-          const score = peakBandEnergy[i] / floor;
-          if (score > domScore) { domScore = score; domIdx = i; }
-        });
-
-        if (domIdx >= 0 && peakMasterRms > masterThresh) {
-          const vl = VRD.layers[domIdx];
-          vl.onsets.push({ time: now, energy: peakMasterRms });
-          const rsLayer = RS.layers[domIdx];
-          if (rsLayer) vrdFlash(rsLayer.id, vl.onsets.length);
-        }
-
-        globalState = 'LOCKOUT';
-        globalLockout = now;
-      }
     }
 
-    prevMasterRms = masterRms;
+    const floor  = VRD.layers[0]?.noiseFloor || 0.008;
+    const thresh = Math.max(0.015, floor * 3.0);
+
+    if (state === 'LOCKOUT') {
+      if (now > lockoutEnd) { state = 'IDLE'; }
+
+    } else if (state === 'IDLE') {
+      if (rms > thresh && rms > prevRms * 1.2) {
+        if (anyListening) {
+          state     = 'RISING';
+          riseStart = now;
+          peakRms   = rms;
+        }
+      }
+
+    } else if (state === 'RISING') {
+      if (rms > peakRms) peakRms = rms;
+
+      if (now - riseStart > RISE_MS) {
+        // ONSET CONFIRMED — classify by spectral centroid
+        const centroid = getSpectralCentroid(masterBuf);
+
+        // Find which listening layer to credit
+        let targetIdx = -1;
+
+        const listening = VRD.layers
+          .map((vl, i) => ({ vl, i }))
+          .filter(({ vl }) => vl.listening);
+
+        if (listening.length === 1) {
+          // Only one layer recording — it gets everything
+          targetIdx = listening[0].i;
+
+        } else if (listening.length > 1) {
+          // Multiple layers — use centroid to classify
+          if (centroid <= CENTROID_SPLIT) {
+            // LOW centroid = BOOM → Layer 1 (index 0)
+            const l = listening.find(({ i }) => i === 0);
+            if (l) targetIdx = 0;
+            else targetIdx = listening[0].i; // fallback
+          } else {
+            // HIGH centroid = CHA/TAK → Layer 2 or 3
+            // Among high layers, use centroid to further split
+            const highLayers = listening.filter(({ i }) => i > 0);
+            if (highLayers.length === 1) {
+              targetIdx = highLayers[0].i;
+            } else if (highLayers.length >= 2) {
+              // Split CHA vs TAK: centroid < 20 = CHA (mid-high), > 20 = TAK (very high)
+              if (centroid < 22) {
+                targetIdx = highLayers[0].i; // Layer 2
+              } else {
+                targetIdx = highLayers[1].i; // Layer 3
+              }
+            }
+          }
+        }
+
+        if (targetIdx >= 0 && VRD.layers[targetIdx]) {
+          const vl = VRD.layers[targetIdx];
+          vl.onsets.push({ time: now, energy: peakRms, centroid });
+          const rsLayer = RS.layers[targetIdx];
+          if (rsLayer) vrdFlash(rsLayer.id, vl.onsets.length);
+          // Debug: show centroid so we can calibrate the split
+          showToast('C:' + centroid.toFixed(1) + ' → L' + (targetIdx+1));
+        }
+
+        state      = 'LOCKOUT';
+        lockoutEnd = now + LOCKOUT_MS;
+      }
+
+      if (rms < thresh * 0.4) { state = 'IDLE'; }
+    }
+
+    prevRms = rms;
   }
   tick();
 }
