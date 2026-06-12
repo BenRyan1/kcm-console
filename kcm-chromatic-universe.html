@@ -2970,7 +2970,7 @@ async function vrdCalibrateNoise() {
         const bandMult = [1.8, 1.8, 1.6, 1.4, 1.2, 1.1];
         const bandMin  = [0.05, 0.04,  0.04, 0.03,  0.02, 0.015];
         // Extra multiplier for CHA band (idx 1) — voice "CHA" has long decay
-        const extraMult = [1.2, 1.8, 1.4, 1.2, 1.2, 1.2];
+        const extraMult = [2.2, 1.8, 1.4, 1.2, 1.2, 1.2]; // BOOM needs 2.2x — long low decay
         VRD.layers.forEach((vl, i) => {
           const arr = samples[i];
           const avg = arr.reduce((a,b) => a+b, 0) / arr.length;
@@ -3009,7 +3009,7 @@ function vrdDetectLoop() {
   let globalLockout = 0;
   let peakEnergies  = new Array(VRD.layers.length).fill(0);
   let attackStart   = 0;
-  const LOCKOUT_MS  = 800;  // ms between any two onsets — longer than syllable decay
+  const LOCKOUT_MS  = 900;  // ms between any two onsets — covers full BOOM decay
   const ATTACK_MAX  = 120;  // ms max to find peak after threshold cross
 
   function tick() {
