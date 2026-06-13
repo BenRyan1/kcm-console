@@ -3979,7 +3979,7 @@ function etRestart() {
   const LOW_MAX_BIN   = 8;      // < ~350 Hz  — BOOM territory
   const HI_MIN_BIN    = 30;     // > ~1300 Hz — CHA territory (wider net)
   const RATIO_SPLIT   = 0.15;   // ≥ = BOOM (L1),  < = CHA (L2) — tuned for MacBook mic
-  const LOCKOUT_MS    = 120;    // min ms between onsets (allows fast 16ths)
+  const LOCKOUT_MS    = 250;    // min ms between onsets — prevents double-counting same sound
   const RISE_MS       = 15;     // ms to confirm onset (avoid noise spikes)
   const FFT_SIZE      = 256;
   const NOISE_FRAMES  = 40;
