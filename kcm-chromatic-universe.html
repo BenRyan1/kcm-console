@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>KCM Chromatic Universe™ | Keys, Codes & Modes</title>
-<link rel="canonical" href="https://keyscodesandmodes.com/apps/kcm-chromatic-universe.html">
+<link rel="canonical" href="https://console.keyscodesandmodes.com/kcm-chromatic-universe.html">
 <meta name="description" content="The ultimate music theory visual instrument — 57+ scales, modes & chords on the 12-Color Chromatic Spectrum™ with Euclidean rhythm engine. Keys, Codes & Modes by Benjamin Ryan.">
 <meta name="author" content="Benjamin Ryan — Keys, Codes & Modes">
 <meta property="og:title" content="KCM Chromatic Universe™">
@@ -146,6 +146,219 @@ body::before {
   border-color: transparent;
 }
 .nav-link.cta:hover { opacity: 0.88; }
+
+/* ── GCIS Save / Load buttons ── */
+.gcis-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0.32rem 0.85rem;
+  border-radius: 20px;
+  border: 1px solid rgba(0,128,128,0.4);
+  background: rgba(10,10,21,0.6);
+  color: var(--text-dim);
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s, box-shadow 0.2s;
+  white-space: nowrap;
+}
+.gcis-btn:hover {
+  background: rgba(0,128,128,0.12);
+  border-color: var(--teal);
+  color: var(--text);
+}
+/* Save flashes gold */
+.gcis-btn--save { border-color: rgba(244,208,63,0.35); }
+.gcis-btn--saved {
+  background: rgba(244,208,63,0.12) !important;
+  border-color: var(--gold) !important;
+  color: var(--gold) !important;
+  animation: gcis-pulse-gold 0.4s ease-out;
+}
+@keyframes gcis-pulse-gold {
+  0%   { box-shadow: 0 0 0 0   rgba(244,208,63,0.7); }
+  50%  { box-shadow: 0 0 14px 4px rgba(244,208,63,0.3); }
+  100% { box-shadow: 0 0 0 0   rgba(244,208,63,0); }
+}
+/* Load flashes teal */
+.gcis-btn--load { border-color: rgba(0,192,192,0.35); }
+.gcis-btn--loaded {
+  background: rgba(0,192,192,0.12) !important;
+  border-color: #00c0c0 !important;
+  color: #00c0c0 !important;
+  animation: gcis-pulse-teal 0.4s ease-out;
+}
+@keyframes gcis-pulse-teal {
+  0%   { box-shadow: 0 0 0 0   rgba(0,192,192,0.7); }
+  50%  { box-shadow: 0 0 14px 4px rgba(0,192,192,0.3); }
+  100% { box-shadow: 0 0 0 0   rgba(0,192,192,0); }
+}
+/* Session title input */
+.gcis-title {
+  background: transparent;
+  border: 1px solid rgba(0,128,128,0.25);
+  border-radius: 16px;
+  color: var(--text-dim);
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  padding: 0.32rem 0.75rem;
+  width: 130px;
+  outline: none;
+  transition: border-color 0.2s, color 0.2s;
+}
+.gcis-title:focus {
+  border-color: var(--teal);
+  color: var(--text);
+}
+/* Toast */
+#cu-gcis-toast {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 10px 22px;
+  border-radius: 6px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  letter-spacing: 0.03em;
+  z-index: 9999;
+  pointer-events: none;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.7);
+}
+
+/* ── Auto-save indicator ── */
+#cu-autosave-dot {
+  display: inline-block;
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--teal);
+  opacity: 0;
+  margin-left: 6px;
+  vertical-align: middle;
+  transition: opacity 0.3s;
+}
+#cu-autosave-dot.flash { opacity: 1; }
+
+/* ══════════════════════════════════════════
+   PERFORMANCE RECORDER PANEL
+   ══════════════════════════════════════════ */
+#cu-recorder {
+  position: relative;
+  z-index: 1;
+  margin: 0 auto 2rem;
+  max-width: 960px;
+  padding: 0 1rem;
+}
+.rec-panel {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.rec-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.rec-title {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--section-title);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.rec-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: #444;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.rec-dot.recording {
+  background: #ff3a3a;
+  box-shadow: 0 0 8px rgba(255,58,58,0.7);
+  animation: rec-blink 1s infinite;
+}
+.rec-dot.playing {
+  background: #00c0c0;
+  box-shadow: 0 0 8px rgba(0,192,192,0.7);
+}
+@keyframes rec-blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+.rec-controls { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.rec-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0.35rem 0.9rem;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--bg3);
+  color: var(--text-dim);
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.rec-btn:hover { border-color:var(--teal); color:var(--text); background:rgba(0,128,128,0.1); }
+.rec-btn:disabled { opacity:0.35; cursor:not-allowed; }
+.rec-btn.active-rec { border-color:#ff3a3a; color:#ff3a3a; background:rgba(255,58,58,0.1); }
+.rec-btn.active-play { border-color:var(--teal); color:#00c0c0; background:rgba(0,192,192,0.1); }
+.rec-time { font-family:monospace; font-size:0.8rem; color:var(--text-dim); min-width:50px; text-align:center; }
+.rec-timeline-wrap { padding:0.75rem 1.25rem; border-bottom:1px solid rgba(0,128,128,0.1); }
+.rec-timeline {
+  position:relative; height:52px;
+  background:var(--bg); border:1px solid rgba(0,128,128,0.15);
+  border-radius:6px; overflow:hidden; cursor:pointer;
+}
+.rec-timeline-track { position:absolute; inset:0; display:flex; align-items:flex-end; padding:4px; gap:1px; }
+.rec-event-bar { flex-shrink:0; border-radius:2px; opacity:0.85; min-width:3px; }
+.rec-playhead {
+  position:absolute; top:0; bottom:0; width:2px;
+  background:var(--gold); box-shadow:0 0 6px rgba(244,208,63,0.6);
+  pointer-events:none;
+}
+.rec-timeline-empty {
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  color:var(--text-ghost); font-size:12px; letter-spacing:0.08em; text-transform:uppercase; pointer-events:none;
+}
+.rec-takes { padding:0.5rem 1.25rem 0.75rem; }
+.rec-takes-title { font-size:10px; letter-spacing:0.12em; text-transform:uppercase; color:var(--text-ghost); margin-bottom:6px; }
+.rec-take-list { display:flex; flex-direction:column; gap:5px; max-height:140px; overflow-y:auto; }
+.rec-take-row {
+  display:flex; align-items:center; gap:8px; padding:5px 10px;
+  background:var(--bg); border:1px solid rgba(0,128,128,0.12);
+  border-radius:6px; font-size:12px; color:var(--text-dim); transition:border-color 0.2s;
+}
+.rec-take-row:hover { border-color:rgba(0,128,128,0.35); }
+.rec-take-row.active { border-color:var(--teal); color:var(--text); }
+.rec-take-name { flex:1; font-weight:500; color:var(--text); }
+.rec-take-meta { color:var(--text-ghost); font-size:11px; white-space:nowrap; }
+.rec-take-btns { display:flex; gap:4px; }
+.rec-take-btn {
+  padding:2px 8px; border-radius:10px; border:1px solid rgba(0,128,128,0.3);
+  background:none; color:var(--text-dim); font-size:11px; cursor:pointer; transition:all 0.15s;
+}
+.rec-take-btn:hover { border-color:var(--teal); color:#00c0c0; }
+.rec-take-btn.danger:hover { border-color:var(--coral); color:var(--coral); }
+.rec-take-btn.export-btn:hover { border-color:var(--gold); color:var(--gold); }
+
 
 /* ══════════════════════════════════════════
    MODE TABS (top of main)
@@ -774,6 +987,146 @@ input[type="range"] {
 .site-footer a:hover { color: var(--gold); }
 
 /* ══════════════════════════════════════════
+   SYNC ENGINE STYLES
+   ══════════════════════════════════════════ */
+
+/* The big glowing SYNC button */
+.btn-sync {
+  background: linear-gradient(135deg, #1a0a2e, #2a0a4e);
+  color: var(--text-ghost);
+  border: 1px solid rgba(139,107,163,0.35);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s;
+}
+.btn-sync::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 120%, rgba(139,107,163,0.25) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.btn-sync:hover { border-color: var(--purple); color: var(--text); }
+.btn-sync:hover::before { opacity: 1; }
+
+.btn-sync.active {
+  background: linear-gradient(135deg, #2a0a4e, #4a1a7e);
+  border-color: var(--purple);
+  color: #fff;
+  box-shadow: 0 0 24px rgba(139,107,163,0.5), 0 0 60px rgba(139,107,163,0.2);
+  animation: syncPulse 2s ease-in-out infinite;
+}
+.btn-sync.active::before { opacity: 1; }
+
+@keyframes syncPulse {
+  0%,100% { box-shadow: 0 0 20px rgba(139,107,163,0.5), 0 0 50px rgba(139,107,163,0.15); }
+  50%      { box-shadow: 0 0 35px rgba(139,107,163,0.8), 0 0 80px rgba(139,107,163,0.3); }
+}
+
+/* Sync mode selector pills */
+.sync-mode-row {
+  display: flex;
+  gap: 0.35rem;
+  margin-top: 0.5rem;
+}
+
+.sync-pill {
+  flex: 1;
+  padding: 0.4rem 0.4rem;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-ghost);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+.sync-pill:hover { border-color: var(--purple); color: var(--text-dim); }
+.sync-pill.active {
+  background: rgba(139,107,163,0.25);
+  border-color: var(--purple);
+  color: #d4b8ff;
+}
+
+/* Live note readout — the "now playing" strip */
+#syncNowPlaying {
+  display: none;
+  background: linear-gradient(135deg, rgba(139,107,163,0.15), rgba(10,10,21,0.8));
+  border: 1px solid rgba(139,107,163,0.4);
+  border-radius: 10px;
+  padding: 0.6rem 0.9rem;
+  margin-top: 0.5rem;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+#syncNowPlaying.visible { display: flex; }
+
+.sync-note-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  font-size: 0.72rem;
+  font-weight: 800;
+  box-shadow: 0 0 12px currentColor;
+  transition: all 0.1s;
+  flex-shrink: 0;
+}
+
+.sync-layer-note {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+}
+.sync-layer-note .lname {
+  font-size: 0.58rem;
+  color: var(--text-ghost);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Flash overlay on Spoke Clock canvas when sync fires */
+#clockSyncFlash {
+  position: absolute;
+  inset: 0;
+  border-radius: 18px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.05s;
+}
+#clockSyncFlash.fire { opacity: 1; transition: opacity 0s; }
+
+/* Chromatic ring on rhythm canvas center — shown when sync active */
+.rhythm-canvas-wrap { position: relative; }
+
+/* Sync status pill inside canvas area */
+#syncStatusPill {
+  position: absolute;
+  top: 12px; left: 50%; transform: translateX(-50%);
+  background: rgba(139,107,163,0.85);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  pointer-events: none;
+  display: none;
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255,255,255,0.2);
+}
+#syncStatusPill.visible { display: block; }
+
+/* ══════════════════════════════════════════
    RESPONSIVE TWEAKS
    ══════════════════════════════════════════ */
 @media (max-width: 600px) {
@@ -815,6 +1168,23 @@ input[type="range"] {
     </div>
   </a>
   <nav class="header-nav">
+    <!-- GCIS session title -->
+    <input
+      type="text"
+      id="cu-session-title"
+      class="gcis-title"
+      value="CU Session"
+      maxlength="48"
+      aria-label="Session title"
+      spellcheck="false"
+    />
+    <!-- Save / Load -->
+    <button class="gcis-btn gcis-btn--save" id="cu-gcis-save" aria-label="Save session as .gcis file">
+      ⬇ Save .gcis
+    </button>
+    <button class="gcis-btn gcis-btn--load" id="cu-gcis-load" aria-label="Load .gcis session file">
+      ⬆ Load .gcis
+    </button>
     <a class="nav-link" href="https://keyscodesandmodes.com">Home</a>
     <a class="nav-link" href="https://keyscodesandmodes.com/offerings.html">Apps</a>
     <a class="nav-link cta" href="https://keyscodesandmodes.com/offerings.html">Get Full Access</a>
@@ -960,8 +1330,9 @@ input[type="range"] {
       <!-- CENTER: Canvas -->
       <div>
         <div id="clockInfoBar" class="info-bar">Drag center to rotate · Click any note to hear it</div>
-        <div class="canvas-wrap">
+        <div class="canvas-wrap" style="position:relative;">
           <canvas id="mainCanvas" width="900" height="900" tabindex="0" aria-label="Chromatic Spoke Clock - interactive music theory wheel"></canvas>
+          <div id="clockSyncFlash"></div>
         </div>
       </div>
 
@@ -1020,6 +1391,7 @@ input[type="range"] {
 
       <!-- CENTER: Rhythm canvas + transport -->
       <div class="rhythm-canvas-wrap">
+        <div id="syncStatusPill">◈ MELODIC SYNC ACTIVE</div>
         <canvas id="rhythmCanvas" width="520" height="520"></canvas>
         <div class="transport-bar">
           <div class="tempo-display">
@@ -1034,12 +1406,37 @@ input[type="range"] {
         </div>
       </div>
 
-      <!-- RIGHT: Polygon picker + presets -->
+      <!-- RIGHT: Polygon picker + presets + SYNC -->
       <div>
         <div class="ctrl-card">
           <div class="ctrl-card-title">Polygon / Pulses</div>
           <div class="poly-picker" id="polyPicker"></div>
         </div>
+
+        <!-- ★ SYNC ENGINE ★ -->
+        <div class="ctrl-card" style="border-color:rgba(139,107,163,0.35);">
+          <div class="ctrl-card-title" style="color:#c4a0ff;">◈ Melodic Sync</div>
+          <p style="font-size:0.7rem;color:var(--text-ghost);margin-bottom:0.75rem;line-height:1.6;">
+            Fuse the rhythm engine with the Spoke Clock. Each beat fires a note from your active scale — <em>rhythm becomes melody.</em>
+          </p>
+
+          <button class="btn btn-sync btn-full" id="syncToggleBtn" onclick="toggleSync()">
+            ◈ &nbsp;ACTIVATE MELODIC SYNC
+          </button>
+
+          <div class="sync-mode-row" id="syncModeRow" style="display:none;">
+            <button class="sync-pill active" id="pill-melodic" onclick="setSyncMode('melodic')">Melodic</button>
+            <button class="sync-pill" id="pill-fused" onclick="setSyncMode('fused')">Fused</button>
+            <button class="sync-pill" id="pill-mirror" onclick="setSyncMode('mirror')">Mirror</button>
+          </div>
+
+          <div id="syncNowPlaying">
+            <!-- filled dynamically -->
+          </div>
+
+          <div id="syncModeDesc" style="font-size:0.68rem;color:var(--text-ghost);margin-top:0.5rem;line-height:1.5;display:none;"></div>
+        </div>
+
         <div class="ctrl-card">
           <div class="ctrl-card-title">Euclidean Presets</div>
           <div class="btn-row" style="flex-direction:column;gap:0.4rem;">
@@ -1128,6 +1525,43 @@ input[type="range"] {
 
     </div>
   </div>
+
+<!-- ══════════════════════════════════════════
+     PERFORMANCE RECORDER
+     ══════════════════════════════════════════ -->
+<div id="cu-recorder">
+  <div class="rec-panel">
+    <div class="rec-header">
+      <div class="rec-title">
+        <span class="rec-dot" id="recDot"></span>
+        Performance Recorder
+        <span id="cu-autosave-dot" title="Auto-saved"></span>
+      </div>
+      <div class="rec-controls">
+        <span class="rec-time" id="recTime">0:00.0</span>
+        <button class="rec-btn" id="recBtn">⏺ Record</button>
+        <button class="rec-btn" id="recStopBtn" disabled>⏹ Stop</button>
+        <button class="rec-btn" id="recPlayBtn" disabled>▶ Play</button>
+        <button class="rec-btn" id="recClearBtn" disabled>✕ Clear</button>
+        <button class="rec-btn export-btn" id="recExportBtn" disabled>⬇ Export .gcis</button>
+      </div>
+    </div>
+    <div class="rec-timeline-wrap">
+      <div class="rec-timeline" id="recTimeline">
+        <div class="rec-timeline-track" id="recTrack"></div>
+        <div class="rec-playhead" id="recPlayhead" style="left:0;display:none;"></div>
+        <div class="rec-timeline-empty" id="recEmpty">Press ⏺ Record then play notes on the clock</div>
+      </div>
+    </div>
+    <div class="rec-takes">
+      <div class="rec-takes-title">Saved Takes</div>
+      <div class="rec-take-list" id="recTakeList">
+        <div style="color:var(--text-ghost);font-size:12px;padding:4px 0;">No takes yet — record something!</div>
+      </div>
+    </div>
+  </div>
+</div>
+
 
 </main>
 
@@ -1482,6 +1916,13 @@ function drawClock(highlightNotes = null) {
   ctx.beginPath(); ctx.arc(CENTER.x,CENTER.y,40,0,Math.PI*2); ctx.fill();
   ctx.strokeStyle = '#F4D03F'; ctx.lineWidth = 2.5; ctx.stroke();
 
+  // Grab-zone indicator — dashed ring showing exact drag boundary
+  ctx.strokeStyle = isDragging ? 'rgba(0,192,192,0.5)' : 'rgba(244,208,63,0.2)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([3,6]);
+  ctx.beginPath(); ctx.arc(CENTER.x,CENTER.y,48,0,Math.PI*2); ctx.stroke();
+  ctx.setLineDash([]);
+
   // Rotate icon on hub
   ctx.strokeStyle = '#F4D03F'; ctx.lineWidth = 1.8;
   ctx.beginPath(); ctx.arc(CENTER.x,CENTER.y,24,0.5,Math.PI*1.8); ctx.stroke();
@@ -1506,7 +1947,7 @@ canvas.addEventListener('mousemove', e => {
     lastMouseAngle = a;
     drawClock(); return;
   }
-  if (d<=60) { canvas.style.cursor='grab'; return; }
+  if (d<=48) { canvas.style.cursor='grab'; return; }
   let found=null;
   for (const n of notePositions) {
     const nx=mx-n.x,ny=my-n.y;
@@ -1523,7 +1964,7 @@ canvas.addEventListener('mousemove', e => {
 canvas.addEventListener('mousedown', e => {
   const {x,y} = getCanvasPoint(e.clientX,e.clientY);
   const dx=x-CENTER.x, dy=y-CENTER.y;
-  if (Math.sqrt(dx*dx+dy*dy)<=60) {
+  if (Math.sqrt(dx*dx+dy*dy)<=48) {
     isDragging=true; lastMouseAngle=Math.atan2(dy,dx); canvas.style.cursor='grabbing'; e.preventDefault();
   }
 });
@@ -1550,7 +1991,7 @@ canvas.addEventListener('click', e => {
 canvas.addEventListener('touchstart', e => {
   if (e.touches.length!==1) return;
   const {x,y} = getCanvasPoint(e.touches[0].clientX, e.touches[0].clientY);
-  if (Math.sqrt((x-CENTER.x)**2+(y-CENTER.y)**2)<=80) {
+  if (Math.sqrt((x-CENTER.x)**2+(y-CENTER.y)**2)<=56) {
     touchDragging=true; lastTouchAngle=Math.atan2(y-CENTER.y,x-CENTER.x); e.preventDefault();
   }
 },{passive:false});
@@ -1927,10 +2368,30 @@ function rScheduleNote(step, time) {
     if(layer.muted) return;
     const ls=step%layer.steps;
     if(layer.pattern[ls]===1){
-      playRhythmSound(layer.soundType, time);
+      // ── SYNC ENGINE ROUTING ──
       const delayMs=(time-RS.audioCtx.currentTime)*1000;
-      const key=`${li}-${ls}`;
-      setTimeout(()=>{RS.activeBeats.add(key);setTimeout(()=>RS.activeBeats.delete(key),180);},Math.max(0,delayMs));
+      const beatKey=`${li}-${ls}`;
+
+      if (SYNC.active && SYNC.mode !== 'melodic') {
+        // FUSED or MIRROR: play percussion sound
+        playRhythmSound(layer.soundType, time);
+      }
+      if (SYNC.active) {
+        // Schedule the melodic note at the exact time
+        const noteData = syncGetNextNote(li, ls, layer);
+        if (noteData) {
+          playMelodicNoteAtTime(noteData.midi, time, noteData.color);
+          setTimeout(()=>{
+            syncFlashClock(noteData.noteIndex, noteData.midi, li, layer.color);
+            updateSyncBadge(li, noteData);
+          }, Math.max(0, delayMs));
+        }
+      } else {
+        // Normal percussion only
+        playRhythmSound(layer.soundType, time);
+      }
+
+      setTimeout(()=>{RS.activeBeats.add(beatKey);setTimeout(()=>RS.activeBeats.delete(beatKey),180);},Math.max(0,delayMs));
     }
   });
 }
@@ -1989,19 +2450,36 @@ function drawRhythmViz() {
   bg.addColorStop(0,'rgba(0,128,128,0.06)'); bg.addColorStop(1,'rgba(0,0,0,0)');
   rCtx.fillStyle=bg; rCtx.beginPath(); rCtx.arc(cx,cy,250,0,Math.PI*2); rCtx.fill();
 
+  // When sync is active in MIRROR mode, draw a faint chromatic ring in background
+  if (SYNC && SYNC.active && SYNC.mode === 'mirror') {
+    const chrR = 245;
+    for(let i=0;i<12;i++){
+      const startA=(i/12)*Math.PI*2 - Math.PI/2;
+      const endA=((i+1)/12)*Math.PI*2 - Math.PI/2;
+      const rootNoteIdx = getRootSpokeIndex()%12;
+      const noteI = (i + rootNoteIdx) % 12;
+      rCtx.beginPath();
+      rCtx.moveTo(cx,cy);
+      rCtx.arc(cx,cy,chrR,startA,endA);
+      rCtx.closePath();
+      rCtx.fillStyle = COLORS[noteI]+'18';
+      rCtx.fill();
+    }
+    // Ring border
+    rCtx.strokeStyle='rgba(255,255,255,0.06)'; rCtx.lineWidth=1;
+    rCtx.beginPath(); rCtx.arc(cx,cy,chrR,0,Math.PI*2); rCtx.stroke();
+  }
+
   const maxR = 210;
 
-  // Draw each layer's polygon
   RS.layers.forEach((layer,li)=>{
     const layerR = maxR - li*28;
     const steps=layer.steps;
 
-    // Draw ring
     rCtx.strokeStyle=layer.muted?'rgba(255,255,255,0.06)':`${layer.color}20`;
     rCtx.lineWidth=1;
     rCtx.beginPath(); rCtx.arc(cx,cy,layerR,0,Math.PI*2); rCtx.stroke();
 
-    // Draw spokes and beat dots
     for(let i=0;i<steps;i++){
       const a=-Math.PI/2 + (i/steps)*Math.PI*2;
       const bx=cx+layerR*Math.cos(a), by=cy+layerR*Math.sin(a);
@@ -2009,33 +2487,58 @@ function drawRhythmViz() {
       const beatKey=`${li}-${i}`;
       const isActive=RS.activeBeats.has(beatKey);
 
-      // Spoke
+      // Determine beat's chromatic color for sync visualization
+      let beatChromaColor = null;
+      if (SYNC && SYNC.active && beat) {
+        if (SYNC.mode === 'mirror') {
+          const rootNoteIdx = getRootSpokeIndex()%12;
+          const noteI = (i + rootNoteIdx) % 12;
+          beatChromaColor = COLORS[noteI];
+        } else {
+          // For melodic/fused, color by layer color but show chroma ring
+          beatChromaColor = layer.color;
+        }
+      }
+
       rCtx.strokeStyle=beat?(layer.muted?'rgba(255,255,255,0.08)':`${layer.color}30`):'rgba(255,255,255,0.05)';
       rCtx.lineWidth=1;
       rCtx.beginPath(); rCtx.moveTo(cx,cy); rCtx.lineTo(bx,by); rCtx.stroke();
 
       if(beat){
-        // Glow for active beat
         if(isActive){
-          const glow=rCtx.createRadialGradient(bx,by,0,bx,by,20);
-          glow.addColorStop(0,layer.color+'99'); glow.addColorStop(1,'transparent');
-          rCtx.fillStyle=glow; rCtx.beginPath(); rCtx.arc(bx,by,20,0,Math.PI*2); rCtx.fill();
+          const glowCol = beatChromaColor || layer.color;
+          const glow=rCtx.createRadialGradient(bx,by,0,bx,by,22);
+          glow.addColorStop(0,glowCol+'bb'); glow.addColorStop(1,'transparent');
+          rCtx.fillStyle=glow; rCtx.beginPath(); rCtx.arc(bx,by,22,0,Math.PI*2); rCtx.fill();
         }
 
-        // Draw polygon shape connecting beats
-        // just the beat dot
-        rCtx.fillStyle=layer.muted?'rgba(255,255,255,0.15)':(isActive?layer.color:`${layer.color}bb`);
-        rCtx.beginPath(); rCtx.arc(bx,by,isActive?8:6,0,Math.PI*2); rCtx.fill();
-        rCtx.strokeStyle=isActive?'#fff':layer.color; rCtx.lineWidth=isActive?2:1;
+        const dotColor = (beatChromaColor && SYNC.active)
+          ? (isActive ? beatChromaColor : beatChromaColor+'99')
+          : (layer.muted?'rgba(255,255,255,0.15)':(isActive?layer.color:`${layer.color}bb`));
+
+        rCtx.fillStyle = dotColor;
+        rCtx.beginPath(); rCtx.arc(bx,by,isActive?9:6,0,Math.PI*2); rCtx.fill();
+        rCtx.strokeStyle=isActive?(beatChromaColor||'#fff'):(beatChromaColor||layer.color);
+        rCtx.lineWidth=isActive?2.5:1;
         rCtx.stroke();
+
+        // Note label on dot when sync mirror active
+        if (SYNC && SYNC.active && SYNC.mode==='mirror' && isActive && beatChromaColor) {
+          const rootNoteIdx = getRootSpokeIndex()%12;
+          const noteI = (i + rootNoteIdx) % 12;
+          rCtx.font='bold 8px Montserrat,sans-serif';
+          rCtx.textAlign='center'; rCtx.textBaseline='middle';
+          rCtx.fillStyle=getTextColorForBg(beatChromaColor);
+          rCtx.fillText(NOTES[noteI],bx,by);
+        }
+
       } else {
-        // Empty position dot
         rCtx.fillStyle='rgba(255,255,255,0.06)';
         rCtx.beginPath(); rCtx.arc(bx,by,3,0,Math.PI*2); rCtx.fill();
       }
     }
 
-    // Draw polygon outline connecting beat positions
+    // Polygon outline
     const beatPositions=[];
     for(let i=0;i<steps;i++){
       if(layer.pattern[i]===1){
@@ -2053,38 +2556,49 @@ function drawRhythmViz() {
     }
   });
 
-  // Playhead arm
+  // Playhead arm — color it with current sync note color if active
   if(RS.playing||RS.step>0){
     const phX=cx+maxR*Math.cos(RS.playheadAngle);
     const phY=cy+maxR*Math.sin(RS.playheadAngle);
+
+    // Dynamic playhead color: sync note color or gold
+    let phColor = '#F4D03F';
+    if (SYNC && SYNC.active && SYNC.liveNotes && SYNC.liveNotes[0]) {
+      phColor = SYNC.liveNotes[0].color || '#F4D03F';
+    }
+
     const grad=rCtx.createLinearGradient(cx,cy,phX,phY);
-    grad.addColorStop(0,'rgba(244,208,63,0.9)');
-    grad.addColorStop(1,'rgba(244,208,63,0.1)');
-    rCtx.strokeStyle=grad; rCtx.lineWidth=2.5;
+    grad.addColorStop(0,phColor+'ee');
+    grad.addColorStop(1,phColor+'18');
+    rCtx.strokeStyle=grad; rCtx.lineWidth=3;
     rCtx.beginPath(); rCtx.moveTo(cx,cy); rCtx.lineTo(phX,phY); rCtx.stroke();
-    rCtx.fillStyle='#F4D03F';
-    rCtx.beginPath(); rCtx.arc(phX,phY,5,0,Math.PI*2); rCtx.fill();
+    rCtx.fillStyle=phColor;
+    rCtx.beginPath(); rCtx.arc(phX,phY,6,0,Math.PI*2); rCtx.fill();
   }
 
   // Center hub
   const chub=rCtx.createRadialGradient(cx,cy,0,cx,cy,28);
   chub.addColorStop(0,'#009999'); chub.addColorStop(1,'#004444');
   rCtx.fillStyle=chub; rCtx.beginPath(); rCtx.arc(cx,cy,22,0,Math.PI*2); rCtx.fill();
-  rCtx.strokeStyle='#F4D03F'; rCtx.lineWidth=2; rCtx.stroke();
+  rCtx.strokeStyle= (SYNC&&SYNC.active) ? '#c4a0ff' : '#F4D03F';
+  rCtx.lineWidth=2; rCtx.stroke();
+
+  // Center label
+  rCtx.font='bold 10px Montserrat,sans-serif';
+  rCtx.textAlign='center'; rCtx.textBaseline='middle';
+  if (SYNC&&SYNC.active&&SYNC.liveNotes&&SYNC.liveNotes[0]) {
+    rCtx.fillStyle=SYNC.liveNotes[0].color||'rgba(244,208,63,0.7)';
+    rCtx.fillText(SYNC.liveNotes[0].name||'',cx,cy);
+  } else if (RS.playing) {
+    rCtx.fillStyle='rgba(244,208,63,0.7)';
+    rCtx.fillText(`${RS.step+1}/${RS.globalSteps}`,cx,cy);
+  }
 
   // 12 o'clock marker
-  rCtx.strokeStyle='rgba(244,208,63,0.4)'; rCtx.lineWidth=1.5;
+  rCtx.strokeStyle='rgba(244,208,63,0.35)'; rCtx.lineWidth=1.5;
   rCtx.setLineDash([4,4]);
   rCtx.beginPath(); rCtx.moveTo(cx,cy-28); rCtx.lineTo(cx,cy-maxR-10); rCtx.stroke();
   rCtx.setLineDash([]);
-
-  // Step counter
-  if(RS.playing){
-    rCtx.font='bold 11px Montserrat,sans-serif';
-    rCtx.fillStyle='rgba(244,208,63,0.7)';
-    rCtx.textAlign='center'; rCtx.textBaseline='middle';
-    rCtx.fillText(`step ${RS.step+1}/${RS.globalSteps}`,cx,cy+1);
-  }
 }
 
 function rAnimate() {
@@ -2112,6 +2626,238 @@ function loadEuclidPreset(name) {
   renderLayers(); drawRhythmViz();
   showToast('✅ '+name+' loaded');
 }
+
+
+// ═══════════════════════════════════════════════════════════════════
+// ★  K C M   M E L O D I C   S Y N C   E N G I N E  ★
+// ═══════════════════════════════════════════════════════════════════
+//
+//  Three modes:
+//  MELODIC — rhythm beats play scale tones in sequence (no perc)
+//  FUSED   — rhythm beats play scale tones AND percussion together
+//  MIRROR  — beat position N maps DIRECTLY to chromatic position N
+//            (beat 0 → C, beat 1 → C#, etc.) — full visual mirror
+//
+//  The Spoke Clock lights up each triggered note in real time.
+//  Each layer has its own independent note-step cursor,
+//  so polyrhythms create independent melodic lines simultaneously.
+// ═══════════════════════════════════════════════════════════════════
+
+const SYNC = {
+  active:   false,
+  mode:     'melodic',   // 'melodic' | 'fused' | 'mirror'
+  // Per-layer cursors — each layer steps through the scale independently
+  layerCursors: [],      // index into scaleNotes[] for each layer
+  // Current live note display per layer
+  liveNotes: [],
+  // Flash timer handles
+  flashTimer: null,
+};
+
+const SYNC_MODE_DESCS = {
+  melodic: 'Beats play scale tones in sequence. No percussion — pure melody driven by your Euclidean rhythm.',
+  fused:   'Every beat plays BOTH its drum sound AND the next scale tone simultaneously. Melody + rhythm at once.',
+  mirror:  'Beat position maps directly to chromatic position (beat 0→C, beat 1→C♯…). The geometry of rhythm IS the melody.',
+};
+
+function toggleSync() {
+  SYNC.active = !SYNC.active;
+  const btn = document.getElementById('syncToggleBtn');
+  const row  = document.getElementById('syncModeRow');
+  const pill = document.getElementById('syncStatusPill');
+  const nowP = document.getElementById('syncNowPlaying');
+  const desc = document.getElementById('syncModeDesc');
+
+  if (SYNC.active) {
+    btn.textContent = '◈  SYNC ON — CLICK TO DEACTIVATE';
+    btn.classList.add('active');
+    row.style.display = 'flex';
+    pill.classList.add('visible');
+    nowP.classList.add('visible');
+    desc.style.display = 'block';
+    syncResetCursors();
+    updateSyncModeDesc();
+    showToast('◈ Melodic Sync ACTIVE');
+    // Switch to clock panel so the light show is visible
+    // (leave rhythm panel open — user can see both via the tabs)
+  } else {
+    btn.textContent = '◈  ACTIVATE MELODIC SYNC';
+    btn.classList.remove('active');
+    row.style.display = 'none';
+    pill.classList.remove('visible');
+    nowP.classList.remove('visible');
+    desc.style.display = 'none';
+    // Clear any clock highlights
+    clearSyncFlash();
+    drawClock();
+    showToast('◈ Melodic Sync off');
+  }
+}
+
+function setSyncMode(mode) {
+  SYNC.mode = mode;
+  document.querySelectorAll('.sync-pill').forEach(p=>p.classList.remove('active'));
+  document.getElementById('pill-'+mode).classList.add('active');
+  syncResetCursors();
+  updateSyncModeDesc();
+
+  const pill = document.getElementById('syncStatusPill');
+  const labels = { melodic:'◈ MELODIC', fused:'◈ FUSED', mirror:'◈ MIRROR' };
+  pill.textContent = labels[mode] + ' SYNC ACTIVE';
+  showToast('Mode: '+mode.toUpperCase());
+}
+
+function updateSyncModeDesc() {
+  document.getElementById('syncModeDesc').textContent = SYNC_MODE_DESCS[SYNC.mode] || '';
+}
+
+function syncResetCursors() {
+  SYNC.layerCursors = RS.layers.map(()=>0);
+  SYNC.liveNotes    = RS.layers.map(()=>null);
+}
+
+// Get the next melodic note for a layer beat
+function syncGetNextNote(layerIndex, beatStep, layer) {
+  const pattern = STENCILS[currentStencil] || STENCILS.chromatic;
+  // Filter to semitones within one octave (0–11) — avoid compound extensions
+  const scaleOffsets = pattern.filter(st => st <= 11);
+  if (scaleOffsets.length === 0) return null;
+
+  const rootSpokeIdx = getRootSpokeIndex();
+  const rootNoteIdx  = rootSpokeIdx % 12;
+  const rootMidi     = MIDI_BASE + rootNoteIdx;
+
+  let noteIdx, midiNum;
+
+  if (SYNC.mode === 'mirror') {
+    // Beat position N → chromatic note N (rotated by root)
+    const chromIdx = (beatStep + rootNoteIdx) % 12;
+    noteIdx  = chromIdx;
+    midiNum  = rootMidi + ((chromIdx - rootNoteIdx + 12) % 12);
+  } else {
+    // Melodic / Fused: step through scale in sequence per layer
+    if (!SYNC.layerCursors) SYNC.layerCursors = RS.layers.map(()=>0);
+    while (SYNC.layerCursors.length <= layerIndex) SYNC.layerCursors.push(0);
+    const cursor   = SYNC.layerCursors[layerIndex] % scaleOffsets.length;
+    const semitones = scaleOffsets[cursor];
+    noteIdx  = (rootNoteIdx + semitones) % 12;
+    midiNum  = rootMidi + semitones;
+    SYNC.layerCursors[layerIndex] = (cursor + 1) % scaleOffsets.length;
+  }
+
+  return {
+    noteIndex: noteIdx,
+    midi:      midiNum,
+    color:     COLORS[noteIdx],
+    name:      NOTES[noteIdx],
+  };
+}
+
+// Play a melodic note at a precise Web Audio time (for scheduler)
+function playMelodicNoteAtTime(midiNum, when, color) {
+  // Use the shared audioCtx if rhythm audio is initialized,
+  // otherwise use main audioCtx
+  const ctx = RS.audioCtx || audioCtx;
+  if (!ctx) return;
+  const freq = 440 * Math.pow(2, (midiNum - 69) / 12);
+  const osc  = ctx.createOscillator();
+  const gain = ctx.createGain();
+  const dest = RS.masterGain || ctx.destination;
+  osc.connect(gain); gain.connect(dest);
+  osc.type = 'sine';
+  osc.frequency.value = freq;
+  const now2 = when || ctx.currentTime;
+  const dur = Math.max(0.08, (60 / RS.tempo) * 0.72);
+  gain.gain.setValueAtTime(0, now2);
+  gain.gain.linearRampToValueAtTime(0.32, now2 + 0.025);
+  gain.gain.exponentialRampToValueAtTime(0.001, now2 + dur);
+  osc.start(now2); osc.stop(now2 + dur + 0.02);
+}
+
+// Flash the Spoke Clock — highlight the triggered note
+let syncFlashNotes = [];    // [{noteIndex, midi, color, layerColor, expiry}]
+let syncFlashRAF   = null;
+
+function syncFlashClock(noteIdx, midiNum, layerIdx, layerColor) {
+  const flashDur = Math.max(120, (60/RS.tempo)*600);
+  const expiry   = performance.now() + flashDur;
+
+  // Add to active flash list
+  syncFlashNotes.push({ noteIndex: noteIdx, midi: midiNum, layerColor, expiry });
+  // Keep list trimmed
+  if (syncFlashNotes.length > 12) syncFlashNotes.shift();
+
+  // Trigger the canvas border flash
+  const flash = document.getElementById('clockSyncFlash');
+  if (flash) {
+    flash.style.background = `radial-gradient(ellipse 100% 100% at 50% 50%, ${layerColor}22 0%, transparent 70%)`;
+    flash.classList.add('fire');
+    setTimeout(()=>flash.classList.remove('fire'), 80);
+  }
+
+  // Redraw clock with highlights
+  redrawClockWithSync();
+
+  // Schedule highlight removal
+  clearTimeout(SYNC.flashTimer);
+  SYNC.flashTimer = setTimeout(()=>{
+    syncFlashNotes = syncFlashNotes.filter(n=>n.expiry > performance.now());
+    redrawClockWithSync();
+  }, flashDur + 20);
+}
+
+function clearSyncFlash() {
+  syncFlashNotes = [];
+  const flash = document.getElementById('clockSyncFlash');
+  if (flash) flash.classList.remove('fire');
+}
+
+// Redraw the Spoke Clock, highlighting sync notes
+function redrawClockWithSync() {
+  if (syncFlashNotes.length === 0) {
+    drawClock();
+    return;
+  }
+  // Build highlight list: all notePositions matching active sync notes
+  const highlights = [];
+  const now = performance.now();
+  const active = syncFlashNotes.filter(n=>n.expiry>now);
+  for (const sn of active) {
+    for (const np of notePositions) {
+      if (np.noteIndex === sn.noteIndex) {
+        highlights.push({ ...np, _syncColor: sn.layerColor });
+      }
+    }
+  }
+  drawClock(highlights.length ? highlights : null);
+}
+
+// Update the "now playing" badge strip
+function updateSyncBadge(layerIdx, noteData) {
+  SYNC.liveNotes[layerIdx] = noteData;
+  const nowP = document.getElementById('syncNowPlaying');
+  nowP.innerHTML = '';
+
+  RS.layers.forEach((layer, li) => {
+    const nd = SYNC.liveNotes[li];
+    if (!nd) return;
+    const tc = getTextColorForBg(nd.color);
+    const wrap = document.createElement('div');
+    wrap.className = 'sync-layer-note';
+    wrap.innerHTML = `
+      <div class="sync-note-badge" style="background:${nd.color};color:${tc};border:2px solid ${layer.color}">
+        ${nd.name}
+      </div>
+      <span class="lname" style="color:${layer.color}">L${li+1}</span>`;
+    nowP.appendChild(wrap);
+  });
+}
+
+// Hook drawClock so sync flashes always use fresh notePositions
+const _origDrawClock = drawClock;
+drawClock = function(highlightNotes) {
+  _origDrawClock(highlightNotes);
+};
 
 
 // ═══════════════════════════════════════════
@@ -2330,6 +3076,829 @@ function etRestart() {
   document.getElementById('etResults').style.display='none';
   document.getElementById('etSettings').style.display='block';
 }
+
+
+// ── Auto-Save to localStorage ──────────────────────────────────────────────
+// Silently saves current clock state every time root, mode, or tempo changes.
+// Restored automatically on next page load.
+// ──────────────────────────────────────────────────────────────────────────
+(function () {
+  var LS_KEY = 'kcm_cu_autosave';
+  var dot = null;
+  var dotTimer = null;
+
+  function getState() {
+    var NOTE_NAMES_AS = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+    var rootIdx = getRootSpokeIndex() % 12;
+    return {
+      root        : NOTE_NAMES_AS[rootIdx],
+      rootMidi    : 60 + rootIdx,
+      mode        : currentStencil || 'chromatic',
+      scale       : (STENCILS[currentStencil] || [0,2,4,5,7,9,11]).slice(),
+      activeNotes : [],
+      bpm         : typeof currentTempo !== 'undefined' ? currentTempo : 120,
+      octave      : 4
+    };
+  }
+
+  function flashDot() {
+    if (!dot) dot = document.getElementById('cu-autosave-dot');
+    if (!dot) return;
+    dot.classList.add('flash');
+    clearTimeout(dotTimer);
+    dotTimer = setTimeout(function() { dot.classList.remove('flash'); }, 800);
+  }
+
+  window.__kcmAutoSave = function() {
+    try {
+      var state = getState();
+      localStorage.setItem(LS_KEY, JSON.stringify({
+        saved: new Date().toISOString(),
+        state: state
+      }));
+      flashDot();
+    } catch(e) {}
+  };
+
+  // Restore on load
+  function restoreAutoSave() {
+    try {
+      var raw = localStorage.getItem(LS_KEY);
+      if (!raw) return;
+      var doc = JSON.parse(raw);
+      if (!doc || !doc.state) return;
+      var s = doc.state;
+      // Apply root
+      var NM = {'C':0,'C#':1,'Db':1,'D':2,'D#':3,'Eb':3,'E':4,'F':5,'F#':6,'Gb':6,'G':7,'G#':8,'Ab':8,'A':9,'A#':10,'Bb':10,'B':11};
+      if (s.root && NM[s.root] !== undefined) {
+        rotationAngle = -NM[s.root] * (Math.PI * 2) / 12;
+        var ks = document.getElementById('keySelect');
+        if (ks) ks.value = String(NM[s.root]);
+      }
+      // Apply mode
+      if (s.mode && STENCILS[s.mode]) {
+        currentStencil = s.mode;
+        var ss = document.getElementById('stencilSelect');
+        if (ss) ss.value = s.mode;
+      }
+      // Apply tempo
+      if (s.bpm) {
+        currentTempo = s.bpm;
+        var ts = document.getElementById('tempoSlider');
+        var tv = document.getElementById('tempoValue');
+        if (ts) ts.value = s.bpm;
+        if (tv) tv.textContent = s.bpm;
+      }
+      drawClock();
+      if (typeof updateWedgePanel === 'function') updateWedgePanel();
+      console.info('[CU autosave] Restored state from', doc.saved);
+    } catch(e) { console.warn('[CU autosave] Restore failed:', e); }
+  }
+
+  // Hook into existing controls to trigger auto-save
+  function hookControls() {
+    var ks = document.getElementById('keySelect');
+    var ss = document.getElementById('stencilSelect');
+    var ts = document.getElementById('tempoSlider');
+    if (ks) ks.addEventListener('change', function() { setTimeout(window.__kcmAutoSave, 100); });
+    if (ss) ss.addEventListener('change', function() { setTimeout(window.__kcmAutoSave, 100); });
+    if (ts) ts.addEventListener('change', function() { setTimeout(window.__kcmAutoSave, 300); });
+    // Also hook canvas drag-end (root change via rotation)
+    var canvas = document.getElementById('mainCanvas');
+    if (canvas) {
+      canvas.addEventListener('mouseup',   function() { setTimeout(window.__kcmAutoSave, 200); });
+      canvas.addEventListener('touchend',  function() { setTimeout(window.__kcmAutoSave, 200); });
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+      restoreAutoSave();
+      hookControls();
+    });
+  } else {
+    restoreAutoSave();
+    hookControls();
+  }
+})();
+
+// ── Performance Recorder ───────────────────────────────────────────────────
+// Records every note played on the clock (clicks, autoplay, strum) with
+// timestamps. Plays back through the same playNote() engine. Export as .gcis
+// (with embedded performance data) or save as a named take in localStorage.
+// ──────────────────────────────────────────────────────────────────────────
+(function () {
+  var NOTE_NAMES_REC = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+  var LS_TAKES_KEY   = 'kcm_cu_takes';
+
+  // ── State ──────────────────────────────────────────────────────────────
+  var recording    = false;
+  var playing      = false;
+  var recStart     = 0;
+  var recEvents    = [];   // [{t, midi, duration, root, mode}]
+  var currentTake  = null; // the active take being viewed/played
+  var takes        = [];   // array of saved takes
+  var playTimer    = null;
+  var timeTimer    = null;
+  var playbackTimers = [];
+  var takeCounter  = 1;
+
+  // ── DOM refs ───────────────────────────────────────────────────────────
+  var recBtn      = null;
+  var stopBtn     = null;
+  var playBtn     = null;
+  var clearBtn    = null;
+  var exportBtn   = null;
+  var timeEl      = null;
+  var dotEl       = null;
+  var trackEl     = null;
+  var playheadEl  = null;
+  var emptyEl     = null;
+  var takeListEl  = null;
+
+  // ── Intercept playNote ─────────────────────────────────────────────────
+  // Wrap the global playNote so every note goes through the recorder.
+  var _origPlayNote = null;
+
+  function wrapPlayNote() {
+    if (typeof window.playNote !== 'function') return;
+    _origPlayNote = window.playNote;
+    window.playNote = function(midiNumber, duration, type) {
+      if (recording) {
+        var t = (Date.now() - recStart) / 1000;
+        var rootIdx = getRootSpokeIndex() % 12;
+        recEvents.push({
+          t        : Math.round(t * 100) / 100,
+          midi     : midiNumber,
+          duration : duration || 0.5,
+          root     : NOTE_NAMES_REC[rootIdx],
+          mode     : currentStencil
+        });
+        updateTimeline(recEvents);
+      }
+      return _origPlayNote.apply(this, arguments);
+    };
+  }
+
+  // ── Timer display ──────────────────────────────────────────────────────
+  function startTimeDisplay(offset) {
+    offset = offset || 0;
+    clearInterval(timeTimer);
+    timeTimer = setInterval(function() {
+      var t = (playing ? offset + (Date.now() - recStart) / 1000 : (Date.now() - recStart) / 1000);
+      timeEl.textContent = formatTime(t);
+      if (playing && currentTake) {
+        var dur = currentTake.duration || 1;
+        var pct = Math.min(t / dur, 1) * 100;
+        if (playheadEl) playheadEl.style.left = pct + '%';
+      }
+    }, 100);
+  }
+
+  function stopTimeDisplay() { clearInterval(timeTimer); }
+
+  function formatTime(s) {
+    var m = Math.floor(s / 60);
+    var sec = (s % 60).toFixed(1);
+    if (sec < 10) sec = '0' + sec;
+    return m + ':' + sec;
+  }
+
+  // ── Timeline rendering ─────────────────────────────────────────────────
+  function updateTimeline(events) {
+    if (!trackEl) return;
+    if (!events || events.length === 0) {
+      if (emptyEl) emptyEl.style.display = 'flex';
+      trackEl.innerHTML = '';
+      if (playheadEl) playheadEl.style.display = 'none';
+      return;
+    }
+    if (emptyEl) emptyEl.style.display = 'none';
+    var dur = events[events.length - 1].t + 0.5;
+    trackEl.innerHTML = '';
+    events.forEach(function(ev) {
+      var bar = document.createElement('div');
+      bar.className = 'rec-event-bar';
+      var noteIdx = ev.midi % 12;
+      var colors = ['#FFFF00','#FFC400','#FF8000','#FF4000','#FF0000','#C4007F',
+                    '#8000FF','#4000FF','#0000FF','#007FFF','#00FF80','#80FF00'];
+      bar.style.background = colors[noteIdx];
+      var heightPct = 30 + (ev.midi % 12) * 1.8;
+      bar.style.height = heightPct + 'px';
+      var widthPct = Math.max(3, (ev.duration / dur) * 100);
+      bar.style.width = widthPct + 'px';
+      bar.title = NOTE_NAMES_REC[noteIdx] + ' (MIDI ' + ev.midi + ') @ ' + ev.t + 's';
+      trackEl.appendChild(bar);
+    });
+    if (playheadEl) {
+      playheadEl.style.display = 'block';
+      playheadEl.style.left = '0%';
+    }
+  }
+
+  // ── Record ─────────────────────────────────────────────────────────────
+  function startRecording() {
+    if (recording) return;
+    recording = true;
+    recStart  = Date.now();
+    recEvents = [];
+    if (dotEl) { dotEl.classList.remove('playing'); dotEl.classList.add('recording'); }
+    recBtn.classList.add('active-rec');
+    stopBtn.disabled  = false;
+    playBtn.disabled  = true;
+    clearBtn.disabled = true;
+    exportBtn.disabled = true;
+    if (emptyEl) emptyEl.style.display = 'none';
+    startTimeDisplay();
+  }
+
+  function stopRecording() {
+    if (!recording) return;
+    recording = false;
+    stopTimeDisplay();
+    if (dotEl) dotEl.classList.remove('recording');
+    recBtn.classList.remove('active-rec');
+    stopBtn.disabled = true;
+    if (recEvents.length > 0) {
+      currentTake = {
+        name     : 'Take ' + takeCounter++,
+        events   : recEvents.slice(),
+        duration : recEvents[recEvents.length-1].t + 1,
+        root     : NOTE_NAMES_REC[getRootSpokeIndex() % 12],
+        mode     : currentStencil,
+        bpm      : typeof currentTempo !== 'undefined' ? currentTempo : 120,
+        recorded : new Date().toISOString()
+      };
+      saveTake(currentTake);
+      updateTimeline(recEvents);
+      playBtn.disabled   = false;
+      clearBtn.disabled  = false;
+      exportBtn.disabled = false;
+      timeEl.textContent = formatTime(currentTake.duration);
+    } else {
+      updateTimeline([]);
+      timeEl.textContent = '0:00.0';
+    }
+  }
+
+  // ── Playback ───────────────────────────────────────────────────────────
+  function startPlayback(take) {
+    if (playing) stopPlayback();
+    if (!take || !take.events || take.events.length === 0) return;
+    playing = true;
+    currentTake = take;
+    recStart = Date.now();
+    if (dotEl) { dotEl.classList.remove('recording'); dotEl.classList.add('playing'); }
+    playBtn.classList.add('active-play');
+    playBtn.innerHTML = '⏸ Pause';
+    stopBtn.disabled = false;
+    updateTimeline(take.events);
+    startTimeDisplay(0);
+
+    // Schedule all notes
+    take.events.forEach(function(ev) {
+      var t = playbackTimers.push(setTimeout(function() {
+        if (!playing) return;
+        if (_origPlayNote) _origPlayNote(ev.midi, ev.duration || 0.5);
+      }, ev.t * 1000));
+    });
+
+    // Auto-stop at end
+    playTimer = setTimeout(function() {
+      stopPlayback();
+    }, (take.duration || 5) * 1000 + 200);
+  }
+
+  function stopPlayback() {
+    playing = false;
+    clearTimeout(playTimer);
+    playbackTimers.forEach(clearTimeout);
+    playbackTimers = [];
+    stopTimeDisplay();
+    if (dotEl) dotEl.classList.remove('playing');
+    if (playBtn) { playBtn.classList.remove('active-play'); playBtn.innerHTML = '▶ Play'; }
+    if (stopBtn) stopBtn.disabled = true;
+    if (playheadEl) playheadEl.style.left = '0%';
+    if (currentTake) timeEl.textContent = formatTime(currentTake.duration);
+  }
+
+  // ── Takes (localStorage) ───────────────────────────────────────────────
+  function loadTakes() {
+    try {
+      var raw = localStorage.getItem(LS_TAKES_KEY);
+      takes = raw ? JSON.parse(raw) : [];
+      takeCounter = takes.length + 1;
+    } catch(e) { takes = []; }
+  }
+
+  function saveTake(take) {
+    loadTakes();
+    takes.unshift(take); // newest first
+    if (takes.length > 20) takes = takes.slice(0, 20); // cap at 20
+    try { localStorage.setItem(LS_TAKES_KEY, JSON.stringify(takes)); } catch(e) {}
+    renderTakeList();
+  }
+
+  function deleteTake(idx) {
+    loadTakes();
+    takes.splice(idx, 1);
+    try { localStorage.setItem(LS_TAKES_KEY, JSON.stringify(takes)); } catch(e) {}
+    renderTakeList();
+  }
+
+  function renderTakeList() {
+    if (!takeListEl) return;
+    loadTakes();
+    if (takes.length === 0) {
+      takeListEl.innerHTML = '<div style="color:var(--text-ghost);font-size:12px;padding:4px 0;">No takes yet — record something!</div>';
+      return;
+    }
+    takeListEl.innerHTML = '';
+    takes.forEach(function(take, idx) {
+      var row = document.createElement('div');
+      row.className = 'rec-take-row' + (currentTake && currentTake.name === take.name ? ' active' : '');
+      var date = take.recorded ? new Date(take.recorded).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : '';
+      row.innerHTML =
+        '<span class="rec-take-name">' + take.name + '</span>' +
+        '<span class="rec-take-meta">' + take.root + ' ' + take.mode + ' · ' + formatTime(take.duration) + ' · ' + date + '</span>' +
+        '<span class="rec-take-btns">' +
+          '<button class="rec-take-btn play-take">▶</button>' +
+          '<button class="rec-take-btn export-btn">⬇</button>' +
+          '<button class="rec-take-btn danger del-take">✕</button>' +
+        '</span>';
+      row.querySelector('.play-take').addEventListener('click', function(e) {
+        e.stopPropagation();
+        currentTake = take;
+        updateTimeline(take.events);
+        playBtn.disabled = false;
+        clearBtn.disabled = false;
+        exportBtn.disabled = false;
+        startPlayback(take);
+        renderTakeList();
+      });
+      row.querySelector('.export-btn').addEventListener('click', function(e) {
+        e.stopPropagation();
+        exportTake(take);
+      });
+      row.querySelector('.del-take').addEventListener('click', function(e) {
+        e.stopPropagation();
+        deleteTake(idx);
+      });
+      takeListEl.appendChild(row);
+    });
+  }
+
+  // ── Export take as .gcis ───────────────────────────────────────────────
+  function exportTake(take) {
+    var NOTE_MAP_EX = {'C':0,'C#':1,'Db':1,'D':2,'D#':3,'Eb':3,'E':4,'F':5,'F#':6,'Gb':6,'G':7,'G#':8,'Ab':8,'A':9,'A#':10,'Bb':10,'B':11};
+    var rootIdx = NOTE_MAP_EX[take.root] || 0;
+    var doc = {
+      gcis      : 1,
+      kcm       : '1.0',
+      saved     : new Date().toISOString(),
+      title     : take.name,
+      state     : {
+        root        : take.root,
+        rootMidi    : 60 + rootIdx,
+        mode        : take.mode,
+        scale       : (STENCILS[take.mode] || [0,2,4,5,7,9,11]).slice(),
+        activeNotes : [],
+        bpm         : take.bpm || 120,
+        octave      : 4
+      },
+      performance : {
+        duration : take.duration,
+        recorded : take.recorded,
+        events   : take.events
+      }
+    };
+    var blob = new Blob([JSON.stringify(doc, null, 2)], { type: 'application/json' });
+    var url  = URL.createObjectURL(blob);
+    var a    = document.createElement('a');
+    a.href   = url;
+    a.download = take.name.replace(/\s+/g,'_').toLowerCase() + '.gcis';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  // ── Wire up buttons ────────────────────────────────────────────────────
+  function initRecorder() {
+    recBtn     = document.getElementById('recBtn');
+    stopBtn    = document.getElementById('recStopBtn');
+    playBtn    = document.getElementById('recPlayBtn');
+    clearBtn   = document.getElementById('recClearBtn');
+    exportBtn  = document.getElementById('recExportBtn');
+    timeEl     = document.getElementById('recTime');
+    dotEl      = document.getElementById('recDot');
+    trackEl    = document.getElementById('recTrack');
+    playheadEl = document.getElementById('recPlayhead');
+    emptyEl    = document.getElementById('recEmpty');
+    takeListEl = document.getElementById('recTakeList');
+
+    if (!recBtn) return;
+
+    wrapPlayNote();
+    loadTakes();
+    renderTakeList();
+
+    recBtn.addEventListener('click', function() {
+      if (recording) { stopRecording(); }
+      else { if(playing) stopPlayback(); startRecording(); }
+    });
+
+    stopBtn.addEventListener('click', function() {
+      if (recording) stopRecording();
+      else if (playing) stopPlayback();
+    });
+
+    playBtn.addEventListener('click', function() {
+      if (playing) { stopPlayback(); }
+      else if (currentTake) { startPlayback(currentTake); }
+      else if (recEvents.length > 0) {
+        currentTake = {
+          name:'Last Recording', events:recEvents.slice(),
+          duration: recEvents[recEvents.length-1].t + 1,
+          root: NOTE_NAMES_REC[getRootSpokeIndex()%12],
+          mode: currentStencil,
+          bpm: typeof currentTempo!=='undefined'?currentTempo:120,
+          recorded: new Date().toISOString()
+        };
+        startPlayback(currentTake);
+      }
+    });
+
+    clearBtn.addEventListener('click', function() {
+      stopPlayback();
+      recEvents = [];
+      currentTake = null;
+      updateTimeline([]);
+      timeEl.textContent = '0:00.0';
+      playBtn.disabled = true;
+      clearBtn.disabled = true;
+      exportBtn.disabled = true;
+    });
+
+    exportBtn.addEventListener('click', function() {
+      if (currentTake) exportTake(currentTake);
+    });
+
+    // Timeline click → scrub
+    var timelineEl = document.getElementById('recTimeline');
+    if (timelineEl) {
+      timelineEl.addEventListener('click', function(e) {
+        if (!currentTake || !currentTake.events || currentTake.events.length === 0) return;
+        var rect = timelineEl.getBoundingClientRect();
+        var pct  = (e.clientX - rect.left) / rect.width;
+        var seekT = pct * currentTake.duration;
+        if (playheadEl) playheadEl.style.left = (pct * 100) + '%';
+        if (timeEl) timeEl.textContent = formatTime(seekT);
+      });
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initRecorder);
+  } else {
+    initRecorder();
+  }
+
+})();
+
+// ── Standalone GCIS Save / Load ────────────────────────────────────────────
+// Works both inside the KCM Console (postMessages state up) and
+// as a standalone page (reads/writes its own clock state directly).
+// ──────────────────────────────────────────────────────────────────────────
+(function () {
+
+  var NOTE_NAMES_EXPORT = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+
+  /* ── Read current clock state ─────────────────────────────────── */
+  function readClockState() {
+    var rootIdx = getRootSpokeIndex() % 12;
+    var stencilPattern = (typeof STENCILS !== 'undefined' && STENCILS[currentStencil])
+      ? STENCILS[currentStencil] : [0,2,4,5,7,9,11];
+
+    return {
+      root        : NOTE_NAMES_EXPORT[rootIdx],
+      rootMidi    : 60 + rootIdx,
+      mode        : currentStencil || 'major',
+      scale       : stencilPattern,
+      activeNotes : [],
+      bpm         : (typeof currentTempo !== 'undefined') ? currentTempo : 120,
+      octave      : 4
+    };
+  }
+
+  /* ── Apply state to clock ─────────────────────────────────────── */
+  function applyClockState(state) {
+    // Root
+    var NOTE_MAP_LOCAL = {
+      'C':0,'C#':1,'Db':1,'D':2,'D#':3,'Eb':3,
+      'E':4,'F':5,'F#':6,'Gb':6,'G':7,'G#':8,
+      'Ab':8,'A':9,'A#':10,'Bb':10,'B':11
+    };
+    if (state.root !== undefined) {
+      var idx = NOTE_MAP_LOCAL[state.root];
+      if (idx !== undefined) {
+        rotationAngle = -idx * (Math.PI * 2) / 12;
+        var ks = document.getElementById('keySelect');
+        if (ks) ks.value = String(idx);
+      }
+    }
+    // Mode/stencil by name
+    if (state.mode !== undefined) {
+      var key = state.mode.toLowerCase().replace(/[\s\-]/g, '_');
+      var alias = {
+        'natural_minor':'minor','aeolian':'minor','ionian':'major',
+        'maj':'major','min':'minor','dom7':'dominant_7th',
+        'maj7':'major_7th','min7':'minor_7th'
+      };
+      if (STENCILS[key]) {
+        currentStencil = key;
+      } else if (alias[key] && STENCILS[alias[key]]) {
+        currentStencil = alias[key];
+      }
+      var ss = document.getElementById('stencilSelect');
+      if (ss && STENCILS[currentStencil]) ss.value = currentStencil;
+    }
+    // Scale intervals fallback
+    if (state.scale && Array.isArray(state.scale)) {
+      var sig = state.scale.slice().sort(function(a,b){return a-b;}).join(',');
+      Object.keys(STENCILS).forEach(function(k) {
+        var s = STENCILS[k].slice().sort(function(a,b){return a-b;}).join(',');
+        if (s === sig) currentStencil = k;
+      });
+      var ss2 = document.getElementById('stencilSelect');
+      if (ss2 && STENCILS[currentStencil]) ss2.value = currentStencil;
+    }
+    // Tempo
+    if (state.bpm !== undefined && typeof currentTempo !== 'undefined') {
+      currentTempo = state.bpm;
+      var ts = document.getElementById('tempoSlider');
+      var tv = document.getElementById('tempoValue');
+      if (ts) ts.value = state.bpm;
+      if (tv) tv.textContent = state.bpm;
+    }
+    drawClock();
+    if (typeof updateWedgePanel === 'function') updateWedgePanel();
+  }
+
+  /* ── Flash helper ─────────────────────────────────────────────── */
+  function flashBtn(btn, label, cls) {
+    var origHTML = btn.innerHTML;
+    var origCls  = btn.className;
+    btn.innerHTML = label;
+    btn.classList.add(cls);
+    setTimeout(function() {
+      btn.innerHTML = origHTML;
+      btn.className = origCls;
+    }, 2000);
+  }
+
+  /* ── Toast ────────────────────────────────────────────────────── */
+  function showToast(msg, type) {
+    var t = document.getElementById('cu-gcis-toast');
+    if (t) t.remove();
+    t = document.createElement('div');
+    t.id = 'cu-gcis-toast';
+    t.textContent = msg;
+    var isErr = type === 'error';
+    t.style.cssText =
+      'background:#12121f;border:1px solid ' + (isErr ? '#CF7A5A' : '#008080') +
+      ';color:' + (isErr ? '#CF7A5A' : '#00c0c0') + ';' +
+      'position:fixed;bottom:28px;left:50%;transform:translateX(-50%);' +
+      'padding:10px 22px;border-radius:6px;font:13px/1.5 Montserrat,sans-serif;' +
+      'letter-spacing:.03em;z-index:9999;pointer-events:none;' +
+      'box-shadow:0 4px 24px rgba(0,0,0,.7);';
+    document.body.appendChild(t);
+    setTimeout(function() { t.remove(); }, 3500);
+  }
+
+  /* ── Filename sanitiser ───────────────────────────────────────── */
+  function sanitise(name) {
+    return name.replace(/[^a-zA-Z0-9_\- ]/g,'').replace(/\s+/g,'_').toLowerCase() || 'cu-session';
+  }
+
+  /* ── Init (after DOM ready) ───────────────────────────────────── */
+  function initGcis() {
+    var saveBtn  = document.getElementById('cu-gcis-save');
+    var loadBtn  = document.getElementById('cu-gcis-load');
+    var titleEl  = document.getElementById('cu-session-title');
+    if (!saveBtn || !loadBtn) return;
+
+    // Hidden file input
+    var fi = document.createElement('input');
+    fi.type = 'file';
+    fi.accept = '.gcis,application/json';
+    fi.style.display = 'none';
+    fi.id = 'cu-gcis-file-input';
+    document.body.appendChild(fi);
+
+    /* ── SAVE ─────────────────────────────────────────────────── */
+    saveBtn.addEventListener('click', function() {
+      var state = readClockState();
+      var title = (titleEl ? titleEl.value.trim() : '') || 'CU Session';
+      var doc = {
+        gcis  : 1,
+        kcm   : '1.0',
+        saved : new Date().toISOString(),
+        title : title,
+        state : state
+      };
+      var blob = new Blob([JSON.stringify(doc, null, 2)], { type: 'application/json' });
+      var url  = URL.createObjectURL(blob);
+      var a    = document.createElement('a');
+      a.href     = url;
+      a.download = sanitise(title) + '.gcis';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      flashBtn(saveBtn, '✓ Saved!', 'gcis-btn--saved');
+      // If embedded in Console, notify parent too
+      try {
+        window.parent.postMessage({ type: 'KCM_STATE_PATCH', payload: state }, '*');
+      } catch(e) {}
+      console.info('[CU gcis] Saved:', doc);
+    });
+
+    /* ── LOAD ─────────────────────────────────────────────────── */
+    loadBtn.addEventListener('click', function() {
+      fi.value = '';
+      fi.click();
+    });
+
+    fi.addEventListener('change', function() {
+      var file = fi.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        var doc;
+        try { doc = JSON.parse(e.target.result); }
+        catch(err) {
+          showToast('⚠ Could not parse .gcis file', 'error');
+          return;
+        }
+        if (!doc || doc.gcis !== 1 || !doc.state || !doc.state.root) {
+          showToast('⚠ Not a valid .gcis session file', 'error');
+          return;
+        }
+        if (titleEl && doc.title) titleEl.value = doc.title;
+        applyClockState(doc.state);
+        // Broadcast to Console parent if embedded
+        try {
+          window.parent.postMessage({ type: 'KCM_STATE', payload: doc.state }, '*');
+        } catch(e) {}
+        flashBtn(loadBtn, '✓ Loaded!', 'gcis-btn--loaded');
+        console.info('[CU gcis] Loaded:', doc);
+      };
+      reader.readAsText(file);
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initGcis);
+  } else {
+    initGcis();
+  }
+
+})();
+
+// ── KCM Console Bridge ─────────────────────────────────────────────────────
+// Listens for KCM_STATE messages from the Console's gcis.js and bridge.js.
+// Fully wired to the clock's live internals — no stubs.
+//
+// setRootNote(idx)      → rotates clock + syncs keySelect dropdown
+// setActiveNotes(arr)   → highlights MIDI notes on the clock face
+// applyPatternByName(n) → applies stencil + syncs stencilSelect dropdown
+// ──────────────────────────────────────────────────────────────────────────
+(function () {
+
+  // Map incoming root names (C# style) to clock index (0–11)
+  const NOTE_MAP = {
+    'C':0, 'C#':1, 'Db':1, 'D':2, 'D#':3, 'Eb':3,
+    'E':4, 'F':5, 'F#':6, 'Gb':6, 'G':7, 'G#':8,
+    'Ab':8, 'A':9, 'A#':10, 'Bb':10, 'B':11
+  };
+
+  /* ── setRootNote ──────────────────────────────────────────────────
+     Rotates the clock to place the given chromatic index (0–11) at
+     12 o'clock, then syncs the keySelect dropdown.                  */
+  function setRootNote(idx) {
+    idx = ((idx % 12) + 12) % 12;
+    // Match the existing keySelect handler: rotationAngle = -idx * step
+    rotationAngle = -idx * (Math.PI * 2) / 12;
+    // Sync dropdown
+    var ks = document.getElementById('keySelect');
+    if (ks) ks.value = String(idx);
+    drawClock();
+    updateWedgePanel();
+  }
+
+  /* ── setActiveNotes ───────────────────────────────────────────────
+     Highlights an array of MIDI note numbers on the clock face by
+     passing them into drawClock as the highlightNotes argument.     */
+  function setActiveNotes(midiArr) {
+    // drawClock accepts an array of MIDI numbers as highlightNotes
+    drawClock(Array.isArray(midiArr) ? midiArr : []);
+  }
+
+  /* ── applyPatternByName ───────────────────────────────────────────
+     Looks up the mode/scale name in STENCILS, applies it, and syncs
+     the stencilSelect dropdown.  Falls back gracefully if not found. */
+  function applyPatternByName(name) {
+    if (!name) return;
+    var key = name.toLowerCase().replace(/[\s\-]/g, '_');
+
+    // Direct key match
+    if (STENCILS[key]) {
+      currentStencil = key;
+    } else {
+      // Try common aliases
+      var alias = {
+        'natural_minor': 'minor',
+        'aeolian':       'minor',
+        'ionian':        'major',
+        'maj':           'major',
+        'min':           'minor',
+        'dom7':          'dominant_7th',
+        'maj7':          'major_7th',
+        'min7':          'minor_7th',
+        'pent_maj':      'pentatonic_major',
+        'pent_min':      'pentatonic_minor',
+        'harm_minor':    'harmonic_minor',
+        'mel_minor':     'melodic_minor'
+      };
+      if (alias[key] && STENCILS[alias[key]]) {
+        currentStencil = alias[key];
+      }
+      // If still no match, leave currentStencil as-is
+    }
+
+    // Sync dropdown
+    var ss = document.getElementById('stencilSelect');
+    if (ss && STENCILS[currentStencil]) {
+      ss.value = currentStencil;
+    }
+
+    drawClock();
+    updateWedgePanel();
+  }
+
+  /* ── applyScaleIntervals ──────────────────────────────────────────
+     Fallback: if a .gcis file sends scale intervals directly (no
+     mode name), find the matching stencil by interval array.        */
+  function applyScaleIntervals(intervals) {
+    if (!Array.isArray(intervals) || intervals.length === 0) return;
+    var sig = intervals.slice().sort(function(a,b){return a-b;}).join(',');
+    var match = null;
+    Object.keys(STENCILS).forEach(function(k) {
+      var s = STENCILS[k].slice().sort(function(a,b){return a-b;}).join(',');
+      if (s === sig) match = k;
+    });
+    if (match) {
+      currentStencil = match;
+      var ss = document.getElementById('stencilSelect');
+      if (ss) ss.value = match;
+      drawClock();
+      updateWedgePanel();
+    }
+  }
+
+  /* ── Message listener ─────────────────────────────────────────────  */
+  window.addEventListener('message', function (e) {
+    if (!e.data || e.data.type !== 'KCM_STATE') return;
+    var p = e.data.payload;
+    if (!p) return;
+
+    // 1. Root note → rotate clock
+    if (p.root !== undefined) {
+      var idx = NOTE_MAP[p.root];
+      if (idx !== undefined) setRootNote(idx);
+    }
+
+    // 2. Mode/scale name → apply stencil
+    if (p.mode !== undefined) {
+      applyPatternByName(p.mode);
+    }
+
+    // 3. Scale intervals → match stencil (if mode name didn't resolve)
+    if (p.scale !== undefined && Array.isArray(p.scale)) {
+      applyScaleIntervals(p.scale);
+    }
+
+    // 4. Active MIDI notes → highlight on clock
+    if (p.activeNotes !== undefined) {
+      setActiveNotes(p.activeNotes);
+    }
+  });
+
+  // Announce presence to Console bridge so it sends the current state immediately
+  window.parent.postMessage({ type: 'KCM_PANEL_READY', panel: 'chromatic-universe' }, '*');
+
+})();
 
 </script>
 </body>
