@@ -4173,8 +4173,8 @@ function etRestart() {
     const atkSplit = (typeof ATK_SPLIT_LIVE !== 'undefined') ? ATK_SPLIT_LIVE : 25;
     const layerIdx   = riseMs >= atkSplit ? 0 : 1;
 
-    // Per-layer lockout — prevents double-counting same layer within 400ms
-    if (nowMs - vrdLayerLast[layerIdx] < 400) return;
+    // Per-layer lockout — prevents double-counting same layer within 500ms
+    if (nowMs - vrdLayerLast[layerIdx] < 500) return;
     vrdLayerLast[layerIdx] = nowMs;
 
     const tFromStart = nowMs - vrdRecStart;
