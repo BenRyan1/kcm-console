@@ -2257,31 +2257,73 @@ function initRhythmAudio() {
 function playRhythmSound(type, when) {
   if (!RS.audioCtx) return;
   const ctx = RS.audioCtx, now = when||ctx.currentTime;
-  if (type==='click'||type==='rim') {
-    const buf=ctx.createBuffer(1,ctx.sampleRate*0.05,ctx.sampleRate);
+
+  function noise(dur) {
+    const buf=ctx.createBuffer(1,ctx.sampleRate*dur,ctx.sampleRate);
     const d=buf.getChannelData(0);
-    for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*Math.exp(-i/(ctx.sampleRate*0.01));
-    const src=ctx.createBufferSource(); src.buffer=buf;
-    const g=ctx.createGain(); g.gain.value=type==='rim'?0.4:0.7;
-    src.connect(g); g.connect(RS.masterGain); src.start(now);
-  } else if (type==='kick') {
+    for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1;
+    const src=ctx.createBufferSource(); src.buffer=buf; return src;
+  }
+
+  if (type==='kick') {
+    // Deep sub-bass thud: 150Hz->35Hz pitch drop, long decay
     const osc=ctx.createOscillator(), g=ctx.createGain();
-    osc.frequency.setValueAtTime(120,now); osc.frequency.exponentialRampToValueAtTime(30,now+0.12);
-    g.gain.setValueAtTime(0.9,now); g.gain.exponentialRampToValueAtTime(0.001,now+0.2);
-    osc.connect(g); g.connect(RS.masterGain); osc.start(now); osc.stop(now+0.22);
-  } else if (type==='tone') {
-    const osc=ctx.createOscillator(), g=ctx.createGain();
-    osc.frequency.value=440; g.gain.setValueAtTime(0.3,now); g.gain.exponentialRampToValueAtTime(0.001,now+0.12);
-    osc.connect(g); g.connect(RS.masterGain); osc.start(now); osc.stop(now+0.14);
-  } else {
-    const buf=ctx.createBuffer(1,ctx.sampleRate*0.04,ctx.sampleRate);
-    const d=buf.getChannelData(0);
-    for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*Math.exp(-i/(ctx.sampleRate*0.008));
-    const src=ctx.createBufferSource(); src.buffer=buf;
-    const flt=ctx.createBiquadFilter(); flt.type=type==='hihat'?'highpass':'bandpass';
-    flt.frequency.value=type==='hihat'?8000:600;
-    const g=ctx.createGain(); g.gain.value=0.5;
+    osc.type='sine';
+    osc.frequency.setValueAtTime(150,now);
+    osc.frequency.exponentialRampToValueAtTime(35,now+0.15);
+    g.gain.setValueAtTime(1.0,now);
+    g.gain.exponentialRampToValueAtTime(0.001,now+0.35);
+    osc.connect(g); g.connect(RS.masterGain); osc.start(now); osc.stop(now+0.38);
+
+  } else if (type==='hihat') {
+    // Crisp bright tick: highpass noise 9kHz, very short
+    const src=noise(0.08);
+    const flt=ctx.createBiquadFilter(); flt.type='highpass'; flt.frequency.value=9000;
+    const g=ctx.createGain();
+    g.gain.setValueAtTime(0.7,now);
+    g.gain.exponentialRampToValueAtTime(0.001,now+0.06);
     src.connect(flt); flt.connect(g); g.connect(RS.masterGain); src.start(now);
+
+  } else if (type==='click') {
+    // Sharp woodblock click: tight bandpass 1800Hz transient
+    const src=noise(0.03);
+    const flt=ctx.createBiquadFilter(); flt.type='bandpass'; flt.frequency.value=1800; flt.Q.value=8;
+    const g=ctx.createGain(); g.gain.value=0.9;
+    src.connect(flt); flt.connect(g); g.connect(RS.masterGain); src.start(now);
+
+  } else if (type==='rim') {
+    // Rimshot: mid-high bandpass crack 3200Hz + short 400Hz tone ping
+    const src=noise(0.06);
+    const flt=ctx.createBiquadFilter(); flt.type='bandpass'; flt.frequency.value=3200; flt.Q.value=4;
+    const g=ctx.createGain();
+    g.gain.setValueAtTime(0.8,now);
+    g.gain.exponentialRampToValueAtTime(0.001,now+0.05);
+    src.connect(flt); flt.connect(g); g.connect(RS.masterGain); src.start(now);
+    const osc=ctx.createOscillator(), og=ctx.createGain();
+    osc.frequency.value=400; og.gain.setValueAtTime(0.3,now); og.gain.exponentialRampToValueAtTime(0.001,now+0.04);
+    osc.connect(og); og.connect(RS.masterGain); osc.start(now); osc.stop(now+0.05);
+
+  } else if (type==='tone') {
+    // Bell tone: sine C5 523Hz, long musical decay 0.6s
+    const osc=ctx.createOscillator(), g=ctx.createGain();
+    osc.type='sine'; osc.frequency.value=523;
+    g.gain.setValueAtTime(0.5,now);
+    g.gain.exponentialRampToValueAtTime(0.001,now+0.6);
+    osc.connect(g); g.connect(RS.masterGain); osc.start(now); osc.stop(now+0.65);
+
+  } else if (type==='wood') {
+    // Wood block: mid bandpass 900Hz, short hollow knock
+    const src=noise(0.05);
+    const flt=ctx.createBiquadFilter(); flt.type='bandpass'; flt.frequency.value=900; flt.Q.value=12;
+    const g=ctx.createGain();
+    g.gain.setValueAtTime(0.9,now);
+    g.gain.exponentialRampToValueAtTime(0.001,now+0.07);
+    src.connect(flt); flt.connect(g); g.connect(RS.masterGain); src.start(now);
+
+  } else {
+    const src=noise(0.03);
+    const g=ctx.createGain(); g.gain.value=0.5;
+    src.connect(g); g.connect(RS.masterGain); src.start(now);
   }
 }
 
