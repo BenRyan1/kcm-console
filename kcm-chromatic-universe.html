@@ -1387,12 +1387,12 @@ input[type="range"] {
           <button class="btn btn-teal btn-full" id="vrdAllowBtn" onclick="vrdRequestMic()" style="margin-bottom:0.4rem;">🎤 Allow Microphone</button>
           <select id="vrdDeviceSelect" style="width:100%;background:var(--bg-deep);color:var(--text);border:1px solid rgba(255,255,255,0.1);border-radius:4px;padding:4px;font-size:0.75rem;display:none;" onchange="vrdSwitchDevice(this.value)"></select>
           <div style="display:flex;align-items:center;gap:0.5rem;margin-top:0.4rem;">
-            <label style="font-size:0.72rem;color:var(--text-dim);white-space:nowrap;">BOOM/CHA Split</label>
-            <input type="range" id="vrdSplitSlider" min="0.01" max="2.0" step="0.01" value="0.15"
+            <label style="font-size:0.72rem;color:var(--text-dim);white-space:nowrap;">BOOM/CHA Speed</label>
+            <input type="range" id="vrdSplitSlider" min="5" max="80" step="1" value="25"
               style="flex:1;accent-color:var(--coral);" oninput="vrdUpdateSplit(this.value)">
-            <span id="vrdSplitVal" style="font-size:0.72rem;color:var(--coral);width:2.5rem;text-align:right;">0.15</span>
+            <span id="vrdSplitVal" style="font-size:0.72rem;color:var(--coral);width:2.5rem;text-align:right;">25ms</span>
           </div>
-          <div style="font-size:0.68rem;color:var(--text-ghost);margin-top:0.2rem;">↑ higher = easier BOOM &nbsp;|&nbsp; ↓ lower = more CHA</div>
+          <div style="font-size:0.68rem;color:var(--text-ghost);margin-top:0.2rem;">↑ higher = slower sounds = BOOM &nbsp;|&nbsp; ↓ lower = faster = CHA</div>
           <div style="display:flex;align-items:center;gap:0.5rem;margin-top:0.4rem;">
             <label style="font-size:0.72rem;color:var(--text-dim);white-space:nowrap;">Sensitivity</label>
             <input type="range" id="vrdSensSlider" min="0.01" max="0.3" step="0.005" value="0.05"
@@ -4089,12 +4089,12 @@ function etRestart() {
     if (lbl) lbl.textContent = parseFloat(val).toFixed(3);
   };
 
-  // Live BOOM/CHA split tuner — lets Ben dial in his exact mic
-  let RATIO_SPLIT_LIVE = 0.15;
+  // Live attack-speed tuner — dial in BOOM vs CHA boundary in ms
+  let ATK_SPLIT_LIVE = 25;
   window.vrdUpdateSplit = function(val) {
-    RATIO_SPLIT_LIVE = parseFloat(val);
+    ATK_SPLIT_LIVE = parseFloat(val);
     const lbl = document.getElementById('vrdSplitVal');
-    if (lbl) lbl.textContent = parseFloat(val).toFixed(2);
+    if (lbl) lbl.textContent = Math.round(val) + 'ms';
   };
 
   // ── Detection loop (always running when mic open) ──────────────────────────
@@ -4111,6 +4111,10 @@ function etRestart() {
     let rms = 0;
     for (let i=0; i<timeBuf.length; i++) rms += timeBuf[i]*timeBuf[i];
     rms = Math.sqrt(rms/timeBuf.length);
+
+    // Store in rolling RMS buffer for attack speed detection
+    vrdRmsBuf[vrdRmsBufIdx] = rms;
+    vrdRmsBufIdx = (vrdRmsBufIdx + 1) % ATK_BUF_SIZE;
 
     // Meter
     const mb = document.getElementById('vrdMeterBar');
@@ -4133,22 +4137,42 @@ function etRestart() {
     }
   }
 
+  // Attack speed buffer — last 128 RMS samples before onset
+  const ATK_BUF_SIZE = 128;
+  let vrdRmsBuf = new Float32Array(ATK_BUF_SIZE);
+  let vrdRmsBufIdx = 0;
+
   function vrdCaptureOnset(freqBuf, nowMs) {
-    // Energy ratio classification
-    let lowPow = 0, hiPow = 0;
-    for (let i=0; i<=LOW_MAX_BIN; i++) {
-      const lin = Math.pow(10, freqBuf[i]/20);
-      lowPow += lin * lin;
+    // ATTACK SPEED DETECTION — works on any mic
+    // BOOM = slow attack (voice builds gradually, >20ms to peak)
+    // CHA  = fast attack (sharp consonant, <10ms to peak)
+    //
+    // We look at the RMS history buffer and measure how quickly
+    // the signal rose from noise floor to peak.
+
+    // Find peak and where signal crossed 20% of peak in recent buffer
+    let peak = 0;
+    for (let i = 0; i < ATK_BUF_SIZE; i++) {
+      if (vrdRmsBuf[i] > peak) peak = vrdRmsBuf[i];
     }
-    for (let i=HI_MIN_BIN; i<freqBuf.length; i++) {
-      const lin = Math.pow(10, freqBuf[i]/20);
-      hiPow  += lin * lin;
+    const threshold20 = peak * 0.20;
+    // Find how many frames ago signal crossed 20% threshold
+    // (scanning backwards from current position)
+    let riseFrames = 0;
+    for (let i = 1; i < ATK_BUF_SIZE; i++) {
+      const idx = (vrdRmsBufIdx - i + ATK_BUF_SIZE) % ATK_BUF_SIZE;
+      if (vrdRmsBuf[idx] < threshold20) break;
+      riseFrames++;
     }
-    const ratio      = lowPow / (hiPow + 1e-9);
-    const split      = (typeof RATIO_SPLIT_LIVE !== 'undefined') ? RATIO_SPLIT_LIVE : RATIO_SPLIT;
-    const layerIdx   = ratio >= split ? 0 : 1;
+    // Each frame is ~1/60s = ~16.7ms
+    const riseMs = riseFrames * 16.7;
+
+    // BOOM = rise > 25ms (slow, chest resonance builds)
+    // CHA  = rise < 25ms (fast, sharp consonant)
+    const atkSplit = (typeof ATK_SPLIT_LIVE !== 'undefined') ? ATK_SPLIT_LIVE : 25;
+    const layerIdx   = riseMs >= atkSplit ? 0 : 1;
     const tFromStart = nowMs - vrdRecStart;
-    console.log(`VRD onset: ratio=${ratio.toFixed(4)} split=${split.toFixed(4)} → L${layerIdx+1} | low=${lowPow.toFixed(4)} hi=${hiPow.toFixed(4)}`);
+    console.log(`VRD onset: riseMs=${riseMs.toFixed(1)} split=${atkSplit}ms → L${layerIdx+1} | riseFrames=${riseFrames} peak=${peak.toFixed(4)}`);
 
     vrdOnsets.push({ t: tFromStart, layer: layerIdx, ratio });
 
