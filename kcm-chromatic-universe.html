@@ -4183,8 +4183,8 @@ function etRestart() {
       if (dot) { dot.style.background='var(--teal)'; setTimeout(()=>dot.style.background='',200); }
     }
 
-    const emoji = ratio >= RATIO_SPLIT ? '💥' : '🔔';
-    const name  = ratio >= RATIO_SPLIT ? 'BOOM' : 'CHA';
+    const emoji = layerIdx === 0 ? '💥' : '🔔';
+    const name  = layerIdx === 0 ? 'BOOM' : 'CHA';
     showToast(`${emoji} ${name}  rise:${riseMs.toFixed(0)}ms → L${layerIdx+1}  t:${Math.round(tFromStart)}ms`);
   }
 
