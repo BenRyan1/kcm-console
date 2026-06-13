@@ -3993,7 +3993,7 @@ function etRestart() {
   let vrdRunning      = false;   // mic is open
   let vrdRecording    = false;   // actively capturing onsets
   let vrdCountingIn   = false;
-  let vrdOnsets       = [];      // [{t: ms from recStart, layer: 0|1, ratio}]
+  let vrdOnsets       = [];      // [{t: ms from recStart, layer: 0|1, riseMs}]
   let vrdRecStart     = 0;       // performance.now() when recording began
   let vrdRecDuration  = 0;       // ms — set when user stops
   let vrdLastOnset    = 0;
@@ -4185,7 +4185,7 @@ function etRestart() {
 
     const emoji = ratio >= RATIO_SPLIT ? '💥' : '🔔';
     const name  = ratio >= RATIO_SPLIT ? 'BOOM' : 'CHA';
-    showToast(`${emoji} ${name}  R:${ratio.toFixed(2)} → L${layerIdx+1}  t:${Math.round(tFromStart)}ms`);
+    showToast(`${emoji} ${name}  rise:${riseMs.toFixed(0)}ms → L${layerIdx+1}  t:${Math.round(tFromStart)}ms`);
   }
 
   // ── Count-in then record ───────────────────────────────────────────────────
