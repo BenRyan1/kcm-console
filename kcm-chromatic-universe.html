@@ -1387,6 +1387,13 @@ input[type="range"] {
           <button class="btn btn-teal btn-full" id="vrdAllowBtn" onclick="vrdRequestMic()" style="margin-bottom:0.4rem;">🎤 Allow Microphone</button>
           <select id="vrdDeviceSelect" style="width:100%;background:var(--bg-deep);color:var(--text);border:1px solid rgba(255,255,255,0.1);border-radius:4px;padding:4px;font-size:0.75rem;display:none;" onchange="vrdSwitchDevice(this.value)"></select>
           <div style="display:flex;align-items:center;gap:0.5rem;margin-top:0.4rem;">
+            <label style="font-size:0.72rem;color:var(--text-dim);white-space:nowrap;">BOOM/CHA Split</label>
+            <input type="range" id="vrdSplitSlider" min="0.01" max="2.0" step="0.01" value="0.15"
+              style="flex:1;accent-color:var(--coral);" oninput="vrdUpdateSplit(this.value)">
+            <span id="vrdSplitVal" style="font-size:0.72rem;color:var(--coral);width:2.5rem;text-align:right;">0.15</span>
+          </div>
+          <div style="font-size:0.68rem;color:var(--text-ghost);margin-top:0.2rem;">↑ higher = easier BOOM &nbsp;|&nbsp; ↓ lower = more CHA</div>
+          <div style="display:flex;align-items:center;gap:0.5rem;margin-top:0.4rem;">
             <label style="font-size:0.72rem;color:var(--text-dim);white-space:nowrap;">Sensitivity</label>
             <input type="range" id="vrdSensSlider" min="0.01" max="0.3" step="0.005" value="0.05"
               style="flex:1;accent-color:var(--teal);" oninput="vrdUpdateSens(this.value)">
@@ -3969,9 +3976,9 @@ function etRestart() {
 (function() {
 
   // ── Constants ──────────────────────────────────────────────────────────────
-  const LOW_MAX_BIN   = 6;      // < ~300 Hz  — BOOM territory
-  const HI_MIN_BIN    = 46;     // > ~2000 Hz — CHA territory
-  const RATIO_SPLIT   = 1.0;    // ≥ = BOOM (L1),  < = CHA (L2)
+  const LOW_MAX_BIN   = 8;      // < ~350 Hz  — BOOM territory
+  const HI_MIN_BIN    = 30;     // > ~1300 Hz — CHA territory (wider net)
+  const RATIO_SPLIT   = 0.15;   // ≥ = BOOM (L1),  < = CHA (L2) — tuned for MacBook mic
   const LOCKOUT_MS    = 120;    // min ms between onsets (allows fast 16ths)
   const RISE_MS       = 15;     // ms to confirm onset (avoid noise spikes)
   const FFT_SIZE      = 256;
@@ -4082,6 +4089,14 @@ function etRestart() {
     if (lbl) lbl.textContent = parseFloat(val).toFixed(3);
   };
 
+  // Live BOOM/CHA split tuner — lets Ben dial in his exact mic
+  let RATIO_SPLIT_LIVE = 0.15;
+  window.vrdUpdateSplit = function(val) {
+    RATIO_SPLIT_LIVE = parseFloat(val);
+    const lbl = document.getElementById('vrdSplitVal');
+    if (lbl) lbl.textContent = parseFloat(val).toFixed(2);
+  };
+
   // ── Detection loop (always running when mic open) ──────────────────────────
   function vrdLoop() {
     if (!vrdRunning) return;
@@ -4130,8 +4145,10 @@ function etRestart() {
       hiPow  += lin * lin;
     }
     const ratio      = lowPow / (hiPow + 1e-9);
-    const layerIdx   = ratio >= RATIO_SPLIT ? 0 : 1;
+    const split      = (typeof RATIO_SPLIT_LIVE !== 'undefined') ? RATIO_SPLIT_LIVE : RATIO_SPLIT;
+    const layerIdx   = ratio >= split ? 0 : 1;
     const tFromStart = nowMs - vrdRecStart;
+    console.log(`VRD onset: ratio=${ratio.toFixed(4)} split=${split.toFixed(4)} → L${layerIdx+1} | low=${lowPow.toFixed(4)} hi=${hiPow.toFixed(4)}`);
 
     vrdOnsets.push({ t: tFromStart, layer: layerIdx, ratio });
 
