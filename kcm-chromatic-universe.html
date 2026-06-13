@@ -586,154 +586,6 @@ input[type="range"] {
 }
 .layer-btn:hover { background: var(--teal-dim); border-color: var(--teal); color: var(--text); }
 .layer-btn.muted { color: var(--coral); border-color: var(--coral); background: rgba(207,122,90,0.1); }
-.mic-btn {
-  color: #00c0c0;
-  font-size: 16px;
-  min-width: 36px;
-}
-.mic-btn:hover { background: rgba(0,192,192,0.2); border-color: #00c0c0; }
-.mic-btn.listening {
-  background: rgba(0,192,192,0.25);
-  border-color: #00c0c0;
-  box-shadow: 0 0 10px #00c0c0;
-  animation: micpulse 0.8s infinite;
-}
-.mic-btn.beat-flash { color: #F4D03F !important; }
-/* STEP PRESET BUTTONS */
-.step-preset-btn {
-  flex: 1;
-  padding: 5px 4px;
-  background: rgba(0,128,128,0.1);
-  border: 1px solid rgba(0,128,128,0.3);
-  border-radius: 5px;
-  color: #b0b0cc;
-  font-size: 0.8rem;
-  font-weight: bold;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-.step-preset-btn:hover { background: rgba(0,192,192,0.2); color: #e8e8f8; }
-.step-preset-btn.active { background: rgba(0,192,192,0.2); border-color: #00c0c0; color: #00c0c0; }
-
-/* CLEAR ALL BUTTON */
-.clear-all-btn {
-  width: 100%;
-  margin-top: 4px;
-  padding: 7px;
-  background: rgba(244,208,63,0.08);
-  border: 1px solid rgba(244,208,63,0.3);
-  border-radius: 8px;
-  color: #F4D03F;
-  font-size: 0.8rem;
-  font-weight: bold;
-  cursor: pointer;
-  letter-spacing: 0.05em;
-  transition: all 0.2s;
-}
-.clear-all-btn:hover { background: rgba(244,208,63,0.18); }
-
-/* RECORD ALL BUTTON */
-.record-all-btn {
-  width: 100%;
-  margin-top: 0.5rem;
-  padding: 10px;
-  background: linear-gradient(135deg, rgba(0,128,128,0.3), rgba(0,192,192,0.15));
-  border: 1px solid #00c0c0;
-  border-radius: 8px;
-  color: #00c0c0;
-  font-size: 0.9rem;
-  font-weight: bold;
-  cursor: pointer;
-  letter-spacing: 0.05em;
-  transition: all 0.2s;
-}
-.record-all-btn:hover { background: rgba(0,192,192,0.25); }
-.record-all-btn.recording {
-  background: linear-gradient(135deg, rgba(244,208,63,0.25), rgba(207,122,90,0.15));
-  border-color: #F4D03F;
-  color: #F4D03F;
-  animation: recpulse 1s infinite;
-}
-@keyframes recpulse {
-  0%,100% { box-shadow: 0 0 6px rgba(244,208,63,0.4); }
-  50%      { box-shadow: 0 0 18px rgba(244,208,63,0.8); }
-}
-
-/* MIC PERMISSION BANNER */
-.mic-permission-banner {
-  display: none;
-  align-items: center;
-  gap: 10px;
-  background: rgba(0,192,192,0.08);
-  border: 1px solid rgba(0,192,192,0.35);
-  border-radius: 8px;
-  padding: 10px 14px;
-  margin-bottom: 10px;
-  flex-wrap: wrap;
-}
-.mic-permission-banner.visible { display: flex; }
-.mic-permission-banner .mic-perm-icon { font-size: 1.5rem; }
-.mic-permission-banner .mic-perm-text { flex: 1; min-width: 160px; }
-.mic-permission-banner .mic-perm-text strong { color: #00c0c0; display: block; font-size: 0.85rem; margin-bottom: 2px; }
-.mic-permission-banner .mic-perm-text span { color: #b0b0cc; font-size: 0.75rem; }
-.mic-perm-btns { display: flex; gap: 6px; }
-.mic-perm-yes {
-  background: #008080; color: #fff;
-  border: none; border-radius: 6px;
-  padding: 6px 14px; font-size: 0.8rem;
-  cursor: pointer; font-weight: bold;
-  transition: background 0.2s;
-}
-.mic-perm-yes:hover { background: #00c0c0; }
-.mic-perm-never {
-  background: transparent; color: #b0b0cc;
-  border: 1px solid rgba(255,255,255,0.15);
-  border-radius: 6px; padding: 6px 10px;
-  font-size: 0.75rem; cursor: pointer;
-}
-.mic-perm-never:hover { color: #e8e8f8; border-color: rgba(255,255,255,0.3); }
-.mic-perm-status {
-  font-size: 0.72rem; padding: 3px 8px;
-  border-radius: 4px; display: none;
-}
-.mic-perm-status.granted { display: inline-block; background: rgba(0,192,192,0.15); color: #00c0c0; }
-.mic-perm-status.denied  { display: inline-block; background: rgba(207,122,90,0.15); color: #CF7A5A; }
-
-.vrd-meter-wrap {
-  margin-top: 6px;
-  display: none;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.65rem;
-  color: #b0b0cc;
-}
-.vrd-meter-wrap.active { display: flex; }
-.vrd-meter-bar {
-  flex: 1;
-  height: 8px;
-  background: rgba(255,255,255,0.08);
-  border-radius: 4px;
-  overflow: hidden;
-  border: 1px solid rgba(0,192,192,0.2);
-}
-.vrd-meter-fill {
-  height: 100%;
-  width: 0%;
-  background: linear-gradient(90deg, #008080, #00c0c0);
-  border-radius: 4px;
-  transition: width 0.05s;
-}
-.vrd-meter-fill.loud { background: linear-gradient(90deg, #F4D03F, #CF7A5A); }
-.vrd-onset-count {
-  min-width: 18px;
-  text-align: right;
-  color: #F4D03F;
-  font-weight: bold;
-}
-@keyframes micpulse {
-  0%,100% { box-shadow: 0 0 6px #00c0c0; }
-  50%      { box-shadow: 0 0 16px #00c0c0; }
-}
 
 .layer-sliders { display: flex; flex-direction: column; gap: 0.4rem; }
 
@@ -1153,51 +1005,15 @@ input[type="range"] {
       <div>
         <div class="ctrl-card">
           <div class="ctrl-card-title">Rhythm Layers</div>
-
-          <!-- MIC PERMISSION BANNER -->
-          <div class="mic-permission-banner" id="micPermBanner">
-            <div class="mic-perm-icon">🎤</div>
-            <div class="mic-perm-text">
-              <strong>Microphone Access Needed</strong>
-              <span>To speak rhythms into the Euclidean circle, allow mic access.</span>
-            </div>
-            <div class="mic-perm-btns">
-              <button class="mic-perm-yes" onclick="vrdRequestMic('always')">✅ Allow Always</button>
-              <button class="mic-perm-yes" style="background:#1a4a4a;" onclick="vrdRequestMic('once')">This Time</button>
-              <button class="mic-perm-never" onclick="vrdDenyMic()">Never</button>
-            </div>
-            <span class="mic-perm-status" id="micPermStatus"></span>
-          </div>
-
           <div id="layerList"></div>
           <button class="btn btn-teal btn-full" onclick="addLayer()" style="margin-top:0.25rem;">+ Add Layer</button>
-          <button class="record-all-btn" id="recordAllBtn" onclick="vrdRecordAll()">🎤 RECORD ALL LAYERS</button>
-          <button class="clear-all-btn" onclick="clearAllLayers()">🗑 CLEAR ALL</button>
         </div>
         <div class="ctrl-card">
           <div class="ctrl-card-title">Steps</div>
           <div class="ctrl-group">
-            <label class="ctrl-label">Grid: <span id="stepsVal" style="color:#00c0c0;font-weight:bold;">16</span> steps</label>
-            <div style="display:flex;gap:5px;margin-bottom:6px;">
-              <button class="step-preset-btn active" id="spb-12"  onclick="setStepsPreset(12)">12</button>
-              <button class="step-preset-btn active" id="spb-16"  onclick="setStepsPreset(16)">16</button>
-              <button class="step-preset-btn"        id="spb-32"  onclick="setStepsPreset(32)">32</button>
-              <button class="step-preset-btn"        id="spb-64"  onclick="setStepsPreset(64)">64</button>
-            </div>
-            <input type="range" id="globalStepsSlider" min="4" max="64" value="16" step="1"
-              oninput="setSteps(this.value)" style="accent-color:#00c0c0;">
-          </div>
-          <div class="ctrl-group" style="margin-top:6px;">
-            <label class="ctrl-label">🎤 Mic Sensitivity: <span id="vrdSensVal">Medium</span></label>
-            <input type="range" id="vrdSensSlider" min="1" max="5" value="3" step="1"
-              oninput="setVrdSensitivity(this.value)" style="accent-color:#00c0c0;">
-          </div>
-          <div class="ctrl-group" style="margin-top:6px;">
-            <label class="ctrl-label">🎙️ Microphone</label>
-            <select id="micDeviceSelect" onchange="setMicDevice(this.value)"
-              style="width:100%;background:#1a1a2e;color:#e8e8f8;border:1px solid rgba(0,128,128,0.3);border-radius:6px;padding:4px 6px;font-size:0.75rem;">
-              <option value="">Default Microphone</option>
-            </select>
+            <label class="ctrl-label" for="globalStepsSlider">Global Steps: <span id="stepsVal">16</span></label>
+            <input type="range" id="globalStepsSlider" min="4" max="32" value="16" step="1"
+              oninput="setSteps(this.value)">
           </div>
         </div>
       </div>
@@ -1233,12 +1049,6 @@ input[type="range"] {
             <button class="btn btn-ghost btn-full" onclick="loadEuclidPreset('cinquillo')" style="font-size:0.7rem;">Cinquillo (5,8)</button>
             <button class="btn btn-ghost btn-full" onclick="loadEuclidPreset('polyrhythm34')" style="font-size:0.7rem;">3 over 4 Polyrhythm</button>
             <button class="btn btn-ghost btn-full" onclick="loadEuclidPreset('polyrhythm45')" style="font-size:0.7rem;">4 over 5 Polyrhythm</button>
-            <button class="btn btn-ghost btn-full" onclick="loadEuclidPreset('bembé')" style="font-size:0.7rem;">Bembé (7,12) · Afro-Cuban</button>
-            <button class="btn btn-ghost btn-full" onclick="loadEuclidPreset('shiko')" style="font-size:0.7rem;">Shiko (4,16) · West African</button>
-            <button class="btn btn-ghost btn-full" onclick="loadEuclidPreset('soukous')" style="font-size:0.7rem;">Soukous (6,16) · Congo</button>
-            <button class="btn btn-ghost btn-full" onclick="loadEuclidPreset('samba')" style="font-size:0.7rem;">Samba (3,16)+(5,16) · Brazil</button>
-            <button class="btn btn-ghost btn-full" onclick="loadEuclidPreset('trap')" style="font-size:0.7rem;">Trap (3,16)+(7,16) · Hip-Hop</button>
-            <button class="btn btn-ghost btn-full" onclick="loadEuclidPreset('rumba')" style="font-size:0.7rem;">Rumba Clave (3,16) · Cuba</button>
           </div>
         </div>
       </div>
@@ -1359,7 +1169,7 @@ function switchPanel(name) {
   document.getElementById('panel-' + name).classList.add('active');
   document.getElementById('tab-' + name).classList.add('active');
   document.getElementById('tab-' + name).setAttribute('aria-selected','true');
-  if (name === 'rhythm') { initRhythmIfNeeded(); vrdInitPanel(); }
+  if (name === 'rhythm') initRhythmIfNeeded();
 }
 
 // ═══════════════════════════════════════════
@@ -1948,18 +1758,14 @@ const RS = {
 };
 
 const LAYER_COLORS = ['#F4D03F','#008080','#CF7A5A','#8B6BA3','#4A7BA7','#9AAF7A'];
-const LAYER_SOUNDS = ['kick','snare','hihat','bass','conga','rim','openhat','cymbal','wood','click'];
+const LAYER_SOUNDS = ['click','kick','hihat','tone','wood','rim'];
 let layerIdCtr = 0;
 
 function initRhythmIfNeeded() {
   if (RS.rInitDone) return;
   RS.rInitDone = true;
   buildPolyPicker();
-  addLayer(); addLayer(); addLayer();
-  // Bobby Sanabria default sounds
-  if (RS.layers[0]) RS.layers[0].soundType = 'kick';   // BOOM
-  if (RS.layers[1]) RS.layers[1].soundType = 'snare';  // TAK
-  if (RS.layers[2]) RS.layers[2].soundType = 'hihat';  // CHA
+  addLayer(); addLayer();
   renderLayers();
   drawRhythmViz();
 }
@@ -1974,148 +1780,33 @@ function initRhythmAudio() {
 }
 
 function playRhythmSound(type, when) {
-  // Auto-init audio if not ready — use VRD's context if available
-  if (!RS.audioCtx) {
-    if (VRD.audioCtx) {
-      RS.audioCtx = VRD.audioCtx;
-      RS.masterGain = RS.audioCtx.createGain();
-      RS.masterGain.gain.value = 0.7;
-      RS.masterGain.connect(RS.audioCtx.destination);
-    } else {
-      initRhythmAudio();
-    }
-  }
   if (!RS.audioCtx) return;
-  if (RS.audioCtx.state === 'suspended') RS.audioCtx.resume();
-  const ctx = RS.audioCtx, now = when || ctx.currentTime;
-
-  function noise(dur) {
-    const buf = ctx.createBuffer(1, ctx.sampleRate * dur, ctx.sampleRate);
-    const d = buf.getChannelData(0);
-    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
-    const src = ctx.createBufferSource(); src.buffer = buf; return src;
-  }
-  function gain(val, end, dur) {
-    const g = ctx.createGain();
-    g.gain.setValueAtTime(val, now);
-    if (end !== null) g.gain.exponentialRampToValueAtTime(end, now + dur);
-    return g;
-  }
-  function osc(freq, type2) {
-    const o = ctx.createOscillator(); o.type = type2 || 'sine';
-    o.frequency.value = freq; return o;
-  }
-  function filt(type2, freq, q) {
-    const f = ctx.createBiquadFilter(); f.type = type2;
-    f.frequency.value = freq; if (q) f.Q.value = q; return f;
-  }
-  function out(node, vol) { node.connect(ctx.createGain()); }
-
-  switch(type) {
-
-    case 'kick': {
-      // Deep bass drum — pitch sweep 120→28Hz
-      const o = osc(120); const g = gain(1.0, 0.001, 0.25);
-      o.frequency.setValueAtTime(120, now);
-      o.frequency.exponentialRampToValueAtTime(28, now + 0.12);
-      g.gain.setValueAtTime(1.0, now);
-      g.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
-      // Add click transient
-      const n = noise(0.01); const ng = gain(0.8, 0.001, 0.01);
-      const nf = filt('highpass', 1200);
-      n.connect(nf); nf.connect(ng); ng.connect(RS.masterGain); n.start(now);
-      o.connect(g); g.connect(RS.masterGain); o.start(now); o.stop(now + 0.3);
-      break;
-    }
-
-    case 'bass': {
-      // Sub bass thud — lower and longer than kick
-      const o = osc(80); const g = gain(0.9, 0.001, 0.4);
-      o.frequency.setValueAtTime(80, now);
-      o.frequency.exponentialRampToValueAtTime(20, now + 0.2);
-      g.gain.setValueAtTime(0.9, now);
-      g.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
-      o.connect(g); g.connect(RS.masterGain); o.start(now); o.stop(now + 0.45);
-      break;
-    }
-
-    case 'snare': {
-      // Snare — tonal body + noise burst
-      const o = osc(200); const og = gain(0.5, 0.001, 0.15);
-      o.frequency.setValueAtTime(200, now);
-      o.frequency.exponentialRampToValueAtTime(100, now + 0.06);
-      og.gain.setValueAtTime(0.5, now); og.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
-      o.connect(og); og.connect(RS.masterGain); o.start(now); o.stop(now + 0.18);
-      const n = noise(0.18); const nf = filt('bandpass', 3000, 0.8);
-      const ng = gain(0.6, 0.001, 0.18);
-      n.connect(nf); nf.connect(ng); ng.connect(RS.masterGain); n.start(now);
-      break;
-    }
-
-    case 'hihat': {
-      // Closed hi-hat — short metallic noise
-      const n = noise(0.08); const f = filt('highpass', 7000);
-      const f2 = filt('bandpass', 10000, 0.5);
-      const g = gain(0.55, 0.001, 0.07);
-      n.connect(f); f.connect(f2); f2.connect(g); g.connect(RS.masterGain); n.start(now);
-      break;
-    }
-
-    case 'openhat': {
-      // Open hi-hat — longer metallic decay
-      const n = noise(0.4); const f = filt('highpass', 6000);
-      const g = gain(0.45, 0.001, 0.38);
-      n.connect(f); f.connect(g); g.connect(RS.masterGain); n.start(now);
-      break;
-    }
-
-    case 'cymbal': {
-      // Crash cymbal — wide noise, long shimmer
-      const n = noise(1.2); const f = filt('highpass', 5000);
-      const f2 = filt('peaking', 8000, 0.6);
-      const g = gain(0.5, 0.001, 1.1);
-      n.connect(f); f.connect(f2); f2.connect(g); g.connect(RS.masterGain); n.start(now);
-      // Add shimmer tone
-      const o = osc(6000, 'sine'); const og = gain(0.08, 0.001, 1.0);
-      o.connect(og); og.connect(RS.masterGain); o.start(now); o.stop(now + 1.2);
-      break;
-    }
-
-    case 'rim': {
-      // Rimshot — sharp mid crack
-      const n = noise(0.04); const f = filt('bandpass', 1800, 2.0);
-      const g = gain(0.7, 0.001, 0.04);
-      n.connect(f); f.connect(g); g.connect(RS.masterGain); n.start(now);
-      break;
-    }
-
-    case 'conga': {
-      // Conga slap — mid-high tonal drum
-      const o = osc(250); const g = gain(0.7, 0.001, 0.18);
-      o.frequency.setValueAtTime(250, now);
-      o.frequency.exponentialRampToValueAtTime(180, now + 0.06);
-      g.gain.setValueAtTime(0.7, now); g.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
-      o.connect(g); g.connect(RS.masterGain); o.start(now); o.stop(now + 0.22);
-      break;
-    }
-
-    case 'wood': {
-      // Wood block — short mid percussive click
-      const o = osc(900, 'square'); const g = gain(0.5, 0.001, 0.06);
-      const f = filt('bandpass', 900, 3.0);
-      g.gain.setValueAtTime(0.5, now); g.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
-      o.connect(f); f.connect(g); g.connect(RS.masterGain); o.start(now); o.stop(now + 0.08);
-      break;
-    }
-
-    case 'click':
-    default: {
-      // Click / metronome tick
-      const n = noise(0.02); const f = filt('highpass', 3000);
-      const g = gain(0.6, 0.001, 0.015);
-      n.connect(f); f.connect(g); g.connect(RS.masterGain); n.start(now);
-      break;
-    }
+  const ctx = RS.audioCtx, now = when||ctx.currentTime;
+  if (type==='click'||type==='rim') {
+    const buf=ctx.createBuffer(1,ctx.sampleRate*0.05,ctx.sampleRate);
+    const d=buf.getChannelData(0);
+    for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*Math.exp(-i/(ctx.sampleRate*0.01));
+    const src=ctx.createBufferSource(); src.buffer=buf;
+    const g=ctx.createGain(); g.gain.value=type==='rim'?0.4:0.7;
+    src.connect(g); g.connect(RS.masterGain); src.start(now);
+  } else if (type==='kick') {
+    const osc=ctx.createOscillator(), g=ctx.createGain();
+    osc.frequency.setValueAtTime(120,now); osc.frequency.exponentialRampToValueAtTime(30,now+0.12);
+    g.gain.setValueAtTime(0.9,now); g.gain.exponentialRampToValueAtTime(0.001,now+0.2);
+    osc.connect(g); g.connect(RS.masterGain); osc.start(now); osc.stop(now+0.22);
+  } else if (type==='tone') {
+    const osc=ctx.createOscillator(), g=ctx.createGain();
+    osc.frequency.value=440; g.gain.setValueAtTime(0.3,now); g.gain.exponentialRampToValueAtTime(0.001,now+0.12);
+    osc.connect(g); g.connect(RS.masterGain); osc.start(now); osc.stop(now+0.14);
+  } else {
+    const buf=ctx.createBuffer(1,ctx.sampleRate*0.04,ctx.sampleRate);
+    const d=buf.getChannelData(0);
+    for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*Math.exp(-i/(ctx.sampleRate*0.008));
+    const src=ctx.createBufferSource(); src.buffer=buf;
+    const flt=ctx.createBiquadFilter(); flt.type=type==='hihat'?'highpass':'bandpass';
+    flt.frequency.value=type==='hihat'?8000:600;
+    const g=ctx.createGain(); g.gain.value=0.5;
+    src.connect(flt); flt.connect(g); g.connect(RS.masterGain); src.start(now);
   }
 }
 
@@ -2144,16 +1835,15 @@ function bjorklund(steps, pulses) {
 // ── LAYERS ──
 function createLayer(steps, pulses, cIdx, sound) {
   const id=++layerIdCtr, color=LAYER_COLORS[cIdx%LAYER_COLORS.length];
-  const p = pulses||0;  // START BLANK — voice fills it
-  return {id, steps:steps||RS.globalSteps, pulses:p,
-    pattern:bjorklund(steps||RS.globalSteps, p),
+  return {id, steps:steps||RS.globalSteps, pulses:pulses||RS.selectedPoly,
+    pattern:bjorklund(steps||RS.globalSteps, pulses||RS.selectedPoly),
     color, soundType:sound||LAYER_SOUNDS[cIdx%LAYER_SOUNDS.length], muted:false};
 }
 
 function addLayer() {
   if(RS.layers.length>=6){showToast('⚠️ Max 6 layers');return;}
   const idx=RS.layers.length;
-  RS.layers.push(createLayer(RS.globalSteps, 0, idx, LAYER_SOUNDS[idx]));
+  RS.layers.push(createLayer(RS.globalSteps,RS.selectedPoly,idx,LAYER_SOUNDS[idx]));
   renderLayers(); drawRhythmViz();
   if(RS.layers.length>1) showToast('✅ Layer '+RS.layers.length+' added');
 }
@@ -2185,16 +1875,9 @@ function renderLayers() {
         <div class="layer-name-row">
           <div class="layer-dot" style="background:${layer.color}"></div>
           <span class="layer-name" style="color:${layer.color}">Layer ${idx+1}</span>
-          <span style="font-size:0.65rem;color:#b0b0cc;margin-left:4px;">${VRD_BANDS[idx]?.label||''}</span>
         </div>
         <div class="layer-btns">
-          <select onchange="setLayerSound(${layer.id},this.value)"
-            style="background:#0d0d1a;color:${layer.color};border:1px solid ${layer.color}55;border-radius:4px;font-size:0.65rem;padding:1px 3px;max-width:72px;">
-            ${buildSoundOptions(layer.soundType)}
-          </select>
-          <button class="layer-btn mic-btn" id="mic-btn-${layer.id}" onclick="listenForRhythm(${layer.id})" title="Tap to speak a rhythm">🎤</button>
           <button class="layer-btn ${layer.muted?'muted':''}" onclick="muteLayer(${layer.id})">${layer.muted?'🔇':'🔊'}</button>
-          <button class="layer-btn" onclick="clearLayer(${layer.id})" title="Clear this layer" style="color:#F4D03F;font-size:11px;">CLR</button>
           <button class="layer-btn" onclick="removeLayer(${layer.id})">✕</button>
         </div>
       </div>
@@ -2204,11 +1887,6 @@ function renderLayers() {
           <input type="range" min="1" max="${layer.steps}" value="${layer.pulses}" step="1"
             oninput="updateLayerPulses(${layer.id},this.value)" style="accent-color:${layer.color}">
           <span class="val" id="lpv-${layer.id}" style="color:${layer.color}">${layer.pulses}</span>
-        </div>
-        <div class="vrd-meter-wrap" id="vrd-meter-${layer.id}">
-          <span>🎤</span>
-          <div class="vrd-meter-bar"><div class="vrd-meter-fill" id="vrd-fill-${layer.id}"></div></div>
-          <span class="vrd-onset-count" id="vrd-count-${layer.id}">0</span>
         </div>
       </div>`;
     container.appendChild(card);
@@ -2295,12 +1973,6 @@ function setRhythmTempo(val) {
 }
 
 function setSteps(val) {
-  // Highlight matching preset button if it's a standard value
-  const n = parseInt(val);
-  [12,16,32,64].forEach(v => {
-    const b = document.getElementById('spb-' + v);
-    if (b) b.classList.toggle('active', v === n);
-  });
   RS.globalSteps=parseInt(val);
   document.getElementById('stepsVal').textContent=val;
   RS.layers.forEach(l=>{l.steps=RS.globalSteps;l.pattern=bjorklund(l.steps,Math.min(l.pulses,l.steps));});
@@ -2430,19 +2102,6 @@ function loadEuclidPreset(name) {
     cinquillo:   [[8,5]],
     polyrhythm34:[[12,3],[16,4]],
     polyrhythm45:[[20,4],[16,5]],
-    // ── NEW PRESETS ──
-    // Bembé: 7 strokes in 12 — the heartbeat of Afro-Cuban religion
-    'bembé':      [[12,7],[12,5],[12,3]],
-    // Shiko: West African bell pattern — 4 in 16
-    shiko:        [[16,4],[16,3]],
-    // Soukous: Congolese guitar rhythm — 6 in 16
-    soukous:      [[16,6],[16,4],[16,2]],
-    // Samba: Brazilian kick + surdo layered
-    samba:        [[16,3],[16,5],[16,2]],
-    // Trap: modern hip-hop kick + hi-hat grid
-    trap:         [[16,3],[16,7],[16,5]],
-    // Rumba Clave: 3-side of the 3-2 in 16 steps
-    rumba:        [[16,3],[16,2],[16,5]],
   };
   const p=presets[name]; if(!p) return;
   RS.layers=[];
@@ -2451,18 +2110,7 @@ function loadEuclidPreset(name) {
     RS.layers.push(createLayer(steps,pulses,i,LAYER_SOUNDS[i]));
   });
   renderLayers(); drawRhythmViz();
-  const labels = {
-    clave32:'3–2 Son Clave', clave23:'2–3 Son Clave',
-    tresillo:'Tresillo', cinquillo:'Cinquillo',
-    polyrhythm34:'3 over 4 Polyrhythm', polyrhythm45:'4 over 5 Polyrhythm',
-    'bembé':'Bembé — Afro-Cuban (7,12)',
-    shiko:'Shiko — West African (4,16)',
-    soukous:'Soukous — Congo (6,16)',
-    samba:'Samba — Brazil (3+5,16)',
-    trap:'Trap — Hip-Hop (3+7,16)',
-    rumba:'Rumba Clave — Cuba (3,16)'
-  };
-  showToast('✅ ' + (labels[name] || name) + ' loaded');
+  showToast('✅ '+name+' loaded');
 }
 
 
@@ -2683,623 +2331,6 @@ function etRestart() {
   document.getElementById('etSettings').style.display='block';
 }
 
-
-// ═══════════════════════════════════════════
-// ═══════════════════════════════════════════
-//  STEP PRESET + SENSITIVITY + MIC DEVICE
-// ═══════════════════════════════════════════
-
-function setStepsPreset(n) {
-  setSteps(n);
-  const slider = document.getElementById('globalStepsSlider');
-  if (slider) slider.value = n;
-  // Update active button state
-  [12,16,32,64].forEach(v => {
-    const b = document.getElementById('spb-' + v);
-    if (b) b.classList.toggle('active', v === n);
-  });
-}
-
-function setVrdSensitivity(val) {
-  const map    = {1:0.04, 2:0.06, 3:0.09, 4:0.13, 5:0.18};
-  const labels = {1:'Very High', 2:'High', 3:'Medium', 4:'Low', 5:'Very Low'};
-  VRD.threshold = map[val] || 0.09;
-  const el = document.getElementById('vrdSensVal');
-  if (el) el.textContent = labels[val] || 'Medium';
-}
-
-// Build sound <option> HTML safely — no nested template literals
-function buildSoundOptions(currentSound) {
-  var sounds = [
-    ['kick',    '💥 Kick Drum'],
-    ['bass',    '🔊 Bass Drum'],
-    ['snare',   '🥁 Snare'],
-    ['hihat',   '🔔 Hi-Hat (closed)'],
-    ['openhat', '🎵 Hi-Hat (open)'],
-    ['cymbal',  '✨ Cymbal Crash'],
-    ['conga',   '🪘 Conga'],
-    ['rim',     '👆 Rimshot'],
-    ['wood',    '🪵 Wood Block'],
-    ['click',   '• Click']
-  ];
-  var html = '';
-  for (var i = 0; i < sounds.length; i++) {
-    var val = sounds[i][0], lbl = sounds[i][1];
-    var sel = (val === currentSound) ? ' selected' : '';
-    html += '<option value="' + val + '"' + sel + '>' + lbl + '</option>';
-  }
-  return html;
-}
-
-function clearLayer(layerId) {
-  const l = RS.layers.find(l => l.id === layerId);
-  if (!l) return;
-  l.pulses  = 0;
-  l.soundLocked = false;
-  l.pattern = bjorklund(l.steps, 0);
-  // Reset beat counter display
-  const cnt = document.getElementById('vrd-count-' + layerId);
-  if (cnt) cnt.textContent = '0';
-  renderLayers();
-  drawRhythmViz();
-}
-
-function clearAllLayers() {
-  RS.layers.forEach(l => {
-    l.pulses  = 0;
-    l.pattern = bjorklund(l.steps, 0);
-  });
-  // Reset all beat counters
-  RS.layers.forEach(l => {
-    const cnt = document.getElementById('vrd-count-' + l.id);
-    if (cnt) cnt.textContent = '0';
-  });
-  renderLayers();
-  drawRhythmViz();
-  showToast('🗑 All layers cleared — ready for voice input');
-}
-
-function setLayerSound(layerId, sound) {
-  const l = RS.layers.find(l => l.id === layerId);
-  if (l) { l.soundType = sound; l.soundLocked = true; }
-}
-
-// Populate mic device dropdown from browser
-async function populateMicDevices() {
-  const sel = document.getElementById('micDeviceSelect');
-  if (!sel) return;
-  try {
-    const devices = await navigator.mediaDevices.enumerateDevices();
-    const mics = devices.filter(d => d.kind === 'audioinput');
-    sel.innerHTML = '<option value="">Default Microphone</option>';
-    mics.forEach(d => {
-      const opt = document.createElement('option');
-      opt.value = d.deviceId;
-      opt.textContent = d.label || ('Microphone ' + (mics.indexOf(d)+1));
-      sel.appendChild(opt);
-    });
-  } catch(e) {}
-}
-
-function setMicDevice(deviceId) {
-  VRD.preferredDeviceId = deviceId || null;
-  // If stream is already open, restart it with new device
-  if (VRD.stream) {
-    vrdCloseStream();
-    setTimeout(() => vrdOpenSharedStream(), 200);
-  }
-}
-
-// ═══════════════════════════════════════════
-//  MIC PERMISSION MANAGER
-// ═══════════════════════════════════════════
-const MicPerm = {
-  state: localStorage.getItem('kcm_mic_perm') || 'unknown'
-};
-
-function vrdCheckPermission() {
-  const banner = document.getElementById('micPermBanner');
-  if (!banner) return;
-  if (MicPerm.state === 'denied') { banner.classList.remove('visible'); return; }
-  if (MicPerm.state === 'granted') { banner.classList.remove('visible'); return; }
-  if (navigator.permissions) {
-    navigator.permissions.query({ name: 'microphone' }).then(result => {
-      if (result.state === 'granted') {
-        MicPerm.state = 'granted';
-        localStorage.setItem('kcm_mic_perm', 'granted');
-        banner.classList.remove('visible');
-        vrdOpenSharedStream(); // auto-open stream if already granted
-      } else if (result.state === 'denied') {
-        banner.classList.remove('visible');
-        showToast('🎤 Mic blocked in browser — go to Site Settings → Microphone → Allow');
-      } else {
-        banner.classList.add('visible');
-      }
-      result.onchange = () => vrdCheckPermission();
-    }).catch(() => { banner.classList.add('visible'); });
-  } else {
-    banner.classList.add('visible');
-  }
-}
-
-async function vrdRequestMic(mode) {
-  const banner = document.getElementById('micPermBanner');
-  const status = document.getElementById('micPermStatus');
-  try {
-    // Test request to trigger browser prompt
-    const test = await navigator.mediaDevices.getUserMedia({
-      audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
-    });
-    test.getTracks().forEach(t => t.stop());
-    MicPerm.state = 'granted';
-    if (mode === 'always') localStorage.setItem('kcm_mic_perm', 'granted');
-    if (banner) banner.classList.remove('visible');
-    showToast('✅ Mic enabled — tap 🎤 RECORD ALL or any layer to start!');
-    vrdOpenSharedStream();
-  } catch(e) {
-    if (status) { status.textContent = '❌ Access denied'; status.className = 'mic-perm-status denied'; }
-    showToast('❌ Mic blocked — open Chrome Settings → Site Settings → Microphone → Allow this site');
-  }
-}
-
-function vrdDenyMic() {
-  MicPerm.state = 'denied';
-  localStorage.setItem('kcm_mic_perm', 'denied');
-  const banner = document.getElementById('micPermBanner');
-  if (banner) banner.classList.remove('visible');
-}
-
-function vrdInitPanel() {
-  setTimeout(() => {
-    vrdCheckPermission();
-    // If already granted, open the shared stream right away
-    if (MicPerm.state === 'granted') vrdOpenSharedStream();
-  }, 300);
-}
-
-// ═══════════════════════════════════════════
-//  KCM VOCAL RHYTHM DETECTOR (VRD) v4
-//  7 FIXES: adaptive threshold, noise floor calibration,
-//  zero smoothing, per-band fftSize, peak detection,
-//  per-band meters, adaptive gap
-// ═══════════════════════════════════════════
-
-// 6 frequency bands — tuned for percussion voice syllables
-// BOOM = chest resonance of "B" sound  ~80-150Hz
-// BASS = body of kick/conga            ~150-280Hz
-// MID  = snare body, mid tom           ~280-900Hz
-// SNAP = snare crack, rim, consonants  ~900-2800Hz
-// CHA  = hi-hat, "ch/sh" sounds        ~2800-7000Hz
-// TICK = cymbal shimmer, "ts/t" sounds ~7000Hz+
-const VRD_BANDS = [
-  // Layer 1: BOOM — low chest resonance of "B" in BOOM (~80-200Hz)
-  { name:'BOOM', type:'lowpass',  freq:200,  Q:1.0, sound:'kick',  label:'💥 BOOM', fftSize:2048 },
-  // Layer 2: TAK — higher freq band (~3000-4000Hz)
-  { name:'TAK',  type:'bandpass', freq:3500, Q:0.8, sound:'snare', label:'👆 TAK',  fftSize:512  },
-  // Layer 3: CHA — "CH" voice peaks at ~1500-2500Hz
-  { name:'CHA',  type:'bandpass', freq:2000, Q:0.8, sound:'hihat', label:'🔔 CHA',  fftSize:512  },
-  // Layer 4: DUK — mid body "D/G" (~300-600Hz)
-  { name:'DUK',  type:'bandpass', freq:400,  Q:0.9, sound:'conga', label:'🪘 DUK',  fftSize:1024 },
-  // Layer 5: TICK — very high shimmer (~6000Hz+)
-  { name:'TICK', type:'highpass', freq:6000, Q:0.8, sound:'rim',   label:'🎵 TICK', fftSize:256  },
-  // Layer 6: MID — broad mid catch-all
-  { name:'MID',  type:'bandpass', freq:700,  Q:0.6, sound:'wood',  label:'🥁 MID',  fftSize:1024 }
-];
-
-const VRD = {
-  stream: null, audioCtx: null, source: null, masterAn: null,
-  layers: [],
-  animFrame: null,
-  threshold:  0.06,  // base — overridden per band after calibration
-  minGap:     100,
-  noiseFloor: [],    // per-band noise floor measured at stream open
-  preferredDeviceId: null
-};
-
-// ── OPEN SHARED STREAM ──
-async function vrdOpenSharedStream() {
-  if (VRD.stream) return;
-  try {
-    const constraints = { echoCancellation:false, noiseSuppression:false, autoGainControl:false };
-    if (VRD.preferredDeviceId) constraints.deviceId = { exact: VRD.preferredDeviceId };
-    VRD.stream = await navigator.mediaDevices.getUserMedia({ audio: constraints });
-  } catch(e) {
-    const banner = document.getElementById('micPermBanner');
-    if (banner) banner.classList.add('visible');
-    showToast('🎤 Tap "Allow" above to enable microphone');
-    return;
-  }
-
-  VRD.audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 44100 });
-  if (VRD.audioCtx.state === 'suspended') await VRD.audioCtx.resume();
-
-  VRD.source   = VRD.audioCtx.createMediaStreamSource(VRD.stream);
-  VRD.masterAn = VRD.audioCtx.createAnalyser();
-  VRD.masterAn.fftSize = 1024;
-  VRD.masterAn.smoothingTimeConstant = 0.5;
-  VRD.source.connect(VRD.masterAn);
-
-  // Build per-band analysers with correct fftSize and ZERO smoothing
-  VRD.layers = VRD_BANDS.map((band) => {
-    const filt = VRD.audioCtx.createBiquadFilter();
-    filt.type = band.type;
-    filt.frequency.value = band.freq;
-    filt.Q.value = band.Q;
-    const an = VRD.audioCtx.createAnalyser();
-    an.fftSize = band.fftSize;
-    an.smoothingTimeConstant = 0;  // FIX 2: zero smoothing — raw transients only
-    VRD.source.connect(filt);
-    filt.connect(an);
-    return {
-      analyser: an, filter: filt,
-      onsets: [], prevEnergy: 0, peakEnergy: 0,
-      listening: false, timer: null,
-      noiseFloor: 0.01,  // will be calibrated
-      threshold:  0.06   // will be calibrated per band
-    };
-  });
-
-  // FIX 5: Calibrate noise floor — listen 600ms before allowing detection
-  showToast('🎤 Calibrating mic… stay quiet for 1 second');
-  await vrdCalibrateNoise();
-
-  vrdDetectLoop();
-  populateMicDevices();
-  // Share AudioContext with RS for playback sounds
-  if (!RS.audioCtx) {
-    RS.audioCtx = VRD.audioCtx;
-    RS.masterGain = RS.audioCtx.createGain();
-    RS.masterGain.gain.value = 0.7;
-    RS.masterGain.connect(RS.audioCtx.destination);
-  }
-  showToast('🎤 Mic ready — tap RECORD ALL or any layer 🎤');
-}
-
-// FIX 5: Measure ambient noise per band, set adaptive threshold
-async function vrdCalibrateNoise() {
-  return new Promise(resolve => {
-    const samples = VRD_BANDS.map(() => []);
-    const bufs = VRD.layers.map(vl => new Uint8Array(vl.analyser.frequencyBinCount));
-    let count = 0;
-    const maxSamples = 60; // ~1 second at 60fps
-
-    function sample() {
-      if (count >= maxSamples) {
-        // Per-band sensitivity multipliers — high bands need lower threshold
-        // because high freq has naturally less energy than low freq
-        const bandMult = [1.8, 1.8, 1.6, 1.4, 1.2, 1.1];
-        const bandMin  = [0.05, 0.04,  0.04, 0.03,  0.02, 0.015];
-        // Extra multiplier for CHA band (idx 1) — voice "CHA" has long decay
-        const extraMult = [2.2, 1.8, 1.4, 1.2, 1.2, 1.2]; // BOOM needs 2.2x — long low decay
-        VRD.layers.forEach((vl, i) => {
-          const arr = samples[i];
-          const avg = arr.reduce((a,b) => a+b, 0) / arr.length;
-          const max = Math.max(...arr);
-          vl.noiseFloor = avg;
-          vl.threshold = Math.max(bandMin[i], (avg + max) * bandMult[i] * 0.5 * extraMult[i]);
-        });
-        resolve();
-        return;
-      }
-      VRD.layers.forEach((vl, i) => {
-        vl.analyser.getByteFrequencyData(bufs[i]);
-        const e = bufs[i].reduce((a,v) => a+v, 0) / bufs[i].length / 255;
-        samples[i].push(e);
-      });
-      count++;
-      requestAnimationFrame(sample);
-    }
-    sample();
-  });
-}
-
-// ── CONTINUOUS DETECTION LOOP ──
-// SPECTRAL CENTROID CLASSIFICATION:
-// 1. Detect every onset using master RMS (one clean trigger per sound)
-// 2. At moment of onset, calculate spectral centroid of that sound
-// 3. Low centroid = BOOM → Layer 1
-//    High centroid = CHA/TAK → Layer 2 or 3
-// This works because BOOM has energy concentrated low,
-// CHA has energy concentrated high — regardless of overall volume
-function vrdDetectLoop() {
-  if (!VRD.stream) return;
-
-  const masterBuf = new Uint8Array(VRD.masterAn.frequencyBinCount);
-
-  let state      = 'IDLE';
-  let lockoutEnd = 0;
-  let prevRms    = 0;
-  let peakRms    = 0;
-  let riseStart  = 0;
-
-  const LOCKOUT_MS = 900;
-  const RISE_MS    = 30;  // fast response — capture onset character early
-
-  // Spectral centroid thresholds (bin index)
-  // masterAn fftSize=1024, sampleRate=44100 → binWidth = 44100/1024 ≈ 43Hz per bin
-  // BOOM voice: centroid below ~400Hz = bin 9
-  // CHA voice:  centroid above ~400Hz = bin 9+
-  const CENTROID_SPLIT = 120; // bin 30 = ~1290Hz — calibrate from debug toasts
-
-  function getSpectralCentroid(buf) {
-    let weightedSum = 0, totalEnergy = 0;
-    for (let i = 0; i < buf.length; i++) {
-      const e = buf[i] / 255;
-      weightedSum += i * e;
-      totalEnergy += e;
-    }
-    return totalEnergy > 0 ? weightedSum / totalEnergy : 0;
-  }
-
-  function tick() {
-    if (!VRD.stream) return;
-    VRD.animFrame = requestAnimationFrame(tick);
-    const now = performance.now();
-
-    VRD.masterAn.getByteFrequencyData(masterBuf);
-    let sum = 0;
-    for (let i = 0; i < masterBuf.length; i++) sum += (masterBuf[i]/255)**2;
-    const rms = Math.sqrt(sum / masterBuf.length);
-
-    // Update ALL listening layer meters with master RMS
-    const anyListening = VRD.layers.some(vl => vl.listening);
-    if (anyListening) {
-      VRD.layers.forEach((vl, i) => {
-        if (vl.listening) vrdMeterUpdate_byIndex(i, Math.min(100, rms * 500));
-      });
-    }
-
-    const floor  = VRD.layers[0]?.noiseFloor || 0.008;
-    const thresh = Math.max(0.015, floor * 3.0);
-
-    if (state === 'LOCKOUT') {
-      if (now > lockoutEnd) { state = 'IDLE'; }
-
-    } else if (state === 'IDLE') {
-      if (rms > thresh && rms > prevRms * 1.2) {
-        if (anyListening) {
-          state     = 'RISING';
-          riseStart = now;
-          peakRms   = rms;
-        }
-      }
-
-    } else if (state === 'RISING') {
-      if (rms > peakRms) peakRms = rms;
-
-      if (now - riseStart > RISE_MS) {
-        // ONSET CONFIRMED — classify by spectral centroid
-        const centroid = getSpectralCentroid(masterBuf);
-
-        // Find which listening layer to credit
-        let targetIdx = -1;
-
-        const listening = VRD.layers
-          .map((vl, i) => ({ vl, i }))
-          .filter(({ vl }) => vl.listening);
-
-        if (listening.length === 1) {
-          // Only one layer recording — it gets everything
-          targetIdx = listening[0].i;
-
-        } else if (listening.length > 1) {
-          // Multiple layers — use centroid to classify
-          if (centroid > CENTROID_SPLIT) {
-            // LOW centroid = BOOM → Layer 1 (index 0)
-            const l = listening.find(({ i }) => i === 0);
-            if (l) targetIdx = 0;
-            else targetIdx = listening[0].i; // fallback
-          } else {
-            // HIGH centroid = CHA/TAK → Layer 2 or 3
-            // Among high layers, use centroid to further split
-            const highLayers = listening.filter(({ i }) => i > 0);
-            if (highLayers.length === 1) {
-              targetIdx = highLayers[0].i;
-            } else if (highLayers.length >= 2) {
-              // Split CHA vs TAK: centroid < 20 = CHA (mid-high), > 20 = TAK (very high)
-              if (centroid < 22) {
-                targetIdx = highLayers[0].i; // Layer 2
-              } else {
-                targetIdx = highLayers[1].i; // Layer 3
-              }
-            }
-          }
-        }
-
-        if (targetIdx >= 0 && VRD.layers[targetIdx]) {
-          const vl = VRD.layers[targetIdx];
-          vl.onsets.push({ time: now, energy: peakRms, centroid });
-          const rsLayer = RS.layers[targetIdx];
-          if (rsLayer) vrdFlash(rsLayer.id, vl.onsets.length);
-          // Debug: show centroid so we can calibrate the split
-          showToast('C:' + centroid.toFixed(1) + ' → L' + (targetIdx+1));
-        }
-
-        state      = 'LOCKOUT';
-        lockoutEnd = now + LOCKOUT_MS;
-      }
-
-      if (rms < thresh * 0.4) { state = 'IDLE'; }
-    }
-
-    prevRms = rms;
-  }
-  tick();
-}
-
-// ── SINGLE LAYER LISTEN ──
-function listenForRhythm(layerId) {
-  if (!VRD.stream) {
-    // Auto-open stream then start this layer
-    vrdOpenSharedStream().then(() => {
-      if (VRD.stream) listenForRhythm(layerId);
-    });
-    return;
-  }
-  const rsLayerIdx = RS.layers.findIndex(l => l.id === layerId);
-  if (rsLayerIdx < 0 || rsLayerIdx >= VRD.layers.length) return;
-  const vl = VRD.layers[rsLayerIdx];
-
-  if (vl.listening) { vrdCommitLayer(rsLayerIdx, layerId); return; }
-
-  vl.onsets = []; vl.prevEnergy = 0; vl.listening = true;
-  vrdButtonState(layerId, 'listening');
-  vrdMeterShow_byId(layerId, true);
-  showToast((VRD_BANDS[rsLayerIdx]?.label || '🎤') + ' — speak! Tap 🎤 again to lock in.');
-  clearTimeout(vl.timer);
-  vl.timer = setTimeout(() => { if (vl.listening) vrdCommitLayer(rsLayerIdx, layerId); }, 8000);
-}
-
-// ── RECORD ALL ──
-function vrdRecordAll() {
-  if (!VRD.stream) {
-    // Stream not open — open it then auto-start recording
-    vrdOpenSharedStream().then(() => {
-      if (VRD.stream) vrdStartAllLayers();
-    });
-    return;
-  }
-  const activeCount = Math.min(RS.layers.length, VRD_BANDS.length);
-  const anyListening = VRD.layers.slice(0, activeCount).some(vl => vl.listening);
-
-  if (anyListening) {
-    RS.layers.slice(0, activeCount).forEach((rsLayer, idx) => {
-      if (VRD.layers[idx]?.listening) vrdCommitLayer(idx, rsLayer.id);
-    });
-    return;
-  }
-
-  vrdStartAllLayers();
-}
-
-function vrdStartAllLayers() {
-  const activeCount = Math.min(RS.layers.length, VRD_BANDS.length);
-  // Make sure audio for playback is ready too
-  initRhythmAudio();
-  VRD.layers.slice(0, activeCount).forEach((vl, idx) => {
-    vl.onsets = []; vl.prevEnergy = 0; vl.listening = true;
-    const rsLayer = RS.layers[idx];
-    if (rsLayer) { vrdButtonState(rsLayer.id, 'listening'); vrdMeterShow_byId(rsLayer.id, true); }
-    clearTimeout(vl.timer);
-    vl.timer = setTimeout(() => { if (vl.listening) vrdCommitLayer(idx, RS.layers[idx]?.id); }, 8000);
-  });
-  showToast('🎤 ALL recording — say BOOM CHA TAK… tap STOP to lock in!');
-  const btn = document.getElementById('recordAllBtn');
-  if (btn) { btn.textContent = '⏹ STOP & LOCK ALL'; btn.classList.add('recording'); }
-}
-
-// ── COMMIT LAYER ──
-function vrdCommitLayer(bandIdx, layerId) {
-  const vl = VRD.layers[bandIdx];
-  if (!vl) return;
-  clearTimeout(vl.timer);
-  vl.listening = false;
-
-  const layer = RS.layers.find(l => l.id === layerId);
-  if (!layer) return;
-
-  const k = vl.onsets.length;
-  vrdButtonState(layerId, 'idle');
-  vrdMeterShow_byId(layerId, false);
-
-  const anyStillListening = VRD.layers.some(l => l.listening);
-  if (!anyStillListening) {
-    const btn = document.getElementById('recordAllBtn');
-    if (btn) { btn.textContent = '🎤 RECORD ALL'; btn.classList.remove('recording'); }
-  }
-
-  if (k < 1) {
-    showToast('⚠️ Layer ' + (bandIdx+1) + ': no beats — speak louder or raise Sensitivity');
-    return;
-  }
-
-  // Fit to best step grid
-  const candidates = [12, 16, 24, 32, 48, 64]; // minimum 12 steps
-  let bestN = RS.globalSteps, bestScore = Infinity;
-  for (const n of candidates) {
-    if (n >= k) {
-      // Prefer 16 as the default musical grid
-      const preference = (n === 16) ? 0.8 : 1.0;
-      const score = Math.abs(n - k * 2.0) * preference;
-      if (score < bestScore) { bestScore = score; bestN = n; }
-    }
-  }
-
-  // Only auto-assign sound if user hasn't manually chosen one
-  if (!layer.soundLocked) layer.soundType = VRD_BANDS[bandIdx]?.sound || 'click';
-  layer.pulses    = Math.min(k, bestN);
-  layer.steps     = bestN;
-  layer.pattern   = bjorklund(bestN, layer.pulses);
-
-  if (bestN !== RS.globalSteps) {
-    RS.globalSteps = bestN;
-    const sv = document.getElementById('stepsVal');
-    if (sv) sv.textContent = bestN;
-  }
-
-  renderLayers();
-  drawRhythmViz();
-  showToast('✅ ' + (VRD_BANDS[bandIdx]?.label||'') + ' · ' + k + ' hits → E(' + layer.pulses + ',' + bestN + ')');
-}
-
-// ── CLOSE STREAM ──
-function vrdCloseStream() {
-  VRD.layers.forEach(vl => { vl.listening = false; clearTimeout(vl.timer); });
-  cancelAnimationFrame(VRD.animFrame);
-  try { if (VRD.source) VRD.source.disconnect(); } catch(e){}
-  VRD.layers.forEach(vl => { try { vl.analyser.disconnect(); vl.filter.disconnect(); } catch(e){} });
-  VRD.layers = [];
-  if (VRD.stream) { VRD.stream.getTracks().forEach(t => t.stop()); VRD.stream = null; }
-  try { if (VRD.audioCtx) VRD.audioCtx.close(); } catch(e){}
-  VRD.audioCtx = null; VRD.source = null; VRD.masterAn = null;
-}
-
-// ── HELPERS ──
-function vrdFlash(layerId, count) {
-  const btn  = document.getElementById('mic-btn-' + layerId);
-  const cnt  = document.getElementById('vrd-count-' + layerId);
-  const fill = document.getElementById('vrd-fill-' + layerId);
-  if (btn)  { btn.textContent = '●'; btn.classList.add('beat-flash'); }
-  const _lo = RS.layers[RS.layers.findIndex(l=>l.id===layerId)] && VRD.layers[RS.layers.findIndex(l=>l.id===layerId)]?.onsets?.slice(-1)[0]; if (cnt) cnt.textContent = count + (_lo?.centroid !== undefined ? " C:" + _lo.centroid.toFixed(0) : "");
-  if (fill) fill.classList.add('loud');
-  setTimeout(() => {
-    const b = document.getElementById('mic-btn-' + layerId);
-    const f = document.getElementById('vrd-fill-' + layerId);
-    const idx = RS.layers.findIndex(l => l.id === layerId);
-    if (b && idx >= 0 && VRD.layers[idx]?.listening) { b.textContent = '⏹'; b.classList.remove('beat-flash'); }
-    if (f) f.classList.remove('loud');
-  }, 120);
-}
-
-function vrdMeterShow_byId(layerId, show) {
-  const wrap = document.getElementById('vrd-meter-' + layerId);
-  if (wrap) wrap.classList.toggle('active', show);
-  if (!show) { const f = document.getElementById('vrd-fill-' + layerId); if (f) f.style.width='0%'; }
-}
-
-function vrdMeterUpdate_byIndex(bandIdx, pct) {
-  const rsLayer = RS.layers[bandIdx];
-  if (!rsLayer) return;
-  const fill = document.getElementById('vrd-fill-' + rsLayer.id);
-  if (fill) fill.style.width = Math.min(100, pct) + '%';
-}
-
-function vrdButtonState(layerId, state) {
-  const btn = document.getElementById('mic-btn-' + layerId);
-  if (!btn) return;
-  if (state === 'listening') {
-    btn.textContent = '⏹'; btn.classList.add('listening');
-    btn.title = 'Tap again to lock in';
-  } else {
-    btn.textContent = '🎤'; btn.classList.remove('listening', 'beat-flash');
-    btn.title = 'Tap to speak a rhythm';
-  }
-}
-
-// Legacy stubs
-function vrdStop() { vrdCloseStream(); }
-function vrdMeterShow(id, show) { vrdMeterShow_byId(id, show); }
-function vrdMeterUpdate(id, pct) {}
 </script>
 </body>
 </html>
