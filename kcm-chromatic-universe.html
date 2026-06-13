@@ -3979,7 +3979,7 @@ function etRestart() {
   const LOW_MAX_BIN   = 8;      // < ~350 Hz  — BOOM territory
   const HI_MIN_BIN    = 30;     // > ~1300 Hz — CHA territory (wider net)
   const RATIO_SPLIT   = 0.15;   // ≥ = BOOM (L1),  < = CHA (L2) — tuned for MacBook mic
-  const LOCKOUT_MS    = 250;    // min ms between onsets — prevents double-counting same sound
+  const LOCKOUT_MS    = 120;    // min ms between onsets (global gate)
   const RISE_MS       = 15;     // ms to confirm onset (avoid noise spikes)
   const FFT_SIZE      = 256;
   const NOISE_FRAMES  = 40;
@@ -3997,6 +3997,7 @@ function etRestart() {
   let vrdRecStart     = 0;       // performance.now() when recording began
   let vrdRecDuration  = 0;       // ms — set when user stops
   let vrdLastOnset    = 0;
+  let vrdLayerLast    = [0, 0, 0, 0, 0, 0];
   let vrdSensitivity  = 0.04;
   let vrdNoiseFloor   = 0.008;
   let vrdAnimId       = null;
@@ -4171,6 +4172,11 @@ function etRestart() {
     // CHA  = rise < 25ms (fast, sharp consonant)
     const atkSplit = (typeof ATK_SPLIT_LIVE !== 'undefined') ? ATK_SPLIT_LIVE : 25;
     const layerIdx   = riseMs >= atkSplit ? 0 : 1;
+
+    // Per-layer lockout — prevents double-counting same layer within 300ms
+    if (nowMs - vrdLayerLast[layerIdx] < 300) return;
+    vrdLayerLast[layerIdx] = nowMs;
+
     const tFromStart = nowMs - vrdRecStart;
     console.log(`VRD onset: riseMs=${riseMs.toFixed(1)} split=${atkSplit}ms → L${layerIdx+1} | riseFrames=${riseFrames} peak=${peak.toFixed(4)}`);
 
@@ -4229,6 +4235,7 @@ function etRestart() {
         vrdRecording  = true;
         vrdRecStart   = performance.now();
         vrdLastOnset  = 0;
+        vrdLayerLast  = [0, 0, 0, 0, 0, 0];
         if (btn) { btn.textContent = '⏹ STOP RECORDING'; btn.style.background='#c0392b'; btn.style.color='#fff'; }
         showToast('🔴 RECORDING — speak your rhythm!');
       }
