@@ -1416,9 +1416,11 @@ input[type="range"] {
           <div class="ctrl-card-title">Steps</div>
         <div id="vrdSummaryPanel" class="ctrl-card" style="display:none;padding:0.6rem;background:rgba(0,128,128,0.06);border:1px solid rgba(0,128,128,0.2);"></div>
           <div class="ctrl-group">
-            <label class="ctrl-label" for="globalStepsSlider">Global Steps: <span id="stepsVal">16</span></label>
-            <input type="range" id="globalStepsSlider" min="4" max="32" value="16" step="1"
-              oninput="setSteps(this.value)">
+            <div style="display:flex;gap:0.4rem;margin-top:0.3rem;">
+              <button id="stepsBtn16" class="poly-btn active" style="width:48px;" onclick="setSteps(16)">16</button>
+              <button id="stepsBtn32" class="poly-btn" style="width:48px;" onclick="setSteps(32)">32</button>
+              <button id="stepsBtn64" class="poly-btn" style="width:48px;" onclick="setSteps(64)">64</button>
+            </div>
           </div>
         </div>
       </div>
@@ -2464,6 +2466,8 @@ function buildPolyPicker() {
 
 function setPolygon(n) {
   RS.selectedPoly=n;
+  // Auto-expand steps if needed (e.g. 12 pulses needs at least 12 steps)
+  if (n > RS.globalSteps) setSteps(Math.max(16, n));
   document.querySelectorAll('.poly-btn').forEach((b,i)=>b.classList.toggle('active',i+2===n));
   RS.layers.forEach(l=>{l.pulses=n;l.pattern=bjorklund(l.steps,Math.min(n,l.steps));});
   renderLayers(); drawRhythmViz();
@@ -2549,7 +2553,11 @@ function setRhythmTempo(val) {
 
 function setSteps(val) {
   RS.globalSteps=parseInt(val);
-  document.getElementById('stepsVal').textContent=val;
+  // Update step button highlights
+  [16,32,64].forEach(n=>{
+    const b=document.getElementById('stepsBtn'+n);
+    if(b) b.classList.toggle('active', n===RS.globalSteps);
+  });
   RS.layers.forEach(l=>{l.steps=RS.globalSteps;l.pattern=bjorklund(l.steps,Math.min(l.pulses,l.steps));});
   renderLayers(); drawRhythmViz();
 }
