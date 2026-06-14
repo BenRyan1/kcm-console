@@ -2247,12 +2247,34 @@ function initRhythmIfNeeded() {
 
 // ── AUDIO ──
 function initRhythmAudio() {
-  if (RS.audioCtx) return;
+  if (RS.audioCtx) {
+    // iOS Safari: resume if suspended
+    if (RS.audioCtx.state === 'suspended') RS.audioCtx.resume();
+    return;
+  }
   RS.audioCtx = new (window.AudioContext||window.webkitAudioContext)();
   RS.masterGain = RS.audioCtx.createGain();
   RS.masterGain.gain.value = 0.7;
   RS.masterGain.connect(RS.audioCtx.destination);
+  // iOS Safari requires resume after creation
+  RS.audioCtx.resume();
 }
+
+// iOS unlock — fires on first touch anywhere on page
+(function() {
+  function unlockAudio() {
+    if (RS.audioCtx && RS.audioCtx.state === 'suspended') {
+      RS.audioCtx.resume();
+    }
+    if (!RS.audioCtx) {
+      initRhythmAudio();
+    }
+    document.removeEventListener('touchstart', unlockAudio);
+    document.removeEventListener('touchend', unlockAudio);
+  }
+  document.addEventListener('touchstart', unlockAudio, {passive:true});
+  document.addEventListener('touchend',   unlockAudio, {passive:true});
+})();
 
 function playRhythmSound(type, when) {
   if (!RS.audioCtx) return;
