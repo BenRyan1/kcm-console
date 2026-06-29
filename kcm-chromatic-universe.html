@@ -1470,6 +1470,12 @@ input[type="range"] {
             <button class="sync-pill" id="pill-mirror" onclick="setSyncMode('mirror')">Mirror</button>
           </div>
 
+          <div class="sync-mode-row" id="cursorModeRow" style="display:none;margin-top:0.4rem;">
+            <button class="sync-pill active" id="cpill-ascending" onclick="setCursorMode('ascending')">Ascending</button>
+            <button class="sync-pill" id="cpill-random" onclick="setCursorMode('random')">Random</button>
+            <button class="sync-pill" id="cpill-arpeggio" onclick="setCursorMode('arpeggio')">Arpeggio</button>
+          </div>
+
           <div id="syncNowPlaying">
             <!-- filled dynamically -->
           </div>
@@ -1482,8 +1488,11 @@ input[type="range"] {
           <div class="btn-row" style="flex-direction:column;gap:0.4rem;">
             <button class="btn btn-ghost btn-full" onclick="loadEuclidPreset('clave32')" style="font-size:0.7rem;">3–2 Son Clave (3,8)</button>
             <button class="btn btn-ghost btn-full" onclick="loadEuclidPreset('clave23')" style="font-size:0.7rem;">2–3 Clave (2,8)</button>
+            <button class="btn btn-ghost btn-full" onclick="loadEuclidPreset('clave')" style="font-size:0.7rem;">Clave (5,12)</button>
             <button class="btn btn-ghost btn-full" onclick="loadEuclidPreset('tresillo')" style="font-size:0.7rem;">Tresillo (3,8)</button>
             <button class="btn btn-ghost btn-full" onclick="loadEuclidPreset('cinquillo')" style="font-size:0.7rem;">Cinquillo (5,8)</button>
+            <button class="btn btn-ghost btn-full" onclick="loadEuclidPreset('shiko')" style="font-size:0.7rem;">Shiko (4,8)</button>
+            <button class="btn btn-ghost btn-full" onclick="loadEuclidPreset('bossanova')" style="font-size:0.7rem;">Bossa Nova (5,16)</button>
             <button class="btn btn-ghost btn-full" onclick="loadEuclidPreset('polyrhythm34')" style="font-size:0.7rem;">3 over 4 Polyrhythm</button>
             <button class="btn btn-ghost btn-full" onclick="loadEuclidPreset('polyrhythm45')" style="font-size:0.7rem;">4 over 5 Polyrhythm</button>
           </div>
@@ -2348,6 +2357,73 @@ function playRhythmSound(type, when) {
     g.gain.exponentialRampToValueAtTime(0.001,now+0.07);
     src.connect(flt); flt.connect(g); g.connect(RS.masterGain); src.start(now);
 
+  } else if (type==='bass') {
+    // Sub-bass: sustained low sine, no sweep, soft long decay
+    const osc=ctx.createOscillator(), g=ctx.createGain();
+    osc.type='sine'; osc.frequency.value=80;
+    g.gain.setValueAtTime(0.9,now);
+    g.gain.exponentialRampToValueAtTime(0.001,now+0.45);
+    osc.connect(g); g.connect(RS.masterGain); osc.start(now); osc.stop(now+0.48);
+
+  } else if (type==='snare') {
+    // Snare: bandpass-filtered noise body, short exponential decay
+    const src=noise(0.15);
+    const flt=ctx.createBiquadFilter(); flt.type='bandpass'; flt.frequency.value=2000; flt.Q.value=2;
+    const g=ctx.createGain();
+    g.gain.setValueAtTime(0.85,now);
+    g.gain.exponentialRampToValueAtTime(0.001,now+0.14);
+    src.connect(flt); flt.connect(g); g.connect(RS.masterGain); src.start(now);
+
+  } else if (type==='openhat') {
+    // Open hi-hat: highpass noise, longer sustain than closed hihat
+    const src=noise(0.32);
+    const flt=ctx.createBiquadFilter(); flt.type='highpass'; flt.frequency.value=8000;
+    const g=ctx.createGain();
+    g.gain.setValueAtTime(0.55,now);
+    g.gain.exponentialRampToValueAtTime(0.001,now+0.3);
+    src.connect(flt); flt.connect(g); g.connect(RS.masterGain); src.start(now);
+
+  } else if (type==='cymbal') {
+    // Cymbal: bright highpass noise wash, long shimmering decay
+    const src=noise(1.4);
+    const flt=ctx.createBiquadFilter(); flt.type='highpass'; flt.frequency.value=6000;
+    const g=ctx.createGain();
+    g.gain.setValueAtTime(0.4,now);
+    g.gain.exponentialRampToValueAtTime(0.001,now+1.3);
+    src.connect(flt); flt.connect(g); g.connect(RS.masterGain); src.start(now);
+
+  } else if (type==='conga') {
+    // Conga: short tuned membrane tone, quick downward pitch bend
+    const osc=ctx.createOscillator(), g=ctx.createGain();
+    osc.type='sine';
+    osc.frequency.setValueAtTime(280,now);
+    osc.frequency.exponentialRampToValueAtTime(200,now+0.1);
+    g.gain.setValueAtTime(0.85,now);
+    g.gain.exponentialRampToValueAtTime(0.001,now+0.18);
+    osc.connect(g); g.connect(RS.masterGain); osc.start(now); osc.stop(now+0.2);
+
+  } else if (type==='clave') {
+    // Clave: pure bright woodblock tone, brief downward sweep, very fast decay
+    const osc=ctx.createOscillator(), g=ctx.createGain();
+    osc.type='sine';
+    osc.frequency.setValueAtTime(2500,now);
+    osc.frequency.exponentialRampToValueAtTime(2200,now+0.015);
+    g.gain.setValueAtTime(0.8,now);
+    g.gain.exponentialRampToValueAtTime(0.001,now+0.04);
+    osc.connect(g); g.connect(RS.masterGain); osc.start(now); osc.stop(now+0.05);
+
+  } else if (type==='cowbell') {
+    // Cowbell: two dissonant square oscillators through bandpass, metallic decay
+    const o1=ctx.createOscillator(), o2=ctx.createOscillator();
+    const flt=ctx.createBiquadFilter(); flt.type='bandpass'; flt.frequency.value=800; flt.Q.value=3;
+    const g=ctx.createGain();
+    o1.type='square'; o1.frequency.value=587;
+    o2.type='square'; o2.frequency.value=845;
+    g.gain.setValueAtTime(0.5,now);
+    g.gain.exponentialRampToValueAtTime(0.001,now+0.3);
+    o1.connect(flt); o2.connect(flt); flt.connect(g); g.connect(RS.masterGain);
+    o1.start(now); o1.stop(now+0.32); o2.start(now); o2.stop(now+0.32);
+
   } else {
     const src=noise(0.03);
     const g=ctx.createGain(); g.gain.value=0.5;
@@ -2438,7 +2514,7 @@ function renderLayers() {
           <label>Sound</label>
           <select style="flex:1;background:var(--bg-deep);color:var(--text);border:1px solid rgba(255,255,255,0.1);border-radius:4px;padding:2px 4px;font-size:0.75rem;"
             onchange="setLayerSound(${layer.id},this.value)">
-            ${['kick','bass','snare','hihat','openhat','cymbal','conga','rim','wood','click'].map(s=>
+            ${['kick','bass','snare','hihat','openhat','cymbal','conga','clave','cowbell','rim','wood','click'].map(s=>
               `<option value="${s}" ${layer.soundType===s?'selected':''}>${s.charAt(0).toUpperCase()+s.slice(1)}</option>`
             ).join('')}
           </select>
@@ -2597,6 +2673,7 @@ function drawRhythmViz() {
   }
 
   const maxR = 210;
+  const activeDotPositions = []; // for cross-layer polyrhythmic coincidence lines (F-6)
 
   RS.layers.forEach((layer,li)=>{
     const layerR = maxR - li*28;
@@ -2636,6 +2713,7 @@ function drawRhythmViz() {
           const glow=rCtx.createRadialGradient(bx,by,0,bx,by,22);
           glow.addColorStop(0,glowCol+'bb'); glow.addColorStop(1,'transparent');
           rCtx.fillStyle=glow; rCtx.beginPath(); rCtx.arc(bx,by,22,0,Math.PI*2); rCtx.fill();
+          activeDotPositions.push({x:bx, y:by});
         }
 
         const dotColor = (beatChromaColor && SYNC.active)
@@ -2681,6 +2759,21 @@ function drawRhythmViz() {
       rCtx.closePath(); rCtx.stroke();
     }
   });
+
+  // Cross-layer polyrhythmic coincidence highlighting (F-6):
+  // when two or more layers fire a pulse at the same scheduled moment, connect their dots.
+  if (activeDotPositions.length >= 2) {
+    rCtx.strokeStyle = 'rgba(255,255,255,0.35)';
+    rCtx.lineWidth = 1.2;
+    for (let a = 0; a < activeDotPositions.length; a++) {
+      for (let b = a + 1; b < activeDotPositions.length; b++) {
+        rCtx.beginPath();
+        rCtx.moveTo(activeDotPositions[a].x, activeDotPositions[a].y);
+        rCtx.lineTo(activeDotPositions[b].x, activeDotPositions[b].y);
+        rCtx.stroke();
+      }
+    }
+  }
 
   // Playhead arm — color it with current sync note color if active
   if(RS.playing||RS.step>0){
@@ -2740,6 +2833,9 @@ function loadEuclidPreset(name) {
     clave23:     [[8,2],[8,3]],
     tresillo:    [[8,3]],
     cinquillo:   [[8,5]],
+    clave:       [[12,5]],
+    bossanova:   [[16,5]],
+    shiko:       [[8,4]],
     polyrhythm34:[[12,3],[16,4]],
     polyrhythm45:[[20,4],[16,5]],
   };
@@ -2772,6 +2868,7 @@ function loadEuclidPreset(name) {
 const SYNC = {
   active:   false,
   mode:     'melodic',   // 'melodic' | 'fused' | 'mirror'
+  cursorMode: 'ascending', // 'ascending' | 'random' | 'arpeggio' — advancement strategy within melodic/fused
   // Per-layer cursors — each layer steps through the scale independently
   layerCursors: [],      // index into scaleNotes[] for each layer
   // Current live note display per layer
@@ -2804,6 +2901,8 @@ function toggleSync() {
     syncResetCursors();
     updateSyncModeDesc();
     showToast('◈ Melodic Sync ACTIVE');
+    const curRow = document.getElementById('cursorModeRow');
+    if (curRow) curRow.style.display = (SYNC.mode === 'mirror') ? 'none' : 'flex';
     // Switch to clock panel so the light show is visible
     // (leave rhythm panel open — user can see both via the tabs)
   } else {
@@ -2813,6 +2912,8 @@ function toggleSync() {
     pill.classList.remove('visible');
     nowP.classList.remove('visible');
     desc.style.display = 'none';
+    const curRow = document.getElementById('cursorModeRow');
+    if (curRow) curRow.style.display = 'none';
     // Clear any clock highlights
     clearSyncFlash();
     drawClock();
@@ -2831,6 +2932,19 @@ function setSyncMode(mode) {
   const labels = { melodic:'◈ MELODIC', fused:'◈ FUSED', mirror:'◈ MIRROR' };
   pill.textContent = labels[mode] + ' SYNC ACTIVE';
   showToast('Mode: '+mode.toUpperCase());
+
+  // Cursor-mode selector only applies to melodic/fused (mirror uses direct beat-to-chromatic mapping)
+  const curRow = document.getElementById('cursorModeRow');
+  if (curRow) curRow.style.display = (mode === 'mirror') ? 'none' : 'flex';
+}
+
+function setCursorMode(mode) {
+  SYNC.cursorMode = mode;
+  document.querySelectorAll('[id^="cpill-"]').forEach(p=>p.classList.remove('active'));
+  const btn = document.getElementById('cpill-'+mode);
+  if (btn) btn.classList.add('active');
+  syncResetCursors();
+  showToast('Cursor: '+mode.charAt(0).toUpperCase()+mode.slice(1));
 }
 
 function updateSyncModeDesc() {
@@ -2861,14 +2975,32 @@ function syncGetNextNote(layerIndex, beatStep, layer) {
     noteIdx  = chromIdx;
     midiNum  = rootMidi + ((chromIdx - rootNoteIdx + 12) % 12);
   } else {
-    // Melodic / Fused: step through scale in sequence per layer
+    // Melodic / Fused: step through the scale per layer.
+    // Advancement strategy is selectable via SYNC.cursorMode (F-8): Ascending, Random, or Arpeggio.
     if (!SYNC.layerCursors) SYNC.layerCursors = RS.layers.map(()=>0);
     while (SYNC.layerCursors.length <= layerIndex) SYNC.layerCursors.push(0);
-    const cursor   = SYNC.layerCursors[layerIndex] % scaleOffsets.length;
-    const semitones = scaleOffsets[cursor];
+
+    let degreeIdx;
+    if (SYNC.cursorMode === 'random') {
+      // Random cursor mode: jump to a randomly selected scale position on each pulse
+      degreeIdx = Math.floor(Math.random() * scaleOffsets.length);
+      SYNC.layerCursors[layerIndex] = degreeIdx;
+    } else if (SYNC.cursorMode === 'arpeggio') {
+      // Arpeggio cursor mode: follow the 1st-3rd-5th scale degree sequence (KCM Arpeggio Law: 1-3-5 ascending)
+      const ARP_DEGREES = [0, 2, 4];
+      const arpPos = SYNC.layerCursors[layerIndex] % ARP_DEGREES.length;
+      degreeIdx = Math.min(ARP_DEGREES[arpPos], scaleOffsets.length - 1);
+      SYNC.layerCursors[layerIndex] = (arpPos + 1) % ARP_DEGREES.length;
+    } else {
+      // Ascending cursor mode (default): cursor increments forward through the scale
+      const cursor = SYNC.layerCursors[layerIndex] % scaleOffsets.length;
+      degreeIdx = cursor;
+      SYNC.layerCursors[layerIndex] = (cursor + 1) % scaleOffsets.length;
+    }
+
+    const semitones = scaleOffsets[degreeIdx];
     noteIdx  = (rootNoteIdx + semitones) % 12;
     midiNum  = rootMidi + semitones;
-    SYNC.layerCursors[layerIndex] = (cursor + 1) % scaleOffsets.length;
   }
 
   return {
