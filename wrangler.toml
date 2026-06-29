@@ -1,0 +1,9 @@
+name = "snowy-rain-84a5"
+main = "worker.js"
+compatibility_date = "2024-01-01"
+workers_dev = true
+preview_urls = true
+
+[[routes]]
+pattern = "keyscodesandmodes.com/api/*"
+zone_name = "keyscodesandmodes.com"

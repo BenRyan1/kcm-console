@@ -22,6 +22,15 @@
 (function () {
   'use strict';
 
+  /* ── AI proxy endpoint ──────────────────────────────────────────────
+     Added 2026-06-28. Previously this file called api.anthropic.com
+     directly from the browser with no API key, which cannot succeed.
+     This now points at the Worker's /ai route, which injects the key
+     server-side. REPLACE the placeholder below with this Worker's real
+     invocable URL (workers.dev URL or custom route) — check via
+     `wrangler deployments list` or the Cloudflare dashboard if unsure. */
+  const AI_PROXY_URL = 'https://snowy-rain-84a5.ben-03b.workers.dev/ai';
+
   /* ── Mode descriptions ─────────────────────────────────────────── */
   const MODE_FEEL = {
     ionian:     'bright, uplifting, major key',
@@ -128,21 +137,20 @@ Write a rich, evocative Suno prompt (max 130 words) that:
 
 Return ONLY the prompt text — no preamble, no explanation, no markdown.`;
 
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const response = await fetch(AI_PROXY_URL, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model:      'claude-sonnet-4-20250514',
         max_tokens: 350,
         messages:   [{ role: 'user', content: userPrompt }]
       })
     });
 
     const data = await response.json();
-    if (data.content && data.content[0] && data.content[0].text) {
+    if (data.ok && data.content && data.content[0] && data.content[0].text) {
       return data.content[0].text.trim();
     }
-    throw new Error('No content from Claude API');
+    throw new Error(data.error || 'No content from AI proxy');
   }
 
   /* ── Inject panel HTML ─────────────────────────────────────────── */

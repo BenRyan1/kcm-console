@@ -1,8 +1,15 @@
 export default {
   async fetch(request, env) {
 
+    const ALLOWED_ORIGINS = [
+      'https://keyscodesandmodes.com',
+      'https://console.keyscodesandmodes.com',
+    ];
+    const requestOrigin = request.headers.get('Origin') || '';
     const cors = {
-      'Access-Control-Allow-Origin': 'https://keyscodesandmodes.com',
+      'Access-Control-Allow-Origin': ALLOWED_ORIGINS.includes(requestOrigin)
+        ? requestOrigin
+        : ALLOWED_ORIGINS[0],
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type',
     };
@@ -58,6 +65,76 @@ export default {
           status: valid ? 200 : 401,
           headers: { ...cors, 'Content-Type': 'application/json' },
         });
+    }
+
+    // ── /ai — secure proxy to the Anthropic Messages API ────────────────
+    // Added 2026-06-28. Closes the open question at Claim H-1/H-2: the
+    // AI Tutor, Song Builder, and Suno-Enhance features previously called
+    // api.anthropic.com directly from the browser with no API key, which
+    // cannot succeed. This route accepts a `messages` array (and optional
+    // `max_tokens`) from the browser, injects the Anthropic API key from
+    // the ANTHROPIC_API_KEY Worker secret (never sent to the client), and
+    // forwards the request to Anthropic's API. The model is fixed here,
+    // not client-supplied, so callers cannot request an arbitrary model.
+    if (url.pathname === '/ai') {
+      if (!env.ANTHROPIC_API_KEY) {
+        return new Response(JSON.stringify({ ok: false, error: 'AI proxy not configured' }),
+          { status: 500, headers: { ...cors, 'Content-Type': 'application/json' } });
+      }
+
+      let body;
+      try {
+        body = await request.json();
+      } catch (e) {
+        return new Response(JSON.stringify({ ok: false, error: 'Invalid JSON' }),
+          { status: 400, headers: { ...cors, 'Content-Type': 'application/json' } });
+      }
+
+      if (!Array.isArray(body.messages) || body.messages.length === 0) {
+        return new Response(JSON.stringify({ ok: false, error: '"messages" array is required' }),
+          { status: 422, headers: { ...cors, 'Content-Type': 'application/json' } });
+      }
+
+      // Cap max_tokens server-side regardless of what the client requests,
+      // so a compromised or buggy client can't run up an unbounded bill.
+      const requestedMaxTokens = Number(body.max_tokens);
+      const maxTokens = Number.isFinite(requestedMaxTokens)
+        ? Math.min(Math.max(requestedMaxTokens, 1), 1024)
+        : 500;
+
+      let anthropicResponse;
+      try {
+        anthropicResponse = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': env.ANTHROPIC_API_KEY,
+            'anthropic-version': '2023-06-01',
+          },
+          body: JSON.stringify({
+            model: env.ANTHROPIC_MODEL || 'claude-sonnet-4-6',
+            max_tokens: maxTokens,
+            messages: body.messages,
+          }),
+        });
+      } catch (e) {
+        return new Response(JSON.stringify({ ok: false, error: 'Upstream request failed' }),
+          { status: 502, headers: { ...cors, 'Content-Type': 'application/json' } });
+      }
+
+      const data = await anthropicResponse.json().catch(() => ({}));
+
+      if (!anthropicResponse.ok) {
+        // Forward Anthropic's status/detail for debugging, but never log
+        // or echo the API key itself (it was never in this response body).
+        return new Response(
+          JSON.stringify({ ok: false, error: 'AI request failed', anthropic_status: anthropicResponse.status, detail: data }),
+          { status: 502, headers: { ...cors, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      return new Response(JSON.stringify({ ok: true, content: data.content }),
+        { status: 200, headers: { ...cors, 'Content-Type': 'application/json' } });
     }
 
     let email = '';
