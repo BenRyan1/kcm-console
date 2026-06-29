@@ -1,6 +1,11 @@
 /* ─────────────────────────────────────────────────────────────────────────
-   KCM CONSOLE — gcis.js  (v0.8.0)
+   KCM CONSOLE — gcis.js  (v1.1)
    Session 8: .gcis — Global Chromatic Identity State
+   v1.1 (Claim C-5 fix, 2026-06-29): the "history" field below was a
+   reserved, unused placeholder. It's now wired to the bus's real
+   pushEvent()/history mechanism (see console.js) and exported as a
+   top-level "events" array — onset time and duration in milliseconds,
+   true 0-11 pitch class plus the full MIDI note number, per event.
 
    THE FORMAT
    ──────────
@@ -29,7 +34,10 @@
        "scale":       [0,2,3,5,7,9,10], ← interval array
        "activeNotes": [62,65,67] ← MIDI note numbers (Set serialised as sorted array)
      },
-     "history": []               ← reserved for v1.1 (session recording)
+     "events": [                 ← recorded note event sequence (Claim C-5)
+       { "t": 0,    "pc": 7, "midi": 67, "duration": 500, "root": "G", "mode": "dorian" },
+       { "t": 500,  "pc": 9, "midi": 69, "duration": 250, "root": "G", "mode": "dorian" }
+     ]                           ← t and duration in milliseconds; [] if nothing recorded
    }
 
    PATENT NOTE
@@ -66,7 +74,7 @@
         scale:       (state.scale || []).slice(),
         activeNotes: Array.from(state.activeNotes || []).sort(function (a, b) { return a - b; })
       },
-      history: []  // reserved for v1.1 session recording
+      events: Array.isArray(state.history) ? state.history.slice() : []  // Claim C-5: onset/duration in ms, true pitch class
     };
     return JSON.stringify(doc, null, 2);
   }
@@ -118,7 +126,8 @@
         root:        s.root,
         mode:        s.mode,
         scale:       s.scale.slice(),
-        activeNotes: new Set(s.activeNotes)
+        activeNotes: new Set(s.activeNotes),
+        history:     Array.isArray(doc.events) ? doc.events.slice() : []
       }
     };
   }

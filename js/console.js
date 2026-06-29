@@ -159,10 +159,20 @@
   //   KCM.bus.get()            → snapshot
   //   KCM.bus.set(patch)       → shallow-merge, notify subscribers
   //   KCM.bus.subscribe(fn)    → fn called on every change; returns unsubscribe()
+  //   KCM.bus.pushEvent(evt)   → appends a timestamped note event to history
+  //                              (silent — does not notify subscribers, since
+  //                              individual note events fire far too often to
+  //                              broadcast to every panel on each one)
+  //   KCM.bus.clearHistory()   → resets history to [] (call at recording start)
   //
-  // State shape (v1 locked): {root, mode, scale, activeNotes:Set<midi>}
+  // State shape (v1.1, Claim C-5 fix 2026-06-29): {root, mode, scale,
+  // activeNotes:Set<midi>, history:Array<{t,pc,midi,duration,root,mode}>}
+  // history events use milliseconds for t (onset, relative to recording
+  // start) and duration, and a true 0-11 pitch class (pc) alongside the
+  // full midi note number.
   function createBus(initial) {
     const state = Object.assign({}, initial);
+    if (!Array.isArray(state.history)) state.history = [];
     const subscribers = new Set();
 
     function snapshot() {
@@ -170,7 +180,8 @@
         root:        state.root,
         mode:        state.mode,
         scale:       state.scale.slice(),
-        activeNotes: new Set(state.activeNotes)
+        activeNotes: new Set(state.activeNotes),
+        history:     state.history.slice()
       };
     }
 
@@ -196,6 +207,13 @@
         }
         if (changed) notify();
       },
+      pushEvent: function (evt) {
+        if (!evt || typeof evt !== 'object') return;
+        state.history.push(Object.assign({}, evt));
+      },
+      clearHistory: function () {
+        state.history = [];
+      },
       subscribe: function (fn) {
         if (typeof fn !== 'function') return function () {};
         subscribers.add(fn);
@@ -217,7 +235,8 @@
     root:        'C',
     mode:        'ionian',
     scale:       MODES.ionian.slice(),
-    activeNotes: new Set()
+    activeNotes: new Set(),
+    history:     []
   });
 
   // ── Dev panel (gated by ?dev=1) ──────────────────────────────────────

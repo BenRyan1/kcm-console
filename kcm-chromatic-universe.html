@@ -3347,13 +3347,31 @@ function etRestart() {
       if (recording) {
         var t = (Date.now() - recStart) / 1000;
         var rootIdx = getRootSpokeIndex() % 12;
+        var rootName = NOTE_NAMES_REC[rootIdx];
+        var durSec = duration || 0.5;
         recEvents.push({
           t        : Math.round(t * 100) / 100,
           midi     : midiNumber,
-          duration : duration || 0.5,
-          root     : NOTE_NAMES_REC[rootIdx],
+          duration : durSec,
+          root     : rootName,
           mode     : currentStencil
         });
+        // Claim C-5: also record into the real bus history, in the units
+        // and field shape the .gcis export actually claims — ms onset/
+        // duration, true 0-11 pitch class — independent of the seconds-
+        // based recEvents above (kept as-is; the timeline UI depends on it).
+        try {
+          if (window.KCM && window.KCM.bus && window.KCM.bus.pushEvent) {
+            window.KCM.bus.pushEvent({
+              t        : Math.round(t * 1000),
+              pc       : ((midiNumber % 12) + 12) % 12,
+              midi     : midiNumber,
+              duration : Math.round(durSec * 1000),
+              root     : rootName,
+              mode     : currentStencil
+            });
+          }
+        } catch (e) { /* bus not available — recording still works locally */ }
         updateTimeline(recEvents);
       }
       return _origPlayNote.apply(this, arguments);
@@ -3422,6 +3440,7 @@ function etRestart() {
     recording = true;
     recStart  = Date.now();
     recEvents = [];
+    try { if (window.KCM && window.KCM.bus && window.KCM.bus.clearHistory) window.KCM.bus.clearHistory(); } catch (e) {}
     if (dotEl) { dotEl.classList.remove('playing'); dotEl.classList.add('recording'); }
     recBtn.classList.add('active-rec');
     stopBtn.disabled  = false;
@@ -3569,9 +3588,23 @@ function etRestart() {
   }
 
   // ── Export take as .gcis ───────────────────────────────────────────────
+  // Claim C-5: events array must carry onset time + duration in
+  // milliseconds and a true 0-11 pitch class value, not seconds/MIDI-only.
+  // take.events (recEvents) stays seconds-based internally for the
+  // timeline UI's math — convert only at the export boundary.
   function exportTake(take) {
     var NOTE_MAP_EX = {'C':0,'C#':1,'Db':1,'D':2,'D#':3,'Eb':3,'E':4,'F':5,'F#':6,'Gb':6,'G':7,'G#':8,'Ab':8,'A':9,'A#':10,'Bb':10,'B':11};
     var rootIdx = NOTE_MAP_EX[take.root] || 0;
+    var msEvents = (take.events || []).map(function (ev) {
+      return {
+        t        : Math.round(ev.t * 1000),
+        pc       : ((ev.midi % 12) + 12) % 12,
+        midi     : ev.midi,
+        duration : Math.round(ev.duration * 1000),
+        root     : ev.root,
+        mode     : ev.mode
+      };
+    });
     var doc = {
       gcis      : 1,
       kcm       : '1.0',
@@ -3586,10 +3619,11 @@ function etRestart() {
         bpm         : take.bpm || 120,
         octave      : 4
       },
+      events      : msEvents,
       performance : {
-        duration : take.duration,
+        duration : Math.round(take.duration * 1000),
         recorded : take.recorded,
-        events   : take.events
+        events   : msEvents
       }
     };
     var blob = new Blob([JSON.stringify(doc, null, 2)], { type: 'application/json' });
