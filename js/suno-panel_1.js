@@ -1,6 +1,7 @@
 /* ═══════════════════════════════════════════════════════════════
-   KCM Console — SUNO Prompt Generator Panel
+   KCM Console — AI Music Prompt Generator Panel
    Session 11 · Updated 2026-05-01 — 4-panel build (v1.0)
+   Updated 2026-06-28 — added Suno/Udio platform selector dropdown
 
    PANELS IN CONSOLE (4 total):
      Panel 1 — Music Theory Pro        (music-theory-pro.html)
@@ -11,12 +12,20 @@
    This panel sits BELOW all four. It:
      1. Subscribes to window.KCM.bus for live root/mode/scale changes
      2. Also listens to postMessage KCM_STATE (bridge fallback)
-     3. Builds a template Suno prompt instantly — no API call
-     4. "✨ Enhance" button calls Claude API for a richer version
-     5. "⎘ Copy to Suno" copies prompt to clipboard
+     3. Builds a template prompt instantly for the selected platform
+        (Suno or Udio) — no API call
+     4. "✨ Enhance" button calls Claude API for a richer, platform-
+        aware version
+     5. "⎘ Copy" copies prompt to clipboard
      6. "↺ Reset" returns to template after AI enhancement
      7. State badge always shows live root + mode from bus
      8. Source badge shows which panel last sent a change
+
+   NOTE: Suno and Udio have no public APIs (as of this writing) — both
+   platforms are copy/paste-only. This panel is a text compiler, not a
+   live integration. If that changes, or once ElevenLabs (which DOES
+   have a real API) gets wired in via the Worker, this is the file to
+   extend.
 ═══════════════════════════════════════════════════════════════ */
 
 (function () {
@@ -72,6 +81,24 @@
     locrian:    '60–80',
   };
 
+  /* ── Platform info — drives dropdown, link, labels, copy text ──── */
+  const PLATFORM_INFO = {
+    suno: {
+      label:     'Suno',
+      url:       'https://suno.com',
+      goTo:      'suno.com',
+      openLabel: '↗ Open Suno',
+      copyLabel: '⎘ Copy to Suno',
+    },
+    udio: {
+      label:     'Udio',
+      url:       'https://udio.com',
+      goTo:      'udio.com',
+      openLabel: '↗ Open Udio',
+      copyLabel: '⎘ Copy to Udio',
+    },
+  };
+
   /* ── Panel name map (for source badge) ────────────────────────── */
   const PANEL_NAMES = {
     'music-theory-pro':     'Music Theory Pro',
@@ -89,9 +116,10 @@
     bpm:         null,
   };
   let _lastSource = null; // which panel last triggered a change
+  let _platform    = 'suno'; // 'suno' | 'udio' — driven by the dropdown
 
-  /* ── Template prompt ───────────────────────────────────────────── */
-  function buildTemplate(s) {
+  /* ── Template prompt — Suno ────────────────────────────────────── */
+  function buildSunoTemplate(s) {
     const mode     = s.mode || 'ionian';
     const root     = s.root || 'C';
     const feel     = MODE_FEEL[mode]        || 'melodic';
@@ -111,16 +139,42 @@
 An evocative instrumental piece in ${root} ${modeName}. ${feel.charAt(0).toUpperCase() + feel.slice(1)} character throughout. Features ${instr}. No lyrics. No vocals.`;
   }
 
-  /* ── Claude API enhanced prompt ────────────────────────────────── */
-  async function enhanceWithClaude(s) {
+  /* ── Template prompt — Udio ────────────────────────────────────── */
+  /* Udio prompts tend to read better shorter and more genre/instrument-
+     forward, lighter on mood adjectives, than Suno's bracketed style —
+     so this is a distinct (not reused) template rather than a copy. */
+  function buildUdioTemplate(s) {
     const mode     = s.mode || 'ionian';
     const root     = s.root || 'C';
+    const genre    = MODE_GENRE[mode]       || 'instrumental';
+    const instr    = MODE_INSTRUMENTS[mode] || 'piano, guitar';
+    const bpm      = MODE_BPM[mode]         || '90–110';
     const modeName = mode.charAt(0).toUpperCase() + mode.slice(1);
-    const feel     = MODE_FEEL[mode]  || 'melodic';
-    const genre    = MODE_GENRE[mode] || 'instrumental';
+
+    return `${genre}, ${root} ${modeName}, ${instr}, ${bpm} BPM, instrumental, no vocals`;
+  }
+
+  /* ── Dispatcher — single call site for either platform ───────────── */
+  function buildTemplate(s, platform) {
+    return platform === 'udio' ? buildUdioTemplate(s) : buildSunoTemplate(s);
+  }
+
+  /* ── Claude API enhanced prompt ────────────────────────────────── */
+  async function enhanceWithClaude(s, platform) {
+    const mode        = s.mode || 'ionian';
+    const root         = s.root || 'C';
+    const modeName     = mode.charAt(0).toUpperCase() + mode.slice(1);
+    const feel         = MODE_FEEL[mode]  || 'melodic';
+    const genre        = MODE_GENRE[mode] || 'instrumental';
+    const info         = PLATFORM_INFO[platform] || PLATFORM_INFO.suno;
+    const platformName = info.label;
+
+    const styleNote = platform === 'udio'
+      ? 'Udio prompts read best SHORT and genre/instrument-forward — favor concrete genre and instrument tags over flowery mood language. Keep it under 40 words, comma-separated tags rather than prose.'
+      : 'Suno responds well to vivid, evocative language and bracketed structural tags like [intro], [verse], [chorus].';
 
     const userPrompt =
-`You are an expert at writing Suno AI music generation prompts.
+`You are an expert at writing ${platformName} AI music generation prompts.
 
 Given this harmonic state from the KCM Console (Keys, Codes & Modes™):
 - Root note: ${root}
@@ -128,12 +182,11 @@ Given this harmonic state from the KCM Console (Keys, Codes & Modes™):
 - Suggested genre: ${genre}
 - Active MIDI notes: ${s.activeNotes && s.activeNotes.length ? s.activeNotes.join(', ') : 'none set'}
 
-Write a rich, evocative Suno prompt (max 130 words) that:
+Write a ${platformName} prompt (max 130 words) that:
 1. Captures the precise emotional character of ${root} ${modeName}
 2. Specifies tempo range, key instruments, and production style
-3. Uses vivid language that Suno responds well to
-4. Includes structural tags like [intro], [verse], [chorus] if appropriate
-5. Ends with: "No lyrics. Instrumental only."
+3. ${styleNote}
+4. Ends with: "No lyrics. Instrumental only."
 
 Return ONLY the prompt text — no preamble, no explanation, no markdown.`;
 
@@ -164,7 +217,11 @@ Return ONLY the prompt text — no preamble, no explanation, no markdown.`;
 <div class="kcm-suno__header">
   <div class="kcm-suno__title-row">
     <span class="kcm-suno__icon" aria-hidden="true">♪</span>
-    <h3 class="kcm-suno__title">Suno Prompt Generator</h3>
+    <h3 class="kcm-suno__title">AI Music Prompt Generator</h3>
+    <select class="kcm-suno__platform-select" id="suno-platform-select" aria-label="Choose AI music platform">
+      <option value="suno">Suno</option>
+      <option value="udio">Udio</option>
+    </select>
     <span class="kcm-suno__state-badge" id="suno-state-badge">C · Ionian</span>
   </div>
   <div class="kcm-suno__meta-row">
@@ -181,7 +238,7 @@ Return ONLY the prompt text — no preamble, no explanation, no markdown.`;
       readonly
       spellcheck="false"
       rows="8"
-      aria-label="Generated Suno prompt — copy and paste into suno.com"
+      aria-label="Generated AI music prompt — copy and paste into the selected platform"
     ></textarea>
     <div class="kcm-suno__prompt-type" id="suno-prompt-type">Template</div>
   </div>
@@ -198,6 +255,7 @@ Return ONLY the prompt text — no preamble, no explanation, no markdown.`;
     </button>
     <a
       class="kcm-suno__btn kcm-suno__btn--open"
+      id="suno-open-link"
       href="https://suno.com"
       target="_blank"
       rel="noopener noreferrer"
@@ -210,7 +268,7 @@ Return ONLY the prompt text — no preamble, no explanation, no markdown.`;
     1 · Choose root + mode in any of the 4 panels above &nbsp;
     2 · Prompt updates instantly &nbsp;
     3 · Hit <em>Enhance</em> for a richer AI version &nbsp;
-    4 · <em>Copy</em> → paste into suno.com → Generate
+    4 · <em>Copy</em> → paste into <span id="suno-howto-target">suno.com</span> → Generate
   </div>
 
   <div class="kcm-suno__status" id="suno-status" aria-live="polite"></div>
@@ -226,6 +284,7 @@ Return ONLY the prompt text — no preamble, no explanation, no markdown.`;
     }
 
     bindEvents();
+    updatePlatformUI();
     renderTemplate();
   }
 
@@ -236,12 +295,33 @@ Return ONLY the prompt text — no preamble, no explanation, no markdown.`;
     const typeBadge = document.getElementById('suno-prompt-type');
     if (!ta) return;
 
-    ta.value           = buildTemplate(_state);
+    ta.value           = buildTemplate(_state, _platform);
     typeBadge.textContent = 'Template';
     typeBadge.className   = 'kcm-suno__prompt-type';
 
     const m = _state.mode || 'ionian';
     if (badge) badge.textContent = `${_state.root} · ${m.charAt(0).toUpperCase() + m.slice(1)}`;
+  }
+
+  /* ── Sync open-link / copy label / howto text to selected platform ── */
+  function updatePlatformUI() {
+    const info      = PLATFORM_INFO[_platform] || PLATFORM_INFO.suno;
+    const openLink  = document.getElementById('suno-open-link');
+    const copyBtn   = document.getElementById('suno-copy-btn');
+    const howtoSpan = document.getElementById('suno-howto-target');
+    const ta        = document.getElementById('suno-prompt-text');
+
+    if (openLink) {
+      openLink.href = info.url;
+      openLink.textContent = info.openLabel;
+      openLink.setAttribute('aria-label', `Open ${info.label} in a new tab`);
+    }
+    /* Don't clobber the "✓ Copied!" text mid-flash */
+    if (copyBtn && copyBtn.textContent.indexOf('Copied') === -1) {
+      copyBtn.textContent = info.copyLabel;
+    }
+    if (howtoSpan) howtoSpan.textContent = info.goTo;
+    if (ta) ta.setAttribute('aria-label', `Generated ${info.label} prompt — copy and paste into ${info.goTo}`);
   }
 
   /* ── Update state + source badges ──────────────────────────────── */
@@ -263,21 +343,31 @@ Return ONLY the prompt text — no preamble, no explanation, no markdown.`;
   /* ── Button events ──────────────────────────────────────────────── */
   function bindEvents() {
 
+    /* Platform selector */
+    document.getElementById('suno-platform-select').addEventListener('change', (e) => {
+      _platform = e.target.value;
+      updatePlatformUI();
+      renderTemplate(); // fresh template for the new platform — an AI-
+                         // enhanced prompt written for Suno isn't valid Udio
+      setStatus(`Switched to ${PLATFORM_INFO[_platform].label}.`, 'info');
+    });
+
     /* Enhance */
     document.getElementById('suno-enhance-btn').addEventListener('click', async () => {
       const btn       = document.getElementById('suno-enhance-btn');
       const typeBadge = document.getElementById('suno-prompt-type');
+      const info      = PLATFORM_INFO[_platform] || PLATFORM_INFO.suno;
 
       btn.disabled    = true;
       btn.textContent = '✨ Enhancing…';
-      setStatus('Calling Claude AI — crafting your Suno prompt…', 'loading');
+      setStatus(`Calling Claude AI — crafting your ${info.label} prompt…`, 'loading');
 
       try {
-        const enhanced = await enhanceWithClaude(_state);
+        const enhanced = await enhanceWithClaude(_state, _platform);
         document.getElementById('suno-prompt-text').value = enhanced;
         typeBadge.textContent = 'AI Enhanced';
         typeBadge.className   = 'kcm-suno__prompt-type kcm-suno__prompt-type--ai';
-        setStatus('AI enhanced! Ready to copy → paste into Suno.', 'success');
+        setStatus(`AI enhanced! Ready to copy → paste into ${info.label}.`, 'success');
       } catch (e) {
         setStatus('Enhancement failed — using template prompt.', 'error');
         renderTemplate();
@@ -297,6 +387,7 @@ Return ONLY the prompt text — no preamble, no explanation, no markdown.`;
     document.getElementById('suno-copy-btn').addEventListener('click', async () => {
       const btn  = document.getElementById('suno-copy-btn');
       const text = document.getElementById('suno-prompt-text').value;
+      const info = PLATFORM_INFO[_platform] || PLATFORM_INFO.suno;
       try {
         await navigator.clipboard.writeText(text);
       } catch (e) {
@@ -308,8 +399,8 @@ Return ONLY the prompt text — no preamble, no explanation, no markdown.`;
         ta.setAttribute('readonly', true);
       }
       btn.textContent = '✓ Copied!';
-      setStatus('Copied! Go to suno.com → paste → Generate.', 'success');
-      setTimeout(() => { btn.textContent = '⎘ Copy to Suno'; }, 2500);
+      setStatus(`Copied! Go to ${info.goTo} → paste → Generate.`, 'success');
+      setTimeout(() => { btn.textContent = info.copyLabel; }, 2500);
     });
   }
 

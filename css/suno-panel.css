@@ -69,6 +69,32 @@
   border-radius: 20px;
 }
 
+/* ── Platform selector dropdown ── */
+.kcm-suno__platform-select {
+  font-family: 'Montserrat', sans-serif;
+  font-size: .72rem;
+  font-weight: 600;
+  letter-spacing: .05em;
+  color: #e8e8f8;
+  background: rgba(0, 128, 128, 0.14);
+  border: 1px solid rgba(0, 128, 128, 0.35);
+  border-radius: 6px;
+  padding: 3px 8px;
+  cursor: pointer;
+  outline: none;
+  transition: border-color .18s;
+}
+
+.kcm-suno__platform-select:hover,
+.kcm-suno__platform-select:focus {
+  border-color: rgba(0, 192, 192, 0.55);
+}
+
+.kcm-suno__platform-select option {
+  background: #0a0a15;
+  color: #e8e8f8;
+}
+
 .kcm-suno__sub {
   font-size: .72rem;
   color: #b0b0cc;
