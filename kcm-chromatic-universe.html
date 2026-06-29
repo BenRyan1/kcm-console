@@ -1399,6 +1399,12 @@ input[type="range"] {
               style="flex:1;accent-color:var(--teal);" oninput="vrdUpdateSens(this.value)">
             <span id="vrdSensVal" style="font-size:0.72rem;color:var(--teal);width:2.5rem;text-align:right;">0.05</span>
           </div>
+          <div style="display:flex;align-items:center;gap:0.5rem;margin-top:0.4rem;">
+            <label style="font-size:0.72rem;color:var(--text-dim);white-space:nowrap;">Count-In Beats</label>
+            <input type="range" id="vrdCountInSlider" min="1" max="8" step="1" value="4"
+              style="flex:1;accent-color:var(--gold);" oninput="vrdUpdateCountIn(this.value)">
+            <span id="vrdCountInVal" style="font-size:0.72rem;color:var(--gold);width:2.5rem;text-align:right;">4</span>
+          </div>
           <div id="vrdMeterWrap" style="margin-top:0.4rem;display:none;">
             <div style="font-size:0.7rem;color:var(--text-ghost);margin-bottom:2px;">🎤 Live level</div>
             <div style="background:rgba(255,255,255,0.06);border-radius:3px;height:6px;overflow:hidden;">
@@ -4087,7 +4093,7 @@ function etRestart() {
   const RISE_MS       = 15;     // ms to confirm onset (avoid noise spikes)
   const FFT_SIZE      = 256;
   const NOISE_FRAMES  = 40;
-  const COUNTIN_BEATS = 4;      // count-in clicks before recording
+  let   COUNTIN_BEATS  = 4;      // count-in clicks before recording — configurable via UI (Claim E-4)
 
   // ── State ──────────────────────────────────────────────────────────────────
   let vrdStream       = null;
@@ -4192,6 +4198,13 @@ function etRestart() {
     vrdSensitivity = parseFloat(val);
     const lbl = document.getElementById('vrdSensVal');
     if (lbl) lbl.textContent = parseFloat(val).toFixed(3);
+  };
+
+  // Configurable count-in beat count (Claim E-4)
+  window.vrdUpdateCountIn = function(val) {
+    COUNTIN_BEATS = parseInt(val, 10);
+    const lbl = document.getElementById('vrdCountInVal');
+    if (lbl) lbl.textContent = COUNTIN_BEATS;
   };
 
   // Live attack-speed tuner — dial in BOOM vs CHA boundary in ms
@@ -4400,7 +4413,7 @@ function etRestart() {
     // Quantize each onset to nearest step
     vrdOnsets.forEach(onset => {
       const rawStep    = onset.t / sixteenth;
-      const stepIdx    = Math.round(rawStep) % steps;
+      const stepIdx    = Math.min(steps - 1, Math.max(0, Math.round(rawStep)));
       const layerIdx   = Math.min(onset.layer, RS.layers.length - 1);
       patterns[layerIdx][stepIdx] = 1;
     });
@@ -4423,10 +4436,13 @@ function etRestart() {
     drawRhythmViz && drawRhythmViz();
 
     const totalBeats = Math.floor(vrdOnsets.length);
-    showToast(`🥁 ${steps}-step grid written — ${vrdOnsets.filter(o=>o.layer===0).length} BOOM + ${vrdOnsets.filter(o=>o.layer===1).length} CHA — hit PLAY!`);
+    showToast(`🥁 ${steps}-step grid written — ${vrdOnsets.filter(o=>o.layer===0).length} BOOM + ${vrdOnsets.filter(o=>o.layer===1).length} CHA — playing now!`);
 
     // Show summary panel
     vrdShowSummary(steps, patterns);
+
+    // Initiate rhythmic sequencer playback using the written pattern arrays (Claim E-1).
+    if (!RS.playing) togglePlay();
   }
 
   function vrdShowSummary(steps, patterns) {
@@ -4442,7 +4458,7 @@ function etRestart() {
         💥 BOOM: <strong style="color:var(--gold)">${boomCount}</strong> &nbsp;|&nbsp;
         🔔 CHA: <strong style="color:var(--teal)">${chaCount}</strong>
       </div>
-      <div style="font-size:0.7rem;color:var(--text-ghost);margin-top:0.3rem;">Hit ▶ PLAY to hear your rhythm</div>
+      <div style="font-size:0.7rem;color:var(--text-ghost);margin-top:0.3rem;">Now playing &#8212; tap &#9208; Pause to stop</div>
     `;
   }
 
