@@ -754,6 +754,7 @@
                 }catch(e){console.error('[KCM→MSP] listener error:',e);}
             });
             console.log('[KCM→MSP] bridge listener ready.');
+            try{ window.parent.postMessage({type:'KCM_PANEL_READY', panel:'modal-stencil-player'},'*'); }catch(e){}
         })();
     </script>
 </body>

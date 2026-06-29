@@ -6382,6 +6382,11 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 var dot = document.getElementById('kcmBridgeDot');
                 if (dot) { dot.title = 'KCM Bridge: listening (no parent connected)'; }
             })();
+
+            // Announce readiness to Console bridge — listener above is now mounted
+            // and can safely receive KCM_STATE. Bridge defers state delivery until
+            // this fires (see bridge.js registerPanelReady handling).
+            try { window.parent.postMessage({ type: 'KCM_PANEL_READY', panel: 'music-theory-pro' }, '*'); } catch(e) {}
         // ── Chord Voicing Display Panel ──────────────────────────
         function updateVoicingPanel() {
             const panel = document.getElementById('chordVoicingPanel');

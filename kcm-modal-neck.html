@@ -528,7 +528,7 @@ function applyKCMState(p){let ch=false;if(p.root!==undefined){const x=ROOT_TO_CH
 const sd=document.createElement('div');sd.style.cssText='position:fixed;top:8px;right:10px;width:8px;height:8px;border-radius:50%;background:#00c0c0;opacity:0;transition:opacity .3s;z-index:999;';document.body.appendChild(sd);
 function flashSync(){sd.style.opacity='1';setTimeout(function(){sd.style.opacity='0';},600);}
 window.addEventListener('message',function(e){if(!e.data)return;if(e.data.type==='KCM_STATE'&&e.data.payload)applyKCMState(e.data.payload);if(e.data.type==='KCM_STATE_PATCH'&&e.data.payload)applyKCMState(e.data.payload);});
-window.parent.postMessage({type:'KCM_READY',panel:'modal-neck'},'*');
+window.parent.postMessage({type:'KCM_PANEL_READY',panel:'modal-neck'},'*');
 
 // ── INITIAL RENDER ───────────────────────────────────────────────────────────
 draw();

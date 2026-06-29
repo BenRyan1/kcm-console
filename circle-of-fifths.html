@@ -923,6 +923,10 @@ window.addEventListener('message',ev=>{
   }catch(e){}
 });
 
+// Announce readiness to Console bridge — listener above is now mounted.
+// Bridge defers KCM_STATE delivery until this fires.
+try{ window.parent.postMessage({type:'KCM_PANEL_READY', panel:'circle-of-fifths'},'*'); }catch(e){}
+
 // ══════════════════════════════════════════════════════
 // RECORDING ENGINE — WAV + MIDI
 // ══════════════════════════════════════════════════════
