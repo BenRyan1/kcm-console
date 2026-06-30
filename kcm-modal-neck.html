@@ -230,7 +230,7 @@ function draw(){
   }
   // NUT
   svgEl('text',{x:LEFT-4,y:NUT_Y+2,'text-anchor':'end','dominant-baseline':'central',fill:'#F4D03F','font-family':'Montserrat,sans-serif','font-size':7,'font-weight':700},svg).textContent='NUT';
-  if(viewMode==='close'&&winStart>0){svgEl('text',{x:LEFT-4,y:NUT_Y+11,'text-anchor':'end','dominant-baseline':'central',fill:'#8B6BA3','font-family':'Montserrat,sans-serif','font-size':6,'font-weight':600},svg).textContent='capo '+winStart;}
+  if(winStart>0){svgEl('text',{x:LEFT-4,y:NUT_Y+11,'text-anchor':'end','dominant-baseline':'central',fill:'#8B6BA3','font-family':'Montserrat,sans-serif','font-size':6,'font-weight':600},svg).textContent='capo '+winStart;}
 
   svgEl('rect',{x:LEFT,y:NUT_Y,width:CW*COLS,height:viewMode==='full'||winStart===0?5:2,fill:viewMode==='full'||winStart===0?'#d8c888':'rgba(80,70,40,0.4)',rx:1},svg);
   // String lines
@@ -263,8 +263,11 @@ function draw(){
     nutG.addEventListener('click',h);
   }
   // Fret rows
+  // Capo offset (winStart) applies consistently in BOTH full-neck and position view —
+  // fixed 2026-06-29 (Group I patent verification): full-neck previously ignored winStart,
+  // creating a mismatch with the nut diamonds, which always honored it.
   for(let row=0;row<WIN;row++){
-    const fret=(viewMode==='full'?0:winStart)+row+1;
+    const fret=winStart+row+1;
     const rowY=NUT_Y+RH*row;
     let hasRootHere=false;
     for(let s=0;s<COLS;s++){if((SC[s]+fret)%12===curKey&&modeSet.has(curKey)){hasRootHere=true;break;}}
