@@ -84,7 +84,27 @@
   var VALID_PITCH_CLASSES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
   var VALID_MODES = ['ionian','dorian','phrygian','lydian','mixolydian','aeolian','locrian'];
 
-  function validate(doc) {
+
+  var ALIAS_MODES={major:"ionian",minor:"aeolian"};
+  function validateGCIS(doc){
+    var e=[],w=[];
+    if(!doc||typeof doc!=="object")return{ok:false,errors:["Not a valid JSON object"],warnings:[]};
+    if(!doc.gcis)e.push("Missing gcis version field");
+    if(!doc.state)e.push("Missing state field");
+    if(doc.state){var s=doc.state;
+      if(!s.root)e.push("Missing state.root");
+      else if(VALID_PITCH_CLASSES.indexOf(s.root)===-1)e.push("Invalid root:"+s.root);
+      if(!s.mode)e.push("Missing state.mode");
+      else if(ALIAS_MODES[s.mode])w.push(s.mode+" is alias, use "+ALIAS_MODES[s.mode]);
+      else if(VALID_MODES.indexOf(s.mode)===-1)e.push("Invalid mode:"+s.mode);
+      if(!Array.isArray(s.scale))e.push("scale must be array");
+      if(!Array.isArray(s.activeNotes))e.push("activeNotes must be array");
+    }
+    return{ok:e.length===0,errors:e,warnings:w};
+  }
+  function validate(doc){var r=validateGCIS(doc);return r.errors.length?r.errors[0]:null;}
+
+  function _validate_unused(doc) {
     if (!doc || typeof doc !== 'object')        return 'Not a valid JSON object';
     if (!doc.gcis)                              return 'Missing gcis version field';
     if (!doc.state)                             return 'Missing state field';
@@ -193,8 +213,9 @@
     serialise:    serialise,
     deserialise:  deserialise,
     saveToDisk:   saveToDisk,
-    loadFromDisk: loadFromDisk,
-    VERSION:      GCIS_VERSION
+    loadFromDisk:loadFromDisk,
+    validate:validateGCIS,
+    VERSION:GCIS_VERSION
   };
 
   console.log('[KCM.gcis] v' + GCIS_VERSION + ' ready — .gcis format initialised.');
