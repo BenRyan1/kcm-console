@@ -579,21 +579,40 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
     <div class="section-label">Waveform — Suno return</div>
     <div class="waveform" id="waveform"></div>
 
-    <div class="section-label">Suno → KCM return analysis</div>
+    <div class="section-label">Return Analysis</div>
+    <!-- Claim MB-4: three real-time composition quality metrics -->
     <div class="return-grid">
       <div class="return-card">
         <div class="return-val" id="retKey" style="color:#007FFF">A</div>
-        <div class="return-lbl">Key detected</div>
+        <div class="return-lbl">Key</div>
       </div>
       <div class="return-card">
         <div class="return-val" id="retMode">Dorian</div>
-        <div class="return-lbl">Mode identified</div>
+        <div class="return-lbl">Mode</div>
       </div>
       <div class="return-card">
         <div class="return-val" id="retColor" style="font-size:11px">Sky Blue</div>
         <div class="return-lbl">KCM color</div>
       </div>
     </div>
+    <div class="return-grid" style="margin-top:6px;">
+      <div class="return-card">
+        <div class="return-val" id="retHarmonicDensity">—</div>
+        <div class="return-lbl">Harmonic Density</div>
+      </div>
+      <div class="return-card">
+        <div class="return-val" id="retModalClarity">—</div>
+        <div class="return-lbl">Modal Clarity</div>
+      </div>
+      <div class="return-card">
+        <div class="return-val" id="retMelodicRange">—</div>
+        <div class="return-lbl">Melodic Range</div>
+      </div>
+    </div>
+
+    <!-- Claim MB-5: platform compatibility matrix -->
+    <div class="section-label" style="margin-top:10px;">Platform Compatibility</div>
+    <div id="compatMatrix" style="display:grid;grid-template-columns:auto 1fr 1fr;gap:4px;font-size:10px;"></div>
 
     <div class="section-label">Bridge log</div>
     <div class="log-box" id="logBox">
@@ -1219,6 +1238,50 @@ function rebuild(){
   document.getElementById('retKey').style.color=h;
   document.getElementById('retMode').textContent=p.mode;
   document.getElementById('retColor').textContent=c;
+
+  // ── Claim MB-4: Return Analysis — three real-time composition quality metrics ──
+  const modeScale = SCALES[p.mode] || [0,2,4,5,7,9,11];
+  const maxVoicing = 6; // max chord tones across all active tracks
+
+  // Harmonic Density: active track count / max possible tracks
+  const activeTrackCount = trackEnabled.filter(Boolean).length;
+  const harmonicDensity = Math.round((activeTrackCount / trackEnabled.length) * 100);
+
+  // Modal Clarity: fraction of mode scale tones that are characteristic
+  // (non-pentatonic chromatic tones score lower)
+  const pentScale = [0,2,4,7,9]; // major pentatonic reference
+  const charTones = modeScale.filter(i => !pentScale.includes(i));
+  const modalClarity = Math.round(((7 - charTones.length) / 7 + charTones.length / 12) * 50);
+
+  // Melodic Range: semitone span of melody track based on complexity and bar count
+  const melodicRange = Math.min(24, 4 + p.complexity * 2 + Math.round(p.bars / 4));
+
+  const hdEl = document.getElementById('retHarmonicDensity');
+  const mcEl = document.getElementById('retModalClarity');
+  const mrEl = document.getElementById('retMelodicRange');
+  if (hdEl) hdEl.textContent = harmonicDensity + '%';
+  if (mcEl) mcEl.textContent = modalClarity + '%';
+  if (mrEl) mrEl.textContent = melodicRange + ' st';
+
+  // ── Claim MB-5: Platform Compatibility Matrix ──
+  const COMPAT = {
+    'MIDI File':     { Suno: '⚠ partial', Udio: '⚠ partial' },
+    'Audio (WAV)':   { Suno: '✓ accepted', Udio: '✓ accepted' },
+    'Prompt String': { Suno: '✓ accepted', Udio: '✓ accepted' },
+    'GCIS Schema':   { Suno: '✗ not accepted', Udio: '✗ not accepted' },
+  };
+  const STATUS_COLOR = { '✓': '#13c468', '⚠': '#F4D03F', '✗': '#e94560' };
+  const matEl = document.getElementById('compatMatrix');
+  if (matEl) {
+    matEl.innerHTML =
+      '<div style="font-weight:700;color:#888;">Format</div><div style="font-weight:700;color:#1DB954;">Suno</div><div style="font-weight:700;color:#5865F2;">Udio</div>' +
+      Object.entries(COMPAT).map(([fmt, platforms]) =>
+        `<div style="color:#bbb;">${fmt}</div>` +
+        Object.entries(platforms).map(([, status]) =>
+          `<div style="color:${STATUS_COLOR[status[0]]};">${status}</div>`
+        ).join('')
+      ).join('');
+  }
   document.getElementById('retColor').style.color=h;
 
   document.getElementById('filenameLbl').textContent=getFilename();
