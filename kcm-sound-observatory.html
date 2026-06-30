@@ -455,6 +455,9 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:10px;heigh
 }
 .fb-cell:hover{background:rgba(0,180,180,.22)}
 .fb-cell:active{background:rgba(244,208,63,.2)!important}
+.fb-cell:focus-visible, .fb-str-label:focus-visible{
+  outline:2px solid #F4D03F;outline-offset:-2px;z-index:3;
+}
 .fb-str-label{cursor:pointer}
 .fb-str-label:hover{color:var(--primary-gold)!important;text-shadow:0 0 12px var(--primary-gold)}
 #c-wheel{cursor:pointer}
@@ -1896,22 +1899,33 @@ function buildNeckTable() {
   const nF = neckFretCount;
   const markerFrets = nF===12?[3,5,7,9,12]:nF===5?[3,5]:[3];
 
-  const table = document.createElement('div');
+  // Real semantic <table> — enables native screen-reader table navigation
+  // and keyboard focus traversal (see wireNeckKeyboardNav below), per the
+  // KCM Guitar Fretboard Standard: frets = rows, strings = columns.
+  const table = document.createElement('table');
   table.className = 'fb-table';
+  table.setAttribute('aria-label', 'Guitar fretboard note positions — frets as rows, strings as columns');
 
   // ── Header row: corner + string name labels ──
-  const hdr = document.createElement('div');
+  const thead = document.createElement('thead');
+  const hdr = document.createElement('tr');
   hdr.className = 'fb-row';
-  const corner = document.createElement('div');
+  const corner = document.createElement('th');
   corner.className = 'fb-fnum-cell';
+  corner.scope = 'col';
   corner.style.cssText = 'font-size:.5rem;color:rgba(244,208,63,.3);border-bottom:1px solid rgba(255,255,255,.08)';
   corner.textContent = 'fret';
   hdr.appendChild(corner);
   for (let s = 0; s < 6; s++) {
-    const lbl = document.createElement('div');
+    const lbl = document.createElement('th');
     lbl.className = 'fb-str-label';
+    lbl.scope = 'col';
     lbl.id = `neck-str-${s}`;
     lbl.dataset.ni = tuning[s];
+    lbl.dataset.s  = s;
+    lbl.tabIndex = 0;
+    lbl.setAttribute('role', 'button');
+    lbl.setAttribute('aria-label', `${names[s]} open string — press Enter to play`);
     lbl.textContent = names[s];
     lbl.title = `${names[s]} open string`;
     lbl.style.cursor = 'pointer';
@@ -1920,22 +1934,29 @@ function buildNeckTable() {
     lbl.addEventListener('touchstart', e=>{e.preventDefault();playAndActivate(tuning[_strS], Math.floor(openMid[_strS]/12)-1, 1.0);}, {passive:false});
     hdr.appendChild(lbl);
   }
-  table.appendChild(hdr);
+  thead.appendChild(hdr);
+  table.appendChild(thead);
+
+  const tbody = document.createElement('tbody');
 
   // ── Nut row (fret 0) ──
-  const nutRow = document.createElement('div');
+  const nutRow = document.createElement('tr');
   nutRow.className = 'fb-row nut-row';
-  const nutFnum = document.createElement('div');
+  const nutFnum = document.createElement('th');
   nutFnum.className = 'fb-fnum-cell';
+  nutFnum.scope = 'row';
   nutFnum.style.cssText = 'height:8px;font-size:.55rem';
   nutFnum.textContent = '0';
   nutRow.appendChild(nutFnum);
   for (let s = 0; s < 6; s++) {
     const pc = tuning[s];
-    const cell = document.createElement('div');
+    const cell = document.createElement('td');
     cell.className = 'fb-cell fb-off';
     cell.style.height = neckFretHeight + 'px';
     cell.style.cursor = 'pointer';
+    cell.tabIndex = 0;
+    cell.setAttribute('role', 'button');
+    cell.setAttribute('aria-label', `Open ${names[s]} string, ${NOTES[pc].name} — press Enter to play`);
     cell.dataset.note = pc;
     cell.dataset.s = s;
     cell.dataset.f = 0;
@@ -1953,16 +1974,17 @@ function buildNeckTable() {
     cell.appendChild(dot);
     nutRow.appendChild(cell);
   }
-  table.appendChild(nutRow);
+  tbody.appendChild(nutRow);
 
   // ── Fret rows 1..nF ──
   for (let f = 1; f <= nF; f++) {
-    const row = document.createElement('div');
+    const row = document.createElement('tr');
     row.className = 'fb-row';
     row.dataset.fret = f;
 
-    const fnumCell = document.createElement('div');
+    const fnumCell = document.createElement('th');
     fnumCell.className = 'fb-fnum-cell';
+    fnumCell.scope = 'row';
     if (markerFrets.includes(f)) {
       const inlay = document.createElement('div');
       inlay.className = 'fb-inlay';
@@ -1977,9 +1999,12 @@ function buildNeckTable() {
 
     for (let s = 0; s < 6; s++) {
       const pc  = (tuning[s] + f) % 12;
-      const cell = document.createElement('div');
+      const cell = document.createElement('td');
       cell.className = 'fb-cell fb-off';
       cell.style.cursor = 'pointer';
+      cell.tabIndex = 0;
+      cell.setAttribute('role', 'button');
+      cell.setAttribute('aria-label', `${names[s]} string, fret ${f}, ${NOTES[pc].name} — press Enter to play`);
       cell.dataset.note = pc;
       cell.dataset.s = s;
       cell.dataset.f = f;
@@ -2000,10 +2025,45 @@ function buildNeckTable() {
       cell.appendChild(dot);
       row.appendChild(cell);
     }
-    table.appendChild(row);
+    tbody.appendChild(row);
   }
+  table.appendChild(tbody);
   container.appendChild(table);
+  if (!container._kcmNeckNavWired) {
+    wireNeckKeyboardNav(container);
+    container._kcmNeckNavWired = true;
+  }
   updateNeckDisplay();
+}
+
+// Keyboard navigation across the fretboard table (G-9): arrow keys move focus
+// string-to-string and fret-to-fret; Enter/Space plays the focused position.
+function neckCellAt(s, f) {
+  if (f < 0) return document.getElementById(`neck-str-${s}`);
+  return document.querySelector(`.fb-cell[data-s="${s}"][data-f="${f}"]`);
+}
+
+function wireNeckKeyboardNav(container) {
+  container.addEventListener('keydown', e => {
+    const el = e.target;
+    const isStrHeader = el.classList && el.classList.contains('fb-str-label');
+    const isCell      = el.classList && el.classList.contains('fb-cell');
+    if (!isStrHeader && !isCell) return;
+
+    const s = parseInt(el.dataset.s, 10);
+    const f = isStrHeader ? -1 : parseInt(el.dataset.f, 10);
+    if (isNaN(s)) return;
+
+    let target = null;
+    if (e.key === 'ArrowRight')      target = neckCellAt(Math.min(5, s+1), f);
+    else if (e.key === 'ArrowLeft')  target = neckCellAt(Math.max(0, s-1), f);
+    else if (e.key === 'ArrowDown')  target = neckCellAt(s, Math.min(neckFretCount, f+1));
+    else if (e.key === 'ArrowUp')    target = neckCellAt(s, Math.max(-1, f-1));
+    else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); el.click(); return; }
+    else return;
+
+    if (target) { e.preventDefault(); target.focus(); }
+  });
 }
 
 // Called every frame from loop() — synced to shared STATE
@@ -2018,6 +2078,9 @@ function updateNeckDisplay() {
     if (isActive) {
       cell.classList.add('fb-on'); cell.classList.remove('fb-off');
       const str = S.detectedNotes.find(n=>n.noteIndex===ni)?.strength || 0.9;
+      // Illuminate the cell itself via CSS background-color (G-9), in addition
+      // to the dot glow below.
+      cell.style.backgroundColor = hexRgba(note.color, 0.16 + str*0.14);
       if (dot) {
         // KCM color glow — full saturation, no white wash
         const glow  = Math.round(10 + str * 18);
@@ -2029,6 +2092,7 @@ function updateNeckDisplay() {
       }
     } else {
       cell.classList.remove('fb-on'); cell.classList.add('fb-off');
+      cell.style.backgroundColor = '';
       if (dot) {
         dot.style.boxShadow  = '';
         dot.style.borderColor = 'rgba(255,255,255,.3)';
