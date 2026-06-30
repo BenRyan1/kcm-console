@@ -95,11 +95,17 @@ export default {
           { status: 422, headers: { ...cors, 'Content-Type': 'application/json' } });
       }
 
+      // Optional system prompt, forwarded as Anthropic's separate `system` field
+      // rather than folded into the first user message.
+      const systemPrompt = typeof body.system === 'string' ? body.system.slice(0, 8000) : undefined;
+
       // Cap max_tokens server-side regardless of what the client requests,
       // so a compromised or buggy client can't run up an unbounded bill.
+      // Ceiling raised to 4096 to accommodate the Song Builder's structured
+      // multi-section JSON arrangement response (chords + melody per section).
       const requestedMaxTokens = Number(body.max_tokens);
       const maxTokens = Number.isFinite(requestedMaxTokens)
-        ? Math.min(Math.max(requestedMaxTokens, 1), 1024)
+        ? Math.min(Math.max(requestedMaxTokens, 1), 4096)
         : 500;
 
       let anthropicResponse;
@@ -114,6 +120,7 @@ export default {
           body: JSON.stringify({
             model: env.ANTHROPIC_MODEL || 'claude-sonnet-4-6',
             max_tokens: maxTokens,
+            ...(systemPrompt ? { system: systemPrompt } : {}),
             messages: body.messages,
           }),
         });

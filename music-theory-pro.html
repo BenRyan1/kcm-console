@@ -31,6 +31,7 @@ Santa Barbara, California | All Rights Reserved
 .cc-link:hover { color: #008080 !important; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/cookieconsent@3/build/cookieconsent.min.js"></script>
+<script src="js/kcm-midi-recorder.js"></script>
 <script>
 window.addEventListener('load', function() {
   window.cookieconsent.initialise({
@@ -2258,7 +2259,7 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                 <button class="rec-btn" id="playRecBtn">▶ Playback</button>
                 <button class="rec-btn" id="clearRecBtn" style="background:linear-gradient(135deg, #e67e22 0%, #d35400 100%);">🗑 Clear</button>
                 <button class="rec-btn" id="downloadRecBtn" style="background:linear-gradient(135deg, var(--primary-purple) 0%, #6a4f8c 100%);">💾 MIDI</button>
-                <button class="rec-btn" id="downloadWAVBtn" style="background:linear-gradient(135deg, #1abc9c 0%, #16a085 100%);" title="Record audio to WAV — start Recording first, then click this to capture">🎧 WAV</button>
+                <button class="rec-btn" id="downloadWAVBtn" style="background:linear-gradient(135deg, #1abc9c 0%, #16a085 100%);" title="Download your recording as a real .wav file — click Record, play notes, click Stop, then click this">🎧 WAV</button>
             </div>
             <div style="text-align:center; font-size:0.68rem; color:#b0b0cc; margin-bottom:0.5rem; line-height:1.4;">
                 ⏺ Record captures note events for MIDI · 🎧 WAV captures the actual audio output
@@ -2436,6 +2437,12 @@ window.addEventListener('unhandledrejection', function(event) {
             currentWaveform:      { get: () => currentWaveform,      configurable: true },
             currentBPM:           { get: () => currentBPM,           configurable: true },
             selectedNotes:        { get: () => selectedNotes,        configurable: true },
+            currentHarmDegree:    { get: () => currentHarmDegree,    configurable: true },
+            currentHarmChordType: { get: () => currentHarmChordType, configurable: true },
+            harmonizedMajorTriads:{ get: () => harmonizedMajorTriads,configurable: true },
+            harmonizedMajor7ths:  { get: () => harmonizedMajor7ths,  configurable: true },
+            harmonizedMinorTriads:{ get: () => harmonizedMinorTriads,configurable: true },
+            harmonizedMinor7ths:  { get: () => harmonizedMinor7ths,  configurable: true },
         });
 
         // ── Init ──────────────────────────────────────────────────
@@ -2657,7 +2664,7 @@ window.addEventListener('unhandledrejection', function(event) {
                 if (el('playRecBtn')) el('playRecBtn').onclick = playbackRecording;
                 if (el('clearRecBtn')) el('clearRecBtn').onclick = () => { recordedNotes = []; const s = el('recordingStatus'); if (s) s.textContent = '🗑 Recording cleared'; };
                 if (el('downloadRecBtn')) el('downloadRecBtn').onclick = downloadMIDI;
-                if (el('downloadWAVBtn')) el('downloadWAVBtn').onclick = startWAVRecording;
+                if (el('downloadWAVBtn')) el('downloadWAVBtn').onclick = downloadWAV;
                 const tempoSlider = el('tempoSlider');
                 if (tempoSlider) tempoSlider.oninput = function() { currentBPM = parseInt(this.value); const d = el('bpmDisplay'); if (d) d.textContent = currentBPM; };
                 if (el('fret4Btn')) el('fret4Btn').onclick = () => { guitarFretCount = 4; el('fret4Btn').classList.add('active'); el('fret5Btn').classList.remove('active'); el('fret12Btn').classList.remove('active'); createGuitar(); setTimeout(() => updateSphereDisplay(), 50); };
@@ -4373,115 +4380,70 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
             } catch(e) { console.error('Download MIDI error:', e); }
         }
 
-        // ── WAV / Audio Recording Engine ──────────────────────────
-        // Uses MediaRecorder on a MediaStream destination node wired to the AudioContext.
-        // The recorder captures the LIVE audio output — whatever the synth/samples play.
+        // ── WAV Audio Export (fixes H-6) ───────────────────────────
+        // Previously this routed live audio through MediaRecorder, which
+        // can only produce compressed .webm/.ogg in-browser — never a real
+        // .wav, despite the claim and the UI both calling it "WAV". This
+        // now renders the same recordedNotes buffer already used for MIDI
+        // export (see downloadMIDI above) through kcm-midi-recorder.js's
+        // OfflineAudioContext-based renderToWav, producing a genuine
+        // 16-bit PCM .wav file every time, with no live-capture timing
+        // risk and no browser-codec dependency.
+        let _wavRendering = false;
 
-        let _wavDest     = null;   // MediaStreamAudioDestinationNode
-        let _wavRecorder = null;   // MediaRecorder
-        let _wavChunks   = [];
-        let _wavRecording = false;
-        const _WAV_MIME   = ['audio/webm;codecs=opus','audio/webm','audio/ogg'].find(m => {
-            try { return MediaRecorder.isTypeSupported(m); } catch(e) { return false; }
-        }) || '';
-
-        function _ensureWAVDest() {
-            if (_wavDest) return;
+        async function downloadWAV() {
+            const btn    = document.getElementById('downloadWAVBtn');
+            const status = document.getElementById('recordingStatus');
             try {
-                _wavDest = audioContext.createMediaStreamDestination();
-                // Tap the master output: all future audio nodes connect here too.
-                // We do this by overriding audioContext.destination references — instead
-                // we manually reconnect after the fact. The simplest approach: create a
-                // GainNode splitter that feeds BOTH the real output and the recorder.
-                // Existing nodes connect to audioContext.destination directly, so we
-                // use a ChannelMergerNode trick: connect destination's stream to recorder.
-                // Actually the cleanest method: replace audioContext.destination usage
-                // with a master gain node that also connects to _wavDest.
-                // Since all _playAt / _playSynth / _playSample connect to audioContext.destination,
-                // we redirect them through a master bus instead.
-                window._kcmMasterBus = audioContext.createGain();
-                window._kcmMasterBus.gain.value = 1.0;
-                window._kcmMasterBus.connect(audioContext.destination);
-                window._kcmMasterBus.connect(_wavDest);
-            } catch(e) { console.error('WAV dest error:', e); }
-        }
-
-        function startWAVRecording() {
-            try {
-                if (!audioReady) { alert('Click START AUDIO ENGINE first!'); return; }
-                if (_wavRecording) { stopWAVRecording(); return; }
-
-                _ensureWAVDest();
-
-                // Restart with a fresh MediaStreamDestination so all new nodes go through it.
-                // Since existing nodes connect to audioContext.destination directly,
-                // we use the AudioContext.createMediaStreamDestination approach:
-                // ALL audio in the context is automatically captured by this node's stream.
-
-                // Create a fresh destination for capture
-                const captureDest = audioContext.createMediaStreamDestination();
-
-                // Connect master output → captureDest (captures everything playing)
-                // We need a source connected to captureDest. The trick: use a ChannelSplitter
-                // to mirror the context output. Since that's not directly possible in Web Audio,
-                // we instead use the createMediaStreamDestination node and route our master gain through it.
-                if (window._kcmMasterBus) {
-                    window._kcmMasterBus.connect(captureDest);
-                }
-
-                _wavChunks = [];
-                if (!_WAV_MIME) {
-                    const s = document.getElementById('recordingStatus');
-                    if (s) s.textContent = '⚠️ WAV recording not supported in this browser. Try Chrome or Firefox.';
+                if (_wavRendering) return;
+                if (recordedNotes.length === 0) {
+                    if (status) status.textContent = '⚠️ No recording yet — click Record, play some notes, then Stop.';
                     return;
                 }
+                if (!window.KCMRecorder || typeof window.KCMRecorder.renderToWav !== 'function') {
+                    if (status) status.textContent = '⚠️ WAV renderer unavailable.';
+                    return;
+                }
+                _wavRendering = true;
+                if (btn)    { btn.textContent = '⏳ Rendering…'; btn.disabled = true; }
+                if (status) status.textContent = '⏳ Rendering WAV…';
 
-                _wavRecorder = new MediaRecorder(captureDest.stream, { mimeType: _WAV_MIME, audioBitsPerSecond: 256000 });
-                _wavRecorder.ondataavailable = e => { if (e.data.size > 0) _wavChunks.push(e.data); };
-                _wavRecorder.onstop = _exportWAV;
-                _wavRecorder.start(100);
-                _wavRecording = true;
+                // Convert recordedNotes {note, octave, timestamp, duration} into the
+                // {type:'on'/'off', note: MIDI number, time: ms} event pairs that
+                // renderToWav expects.
+                const events = [];
+                let maxEndMs = 0;
+                recordedNotes.forEach(n => {
+                    const midiNote = (n.octave + 1) * 12 + n.note; // C4 = 60, standard
+                    const durMs    = Math.round((n.duration || 0.5) * 1000);
+                    const endMs    = n.timestamp + durMs;
+                    events.push({ type: 'on',  note: midiNote, velocity: 100, time: n.timestamp });
+                    events.push({ type: 'off', note: midiNote, time: endMs });
+                    if (endMs > maxEndMs) maxEndMs = endMs;
+                });
 
-                const btn = document.getElementById('downloadWAVBtn');
-                const s   = document.getElementById('recordingStatus');
-                if (btn) { btn.textContent = '⏹ Stop WAV'; btn.style.background = 'linear-gradient(135deg,#e74c3c,#c0392b)'; }
-                if (s)   s.textContent = '🔴 WAV recording… play notes, then click ⏹ Stop WAV';
-
+                const wavBlob = await window.KCMRecorder.renderToWav(events, maxEndMs);
+                const url = URL.createObjectURL(wavBlob);
+                const a   = document.createElement('a');
+                a.href = url;
+                a.download = `kcm_recording_${new Date().toISOString().slice(0,19).replace(/[T:]/g,'-')}.wav`;
+                a.click();
+                URL.revokeObjectURL(url);
+                if (status) status.textContent = `💾 Saved ${(wavBlob.size/1024).toFixed(0)} KB as real .wav`;
             } catch(e) {
-                console.error('WAV record error:', e);
-                const s = document.getElementById('recordingStatus');
-                if (s) s.textContent = '⚠️ WAV recording failed: ' + e.message;
+                console.error('WAV export error:', e);
+                if (status) status.textContent = '⚠️ WAV export failed: ' + e.message;
+            } finally {
+                _wavRendering = false;
+                if (btn) { btn.textContent = '🎧 WAV'; btn.disabled = false; }
             }
         }
 
-        function stopWAVRecording() {
-            if (!_wavRecording || !_wavRecorder) return;
-            _wavRecording = false;
-            _wavRecorder.stop();
-            const btn = document.getElementById('downloadWAVBtn');
-            if (btn) { btn.textContent = '🎧 WAV'; btn.style.background = 'linear-gradient(135deg, #1abc9c 0%, #16a085 100%)'; }
-        }
-
-        function _exportWAV() {
-            try {
-                const blob = new Blob(_wavChunks, { type: _WAV_MIME || 'audio/webm' });
-                const url  = URL.createObjectURL(blob);
-                const a    = document.createElement('a');
-                const ext  = _WAV_MIME.includes('ogg') ? '.ogg' : '.webm';
-                a.href = url;
-                a.download = `kcm_recording_${new Date().toISOString().slice(0,19).replace(/[T:]/g,'-')}${ext}`;
-                a.click();
-                URL.revokeObjectURL(url);
-                const s = document.getElementById('recordingStatus');
-                if (s) s.textContent = `💾 Audio saved (${(blob.size/1024).toFixed(0)} KB) — open in Audacity to convert to WAV`;
-            } catch(e) { console.error('WAV export error:', e); }
-        }
-
         // Expose for dock
-        window.startWAVRecording = startWAVRecording;
-        window.stopWAVRecording  = stopWAVRecording;
+        window.downloadWAV = downloadWAV;
 
         // ── Interval popup ────────────────────────────────────────
+
         function showIntervalInfo(interval) {
             try {
                 if (typeof interval !== 'number' || interval < 0 || interval > 11) return;
@@ -5435,6 +5397,17 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 }
             // Update voicing panel if in harmonized mode
             try { if (typeof updateVoicingPanel === 'function') updateVoicingPanel(); } catch(e2) {}
+            // Session interaction history (H-7): log each distinct selection-state
+            // description for the AI Tutor's context, deduped against the last entry.
+            try {
+                if (!window._kcmSessionHistory) window._kcmSessionHistory = [];
+                const h = window._kcmSessionHistory;
+                const last = h[h.length - 1];
+                if (status.textContent && status.textContent !== last) {
+                    h.push(status.textContent);
+                    if (h.length > 10) h.shift();
+                }
+            } catch(e3) {}
             } catch(e) { console.error('Update display error:', e); }
         }
 
@@ -7383,6 +7356,29 @@ Explain in 3 sentences: what they're looking at, what makes it musically interes
     _guideFireClaude(prompt);
 }
 
+// ── KCM AI Proxy Helper (fixes H-1/H-2) ──────────────────────────
+// All AI requests route through the Cloudflare Worker's /ai endpoint,
+// which injects the Anthropic API key server-side (Worker secret,
+// never exposed to the browser) and forwards to the Anthropic Messages
+// API. Previously these calls went directly to api.anthropic.com from
+// client-side JS with no credential at all, which could never succeed.
+const _KCM_AI_PROXY_URL = 'https://snowy-rain-84a5.ben-03b.workers.dev/ai';
+
+async function _kcmAIProxy(messages, system, maxTokens) {
+    const res = await fetch(_KCM_AI_PROXY_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            max_tokens: maxTokens || 500,
+            ...(system ? { system } : {}),
+            messages,
+        })
+    });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || 'AI proxy request failed');
+    return { content: data.content };
+}
+
 async function _guideFireClaude(userPrompt) {
     if (_guideInflight) return;
     _guideInflight = true;
@@ -7397,17 +7393,11 @@ async function _guideFireClaude(userPrompt) {
     if (dot)      dot.style.background   = '#F4D03F';
 
     try {
-        const res = await fetch('https://api.anthropic.com/v1/messages', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                model: 'claude-sonnet-4-20250514',
-                max_tokens: 400,
-                system: typeof _getKCMContext === 'function' ? _getKCMContext() : 'You are the KCM AI Music Theory Tutor. Be warm, concise, and educational.',
-                messages: [{ role: 'user', content: userPrompt }]
-            })
-        });
-        const data = await res.json();
+        const data = await _kcmAIProxy(
+            [{ role: 'user', content: userPrompt }],
+            typeof _getKCMContext === 'function' ? _getKCMContext() : 'You are the KCM AI Music Theory Tutor. Be warm, concise, and educational.',
+            400
+        );
         const text = data.content && data.content[0] ? data.content[0].text.trim() : 'No response.';
         if (loading)  loading.style.display  = 'none';
         if (response) response.textContent    = text;
@@ -7648,18 +7638,11 @@ Make the melody genuinely musical — use stepwise motion with occasional leaps,
 Create a complete, expressive composition. Make the chord progression interesting and appropriate to the mode. The melody should be singable and emotionally resonant with the "${feel}" feel. Use the KCM color system throughout.`;
 
     try {
-        const res = await fetch('https://api.anthropic.com/v1/messages', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                model: 'claude-sonnet-4-20250514',
-                max_tokens: 4000,
-                system: systemPrompt,
-                messages: [{ role: 'user', content: userPrompt }]
-            })
-        });
-
-        const data = await res.json();
+        const data = await _kcmAIProxy(
+            [{ role: 'user', content: userPrompt }],
+            systemPrompt,
+            4000
+        );
         let rawText = data.content && data.content[0] ? data.content[0].text.trim() : '';
 
         // Robust JSON extraction - handles markdown fences, leading/trailing text
@@ -8077,6 +8060,45 @@ function _getKCMContext() {
 
     const modeLabel = modeNames[mode] || mode;
 
+    // ── H-7 field 1: harmonized scale chords at each diatonic degree ──
+    let harmonizedBlock = '';
+    try {
+        const chordType = typeof currentHarmChordType !== 'undefined' ? currentHarmChordType : 'triad';
+        const isMinor = level === 'harmMinor';
+        const degrees = isMinor
+            ? (chordType === '7th' ? window.harmonizedMinor7ths : window.harmonizedMinorTriads)
+            : (chordType === '7th' ? window.harmonizedMajor7ths : window.harmonizedMajorTriads);
+        if (Array.isArray(degrees)) {
+            const curDeg = typeof currentHarmDegree !== 'undefined' ? currentHarmDegree : 0;
+            const degList = degrees.map((d, i) =>
+                `${d.name} (${d.quality}${i === curDeg ? ' — currently selected' : ''})`
+            ).join(', ');
+            harmonizedBlock = `\n- Harmonized ${isMinor ? 'minor' : 'major'} scale chords at each degree: ${degList}`;
+        }
+    } catch(eH) {}
+
+    // ── H-7 field 2: notes of any currently selected stencil pattern ──
+    let stencilBlock = '';
+    try {
+        const pat = window.currentPatternIntervals;
+        if (Array.isArray(pat) && pat.length > 0) {
+            const stencilNotes = pat.map(iv => noteNames[((root + iv) % 12 + 12) % 12]).join(', ');
+            stencilBlock = `\n- Current stencil pattern notes: ${stencilNotes}`;
+        }
+    } catch(eS) {}
+
+    // ── H-7 field 3: current BPM (playback tempo) ──
+    const bpmBlock = `\n- BPM: ${bpm}`;
+
+    // ── H-7 field 4: recent session interaction history ──
+    let historyBlock = '';
+    try {
+        const hist = window._kcmSessionHistory;
+        if (Array.isArray(hist) && hist.length > 0) {
+            historyBlock = `\n- Recent session activity: ${hist.slice(-5).join(' → ')}`;
+        }
+    } catch(eHi) {}
+
     return `You are the KCM AI Music Theory Tutor, built into "Music Theory Explorer Pro" by Benjamin Ryan — creator of the Keys, Codes & Modes™ visual music theory system.
 
 CURRENT APP STATE:
@@ -8084,8 +8106,7 @@ CURRENT APP STATE:
 - Mode: ${levelLabel}${level === 'modes' ? ' → ' + modeLabel : ''}
 - Selected Notes: ${noteList}
 - Octave: ${octave} (Middle C = Octave 4)
-- Waveform: ${waveform}
-- BPM: ${bpm}
+- Waveform: ${waveform}${bpmBlock}${harmonizedBlock}${stencilBlock}${historyBlock}
 
 KCM SYSTEM: The 12-Color Chromatic Spectrum™ assigns a unique color to each of the 12 pitch classes:
 C=Yellow, C#=Amber, D=Orange, D#=Red-Orange, E=Red, F=Magenta, F#=Violet, G=Blue-Violet, G#=Blue, A=Sky Blue, A#=Spring Green, B=Yellow-Green.
@@ -8135,18 +8156,11 @@ async function kcmAIAsk(type) {
     if (dot)      { dot.style.background = '#F4D03F'; }
 
     try {
-        const res = await fetch('https://api.anthropic.com/v1/messages', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                model: 'claude-sonnet-4-20250514',
-                max_tokens: 1000,
-                system: _getKCMContext(),
-                messages: [{ role: 'user', content: userPrompt }]
-            })
-        });
-
-        const data = await res.json();
+        const data = await _kcmAIProxy(
+            [{ role: 'user', content: userPrompt }],
+            _getKCMContext(),
+            1000
+        );
         const text = data.content && data.content[0] ? data.content[0].text : 'No response received.';
 
         if (loading)  loading.style.display  = 'none';

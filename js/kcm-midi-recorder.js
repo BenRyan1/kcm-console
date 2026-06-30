@@ -327,6 +327,7 @@
   global.KCMRecorder={
     init,noteOn,noteOff,noteOnByName,noteOffByName,noteNameToMidi,
     connectSynthOutput,getTakes:()=>takes,getEvents:()=>events,
+    renderToWav,
     _rec,_stop,_play,_clear,_exportMidi,_exportWav,
     _toggleRecord:_rec,_rewind:_play
   };
