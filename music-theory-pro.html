@@ -3623,8 +3623,20 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
             if (typeof oct === 'undefined') oct = currentOctave;
             if (typeof dur === 'undefined') dur = 0.7;
             try {
-                if (!audioContext || !audioReady) return;
+                if (!audioContext || !audioReady) {
+                    try { initAudio(); } catch(eInit) {}
+                    const s = document.getElementById('status');
+                    if (s) s.textContent = '🔊 Starting audio… click the note again in a moment';
+                    return;
+                }
                 if (audioContext.state === 'suspended') audioContext.resume();
+                if (!window._kcmMasterBus) {
+                    try {
+                        window._kcmMasterBus = audioContext.createGain();
+                        window._kcmMasterBus.gain.value = 1.0;
+                        window._kcmMasterBus.connect(audioContext.destination);
+                    } catch(eBus) { console.error('Master bus rebuild failed:', eBus); }
+                }
                 if (isRecording) recordedNotes.push({note:n, octave:oct, timestamp:Date.now()-recordingStartTime, duration:dur});
                 _playAt(n, oct, audioContext.currentTime, dur, 0.25);
                 // Only do visual highlight for single-note clicks (not during sequence playback)
