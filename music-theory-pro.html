@@ -5383,7 +5383,17 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
             try {
                 const list = document.getElementById('noteList');
                 if (!list) return;
-                let notes = Array.from(selectedNotes).sort((a,b)=>a-b);
+                const sorted = Array.from(selectedNotes).sort((a,b)=>a-b);
+                // Rotate so the root always comes first (= bottom note), same rule
+                // used everywhere else notes are voiced (playChordNotes, drawStaff,
+                // stencil playback, etc). A plain numeric sort would scramble the
+                // order whenever the root isn't the lowest pitch class (e.g. root A
+                // with a major triad → pcs [9,1,4] → naive sort puts A last).
+                let notes = sorted;
+                if (currentLevel !== 'freeplay' && currentLevel !== '2') {
+                    const rootIdx = sorted.indexOf(rootNote);
+                    if (rootIdx > 0) notes = [...sorted.slice(rootIdx), ...sorted.slice(0, rootIdx)];
+                }
                 if (currentLevel === 'freeplay' && notes.length === 0) {
                     list.innerHTML = '<span class="note-badge">Click notes to select!</span>';
                 } else if (notes.length === 2 && currentLevel === '2') {
