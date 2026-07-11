@@ -216,6 +216,33 @@ body{font-family:var(--font-b);background:radial-gradient(ellipse at 30% 20%,#1e
         </svg>
       </div>
 
+      <!-- ── Explorer: see the current key/chord on Keyboard, Fretboard, Staff, Chromatic Circle ── -->
+      <div class="explorer-section" id="explorerSection" style="margin:14px 0 0;">
+        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-bottom:10px;">
+          <h2 style="margin:0; font-size:1.1rem; color:#F4D03F;">🎼 See It On...</h2>
+          <div id="explorerTabs" style="display:flex; gap:6px; flex-wrap:wrap;">
+            <button class="explorer-tab" data-panel="keyboard" style="padding:6px 12px; border-radius:8px; font-size:0.72rem; font-weight:700; cursor:pointer; border:1.5px solid rgba(0,192,192,0.25); background:rgba(0,40,40,0.4); color:#8fb0b0;">⌨ Keyboard</button>
+            <button class="explorer-tab" data-panel="fretboard" style="padding:6px 12px; border-radius:8px; font-size:0.72rem; font-weight:700; cursor:pointer; border:1.5px solid rgba(0,192,192,0.25); background:rgba(0,40,40,0.4); color:#8fb0b0;">🎸 Fretboard</button>
+            <button class="explorer-tab" data-panel="staff" style="padding:6px 12px; border-radius:8px; font-size:0.72rem; font-weight:700; cursor:pointer; border:1.5px solid rgba(0,192,192,0.25); background:rgba(0,40,40,0.4); color:#8fb0b0;">🎼 Staff</button>
+            <button class="explorer-tab" data-panel="circle" style="padding:6px 12px; border-radius:8px; font-size:0.72rem; font-weight:700; cursor:pointer; border:1.5px solid rgba(0,192,192,0.25); background:rgba(0,40,40,0.4); color:#8fb0b0;">⭕ Chromatic Circle</button>
+          </div>
+        </div>
+        <div id="explorerReadout" style="text-align:center; font-size:0.85rem; color:#a0f0f0; margin-bottom:8px; min-height:1.2em;">Click any key or chord on the wheel above</div>
+        <div style="background:rgba(10,14,26,0.55); border:1.5px solid rgba(0,192,192,0.28); border-radius:14px; padding:16px; overflow-x:auto;">
+          <div class="explorer-panel" data-panel="keyboard"><svg id="explKeyboardSvg" viewBox="0 0 700 180" width="700" height="180" preserveAspectRatio="xMidYMid meet" style="width:100%; max-width:700px; height:auto; display:block; margin:0 auto;"></svg></div>
+          <div class="explorer-panel" data-panel="fretboard" style="display:none;">
+            <div style="display:flex; gap:6px; justify-content:center; margin-bottom:8px;">
+              <button class="expl-fret-btn" data-frets="4" style="padding:5px 12px; border-radius:8px; font-size:0.68rem; font-weight:700; cursor:pointer; border:1.5px solid rgba(0,192,192,0.35); background:rgba(0,40,40,0.4); color:#8fb0b0;">4 Frets</button>
+              <button class="expl-fret-btn" data-frets="5" style="padding:5px 12px; border-radius:8px; font-size:0.68rem; font-weight:700; cursor:pointer; border:1.5px solid rgba(0,192,192,0.35); background:rgba(0,40,40,0.4); color:#8fb0b0;">5 Frets</button>
+              <button class="expl-fret-btn" data-frets="12" style="padding:5px 12px; border-radius:8px; font-size:0.68rem; font-weight:700; cursor:pointer; border:1.5px solid rgba(0,192,192,0.35); background:rgba(0,40,40,0.4); color:#8fb0b0;">12 Frets (Full)</button>
+            </div>
+            <svg id="explFretboardSvg" viewBox="0 0 340 260" width="340" height="260" preserveAspectRatio="xMidYMid meet" style="width:100%; max-width:340px; height:auto; display:block; margin:0 auto;"></svg>
+          </div>
+          <div class="explorer-panel" data-panel="staff" style="display:none;"><svg id="explStaffSvg" viewBox="0 0 700 150" width="700" height="150" preserveAspectRatio="xMidYMid meet" style="width:100%; max-width:700px; height:auto; display:block; margin:0 auto;"></svg></div>
+          <div class="explorer-panel" data-panel="circle" style="display:none;"><svg id="explCircleSvg" viewBox="0 0 300 300" width="300" height="300" preserveAspectRatio="xMidYMid meet" style="width:100%; max-width:320px; height:auto; display:block; margin:0 auto;"></svg></div>
+        </div>
+      </div>
+
       <!-- Loop block -->
       <div class="record-bar" style="margin:8px 0;">
         <button class="rec-btn" id="cofRecordBtn">🔴 RECORD</button>
@@ -311,33 +338,6 @@ body{font-family:var(--font-b);background:radial-gradient(ellipse at 30% 20%,#1e
         <div class="prog-list" id="minProgList"></div>
         <div class="chord-pills" id="minPills"></div>
       </div>
-    </div>
-  </div>
-
-  <!-- ── Explorer: see the current key/chord on Keyboard, Fretboard, Staff, Chromatic Circle ── -->
-  <div class="explorer-section" id="explorerSection" style="margin:28px auto 0; max-width:980px; padding:0 16px;">
-    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-bottom:10px;">
-      <h2 style="margin:0; font-size:1.1rem; color:#F4D03F;">🎼 See It On...</h2>
-      <div id="explorerTabs" style="display:flex; gap:6px; flex-wrap:wrap;">
-        <button class="explorer-tab" data-panel="keyboard" style="padding:6px 12px; border-radius:8px; font-size:0.72rem; font-weight:700; cursor:pointer; border:1.5px solid rgba(0,192,192,0.25); background:rgba(0,40,40,0.4); color:#8fb0b0;">⌨ Keyboard</button>
-        <button class="explorer-tab" data-panel="fretboard" style="padding:6px 12px; border-radius:8px; font-size:0.72rem; font-weight:700; cursor:pointer; border:1.5px solid rgba(0,192,192,0.25); background:rgba(0,40,40,0.4); color:#8fb0b0;">🎸 Fretboard</button>
-        <button class="explorer-tab" data-panel="staff" style="padding:6px 12px; border-radius:8px; font-size:0.72rem; font-weight:700; cursor:pointer; border:1.5px solid rgba(0,192,192,0.25); background:rgba(0,40,40,0.4); color:#8fb0b0;">🎼 Staff</button>
-        <button class="explorer-tab" data-panel="circle" style="padding:6px 12px; border-radius:8px; font-size:0.72rem; font-weight:700; cursor:pointer; border:1.5px solid rgba(0,192,192,0.25); background:rgba(0,40,40,0.4); color:#8fb0b0;">⭕ Chromatic Circle</button>
-      </div>
-    </div>
-    <div id="explorerReadout" style="text-align:center; font-size:0.85rem; color:#a0f0f0; margin-bottom:8px; min-height:1.2em;">Click any key or chord on the wheel above</div>
-    <div style="background:rgba(10,14,26,0.55); border:1.5px solid rgba(0,192,192,0.28); border-radius:14px; padding:16px; overflow-x:auto;">
-      <div class="explorer-panel" data-panel="keyboard"><svg id="explKeyboardSvg" viewBox="0 0 700 180" width="700" height="180" preserveAspectRatio="xMidYMid meet" style="width:100%; max-width:700px; height:auto; display:block; margin:0 auto;"></svg></div>
-      <div class="explorer-panel" data-panel="fretboard" style="display:none;">
-        <div style="display:flex; gap:6px; justify-content:center; margin-bottom:8px;">
-          <button class="expl-fret-btn" data-frets="4" style="padding:5px 12px; border-radius:8px; font-size:0.68rem; font-weight:700; cursor:pointer; border:1.5px solid rgba(0,192,192,0.35); background:rgba(0,40,40,0.4); color:#8fb0b0;">4 Frets</button>
-          <button class="expl-fret-btn" data-frets="5" style="padding:5px 12px; border-radius:8px; font-size:0.68rem; font-weight:700; cursor:pointer; border:1.5px solid rgba(0,192,192,0.35); background:rgba(0,40,40,0.4); color:#8fb0b0;">5 Frets</button>
-          <button class="expl-fret-btn" data-frets="12" style="padding:5px 12px; border-radius:8px; font-size:0.68rem; font-weight:700; cursor:pointer; border:1.5px solid rgba(0,192,192,0.35); background:rgba(0,40,40,0.4); color:#8fb0b0;">12 Frets (Full)</button>
-        </div>
-        <svg id="explFretboardSvg" viewBox="0 0 340 260" width="340" height="260" preserveAspectRatio="xMidYMid meet" style="width:100%; max-width:340px; height:auto; display:block; margin:0 auto;"></svg>
-      </div>
-      <div class="explorer-panel" data-panel="staff" style="display:none;"><svg id="explStaffSvg" viewBox="0 0 700 150" width="700" height="150" preserveAspectRatio="xMidYMid meet" style="width:100%; max-width:700px; height:auto; display:block; margin:0 auto;"></svg></div>
-      <div class="explorer-panel" data-panel="circle" style="display:none;"><svg id="explCircleSvg" viewBox="0 0 300 300" width="300" height="300" preserveAspectRatio="xMidYMid meet" style="width:100%; max-width:320px; height:auto; display:block; margin:0 auto;"></svg></div>
     </div>
   </div>
 </div>
