@@ -1848,7 +1848,13 @@ function getRootSpokeIndex() {
 }
 
 function isNoteInStencil(noteIndex) {
-  return (STENCILS[currentStencil] || []).includes(noteIndex);
+  // STENCILS patterns are defined relative to root=0 (C). Shift by whichever
+  // root is currently selected (getRootSpokeIndex) before checking membership —
+  // otherwise this only lines up correctly when the root happens to be C, and
+  // scrambles for every other key (matches the sidebar's own root-shift math).
+  const rootPc = getRootSpokeIndex() % 12;
+  const rel = (noteIndex - rootPc + 12) % 12;
+  return (STENCILS[currentStencil] || []).includes(rel);
 }
 
 function isNoteInWedge(spokeIndex) {
