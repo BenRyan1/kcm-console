@@ -328,7 +328,14 @@ body{font-family:var(--font-b);background:radial-gradient(ellipse at 30% 20%,#1e
     <div id="explorerReadout" style="text-align:center; font-size:0.85rem; color:#a0f0f0; margin-bottom:8px; min-height:1.2em;">Click any key or chord on the wheel above</div>
     <div style="background:rgba(10,14,26,0.55); border:1.5px solid rgba(0,192,192,0.28); border-radius:14px; padding:16px; overflow-x:auto;">
       <div class="explorer-panel" data-panel="keyboard"><svg id="explKeyboardSvg" viewBox="0 0 700 180" width="700" height="180" preserveAspectRatio="xMidYMid meet" style="width:100%; max-width:700px; height:auto; display:block; margin:0 auto;"></svg></div>
-      <div class="explorer-panel" data-panel="fretboard" style="display:none;"><svg id="explFretboardSvg" viewBox="0 0 700 200" width="700" height="200" preserveAspectRatio="xMidYMid meet" style="width:100%; max-width:700px; height:auto; display:block; margin:0 auto;"></svg></div>
+      <div class="explorer-panel" data-panel="fretboard" style="display:none;">
+        <div style="display:flex; gap:6px; justify-content:center; margin-bottom:8px;">
+          <button class="expl-fret-btn" data-frets="4" style="padding:5px 12px; border-radius:8px; font-size:0.68rem; font-weight:700; cursor:pointer; border:1.5px solid rgba(0,192,192,0.35); background:rgba(0,40,40,0.4); color:#8fb0b0;">4 Frets</button>
+          <button class="expl-fret-btn" data-frets="5" style="padding:5px 12px; border-radius:8px; font-size:0.68rem; font-weight:700; cursor:pointer; border:1.5px solid rgba(0,192,192,0.35); background:rgba(0,40,40,0.4); color:#8fb0b0;">5 Frets</button>
+          <button class="expl-fret-btn" data-frets="12" style="padding:5px 12px; border-radius:8px; font-size:0.68rem; font-weight:700; cursor:pointer; border:1.5px solid rgba(0,192,192,0.35); background:rgba(0,40,40,0.4); color:#8fb0b0;">12 Frets (Full)</button>
+        </div>
+        <svg id="explFretboardSvg" viewBox="0 0 340 260" width="340" height="260" preserveAspectRatio="xMidYMid meet" style="width:100%; max-width:340px; height:auto; display:block; margin:0 auto;"></svg>
+      </div>
       <div class="explorer-panel" data-panel="staff" style="display:none;"><svg id="explStaffSvg" viewBox="0 0 700 150" width="700" height="150" preserveAspectRatio="xMidYMid meet" style="width:100%; max-width:700px; height:auto; display:block; margin:0 auto;"></svg></div>
       <div class="explorer-panel" data-panel="circle" style="display:none;"><svg id="explCircleSvg" viewBox="0 0 300 300" width="300" height="300" preserveAspectRatio="xMidYMid meet" style="width:100%; max-width:320px; height:auto; display:block; margin:0 auto;"></svg></div>
     </div>
@@ -1094,8 +1101,14 @@ document.getElementById('cofClearBtn').addEventListener('click', ()=>{
 // currently active on the Circle of Fifths wheel (dots, tonic/sub/dom
 // buttons, arpeggios, sequences, loop). Wired in from render() above —
 // note this uses function declarations (not const) so they're hoisted
-// and available no matter where render() is first called from.
+// and available no matter where render() is first called from. State that
+// needs a real value (not just a hoisted function) uses "var" instead of
+// "let/const" for the same reason — var is safe to read before its own
+// line runs (yields undefined, not a crash); a const here would throw the
+// same temporal-dead-zone error the staff panel hit earlier.
 // ══════════════════════════════════════════════════════
+var _explFretCount = 5; // matches the main Guitar Fretboard panel's default
+
 function _explPc(name) {
   return NOTE_CHROMA[name] !== undefined ? NOTE_CHROMA[name] : CHROMATIC.indexOf(name);
 }
@@ -1141,24 +1154,29 @@ function _explRenderFretboard(tones) {
   const svg = document.getElementById('explFretboardSvg');
   if (!svg) return;
   const tonePcs = new Set(tones.map(_explPc));
-  const STRINGS = ['E','B','G','D','A','E']; // high to low, open-string notes
-  const FRETS = 5;
-  const w = 700, padL = 40, padT = 20;
-  const fretW = (w-padL-20)/FRETS, stringSpc = 140/(STRINGS.length-1);
-  let html = `<rect x="${padL}" y="${padT}" width="4" height="${stringSpc*(STRINGS.length-1)}" fill="#F4D03F"/>`;
+  // Vertical strings, bass (low E) on the LEFT — matches the main app's
+  // fretboard convention: strings run top-to-bottom, columns left-to-right
+  // are E(low) A D G B E(high), frets stack downward from the nut.
+  const STRINGS = ['E','A','D','G','B','E'];
+  const FRETS = _explFretCount || 5;
+  const w = 340, h = 260, padL = 30, padT = 40, padR = 20, padB = 20;
+  const stringSpc = (w-padL-padR)/(STRINGS.length-1);
+  const fretH = (h-padT-padB)/FRETS;
+  let html = `<rect x="${padL-2}" y="${padT-2}" width="${stringSpc*(STRINGS.length-1)+4}" height="4" fill="#F4D03F"/>`;
   for (let f=1; f<=FRETS; f++) {
-    const x = padL + f*fretW;
-    html += `<line x1="${x}" y1="${padT}" x2="${x}" y2="${padT+stringSpc*(STRINGS.length-1)}" stroke="rgba(0,192,192,0.3)" stroke-width="1.5"/>`;
+    const y = padT + f*fretH;
+    html += `<line x1="${padL}" y1="${y}" x2="${padL+stringSpc*(STRINGS.length-1)}" y2="${y}" stroke="rgba(0,192,192,0.3)" stroke-width="1.5"/>`;
   }
   STRINGS.forEach((openNote,si) => {
-    const y = padT + si*stringSpc;
-    html += `<line x1="${padL}" y1="${y}" x2="${w-20}" y2="${y}" stroke="rgba(200,200,220,0.35)" stroke-width="1"/>`;
+    const x = padL + si*stringSpc;
+    html += `<line x1="${x}" y1="${padT}" x2="${x}" y2="${h-padB}" stroke="rgba(200,200,220,0.35)" stroke-width="${1+si*0.3}"/>`;
+    html += `<text x="${x}" y="18" text-anchor="middle" font-size="11" font-weight="700" fill="#c8c8e0">${openNote}</text>`;
     const openPc = _explPc(openNote);
     for (let f=0; f<=FRETS; f++) {
       const notePc = (openPc+f)%12;
       const noteName = CHROMATIC[notePc];
       if (!tonePcs.has(notePc)) continue;
-      const x = f===0 ? padL-16 : padL + (f-0.5)*fretW;
+      const y = f===0 ? padT : padT + (f-0.5)*fretH;
       html += `<circle cx="${x}" cy="${y}" r="10" fill="${NOTE_COLORS[noteName]}" stroke="#000" stroke-width="1.5"/>`;
       html += `<text x="${x}" y="${y+4}" text-anchor="middle" font-size="9" font-weight="700" fill="${textOn(noteName)}">${noteName}</text>`;
     }
@@ -1241,6 +1259,22 @@ function _explShowPanel(name) {
 document.querySelectorAll('.explorer-tab').forEach(b => {
   b.addEventListener('click', () => _explShowPanel(b.dataset.panel));
 });
+
+// Fret-count row (4 / 5 / 12, matching the main Guitar Fretboard panel)
+function _explSetFretCount(n) {
+  _explFretCount = n;
+  document.querySelectorAll('.expl-fret-btn').forEach(b => {
+    const on = parseInt(b.dataset.frets) === n;
+    b.style.background = on ? 'linear-gradient(135deg,#006060,#003838)' : 'rgba(0,40,40,0.4)';
+    b.style.borderColor = on ? 'rgba(0,192,192,0.7)' : 'rgba(0,192,192,0.35)';
+    b.style.color = on ? '#a0ffff' : '#8fb0b0';
+  });
+  renderExplorer();
+}
+document.querySelectorAll('.expl-fret-btn').forEach(b => {
+  b.addEventListener('click', () => _explSetFretCount(parseInt(b.dataset.frets)));
+});
+_explSetFretCount(5);
 _explShowPanel('keyboard');
 renderExplorer();
 
