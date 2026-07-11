@@ -3093,7 +3093,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 lbl.setAttribute('aria-label', `${names[s]} string`);
                 lbl.onclick = () => {
                     if (!audioReady) { alert('Click START AUDIO ENGINE first!'); return; }
-                    playNote(tuning[s], octs[s], 0.8);
+                    playNote(tuning[s], octs[s], 0.8, 0.34); // louder — guitar fretboard notes were quieter than the rest of the app
                 };
                 headerRow.appendChild(lbl);
             }
@@ -3138,7 +3138,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
 
                 cell.onclick = () => {
                     if (!audioReady) { alert('Click START AUDIO ENGINE first!'); return; }
-                    playNote(tuning[s], octs[s], 0.8);
+                    playNote(tuning[s], octs[s], 0.8, 0.34); // louder — matches string label volume boost
                 };
                 nutRow.appendChild(cell);
             }
@@ -3191,7 +3191,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
 
                     cell.onclick = () => {
                         if (!audioReady) { alert('Click START AUDIO ENGINE first!'); return; }
-                        playNote(pc, oct, 0.8);
+                        playNote(pc, oct, 0.8, 0.34); // louder — matches other guitar fretboard volume boost
                     };
                     row.appendChild(cell);
                 }
@@ -3688,9 +3688,10 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         }
 
         // ── playNote: immediate single note (clicks / freeplay) ──
-        function playNote(n, oct, dur) {
+        function playNote(n, oct, dur, vol) {
             if (typeof oct === 'undefined') oct = currentOctave;
             if (typeof dur === 'undefined') dur = 0.7;
+            if (typeof vol === 'undefined') vol = 0.25;
             try {
                 if (!audioContext || !audioReady) {
                     try { initAudio(); } catch(eInit) {}
@@ -3707,7 +3708,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                     } catch(eBus) { console.error('Master bus rebuild failed:', eBus); }
                 }
                 if (isRecording) recordedNotes.push({note:n, octave:oct, timestamp:Date.now()-recordingStartTime, duration:dur});
-                _playAt(n, oct, audioContext.currentTime, dur, 0.25);
+                _playAt(n, oct, audioContext.currentTime, dur, vol);
                 // Only do visual highlight for single-note clicks (not during sequence playback)
                 if (_playTimers.length === 0) {
                     highlightNote(n, true);
