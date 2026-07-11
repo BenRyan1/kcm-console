@@ -313,6 +313,26 @@ body{font-family:var(--font-b);background:radial-gradient(ellipse at 30% 20%,#1e
       </div>
     </div>
   </div>
+
+  <!-- ── Explorer: see the current key/chord on Keyboard, Fretboard, Staff, Chromatic Circle ── -->
+  <div class="explorer-section" id="explorerSection" style="margin:28px auto 0; max-width:980px; padding:0 16px;">
+    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-bottom:10px;">
+      <h2 style="margin:0; font-size:1.1rem; color:#F4D03F;">🎼 See It On...</h2>
+      <div id="explorerTabs" style="display:flex; gap:6px; flex-wrap:wrap;">
+        <button class="explorer-tab" data-panel="keyboard" style="padding:6px 12px; border-radius:8px; font-size:0.72rem; font-weight:700; cursor:pointer; border:1.5px solid rgba(0,192,192,0.25); background:rgba(0,40,40,0.4); color:#8fb0b0;">⌨ Keyboard</button>
+        <button class="explorer-tab" data-panel="fretboard" style="padding:6px 12px; border-radius:8px; font-size:0.72rem; font-weight:700; cursor:pointer; border:1.5px solid rgba(0,192,192,0.25); background:rgba(0,40,40,0.4); color:#8fb0b0;">🎸 Fretboard</button>
+        <button class="explorer-tab" data-panel="staff" style="padding:6px 12px; border-radius:8px; font-size:0.72rem; font-weight:700; cursor:pointer; border:1.5px solid rgba(0,192,192,0.25); background:rgba(0,40,40,0.4); color:#8fb0b0;">🎼 Staff</button>
+        <button class="explorer-tab" data-panel="circle" style="padding:6px 12px; border-radius:8px; font-size:0.72rem; font-weight:700; cursor:pointer; border:1.5px solid rgba(0,192,192,0.25); background:rgba(0,40,40,0.4); color:#8fb0b0;">⭕ Chromatic Circle</button>
+      </div>
+    </div>
+    <div id="explorerReadout" style="text-align:center; font-size:0.85rem; color:#a0f0f0; margin-bottom:8px; min-height:1.2em;">Click any key or chord on the wheel above</div>
+    <div style="background:rgba(10,14,26,0.55); border:1.5px solid rgba(0,192,192,0.28); border-radius:14px; padding:16px; overflow-x:auto;">
+      <div class="explorer-panel" data-panel="keyboard"><svg id="explKeyboardSvg" viewBox="0 0 700 180" style="width:100%; max-width:700px; display:block; margin:0 auto;"></svg></div>
+      <div class="explorer-panel" data-panel="fretboard" style="display:none;"><svg id="explFretboardSvg" viewBox="0 0 700 200" style="width:100%; max-width:700px; display:block; margin:0 auto;"></svg></div>
+      <div class="explorer-panel" data-panel="staff" style="display:none;"><svg id="explStaffSvg" viewBox="0 0 700 150" style="width:100%; max-width:700px; display:block; margin:0 auto;"></svg></div>
+      <div class="explorer-panel" data-panel="circle" style="display:none;"><svg id="explCircleSvg" viewBox="0 0 300 300" style="width:100%; max-width:320px; display:block; margin:0 auto;"></svg></div>
+    </div>
+  </div>
 </div>
 
 
@@ -596,6 +616,7 @@ const render = () => {
   renderPanels();
   renderLoopBlock();
   renderEffCard();
+  if (typeof renderExplorer === 'function') renderExplorer();
 };
 
 // ── SVG Circle ────────────────────────────────────────
@@ -609,7 +630,7 @@ const svgEl = (tag,attrs={}) => {
 const renderCircle = () => {
   const svg = document.getElementById('circleSvg');
   svg.innerHTML='';
-  const cx=250,cy=250,outerOrbit=193,outerR=30,innerOrbit=137,innerR=21,ksSig=108;
+  const cx=250,cy=250,outerOrbit=193,outerR=30,innerOrbit=137,innerR=21,ksSig=96;
 
   // Background rings
   const addCirc=(r,fill,stroke,sw,dash='')=>{
@@ -653,10 +674,12 @@ const renderCircle = () => {
     const path=svgEl('path',{d:`M${s0.x},${s0.y} L${s1.x},${s1.y} A242,242 0 0,1 ${e1.x},${e1.y} L${e0.x},${e0.y} A90,90 0 0,0 ${s0.x},${s0.y} Z`,fill:col,opacity:'0.13',stroke:'none'});
     svg.appendChild(path);
 
-    // Key sig labels
+    // Key sig labels — pulled toward center (ksSig radius) with a tighter
+    // two-line stack so they clear the inner (minor-key) dot ring instead
+    // of overlapping it.
     const ks=KEY_SIG_LABELS[index].split('\n');
-    addTxt(kx,ky-3,ks[0],'8','rgba(0,220,220,0.55)','700','Arial,sans-serif');
-    addTxt(kx,ky+6,ks[1],'7','rgba(0,192,192,0.4)','600','Arial,sans-serif');
+    addTxt(kx,ky-2,ks[0],'7','rgba(0,220,220,0.55)','700','Arial,sans-serif');
+    addTxt(kx,ky+5,ks[1],'6','rgba(0,192,192,0.4)','600','Arial,sans-serif');
 
     // ── OUTER DOT — Major ──────────────────────────
     const g=document.createElementNS(SVG_NS,'g');
@@ -1064,6 +1087,155 @@ document.getElementById('cofClearBtn').addEventListener('click', ()=>{
   document.getElementById('cofNoteCount').textContent = '0 notes';
   document.getElementById('cofRecStatus').textContent = 'Cleared — press RECORD to start again';
 });
+
+// ══════════════════════════════════════════════════════
+// KCM Explorer — Keyboard / Fretboard / Staff / Chromatic Circle
+// Read-only mini visualizations that mirror whatever key/chord is
+// currently active on the Circle of Fifths wheel (dots, tonic/sub/dom
+// buttons, arpeggios, sequences, loop). Wired in from render() above —
+// note this uses function declarations (not const) so they're hoisted
+// and available no matter where render() is first called from.
+// ══════════════════════════════════════════════════════
+function _explPc(name) {
+  return NOTE_CHROMA[name] !== undefined ? NOTE_CHROMA[name] : CHROMATIC.indexOf(name);
+}
+
+function _explCurrentTones() {
+  const active = (typeof getActiveNote === 'function') ? getActiveNote() : null;
+  if (active && active.note) {
+    const tones = active.type === 'inner' ? getMinorTriad(active.note) : getTriad(active.note);
+    return { tones, label: `${active.note}${active.type==='inner'?'m':''} triad` };
+  }
+  // Nothing actively sounding — default to the selected major key's scale.
+  const root = _explPc(S.majKey);
+  const majorSteps = [0,2,4,5,7,9,11];
+  const tones = majorSteps.map(st => CHROMATIC[(root+st)%12]);
+  return { tones, label: `${S.majKey} Major scale` };
+}
+
+function _explRenderKeyboard(tones) {
+  const svg = document.getElementById('explKeyboardSvg');
+  if (!svg) return;
+  const tonePcs = new Set(tones.map(_explPc));
+  const whiteOrder = ['C','D','E','F','G','A','B'];
+  const blackAfter = {'C':'Db','D':'Eb','F':'Gb','G':'Ab','A':'Bb'};
+  const wW = 700/7, wH = 170;
+  let html = '';
+  whiteOrder.forEach((n,i) => {
+    const x = i*wW;
+    const on = tonePcs.has(_explPc(n));
+    html += `<rect x="${x}" y="5" width="${wW-2}" height="${wH}" rx="4" fill="${on?NOTE_COLORS[n]:'#f5f5f0'}" stroke="#222" stroke-width="1.5"/>`;
+    html += `<text x="${x+wW/2-1}" y="${wH-10}" text-anchor="middle" font-size="11" font-weight="700" fill="${on?textOn(n):'#555'}">${n}</text>`;
+  });
+  whiteOrder.forEach((n,i) => {
+    const bn = blackAfter[n];
+    if (!bn) return;
+    const x = (i+1)*wW - wW*0.28;
+    const on = tonePcs.has(_explPc(bn));
+    html += `<rect x="${x}" y="5" width="${wW*0.56}" height="${wH*0.62}" rx="3" fill="${on?NOTE_COLORS[bn]:'#1a1a1a'}" stroke="#000" stroke-width="1.5"/>`;
+  });
+  svg.innerHTML = html;
+}
+
+function _explRenderFretboard(tones) {
+  const svg = document.getElementById('explFretboardSvg');
+  if (!svg) return;
+  const tonePcs = new Set(tones.map(_explPc));
+  const STRINGS = ['E','B','G','D','A','E']; // high to low, open-string notes
+  const FRETS = 5;
+  const w = 700, padL = 40, padT = 20;
+  const fretW = (w-padL-20)/FRETS, stringSpc = 140/(STRINGS.length-1);
+  let html = `<rect x="${padL}" y="${padT}" width="4" height="${stringSpc*(STRINGS.length-1)}" fill="#F4D03F"/>`;
+  for (let f=1; f<=FRETS; f++) {
+    const x = padL + f*fretW;
+    html += `<line x1="${x}" y1="${padT}" x2="${x}" y2="${padT+stringSpc*(STRINGS.length-1)}" stroke="rgba(0,192,192,0.3)" stroke-width="1.5"/>`;
+  }
+  STRINGS.forEach((openNote,si) => {
+    const y = padT + si*stringSpc;
+    html += `<line x1="${padL}" y1="${y}" x2="${w-20}" y2="${y}" stroke="rgba(200,200,220,0.35)" stroke-width="1"/>`;
+    const openPc = _explPc(openNote);
+    for (let f=0; f<=FRETS; f++) {
+      const notePc = (openPc+f)%12;
+      const noteName = CHROMATIC[notePc];
+      if (!tonePcs.has(notePc)) continue;
+      const x = f===0 ? padL-16 : padL + (f-0.5)*fretW;
+      html += `<circle cx="${x}" cy="${y}" r="10" fill="${NOTE_COLORS[noteName]}" stroke="#000" stroke-width="1.5"/>`;
+      html += `<text x="${x}" y="${y+4}" text-anchor="middle" font-size="9" font-weight="700" fill="${textOn(noteName)}">${noteName}</text>`;
+    }
+  });
+  svg.innerHTML = html;
+}
+
+// Simplified treble-staff placement: maps each pitch class to the nearest
+// natural line/space (sharps/flats ride their natural neighbor's position).
+// Good for "which notes are in this chord" at a glance — not strict notation.
+const _EXPL_STAFF_STEP = {'C':0,'Db':0,'D':1,'Eb':1,'E':2,'F':3,'Gb':3,'G':4,'Ab':4,'A':5,'Bb':5,'B':6};
+function _explStaffY(n) { return 96 - _EXPL_STAFF_STEP[n]*8; }
+
+function _explRenderStaff(tones) {
+  const svg = document.getElementById('explStaffSvg');
+  if (!svg) return;
+  const left = 60, right = 640, top = 20;
+  let html = '';
+  for (let i=0; i<5; i++) {
+    const y = top + i*16;
+    html += `<line x1="${left}" y1="${y}" x2="${right}" y2="${y}" stroke="rgba(200,200,220,0.5)" stroke-width="1.5"/>`;
+  }
+  html += `<text x="18" y="${top+58}" font-size="52" fill="#F4D03F" font-family="serif">𝄞</text>`;
+  const spacing = (right-left-40) / Math.max(tones.length,1);
+  tones.forEach((n,i) => {
+    const x = left+50+i*spacing;
+    const y = top + _explStaffY(n);
+    html += `<ellipse cx="${x}" cy="${y}" rx="9" ry="7" fill="${NOTE_COLORS[n]}" stroke="#000" stroke-width="1.5"/>`;
+    html += `<text x="${x}" y="${y+28}" text-anchor="middle" font-size="10" font-weight="700" fill="${NOTE_COLORS[n]}">${n}</text>`;
+  });
+  svg.innerHTML = html;
+}
+
+function _explRenderCircle(tones) {
+  const svg = document.getElementById('explCircleSvg');
+  if (!svg) return;
+  const tonePcs = new Set(tones.map(_explPc));
+  const cx=150, cy=150, r=110;
+  let html = '';
+  for (let i=0; i<12; i++) {
+    const angle = (i/12)*Math.PI*2 - Math.PI/2;
+    const x = cx+r*Math.cos(angle), y = cy+r*Math.sin(angle);
+    const n = CHROMATIC[i];
+    const on = tonePcs.has(i);
+    html += `<circle cx="${x}" cy="${y}" r="${on?20:14}" fill="${on?NOTE_COLORS[n]:'rgba(255,255,255,0.08)'}" stroke="${on?'#fff':'rgba(255,255,255,0.2)'}" stroke-width="${on?2:1}"/>`;
+    html += `<text x="${x}" y="${y+4}" text-anchor="middle" font-size="${on?12:10}" font-weight="700" fill="${on?textOn(n):'rgba(255,255,255,0.4)'}">${n}</text>`;
+  }
+  svg.innerHTML = html;
+}
+
+function renderExplorer() {
+  const { tones, label } = _explCurrentTones();
+  const readout = document.getElementById('explorerReadout');
+  if (readout) readout.textContent = `Showing: ${label}  —  ${tones.join(' · ')}`;
+  _explRenderKeyboard(tones);
+  _explRenderFretboard(tones);
+  _explRenderStaff(tones);
+  _explRenderCircle(tones);
+}
+
+function _explShowPanel(name) {
+  document.querySelectorAll('.explorer-panel').forEach(p => {
+    p.style.display = p.dataset.panel === name ? 'block' : 'none';
+  });
+  document.querySelectorAll('.explorer-tab').forEach(b => {
+    const on = b.dataset.panel === name;
+    b.style.background = on ? 'linear-gradient(135deg,#006060,#003838)' : 'rgba(0,40,40,0.4)';
+    b.style.borderColor = on ? 'rgba(0,192,192,0.7)' : 'rgba(0,192,192,0.25)';
+    b.style.color = on ? '#a0ffff' : '#8fb0b0';
+  });
+}
+
+document.querySelectorAll('.explorer-tab').forEach(b => {
+  b.addEventListener('click', () => _explShowPanel(b.dataset.panel));
+});
+_explShowPanel('keyboard');
+renderExplorer();
 
 </script>
 </body>
