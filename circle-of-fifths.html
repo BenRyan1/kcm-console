@@ -221,10 +221,10 @@ body{font-family:var(--font-b);background:radial-gradient(ellipse at 30% 20%,#1e
         <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-bottom:10px;">
           <h2 style="margin:0; font-size:1.1rem; color:#F4D03F;">🎼 See It On...</h2>
           <div id="explorerTabs" style="display:flex; gap:6px; flex-wrap:wrap;">
-            <button class="explorer-tab" data-panel="keyboard" style="padding:6px 12px; border-radius:8px; font-size:0.72rem; font-weight:700; cursor:pointer; border:1.5px solid rgba(0,192,192,0.25); background:rgba(0,40,40,0.4); color:#8fb0b0;">⌨ Keyboard</button>
-            <button class="explorer-tab" data-panel="fretboard" style="padding:6px 12px; border-radius:8px; font-size:0.72rem; font-weight:700; cursor:pointer; border:1.5px solid rgba(0,192,192,0.25); background:rgba(0,40,40,0.4); color:#8fb0b0;">🎸 Fretboard</button>
-            <button class="explorer-tab" data-panel="staff" style="padding:6px 12px; border-radius:8px; font-size:0.72rem; font-weight:700; cursor:pointer; border:1.5px solid rgba(0,192,192,0.25); background:rgba(0,40,40,0.4); color:#8fb0b0;">🎼 Staff</button>
-            <button class="explorer-tab" data-panel="circle" style="padding:6px 12px; border-radius:8px; font-size:0.72rem; font-weight:700; cursor:pointer; border:1.5px solid rgba(0,192,192,0.25); background:rgba(0,40,40,0.4); color:#8fb0b0;">⭕ Chromatic Circle</button>
+            <button class="explorer-tab" data-panel="keyboard" style="padding:6px 12px; border-radius:8px; font-size:0.72rem; font-weight:700; cursor:pointer; border:1.5px solid rgba(200,220,255,0.3); background:rgba(20,28,45,0.5); color:#a8bcdc;">⌨ Keyboard</button>
+            <button class="explorer-tab" data-panel="fretboard" style="padding:6px 12px; border-radius:8px; font-size:0.72rem; font-weight:700; cursor:pointer; border:1.5px solid rgba(244,208,63,0.3); background:rgba(40,32,10,0.5); color:#c8ac60;">🎸 Fretboard</button>
+            <button class="explorer-tab" data-panel="staff" style="padding:6px 12px; border-radius:8px; font-size:0.72rem; font-weight:700; cursor:pointer; border:1.5px solid rgba(139,107,163,0.35); background:rgba(28,20,38,0.5); color:#b89cd0;">🎼 Staff</button>
+            <button class="explorer-tab" data-panel="circle" style="padding:6px 12px; border-radius:8px; font-size:0.72rem; font-weight:700; cursor:pointer; border:1.5px solid rgba(207,122,90,0.35); background:rgba(40,22,15,0.5); color:#d89878;">⭕ Chromatic Circle</button>
           </div>
         </div>
         <div id="explorerReadout" style="text-align:center; font-size:0.85rem; color:#a0f0f0; margin-bottom:8px; min-height:1.2em;">Click any key or chord on the wheel above</div>
@@ -1144,8 +1144,10 @@ function _explRenderKeyboard(tones) {
     const bn = blackAfter[n];
     if (!bn) return;
     const x = (i+1)*wW - wW*0.28;
+    const bw = wW*0.56, bh = wH*0.62;
     const on = tonePcs.has(_explPc(bn));
-    html += `<rect x="${x}" y="5" width="${wW*0.56}" height="${wH*0.62}" rx="3" fill="${on?NOTE_COLORS[bn]:'#1a1a1a'}" stroke="#000" stroke-width="1.5"/>`;
+    html += `<rect x="${x}" y="5" width="${bw}" height="${bh}" rx="3" fill="${on?NOTE_COLORS[bn]:'#1a1a1a'}" stroke="#000" stroke-width="1.5"/>`;
+    html += `<text x="${x+bw/2}" y="${bh-8}" text-anchor="middle" font-size="9.5" font-weight="700" fill="${on?textOn(bn):'#ccc'}">${DISPLAY_NOTE[bn]||bn}</text>`;
   });
   svg.innerHTML = html;
 }
@@ -1248,11 +1250,22 @@ function _explShowPanel(name) {
   document.querySelectorAll('.explorer-panel').forEach(p => {
     p.style.display = p.dataset.panel === name ? 'block' : 'none';
   });
+  // Each tab is themed to its instrument — keyboard (cool silver-blue),
+  // fretboard (wood/string gold), staff (manuscript purple), chromatic
+  // circle (spectrum coral) — both at rest and when active.
+  const THEME = {
+    keyboard:  { rest:['rgba(200,220,255,0.3)','rgba(20,28,45,0.5)','#a8bcdc'],  active:['rgba(200,220,255,0.85)','linear-gradient(135deg,#3a4a6a,#1a2438)','#eaf2ff'] },
+    fretboard: { rest:['rgba(244,208,63,0.3)','rgba(40,32,10,0.5)','#c8ac60'],   active:['rgba(244,208,63,0.85)','linear-gradient(135deg,#8a6a20,#4a3810)','#fff2c0'] },
+    staff:     { rest:['rgba(139,107,163,0.35)','rgba(28,20,38,0.5)','#b89cd0'],active:['rgba(200,168,232,0.85)','linear-gradient(135deg,#5a3a80,#2a1a48)','#ecd8ff'] },
+    circle:    { rest:['rgba(207,122,90,0.35)','rgba(40,22,15,0.5)','#d89878'], active:['rgba(255,150,110,0.85)','linear-gradient(135deg,#a85a3a,#5a2a18)','#ffdcc4'] },
+  };
   document.querySelectorAll('.explorer-tab').forEach(b => {
     const on = b.dataset.panel === name;
-    b.style.background = on ? 'linear-gradient(135deg,#006060,#003838)' : 'rgba(0,40,40,0.4)';
-    b.style.borderColor = on ? 'rgba(0,192,192,0.7)' : 'rgba(0,192,192,0.25)';
-    b.style.color = on ? '#a0ffff' : '#8fb0b0';
+    const t = THEME[b.dataset.panel] || THEME.keyboard;
+    const [borderColor, background, color] = on ? t.active : t.rest;
+    b.style.borderColor = borderColor;
+    b.style.background = background;
+    b.style.color = color;
   });
 }
 
