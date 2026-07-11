@@ -691,6 +691,12 @@ input[type="range"] {
   .rhythm-layout { grid-template-columns: 1fr; }
 }
 
+.rhythm-center-col {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
 .rhythm-canvas-wrap {
   background: radial-gradient(ellipse 80% 80% at 50% 50%, rgba(0,128,128,0.07) 0%, transparent 70%);
   border: 1px solid var(--border);
@@ -702,6 +708,46 @@ input[type="range"] {
   align-items: center;
   gap: 0.75rem;
 }
+
+.euclid-presets-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem;
+}
+
+@media (max-width: 480px) {
+  .euclid-presets-grid { grid-template-columns: 1fr; }
+}
+
+.euclid-preset-group-label {
+  grid-column: 1 / -1;
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  color: var(--text-ghost);
+  text-transform: uppercase;
+  margin: 0.5rem 0 -0.1rem;
+}
+.euclid-preset-group-label:first-child { margin-top: 0; }
+
+.euclid-preset-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  line-height: 1.3;
+}
+.euclid-preset-btn .euclid-preset-dots {
+  font-size: 0.85rem;
+  letter-spacing: 0.12em;
+  color: var(--teal);
+  opacity: 0.85;
+}
+.euclid-preset-btn.active {
+  border-color: var(--gold) !important;
+  background: rgba(244,208,63,0.1) !important;
+  color: var(--gold) !important;
+}
+.euclid-preset-btn.active .euclid-preset-dots { color: var(--gold); }
 
 #rhythmCanvas {
   width: 100%;
@@ -1435,24 +1481,38 @@ input[type="range"] {
         <div id="vrdSummaryPanel" class="ctrl-card" style="display:none;padding:0.6rem;background:rgba(0,128,128,0.06);border:1px solid rgba(0,128,128,0.2);"></div>
       </div>
 
-      <!-- CENTER: Rhythm canvas + transport -->
-      <div class="rhythm-canvas-wrap">
-        <div id="syncStatusPill">◈ MELODIC SYNC ACTIVE</div>
-        <canvas id="rhythmCanvas" width="520" height="520"></canvas>
-        <div class="transport-bar">
-          <div class="tempo-display">
-            <div class="tempo-val" id="rTempoDisplay">110</div>
-            <div class="tempo-lbl">BPM</div>
+      <!-- CENTER: Rhythm canvas + transport + presets -->
+      <div class="rhythm-center-col">
+        <div class="rhythm-canvas-wrap">
+          <div id="syncStatusPill">◈ MELODIC SYNC ACTIVE</div>
+          <canvas id="rhythmCanvas" width="520" height="520"></canvas>
+          <div class="transport-bar">
+            <div class="tempo-display">
+              <div class="tempo-val" id="rTempoDisplay">110</div>
+              <div class="tempo-lbl">BPM</div>
+            </div>
+            <input type="range" id="rTempoSlider" min="40" max="240" value="110" step="5"
+              oninput="setRhythmTempo(this.value)"
+              style="width:140px;">
+            <button class="btn btn-teal" id="playBtn" onclick="togglePlay()">▶ Play</button>
+            <button class="btn btn-ghost" onclick="stopReset()">■ Stop</button>
           </div>
-          <input type="range" id="rTempoSlider" min="40" max="240" value="110" step="5"
-            oninput="setRhythmTempo(this.value)"
-            style="width:140px;">
-          <button class="btn btn-teal" id="playBtn" onclick="togglePlay()">▶ Play</button>
-          <button class="btn btn-ghost" onclick="stopReset()">■ Stop</button>
+        </div>
+
+        <div class="ctrl-card">
+          <div class="ctrl-card-title">Euclidean Presets</div>
+          <div class="euclid-presets-grid" id="euclidPresetsGrid">
+            <!-- populated by renderEuclidPresets() — see script below -->
+          </div>
+          <button class="btn btn-ghost btn-full" onclick="saveEuclidPreset()" style="font-size:0.7rem;margin-top:0.6rem;color:var(--gold);border-color:rgba(244,208,63,0.35);">💾 Save Current Pattern as Preset</button>
+          <div id="euclidCustomPresetsWrap" style="display:none;">
+            <div style="font-size:0.62rem;color:var(--text-ghost);letter-spacing:0.08em;margin:0.7rem 0 0.3rem;">YOUR PRESETS</div>
+            <div class="euclid-presets-grid" id="euclidCustomPresetsGrid"></div>
+          </div>
         </div>
       </div>
 
-      <!-- RIGHT: Polygon picker + presets + SYNC -->
+      <!-- RIGHT: Polygon picker + SYNC -->
       <div>
         <div class="ctrl-card">
           <div class="ctrl-card-title">Rhythm Grid</div>
@@ -1508,21 +1568,6 @@ input[type="range"] {
           </div>
 
           <div id="syncModeDesc" style="font-size:0.68rem;color:var(--text-ghost);margin-top:0.5rem;line-height:1.5;display:none;"></div>
-        </div>
-
-        <div class="ctrl-card">
-          <div class="ctrl-card-title">Euclidean Presets</div>
-          <div class="btn-row" style="flex-direction:column;gap:0.4rem;">
-            <button class="btn btn-ghost btn-full" onclick="loadEuclidPreset('clave32')" style="font-size:0.7rem;">3–2 Son Clave (3,8)</button>
-            <button class="btn btn-ghost btn-full" onclick="loadEuclidPreset('clave23')" style="font-size:0.7rem;">2–3 Clave (2,8)</button>
-            <button class="btn btn-ghost btn-full" onclick="loadEuclidPreset('clave')" style="font-size:0.7rem;">Clave (5,12)</button>
-            <button class="btn btn-ghost btn-full" onclick="loadEuclidPreset('tresillo')" style="font-size:0.7rem;">Tresillo (3,8)</button>
-            <button class="btn btn-ghost btn-full" onclick="loadEuclidPreset('cinquillo')" style="font-size:0.7rem;">Cinquillo (5,8)</button>
-            <button class="btn btn-ghost btn-full" onclick="loadEuclidPreset('shiko')" style="font-size:0.7rem;">Shiko (4,8)</button>
-            <button class="btn btn-ghost btn-full" onclick="loadEuclidPreset('bossanova')" style="font-size:0.7rem;">Bossa Nova (5,16)</button>
-            <button class="btn btn-ghost btn-full" onclick="loadEuclidPreset('polyrhythm34')" style="font-size:0.7rem;">3 over 4 Polyrhythm</button>
-            <button class="btn btn-ghost btn-full" onclick="loadEuclidPreset('polyrhythm45')" style="font-size:0.7rem;">4 over 5 Polyrhythm</button>
-          </div>
         </div>
       </div>
 
@@ -2414,6 +2459,7 @@ function initRhythmIfNeeded() {
   if (RS.rInitDone) return;
   RS.rInitDone = true;
   buildPolyPicker();
+  if (typeof renderEuclidPresets === 'function') renderEuclidPresets();
   addLayer(); addLayer();
   renderLayers();
   drawRhythmViz();
@@ -2646,7 +2692,8 @@ function setLayerSound(id, sound) {
 
 function updateLayerPulses(id, val) {
   const l=RS.layers.find(l=>l.id===id);
-  if(l){l.pulses=parseInt(val); l.pattern=bjorklund(l.steps,Math.min(l.pulses,l.steps)); document.getElementById(`lpv-${id}`).textContent=l.pulses; drawRhythmViz();}
+  if(l){l.pulses=parseInt(val); l.pattern=bjorklund(l.steps,Math.min(l.pulses,l.steps)); document.getElementById(`lpv-${id}`).textContent=l.pulses; drawRhythmViz();
+    if (typeof updateEuclidPresetHighlight === 'function') updateEuclidPresetHighlight();}
 }
 
 function renderLayers() {
@@ -2688,6 +2735,7 @@ function renderLayers() {
       </div>`;
     container.appendChild(card);
   });
+  if (typeof updateEuclidPresetHighlight === 'function') updateEuclidPresetHighlight();
 }
 
 // ── POLYGON PICKER ──
@@ -2993,26 +3041,149 @@ function rAnimate() {
 }
 
 // ── EUCLIDEAN PRESETS ──
+// Single source of truth — loadEuclidPreset(), renderEuclidPresets() (dot
+// previews + grouping), and updateEuclidPresetHighlight() (active-preset
+// indicator) all read from this so the button list and the load logic can
+// never drift out of sync with each other.
+const EUCLID_PRESETS = {
+  clave32:      { label:'3–2 Son Clave',      group:'Afro-Cuban / Latin', layers:[[8,3],[8,2]] },
+  clave23:      { label:'2–3 Clave',           group:'Afro-Cuban / Latin', layers:[[8,2],[8,3]] },
+  clave:        { label:'Clave (5,12)',        group:'Afro-Cuban / Latin', layers:[[12,5]] },
+  tresillo:     { label:'Tresillo (3,8)',      group:'Afro-Cuban / Latin', layers:[[8,3]] },
+  cinquillo:    { label:'Cinquillo (5,8)',     group:'Afro-Cuban / Latin', layers:[[8,5]] },
+  shiko:        { label:'Shiko (4,8)',         group:'Afro-Cuban / Latin', layers:[[8,4]] },
+  bossanova:    { label:'Bossa Nova (5,16)',   group:'Brazilian',          layers:[[16,5]] },
+  polyrhythm34: { label:'3 over 4 Polyrhythm', group:'Polyrhythm',         layers:[[12,3],[16,4]] },
+  polyrhythm45: { label:'4 over 5 Polyrhythm', group:'Polyrhythm',         layers:[[20,4],[16,5]] },
+};
+const LS_CUSTOM_PRESETS_KEY = 'kcm_cu_custom_euclid_presets';
+
 function loadEuclidPreset(name) {
-  const presets = {
-    clave32:     [[8,3],[8,2]],
-    clave23:     [[8,2],[8,3]],
-    tresillo:    [[8,3]],
-    cinquillo:   [[8,5]],
-    clave:       [[12,5]],
-    bossanova:   [[16,5]],
-    shiko:       [[8,4]],
-    polyrhythm34:[[12,3],[16,4]],
-    polyrhythm45:[[20,4],[16,5]],
-  };
-  const p=presets[name]; if(!p) return;
+  const p = EUCLID_PRESETS[name]; if (!p) return;
   RS.layers=[];
-  p.forEach(([steps,pulses],i)=>{
+  p.layers.forEach(([steps,pulses],i)=>{
     RS.globalSteps=steps;
     RS.layers.push(createLayer(steps,pulses,i,LAYER_SOUNDS[i]));
   });
   renderLayers(); drawRhythmViz();
-  showToast('✅ '+name+' loaded');
+  showToast('✅ '+p.label+' loaded');
+}
+
+// Small dot-row preview of a pattern's shape, e.g. ●○●○●○○○ — capped and
+// evenly downsampled for long patterns so it never overflows a button.
+function _euclidDots(steps, pulses) {
+  const pat = bjorklund(steps, Math.min(pulses, steps));
+  const MAX_DOTS = 16;
+  let shown = pat;
+  if (pat.length > MAX_DOTS) {
+    shown = [];
+    for (let i=0;i<MAX_DOTS;i++) shown.push(pat[Math.floor(i*pat.length/MAX_DOTS)]);
+  }
+  return shown.map(v => v ? '●' : '○').join('');
+}
+
+function renderEuclidPresets() {
+  const grid = document.getElementById('euclidPresetsGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  let lastGroup = null;
+  Object.keys(EUCLID_PRESETS).forEach(key => {
+    const p = EUCLID_PRESETS[key];
+    if (p.group !== lastGroup) {
+      lastGroup = p.group;
+      const label = document.createElement('div');
+      label.className = 'euclid-preset-group-label';
+      label.textContent = p.group;
+      grid.appendChild(label);
+    }
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-ghost btn-full euclid-preset-btn';
+    btn.dataset.preset = key;
+    btn.style.fontSize = '0.7rem';
+    btn.onclick = () => loadEuclidPreset(key);
+    const [steps0, pulses0] = p.layers[0];
+    btn.innerHTML = `<span>${p.label}</span><span class="euclid-preset-dots">${_euclidDots(steps0, pulses0)}</span>`;
+    grid.appendChild(btn);
+  });
+  updateEuclidPresetHighlight();
+  renderCustomEuclidPresets();
+}
+
+// Highlights whichever preset button (if any) exactly matches the pattern
+// currently loaded into RS.layers — same "don't show one thing while
+// something else is actually loaded" principle as the degree-button sync.
+function updateEuclidPresetHighlight() {
+  const current = RS.layers.map(l => l.steps + ':' + l.pulses).join(',');
+  document.querySelectorAll('.euclid-preset-btn').forEach(btn => {
+    const key = btn.dataset.preset;
+    const p = key.indexOf('custom:') === 0 ? _loadCustomPresets()[key.slice(7)] : EUCLID_PRESETS[key];
+    const target = p ? p.layers.map(([s,pu]) => s + ':' + pu).join(',') : null;
+    btn.classList.toggle('active', target !== null && target === current);
+  });
+}
+
+// ── Custom (user-saved) presets ──────────────────────────────────────────
+function _loadCustomPresets() {
+  try { return JSON.parse(localStorage.getItem(LS_CUSTOM_PRESETS_KEY)) || {}; }
+  catch (e) { return {}; }
+}
+function _saveCustomPresets(obj) {
+  try { localStorage.setItem(LS_CUSTOM_PRESETS_KEY, JSON.stringify(obj)); } catch (e) {}
+}
+
+function saveEuclidPreset() {
+  if (!RS.layers.length) { showToast('⚠️ No pattern to save — add a layer first'); return; }
+  const name = prompt('Name this preset:', 'My Pattern ' + (Object.keys(_loadCustomPresets()).length + 1));
+  if (!name) return;
+  const key = 'c' + Date.now();
+  const custom = _loadCustomPresets();
+  custom[key] = { label: name, layers: RS.layers.map(l => [l.steps, l.pulses]) };
+  _saveCustomPresets(custom);
+  renderCustomEuclidPresets();
+  showToast('💾 Saved "' + name + '"');
+}
+
+function deleteCustomEuclidPreset(key, ev) {
+  if (ev) ev.stopPropagation();
+  const custom = _loadCustomPresets();
+  delete custom[key];
+  _saveCustomPresets(custom);
+  renderCustomEuclidPresets();
+}
+
+function loadCustomEuclidPreset(key) {
+  const custom = _loadCustomPresets();
+  const p = custom[key]; if (!p) return;
+  RS.layers = [];
+  p.layers.forEach(([steps,pulses],i) => {
+    RS.globalSteps = steps;
+    RS.layers.push(createLayer(steps,pulses,i,LAYER_SOUNDS[i]));
+  });
+  renderLayers(); drawRhythmViz();
+  showToast('✅ ' + p.label + ' loaded');
+}
+
+function renderCustomEuclidPresets() {
+  const wrap = document.getElementById('euclidCustomPresetsWrap');
+  const grid = document.getElementById('euclidCustomPresetsGrid');
+  if (!wrap || !grid) return;
+  const custom = _loadCustomPresets();
+  const keys = Object.keys(custom);
+  wrap.style.display = keys.length ? '' : 'none';
+  grid.innerHTML = '';
+  keys.forEach(key => {
+    const p = custom[key];
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-ghost btn-full euclid-preset-btn';
+    btn.dataset.preset = 'custom:' + key;
+    btn.style.fontSize = '0.7rem';
+    btn.style.position = 'relative';
+    btn.onclick = () => loadCustomEuclidPreset(key);
+    const [steps0, pulses0] = p.layers[0];
+    btn.innerHTML = `<span>${p.label} <span onclick="deleteCustomEuclidPreset('${key}',event)" title="Delete" style="opacity:0.5;cursor:pointer;">✕</span></span><span class="euclid-preset-dots">${_euclidDots(steps0, pulses0)}</span>`;
+    grid.appendChild(btn);
+  });
+  updateEuclidPresetHighlight();
 }
 
 
