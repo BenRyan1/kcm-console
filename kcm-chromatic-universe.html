@@ -1323,6 +1323,17 @@ input[type="range"] {
           <div class="btn-row" style="margin-top:0.5rem;">
             <button class="btn btn-teal" id="autoPlayBtn" onclick="toggleAutoPlay()">▶ Auto-Play</button>
             <button class="btn btn-gold" id="strumBtn" onclick="strumChord()">🎸 Strum</button>
+            <button class="btn" id="stopAllBtn" onclick="stopEverything()" style="background:rgba(207,122,90,0.18); border:1.5px solid #CF7A5A; color:#CF7A5A;">⏹ Stop</button>
+          </div>
+          <div class="ctrl-group" style="margin-top:0.7rem; display:flex; flex-direction:column; gap:6px;">
+            <label style="display:flex; align-items:center; gap:8px; font-size:0.72rem; cursor:pointer; color:#d0d0e8;">
+              <input type="checkbox" id="segmentViewToggle" onchange="setSegmentViewOnly(this.checked)">
+              🔍 Segment view — show/play only the current slice
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; font-size:0.72rem; cursor:pointer; color:#d0d0e8;">
+              <input type="checkbox" id="sphereWideToggle" onchange="setSphereWideMode(this.checked)">
+              🌐 Whole-sphere scale — Auto-Play sweeps every scale note, all the way around
+            </label>
           </div>
         </div>
       </div>
@@ -1712,6 +1723,28 @@ function playNote(midiNumber, duration = 0.5, type = 'sine') {
   osc.stop(now + duration);
 }
 
+// Wraps setTimeout for anything in a playback chain (Auto-Play, Strum) so
+// the Stop button can cancel every pending step at once instead of letting
+// an in-flight sequence keep firing after Stop is pressed.
+function schedulePlayback(fn, delay) {
+  const id = setTimeout(fn, delay);
+  pendingPlaybackTimers.push(id);
+  return id;
+}
+
+function stopEverything() {
+  stopAutoPlay();
+  pendingPlaybackTimers.forEach(id => clearTimeout(id));
+  pendingPlaybackTimers = [];
+  if (audioCtx) {
+    try { audioCtx.close(); } catch(e) {}
+    audioCtx = null;
+  }
+  drawClock();
+  infoBar.textContent = '⏹ Stopped · Drag center to rotate · Click any note to hear it';
+  infoBar.classList.remove('active');
+}
+
 // ═══════════════════════════════════════════
 // ═══════════════════════════════════════════
 //  CHROMATIC SPOKE CLOCK
@@ -1847,6 +1880,10 @@ let activeNote = null;
 let currentStencil = 'chromatic';
 let midiAccess = null;
 let activeMidiNotes = new Set();
+let segmentViewOnly = false;   // when true, wheel shows/plays only the current wedge (slice)
+let sphereWideMode = false;    // when true, Auto-Play sweeps every scale note across the whole wheel
+let sphereAutoS = 0, sphereAutoR = 0;  // traversal cursor for whole-sphere Auto-Play
+let pendingPlaybackTimers = [];        // setTimeout ids from chained playback, so Stop can cancel them
 
 function getCanvasPoint(clientX, clientY) {
   const rect = canvas.getBoundingClientRect();
@@ -1920,13 +1957,21 @@ function drawClock(highlightNotes = null) {
     });
   }
 
+  // Segment view: when on, only the current wedge (the spoke aligned at 12
+  // o'clock) is drawn/clickable — everything else stays out of notePositions'
+  // visible set so the wheel reads as a single slice instead of the full wheel.
+  const activeSpokeForView = getRootSpokeIndex();
+
   // Spokes and note dots
   for (let s = 0; s < SPOKES; s++) {
     const angle = (s/SPOKES)*Math.PI*2 - Math.PI/2 + rotationAngle;
+    const spokeVisible = !segmentViewOnly || s === activeSpokeForView;
 
-    ctx.strokeStyle = 'rgba(0,128,128,0.12)'; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(CENTER.x, CENTER.y);
-    ctx.lineTo(CENTER.x+OUTER_R*Math.cos(angle), CENTER.y+OUTER_R*Math.sin(angle)); ctx.stroke();
+    if (spokeVisible) {
+      ctx.strokeStyle = 'rgba(0,128,128,0.12)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(CENTER.x, CENTER.y);
+      ctx.lineTo(CENTER.x+OUTER_R*Math.cos(angle), CENTER.y+OUTER_R*Math.sin(angle)); ctx.stroke();
+    }
 
     for (let r = 0; r < RINGS; r++) {
       const radius = INNER_R + r * RING_SPC;
@@ -1935,7 +1980,11 @@ function drawClock(highlightNotes = null) {
       const x = CENTER.x + radius * Math.cos(angle);
       const y = CENTER.y + radius * Math.sin(angle);
 
-      notePositions.push({ x, y, note: NOTES[noteIdx], noteIndex: noteIdx, midiNumber: midi, s, r });
+      // Always recorded (even off-screen in segment view) so whole-sphere
+      // Auto-Play and click hit-testing still have full note data to work with.
+      notePositions.push({ x, y, note: NOTES[noteIdx], noteIndex: noteIdx, midiNumber: midi, s, r, visible: spokeVisible });
+
+      if (!spokeVisible) continue;
 
       const isHi = hiArr.some(h => h.s===s && h.r===r) || activeMidiNotes.has(midi);
       const inStencil = isNoteInStencil(noteIdx);
@@ -2021,6 +2070,7 @@ canvas.addEventListener('mousemove', e => {
   if (d<=48) { canvas.style.cursor='grab'; return; }
   let found=null;
   for (const n of notePositions) {
+    if (n.visible === false) continue;
     const nx=mx-n.x,ny=my-n.y;
     if (Math.sqrt(nx*nx+ny*ny)<=NOTE_R*1.6){ found=n; break; }
   }
@@ -2046,6 +2096,7 @@ canvas.addEventListener('mouseleave', () => { if(isDragging){isDragging=false;} 
 canvas.addEventListener('click', e => {
   const {x:mx,y:my} = getCanvasPoint(e.clientX,e.clientY);
   for (const n of notePositions) {
+    if (n.visible === false) continue; // segment view: only the drawn slice is clickable
     const dx=mx-n.x, dy=my-n.y;
     if (Math.sqrt(dx*dx+dy*dy)<=NOTE_R*1.6) {
       playNote(n.midiNumber);
@@ -2080,6 +2131,7 @@ canvas.addEventListener('touchend', e => {
   if (e.changedTouches.length===1) {
     const {x,y} = getCanvasPoint(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
     for (const n of notePositions) {
+      if (n.visible === false) continue;
       if (Math.sqrt((x-n.x)**2+(y-n.y)**2)<=NOTE_R*2) {
         playNote(n.midiNumber); drawClock(n);
         setTimeout(()=>drawClock(),500); break;
@@ -2157,6 +2209,7 @@ function toggleAutoPlay() {
 function startAutoPlay() {
   if (isAutoPlaying) return;
   isAutoPlaying=true; autoPlayIndex=0; autoPlayDir=1;
+  sphereAutoS=0; sphereAutoR=0;
   document.getElementById('autoPlayBtn').textContent='⏸ Pause';
   document.getElementById('autoPlayBtn').classList.add('is-active');
   playNextNote();
@@ -2169,9 +2222,21 @@ function stopAutoPlay() {
   drawClock();
 }
 
+// Toggles for the two view/playback modes (checkboxes in the Playback card).
+function setSegmentViewOnly(on) {
+  segmentViewOnly = on;
+  drawClock();
+}
+
+function setSphereWideMode(on) {
+  sphereWideMode = on;
+  sphereAutoS = 0; sphereAutoR = 0;
+}
+
 function playNextNote() {
   if (!isAutoPlaying) return;
   const interval = (60/currentTempo)*1000;
+  if (sphereWideMode) { playNextNoteWholeSphere(interval); return; }
   let attempts=0;
   while (attempts < RINGS*2) {
     const aPerSpoke=(Math.PI*2)/SPOKES;
@@ -2183,18 +2248,43 @@ function playNextNote() {
       drawClock([n]);
       infoBar.textContent=`Playing: ${n.note} (${currentTempo} BPM)`;
       infoBar.classList.add('active');
-      setTimeout(()=>infoBar.classList.remove('active'),120);
+      schedulePlayback(()=>infoBar.classList.remove('active'),120);
       autoPlayIndex+=autoPlayDir;
       if (autoPlayIndex>=RINGS){autoPlayIndex=RINGS-2;autoPlayDir=-1;}
       else if (autoPlayIndex<0){autoPlayIndex=1;autoPlayDir=1;}
-      setTimeout(playNextNote, interval); return;
+      schedulePlayback(playNextNote, interval); return;
     }
     autoPlayIndex+=autoPlayDir;
     if(autoPlayIndex>=RINGS){autoPlayIndex=RINGS-2;autoPlayDir=-1;}
     else if(autoPlayIndex<0){autoPlayIndex=1;autoPlayDir=1;}
     attempts++;
   }
-  setTimeout(playNextNote, interval);
+  schedulePlayback(playNextNote, interval);
+}
+
+// Whole-sphere sweep: walks every spoke × ring on the entire wheel (not just
+// the wedge at 12 o'clock), playing every note that belongs to the current
+// scale/stencil, so you hear the full scale pattern across all 12 keys' worth
+// of positions instead of just one octave run at one wedge.
+function playNextNoteWholeSphere(interval) {
+  let attempts = 0;
+  while (attempts < SPOKES*RINGS) {
+    const s = sphereAutoS, r = sphereAutoR;
+    const n = notePositions.find(p=>p.s===s&&p.r===r);
+    sphereAutoR++;
+    if (sphereAutoR>=RINGS) { sphereAutoR=0; sphereAutoS=(sphereAutoS+1)%SPOKES; }
+    if (n && isNoteInStencil(n.noteIndex)) {
+      playNote(n.midiNumber, Math.min(0.5,(60/currentTempo)*0.85));
+      drawClock([n]);
+      infoBar.textContent=`Playing (whole sphere): ${n.note} (${currentTempo} BPM)`;
+      infoBar.classList.add('active');
+      schedulePlayback(()=>infoBar.classList.remove('active'),120);
+      schedulePlayback(playNextNote, interval);
+      return;
+    }
+    attempts++;
+  }
+  schedulePlayback(playNextNote, interval);
 }
 
 // ── STRUM ──
@@ -2205,11 +2295,11 @@ function strumChord() {
   const notes=notePositions.filter(n=>n.s===spokeAt12&&isNoteInStencil(n.noteIndex));
   if (!notes.length) return;
   initAudio();
-  notes.forEach((n,i)=>setTimeout(()=>playNote(n.midiNumber,1.4),i*30));
+  notes.forEach((n,i)=>schedulePlayback(()=>playNote(n.midiNumber,1.4),i*30));
   drawClock(notes);
   infoBar.textContent=`Strumming: ${notes.map(n=>n.note).join(' · ')}`;
   infoBar.classList.add('active');
-  setTimeout(()=>{drawClock();infoBar.classList.remove('active');},1600);
+  schedulePlayback(()=>{drawClock();infoBar.classList.remove('active');},1600);
 }
 
 // ── WEDGE PANEL ──
@@ -2362,6 +2452,7 @@ function initRhythmAudio() {
 
 function playRhythmSound(type, when) {
   if (!RS.audioCtx) return;
+  if (typeof window._recPercussionHit === 'function') window._recPercussionHit(type, when);
   const ctx = RS.audioCtx, now = when||ctx.currentTime;
 
   function noise(dur) {
@@ -3092,6 +3183,7 @@ function playMelodicNoteAtTime(midiNum, when, color) {
   // otherwise use main audioCtx
   const ctx = RS.audioCtx || audioCtx;
   if (!ctx) return;
+  if (typeof window._recMelodicHit === 'function') window._recMelodicHit(midiNum, when);
   const freq = 440 * Math.pow(2, (midiNum - 69) / 12);
   const osc  = ctx.createOscillator();
   const gain = ctx.createGain();
@@ -3591,6 +3683,56 @@ function etRestart() {
     };
   }
 
+  // ── Capture Rhythm Lab playback too ──────────────────────────────────────
+  // playRhythmSound() (drum hits) and playMelodicNoteAtTime() (sync-mode
+  // melodic notes) are defined outside this closure and talk to the Web
+  // Audio API directly — they never call playNote(), so without these hooks
+  // the Performance Recorder captures clock clicks but is completely blind
+  // to anything the Euclidean Rhythm engine plays. Exposed on window so
+  // those outer-scope functions can reach in and log an event, the same way
+  // wrapPlayNote() does above for clock notes.
+  var GM_DRUM_MAP = { kick:36, bass:35, snare:38, rim:37, click:37, hihat:42, openhat:46, wood:76, tone:56 };
+
+  window._recPercussionHit = function(soundType, whenSec) {
+    if (!recording) return;
+    var nowCtx   = (window.RS && RS.audioCtx) ? RS.audioCtx.currentTime : 0;
+    var delaySec = Math.max(0, (typeof whenSec === 'number' ? whenSec : nowCtx) - nowCtx);
+    var t = (Date.now() - recStart) / 1000 + delaySec;
+    var midi = GM_DRUM_MAP.hasOwnProperty(soundType) ? GM_DRUM_MAP[soundType] : 38;
+    recEvents.push({
+      t        : Math.round(t * 100) / 100,
+      midi     : midi,
+      duration : 0.15,
+      root     : '',
+      mode     : currentStencil,
+      isDrum   : true,
+      drumType : soundType
+    });
+    try {
+      if (window.KCM && window.KCM.bus && window.KCM.bus.pushEvent) {
+        window.KCM.bus.pushEvent({
+          t: Math.round(t * 1000), pc: null, midi: midi, duration: 150,
+          root: '', mode: currentStencil, isDrum: true, drumType: soundType
+        });
+      }
+    } catch (e) { /* bus not available — recording still works locally */ }
+    updateTimeline(recEvents);
+  };
+
+  window._recMelodicHit = function(midiNumber, whenSec) {
+    if (!recording) return;
+    var nowCtx   = (window.RS && RS.audioCtx) ? RS.audioCtx.currentTime : 0;
+    var delaySec = Math.max(0, (typeof whenSec === 'number' ? whenSec : nowCtx) - nowCtx);
+    var t = (Date.now() - recStart) / 1000 + delaySec;
+    var rootIdx  = getRootSpokeIndex() % 12;
+    var rootName = NOTE_NAMES_REC[rootIdx];
+    recEvents.push({
+      t: Math.round(t * 100) / 100, midi: midiNumber, duration: 0.4,
+      root: rootName, mode: currentStencil
+    });
+    updateTimeline(recEvents);
+  };
+
   // ── Timer display ──────────────────────────────────────────────────────
   function startTimeDisplay(offset) {
     offset = offset || 0;
@@ -3707,11 +3849,20 @@ function etRestart() {
     updateTimeline(take.events);
     startTimeDisplay(0);
 
-    // Schedule all notes
+    // Schedule all notes (and, for takes recorded from the Rhythm Lab,
+    // drum hits — replayed via playRhythmSound rather than playNote so they
+    // sound like the actual kick/snare/hihat instead of a pitched tone)
     take.events.forEach(function(ev) {
       var t = playbackTimers.push(setTimeout(function() {
         if (!playing) return;
-        if (_origPlayNote) _origPlayNote(ev.midi, ev.duration || 0.5);
+        if (ev.isDrum) {
+          if (typeof playRhythmSound === 'function') {
+            var when = (window.RS && RS.audioCtx) ? RS.audioCtx.currentTime : undefined;
+            playRhythmSound(ev.drumType, when);
+          }
+        } else if (_origPlayNote) {
+          _origPlayNote(ev.midi, ev.duration || 0.5);
+        }
       }, ev.t * 1000));
     });
 

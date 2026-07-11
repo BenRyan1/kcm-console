@@ -494,8 +494,12 @@ function _explLoadSamples() {
   if (_sfLoadStarted || typeof Soundfont === 'undefined') return;
   _sfLoadStarted = true;
   const ctx = getAudio();
-  Soundfont.instrument(ctx, 'acoustic_grand_piano').then(inst => { _sfPiano = inst; }).catch(() => {});
-  Soundfont.instrument(ctx, 'acoustic_guitar_steel').then(inst => { _sfGuitar = inst; }).catch(() => {});
+  // Route sampled instrument output through masterGain (not straight to
+  // ctx.destination, soundfont-player's default) — the WAV recorder taps
+  // masterGain specifically, so without this the Keyboard/Fretboard tabs'
+  // real piano/guitar samples would play audibly but never get captured.
+  Soundfont.instrument(ctx, 'acoustic_grand_piano', { destination: masterGain }).then(inst => { _sfPiano = inst; }).catch(() => {});
+  Soundfont.instrument(ctx, 'acoustic_guitar_steel', { destination: masterGain }).then(inst => { _sfGuitar = inst; }).catch(() => {});
 }
 // Retry a few times in case the deferred CDN script hasn't finished
 // loading yet when the page first paints (Soundfont still undefined).
@@ -514,7 +518,7 @@ const playNotes = (notes,oct=4,dur=0.9,delay=0) => {
   const sampledInst = _explTimbre === 'piano' ? _sfPiano : _explTimbre === 'guitar' ? _sfGuitar : null;
   if (sampledInst) {
     notes.forEach(n => {
-      try { sampledInst.play(n + oct, ctx.currentTime + delay, { duration: dur, gain: 2.4 }); }
+      try { sampledInst.play(n + oct, ctx.currentTime + delay, { duration: dur, gain: 2.4, destination: masterGain }); }
       catch (e) { /* fall through silently — recording capture below still runs */ }
     });
     if (typeof _cof_recording !== 'undefined' && _cof_recording && delay === 0) {

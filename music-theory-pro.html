@@ -3234,11 +3234,15 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                             b.style.background = active ? 'var(--primary-teal)' : 'rgba(0,128,128,0.12)';
                             b.style.borderColor = active ? 'var(--primary-teal)' : 'rgba(0,128,128,0.4)';
                         });
+                        // Keep the dock and card picker in sync too
+                        if (typeof syncHarmDockUI === 'function') syncHarmDockUI(degIdx);
+                        try { if (typeof updateVoicingPanel === 'function') updateVoicingPanel(); } catch(e2) {}
                     } else {
                         // Tap non-chord-root: just change the key root
                         rootNote = noteIndex;
                         currentHarmDegree = 0;
                         updateDisplay();
+                        if (typeof syncHarmDockUI === 'function') syncHarmDockUI(0);
                     }
                     setTimeout(() => playHarmChordAscending(), 80);
                     return;
@@ -3685,6 +3689,18 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                     return;
                 }
                 const t = Math.max(audioTime, audioContext.currentTime);
+                // Capture every note that actually sounds — chords, scales,
+                // triads, progressions, and single clicks alike — into the
+                // Recording Studio. This is the one function ALL playback
+                // funnels through; previously only playNote() pushed into
+                // recordedNotes, but most of what the app plays (e.g.
+                // playHarmChordAscending for chords/progressions) calls
+                // _playAt directly and never touched playNote(), so Record
+                // silently captured only individual Free Play clicks.
+                if (isRecording) {
+                    const delayMs = Math.max(0, (t - audioContext.currentTime) * 1000);
+                    recordedNotes.push({ note: pc, octave: oct, timestamp: (Date.now() - recordingStartTime) + delayMs, duration: dur });
+                }
                 // Try sample first; fall back to synth
                 if (_samplesReady && currentInstrument !== 'synth') {
                     if (_playSample(pc, oct, t, dur, vol)) return;
@@ -3713,7 +3729,9 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                         window._kcmMasterBus.connect(audioContext.destination);
                     } catch(eBus) { console.error('Master bus rebuild failed:', eBus); }
                 }
-                if (isRecording) recordedNotes.push({note:n, octave:oct, timestamp:Date.now()-recordingStartTime, duration:dur});
+                // Recording capture now happens centrally inside _playAt()
+                // (see comment there) so it covers chords/scales too, not
+                // just this single-note path — no separate push needed here.
                 _playAt(n, oct, audioContext.currentTime, dur, vol);
                 // Only do visual highlight for single-note clicks (not during sequence playback)
                 if (_playTimers.length === 0) {
@@ -5136,6 +5154,22 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         }
         window.playHarmChordDescending = playHarmChordDescending;
 
+        // Authoritative setter for the Harmonized "Scale Degree", exposed to
+        // window so code OUTSIDE this closure (e.g. the KCM Control Dock,
+        // which is wired up further down in the file, past where this IIFE
+        // ends) can change it safely. currentHarmDegree itself is a `let`
+        // local to this closure — a bare `currentHarmDegree = x` written
+        // from outside would silently create an unrelated global variable
+        // instead of updating the real state, leaving the dock's set degree
+        // visually "stuck" or, worse, disconnected from what actually plays.
+        // Always route external degree changes through this function.
+        function setHarmDegreeAndSync(deg) {
+            currentHarmDegree = deg;
+            updateDisplay();
+            setTimeout(() => playHarmChordAscending(), 200);
+        }
+        window.setHarmDegreeAndSync = setHarmDegreeAndSync;
+
         // ── Update controls ───────────────────────────────────────
         function updateControls() {
             try {
@@ -5341,6 +5375,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                                 });
                                 this.style.background = 'var(--primary-teal)';
                                 this.style.borderColor = 'var(--primary-teal)';
+                                if (typeof syncHarmDockUI === 'function') syncHarmDockUI(currentHarmDegree);
                                 updateDisplay();
                                 setTimeout(() => playHarmChordAscending(), 200);
                             };
@@ -6557,6 +6592,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 // Click to play this degree
                 card.onclick = () => {
                     currentHarmDegree = degIdx;
+                    if (typeof syncHarmDockUI === 'function') syncHarmDockUI(degIdx);
                     updateDisplay();
                     setTimeout(() => playHarmChordAscending(), 100);
                 };
@@ -7044,27 +7080,30 @@ function dockSetMode(el, mode) {
     }
 }
 
+function syncHarmDockUI(deg) {
+    // Single source of truth for the KCM Control Dock's degree-button
+    // highlighting. Called from every place the Harmonized "Scale Degree"
+    // can be changed (main .deg-btn row, card picker, wheel-note click, and
+    // the dock itself) so the dock never shows a stale/incorrect degree
+    // relative to whatever currentHarmDegree actually is.
+    document.querySelectorAll('#dockMajorDegrees .dock-deg-btn, #dockMinorDegrees .dock-deg-btn').forEach(b => {
+        b.classList.toggle('active', parseInt(b.dataset.deg) === deg);
+    });
+}
+
 function dockSetDegree(el, deg) {
-    // Update active state in whichever group is visible
-    // Determine current level by checking which dock-level-btn is active
-    const activeLvlBtn = document.querySelector('.dock-level-btn.active');
-    const _lvl = activeLvlBtn ? activeLvlBtn.dataset.dockLevel : 'harmMajor';
-    const group = _lvl === 'harmMinor'
-        ? document.getElementById('dockMinorDegrees')
-        : document.getElementById('dockMajorDegrees');
-    group.querySelectorAll('.dock-deg-btn').forEach(b => b.classList.remove('active'));
-    el.classList.add('active');
-    // Also click matching main deg-btn to keep in sync
-    const mainBtn = document.querySelector(`.deg-btn[data-deg="${deg}"]`);
-    if (mainBtn) {
-        mainBtn.click();
+    // Update active state in the dock (covers both major/minor groups)
+    syncHarmDockUI(deg);
+    // Update the real chord-degree state and re-render — routed through the
+    // authoritative setter (not a bare `currentHarmDegree = deg`) so this
+    // works correctly whether or not the main .deg-btn row happens to be
+    // mounted right now.
+    if (typeof window.setHarmDegreeAndSync === 'function') {
+        window.setHarmDegreeAndSync(deg);
     } else {
-        // Fallback: set directly and play
-        if (typeof currentHarmDegree !== 'undefined') {
-            currentHarmDegree = deg;
-            if (typeof updateDisplay === 'function') window.updateDisplay();
-            setTimeout(() => { if (typeof playHarmChordAscending === 'function') window.playHarmChordAscending(); }, 200);
-        }
+        // Extremely defensive fallback — should not be reachable in practice.
+        const mainBtn = document.querySelector(`.deg-btn[data-deg="${deg}"]`);
+        if (mainBtn) mainBtn.click();
     }
 }
 
