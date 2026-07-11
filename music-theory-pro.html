@@ -1107,18 +1107,61 @@ select option { background: #1a1a2e; color: white; }
 .black-key .key-label { bottom: 3px; font-size: 7px; color: #666; }
 
 /* ============================================================
-   EAR TRAINING
+   EAR TRAINING — docked panel that appears BELOW whichever view
+   (Circle/Piano/Guitar/Sing/Stencil) is active, in normal
+   document flow. It is no longer part of the exclusive panel
+   swap zone, so it never hides or overlaps the circle, staff,
+   keyboard, or fretboard — it simply adds itself underneath and
+   pushes the rest of the page down.
    ============================================================ */
 #earTraining {
     display: none;
-    background: rgba(0,0,0,0.4);
-    padding: 2rem;
+    width: 100%;
+    max-width: 500px;
+    margin: 0.75rem auto 0;
+    background: linear-gradient(135deg, rgba(10,10,21,0.98) 0%, rgba(26,26,46,0.98) 100%);
+    padding: 0 1.5rem 1.5rem;
     border-radius: 16px;
-    max-width: 750px;
     text-align: center;
-    margin: 0 auto;
-    border: 2px solid rgba(0,128,128,0.2);
+    border: 2px solid var(--primary-teal);
     box-shadow: 0 6px 25px rgba(0,0,0,0.4);
+}
+.ear-overlay-hdr {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin: 0 -1.5rem 1rem;
+    padding: 0.65rem 1rem;
+    background: linear-gradient(135deg, var(--primary-teal) 0%, #006666 100%);
+    border-radius: 14px 14px 0 0;
+}
+.ear-overlay-hdr span {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 0.82rem;
+    letter-spacing: 1px;
+    color: white;
+    text-transform: uppercase;
+}
+#closeEarBtn {
+    background: rgba(255,255,255,0.15);
+    border: none;
+    color: white;
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s;
+}
+#closeEarBtn:hover { background: rgba(255,255,255,0.3); }
+.view-btn.ear-open {
+    background: linear-gradient(135deg, var(--primary-gold) 0%, #c9a227 100%) !important;
+    border-color: var(--primary-gold) !important;
+    color: #1a1a2e !important;
 }
 .quiz-options {
     display: flex;
@@ -1150,6 +1193,8 @@ select option { background: #1a1a2e; color: white; }
 .quiz-btn:hover { background: linear-gradient(135deg, #00a0a0 0%, var(--primary-teal) 100%); transform: translateY(-2px); }
 .quiz-btn.correct { background: linear-gradient(135deg, #27ae60 0%, #229954 100%); box-shadow: 0 6px 20px rgba(39,174,96,0.6); }
 .quiz-btn.incorrect { background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); box-shadow: 0 6px 20px rgba(231,76,60,0.6); }
+.quiz-btn:disabled { opacity: 1; cursor: default; transform: none; }
+.quiz-btn:disabled:not(.correct):not(.incorrect) { opacity: 0.45; }
 
 /* ============================================================
    SPHERES (chromatic circle notes)
@@ -1779,17 +1824,6 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                     </div>
                 </div>
 
-                <!-- PANEL 4: EAR TRAINING -->
-                <div id="earTraining" role="region" aria-label="Ear training quiz">
-                    <h3 id="quizQuestion" style="font-family:var(--font-display); font-size:1.3rem; font-weight:800; color:var(--primary-gold); margin-bottom:1rem;">Click "New Question" to start</h3>
-                    <div class="quiz-options" id="quizOptions" role="group" aria-label="Answer options"></div>
-                    <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin:0.75rem 0;">
-                        <button class="play-btn" id="playQuizBtn">🔊 Replay Sound</button>
-                        <button class="play-btn" id="newQuizBtn" style="background:linear-gradient(135deg, var(--primary-purple) 0%, #6a4f8c 100%);">🔄 New Question</button>
-                    </div>
-                    <p id="quizScore" style="margin-top:1.25rem; font-family:var(--font-display); font-size:1.2rem; font-weight:700; color:var(--primary-gold);" aria-live="polite">Score: 0/0</p>
-                </div>
-
                 <!-- PANEL 5: SING / PITCH DETECTOR -->
                 <div id="singPanel" role="region" aria-label="Pitch detector" style="display:none;">
                     <h2 style="font-family:var(--font-display);font-size:1.2rem;font-weight:900;color:var(--primary-gold);margin-bottom:0.4rem;text-align:center;">🎤 SING OR PLAY — Watch Your Music Come Alive</h2>
@@ -1918,6 +1952,25 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                             onmouseout="this.style.transform='';this.style.boxShadow='0 4px 12px rgba(231,76,60,0.3)'">■ STOP</button>
                     </div>
                 </div>
+            </div>
+
+            <!-- ── EAR TRAINING — docked panel, appears below the staff when
+                 toggled open. Not part of panelSwapZone: the active view
+                 (Circle/Piano/Guitar/Sing/Stencil) and the staff above stay
+                 fully visible and keep lighting up while quizzing. ── -->
+            <div id="earTraining" role="region" aria-label="Ear training quiz">
+                <div class="ear-overlay-hdr">
+                    <span>👂 Ear Training</span>
+                    <button id="closeEarBtn" aria-label="Close ear training">✕</button>
+                </div>
+                <h3 id="quizQuestion" style="font-family:var(--font-display); font-size:1.15rem; font-weight:800; color:var(--primary-gold); margin-bottom:1rem;">Click "New Question" to start</h3>
+                <div class="quiz-options" id="quizOptions" role="group" aria-label="Answer options"></div>
+                <p id="quizFeedback" aria-live="assertive" style="min-height:1.6rem; margin:0.6rem 0 0; font-family:var(--font-display); font-size:1.05rem; font-weight:800;"></p>
+                <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin:0.75rem 0;">
+                    <button class="play-btn" id="playQuizBtn">🔊 Replay Sound</button>
+                    <button class="play-btn" id="newQuizBtn" style="background:linear-gradient(135deg, var(--primary-purple) 0%, #6a4f8c 100%);">🔄 New Question</button>
+                </div>
+                <p id="quizScore" style="margin-top:1.25rem; font-family:var(--font-display); font-size:1.2rem; font-weight:700; color:var(--primary-gold);" aria-live="polite">Score: 0/0</p>
             </div>
 
             <!-- ── CONTROLS (always visible below panels) ── -->
@@ -2332,7 +2385,7 @@ window.addEventListener('unhandledrejection', function(event) {
         let currentWaveform = 'sine', currentBPM = 120, currentModeSelection = 'ionian';
         let currentTriadSelection = 'major', currentExtendedSelection = 'major7';
         let currentMinorType = 'naturalMinor', currentHarmDegree = 0, currentHarmChordType = 'triad';
-        let quizCorrect = 0, quizTotal = 0, currentQuiz = null;
+        let quizCorrect = 0, quizTotal = 0, currentQuiz = null, earTrainingOpen = false;
         let isRecording = false, recordedNotes = [], recordingStartTime = 0;
         let guitarFretCount = 5;
 
@@ -2463,6 +2516,7 @@ window.addEventListener('unhandledrejection', function(event) {
                         createSpheres();
                         updateDisplay();
                         updateView();
+                        updateEarOverlay();
                         updateOctaveDisplay();
                         const initialNotes = Array.from(selectedNotes);
                         if (initialNotes.length > 0) updateStaffNotation(initialNotes);
@@ -2496,6 +2550,18 @@ window.addEventListener('unhandledrejection', function(event) {
 
                 document.querySelectorAll('.view-btn[data-view]').forEach(btn => {
                     btn.onclick = function() {
+                        // "Ear" is a docked panel, not one of the exclusive swap-zone
+                        // views — toggle it open/closed without disturbing whichever
+                        // of Circle/Piano/Guitar/Sing/Stencil is currently showing.
+                        if (this.dataset.view === 'ear') {
+                            earTrainingOpen = !earTrainingOpen;
+                            updateEarOverlay();
+                            if (earTrainingOpen) {
+                                if (!currentQuiz) generateQuiz(); else playQuizSound();
+                            }
+                            try { trackEvent('ear_training_toggle', {open: earTrainingOpen}); } catch(e) {}
+                            return;
+                        }
                         clearAllHighlights();
                         document.querySelector('.view-btn.active')?.classList.remove('active');
                         this.classList.add('active');
@@ -2508,6 +2574,8 @@ window.addEventListener('unhandledrejection', function(event) {
                         if (currentView !== 'sing' && typeof kcmGuideAutoExplain === 'function') kcmGuideAutoExplain('view');
                     };
                 });
+                const closeEarBtn = document.getElementById('closeEarBtn');
+                if (closeEarBtn) closeEarBtn.onclick = () => { earTrainingOpen = false; updateEarOverlay(); };
                 // Key picker button is also .view-btn but has no data-view — wire it separately
                 const _kpb = document.getElementById('keyPickerBtn');
                 if (_kpb) _kpb.onclick = () => { if (typeof toggleKeyPicker === 'function') toggleKeyPicker(); };
@@ -4290,6 +4358,9 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 currentQuiz = {type:'interval', correct:int, notes:[0, int]};
                 const qEl = document.getElementById('quizQuestion');
                 if (qEl) qEl.textContent = 'What interval do you hear?';
+                const fbEl = document.getElementById('quizFeedback');
+                if (fbEl) { fbEl.textContent = ''; fbEl.style.color = ''; }
+                updateStaffNotation([]); // clear previous reveal so the new answer isn't given away
                 const opts = document.getElementById('quizOptions');
                 if (!opts) return;
                 opts.innerHTML = '';
@@ -4299,6 +4370,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 options.forEach(i => {
                     const btn = document.createElement('button');
                     btn.className = 'quiz-btn'; btn.textContent = intervalNames[i];
+                    btn.disabled = false;
                     btn.onclick = () => checkAnswer(i); opts.appendChild(btn);
                 });
                 playQuizSound();
@@ -4307,21 +4379,32 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         }
 
         function playQuizSound() {
-            if (!currentQuiz || !audioReady) return;
+            if (!currentQuiz) return;
+            if (!audioReady) { alert('Click START AUDIO ENGINE first!'); return; }
             currentQuiz.notes.forEach((n, i) => setTimeout(() => playNote(n, 4, 0.8), i * 600));
         }
 
         function checkAnswer(ans) {
             try {
-                if (!currentQuiz) return;
+                if (!currentQuiz || currentQuiz.answered) return; // one answer per question
+                currentQuiz.answered = true;
                 const btns = document.querySelectorAll('.quiz-btn');
+                const isRight = ans === currentQuiz.correct;
                 quizTotal++;
-                if (ans === currentQuiz.correct) { quizCorrect++; btns.forEach(btn => { if (btn.textContent === intervalNames[ans]) btn.classList.add('correct'); }); }
+                if (isRight) { quizCorrect++; btns.forEach(btn => { if (btn.textContent === intervalNames[ans]) btn.classList.add('correct'); }); }
                 else { btns.forEach(btn => { if (btn.textContent === intervalNames[ans]) btn.classList.add('incorrect'); if (btn.textContent === intervalNames[currentQuiz.correct]) btn.classList.add('correct'); }); }
+                btns.forEach(btn => btn.disabled = true); // lock in the answer
                 const scoreEl = document.getElementById('quizScore');
                 if (scoreEl) scoreEl.textContent = `Score: ${quizCorrect}/${quizTotal} (${Math.round(quizCorrect/quizTotal*100)}%)`;
-                try { trackEvent('quiz_answer', {correct: ans === currentQuiz.correct}); } catch(e) {}
-                setTimeout(() => generateQuiz(), 2000);
+                const fbEl = document.getElementById('quizFeedback');
+                if (fbEl) {
+                    if (isRight) { fbEl.textContent = '✅ CORRECT!'; fbEl.style.color = '#2ecc71'; }
+                    else { fbEl.textContent = `❌ NOT QUITE — it was ${intervalNames[currentQuiz.correct]}`; fbEl.style.color = '#e74c3c'; }
+                }
+                try { trackEvent('quiz_answer', {correct: isRight}); } catch(e) {}
+                // Reveal both interval notes together on staff
+                updateStaffNotation(currentQuiz.notes.map(n => ({pc: n, oct: 4})));
+                setTimeout(() => generateQuiz(), 2200);
             } catch(e) { console.error('Check answer error:', e); }
         }
 
@@ -5328,7 +5411,8 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                     if (showPiano) { createPiano(); updatePianoDisplay(); }
                 }
                 if (guitar)  guitar.style.display  = currentView === 'guitar'   ? 'block' : 'none';
-                if (ear)     ear.style.display     = currentView === 'ear'      ? 'block' : 'none';
+                // Ear Training is a docked panel now (see updateEarOverlay) —
+                // it's independent of currentView and never hidden by a view switch.
                 const sing = el('singPanel');
                 if (sing)    sing.style.display    = currentView === 'sing'     ? 'block' : 'none';
                 // ── KCM STENCIL PANEL ──
@@ -5341,10 +5425,20 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 const staffNotes = Array.from(selectedNotes);
                 updateStaffNotation(staffNotes.length > 0 ? staffNotes : [rootNote]);
                 const pc = el('progressionControls');
-                if ((currentLevel==='harmMajor'||currentLevel==='harmMinor') && currentView!=='ear') {
+                if (currentLevel==='harmMajor'||currentLevel==='harmMinor') {
                     if (pc) { pc.style.display='block'; updateProgressionButtons(); }
                 } else { if (pc) pc.style.display='none'; }
             } catch(e) { console.error('Update view error:', e); }
+        }
+
+        // ── Update ear training docked panel ───────────────────────
+        function updateEarOverlay() {
+            try {
+                const overlay = document.getElementById('earTraining');
+                if (overlay) overlay.style.display = earTrainingOpen ? 'block' : 'none';
+                const earBtn = document.querySelector('.view-btn[data-view="ear"]');
+                if (earBtn) earBtn.classList.toggle('ear-open', earTrainingOpen);
+            } catch(e) { console.error('Ear overlay error:', e); }
         }
 
         // ── Octave display ────────────────────────────────────────
