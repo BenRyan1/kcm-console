@@ -4304,14 +4304,20 @@ function etRestart() {
     var NOTE_MAP_EX = {'C':0,'C#':1,'Db':1,'D':2,'D#':3,'Eb':3,'E':4,'F':5,'F#':6,'Gb':6,'G':7,'G#':8,'Ab':8,'A':9,'A#':10,'Bb':10,'B':11};
     var rootIdx = NOTE_MAP_EX[take.root] || 0;
     var msEvents = (take.events || []).map(function (ev) {
-      return {
+      var out = {
         t        : Math.round(ev.t * 1000),
-        pc       : ((ev.midi % 12) + 12) % 12,
+        // Drum hits carry a General MIDI percussion note number in .midi
+        // (see _recPercussionHit), not a real pitch — a mod-12 pitch class
+        // on that number would misleadingly claim it's a melodic C/D/etc.
+        // Only compute pc for genuine melodic events.
+        pc       : ev.isDrum ? null : ((ev.midi % 12) + 12) % 12,
         midi     : ev.midi,
         duration : Math.round(ev.duration * 1000),
         root     : ev.root,
         mode     : ev.mode
       };
+      if (ev.isDrum) { out.isDrum = true; out.drumType = ev.drumType; }
+      return out;
     });
     var doc = {
       gcis      : 1,
