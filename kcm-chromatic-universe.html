@@ -1510,6 +1510,20 @@ input[type="range"] {
             <div class="euclid-presets-grid" id="euclidCustomPresetsGrid"></div>
           </div>
         </div>
+
+        <!-- ★ TAP-TO-EUCLIDEAN ★ -->
+        <div class="ctrl-card" style="border-color:rgba(74,123,167,0.35);">
+          <div class="ctrl-card-title" style="color:#4A7BA7;">🥁 Tap-to-Euclidean</div>
+          <p style="font-size:0.7rem;color:var(--text-ghost);margin-bottom:0.6rem;line-height:1.5;">
+            Tap out any rhythm below (or press <b>Space</b>) in time with the BPM. We'll quantize it to the step grid, load it as a new layer, and tell you how close it lands to its "perfectly even" Euclidean twin.
+          </p>
+          <button class="btn btn-teal btn-full" id="tapPadBtn" onclick="handleTapInput()" style="font-size:1rem;font-weight:800;padding:1rem;">👆 TAP HERE</button>
+          <div style="display:flex;justify-content:space-between;margin-top:0.5rem;font-size:0.68rem;color:var(--text-ghost);">
+            <span id="tapCountDisplay">0 taps</span>
+            <span id="tapStepsDisplay">Grid: 16 steps</span>
+          </div>
+          <button class="btn btn-full" onclick="resetTapCapture()" style="margin-top:0.4rem;font-size:0.68rem;background:rgba(255,255,255,0.05);color:var(--text-dim);">↺ Reset Taps</button>
+        </div>
       </div>
 
       <!-- RIGHT: Polygon picker + SYNC -->
@@ -2664,8 +2678,146 @@ function createLayer(steps, pulses, cIdx, sound) {
   const id=++layerIdCtr, color=LAYER_COLORS[cIdx%LAYER_COLORS.length];
   return {id, steps:steps||RS.globalSteps, pulses:pulses||RS.selectedPoly,
     pattern:bjorklund(steps||RS.globalSteps, pulses||RS.selectedPoly),
-    color, soundType:sound||LAYER_SOUNDS[cIdx%LAYER_SOUNDS.length], muted:false};
+    color, soundType:sound||LAYER_SOUNDS[cIdx%LAYER_SOUNDS.length], muted:false, rotation:0};
 }
+
+// ── Complementary ("Add the Gaps") layer ──────────────────────────────────
+// A layer whose pattern is the exact bitwise complement of a source layer's
+// pattern — guaranteed zero overlap with that specific source, an instant
+// perfect call-and-response partner rhythm.
+function createComplementLayer(sourceLayer, cIdx, sound) {
+  const id = ++layerIdCtr, color = LAYER_COLORS[cIdx % LAYER_COLORS.length];
+  const pattern = sourceLayer.pattern.map(v => v ? 0 : 1);
+  const pulses = pattern.reduce((a,b) => a+b, 0);
+  return { id, steps: sourceLayer.steps, pulses, pattern, color,
+    soundType: sound || LAYER_SOUNDS[cIdx % LAYER_SOUNDS.length], muted:false, rotation:0 };
+}
+
+function addComplementLayer(sourceLayerId) {
+  if (RS.layers.length >= 6) { showToast('⚠️ Max 6 layers'); return; }
+  const src = RS.layers.find(l => l.id === sourceLayerId);
+  if (!src) return;
+  if (!src.pattern.includes(1) || !src.pattern.includes(0)) {
+    showToast('⚠️ That layer has no gaps to fill'); return;
+  }
+  const srcIdx = RS.layers.indexOf(src);
+  const idx = RS.layers.length;
+  const newLayer = createComplementLayer(src, idx, LAYER_SOUNDS[idx % LAYER_SOUNDS.length]);
+  RS.layers.push(newLayer);
+  renderLayers(); drawRhythmViz();
+  showToast('🧩 Complementary layer added — perfectly fills Layer ' + (srcIdx+1) + '\'s gaps');
+}
+
+// ── Rotation dial ──────────────────────────────────────────────────────────
+// Every Euclidean pattern has multiple rotations (same shape, different
+// starting beat) and many are themselves recognized rhythms. Rotating just
+// shifts the pattern array circularly — the underlying pulse count never
+// changes, so a rotation can only ever "become" a named preset that shares
+// the exact same (steps, pulses) — checkRotationMatch looks for that
+// honestly, using the app's own verified bjorklund output for comparison
+// rather than any hard-coded ethnomusicological claim.
+function rotateLayer(id, dir) {
+  const l = RS.layers.find(l => l.id === id);
+  if (!l) return;
+  const n = l.pattern.length;
+  if (n < 2) return;
+  if (dir > 0) l.pattern.push(l.pattern.shift());
+  else l.pattern.unshift(l.pattern.pop());
+  l.rotation = ((l.rotation||0) + dir + n) % n;
+  const rotEl = document.getElementById('lrot-' + id);
+  if (rotEl) rotEl.textContent = l.rotation + '/' + n;
+  drawRhythmViz();
+  if (typeof updateEuclidPresetHighlight === 'function') updateEuclidPresetHighlight();
+  checkRotationMatch(l);
+}
+
+function checkRotationMatch(l) {
+  const bitstr = l.pattern.join('');
+  for (const key in EUCLID_PRESETS) {
+    const p = EUCLID_PRESETS[key];
+    if (p.layers.length !== 1) continue;
+    const [s, pu] = p.layers[0];
+    if (s !== l.steps) continue;
+    if (bjorklund(s, pu).join('') === bitstr) { showToast('🎉 This rotation matches: ' + p.label + '!'); return; }
+  }
+}
+
+// ── Tap-to-Euclidean ─────────────────────────────────────────────────────
+// Tap out any rhythm in time with the current BPM; each tap is quantized
+// onto the current 16th-note step grid (using the exact same spb/4 math the
+// scheduler itself uses in rAdvanceStep, so a tap and a scheduled beat mean
+// the same thing) and turned into a real layer. We also compute how many of
+// the tapped hits land on the same steps as bjorklund's "ideal" spacing for
+// that same hit count — an honest measurement, not a guessed rhythm name.
+let _tapTimes = [];
+let _tapIdleTimer = null;
+const TAP_IDLE_MS = 1800;
+
+function handleTapInput() {
+  const now = performance.now();
+  _tapTimes.push(now);
+  clearTimeout(_tapIdleTimer);
+  const countEl = document.getElementById('tapCountDisplay');
+  if (countEl) countEl.textContent = _tapTimes.length + ' tap' + (_tapTimes.length===1?'':'s');
+  const stepsEl = document.getElementById('tapStepsDisplay');
+  if (stepsEl) stepsEl.textContent = 'Grid: ' + (RS.globalSteps||16) + ' steps';
+  // Audible click so tapping feels responsive — silently no-ops if the
+  // rhythm audio engine hasn't been started yet.
+  try { if (typeof playRhythmSound === 'function' && RS.audioCtx) playRhythmSound('click', RS.audioCtx.currentTime); } catch(e) {}
+  _tapIdleTimer = setTimeout(finalizeTapCapture, TAP_IDLE_MS);
+}
+
+function resetTapCapture() {
+  _tapTimes = [];
+  clearTimeout(_tapIdleTimer);
+  const countEl = document.getElementById('tapCountDisplay');
+  if (countEl) countEl.textContent = '0 taps';
+}
+
+function finalizeTapCapture() {
+  if (_tapTimes.length < 2) {
+    if (_tapTimes.length === 1) showToast('⚠️ Keep tapping — need at least 2 taps to detect a pattern');
+    return;
+  }
+  if (RS.layers.length >= 6) { showToast('⚠️ Max 6 layers — remove one first, then tap again'); resetTapCapture(); return; }
+
+  const steps = RS.globalSteps || 16;
+  const stepDurMs = (60000 / (RS.tempo||110)) / 4; // matches rAdvanceStep()'s spb/4
+  const t0 = _tapTimes[0];
+  const hitSteps = new Set();
+  _tapTimes.forEach(t => {
+    const raw = Math.round((t - t0) / stepDurMs) % steps;
+    hitSteps.add(((raw % steps) + steps) % steps);
+  });
+
+  const tappedPattern = new Array(steps).fill(0);
+  hitSteps.forEach(i => tappedPattern[i] = 1);
+  const pulses = hitSteps.size;
+
+  const idx = RS.layers.length;
+  const id = ++layerIdCtr;
+  const color = LAYER_COLORS[idx % LAYER_COLORS.length];
+  RS.layers.push({ id, steps, pulses, pattern: tappedPattern, color,
+    soundType: LAYER_SOUNDS[idx % LAYER_SOUNDS.length], muted:false, rotation:0 });
+  renderLayers(); drawRhythmViz();
+
+  const idealPattern = bjorklund(steps, pulses);
+  const matches = tappedPattern.reduce((acc,v,i) => acc + (v===idealPattern[i]?1:0), 0);
+  const matchPct = Math.round(100 * matches / steps);
+  showToast(`🥁 Tapped pattern loaded — ${pulses} hits over ${steps} steps (${matchPct}% matches the ideal Euclidean spacing)`);
+
+  resetTapCapture();
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.code !== 'Space') return;
+  const panel = document.getElementById('panel-rhythm');
+  if (!panel || !panel.classList.contains('active')) return;
+  const tag = (document.activeElement && document.activeElement.tagName) || '';
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+  e.preventDefault();
+  handleTapInput();
+});
 
 function addLayer() {
   if(RS.layers.length>=6){showToast('⚠️ Max 6 layers');return;}
@@ -2692,7 +2844,10 @@ function setLayerSound(id, sound) {
 
 function updateLayerPulses(id, val) {
   const l=RS.layers.find(l=>l.id===id);
-  if(l){l.pulses=parseInt(val); l.pattern=bjorklund(l.steps,Math.min(l.pulses,l.steps)); document.getElementById(`lpv-${id}`).textContent=l.pulses; drawRhythmViz();
+  if(l){l.pulses=parseInt(val); l.pattern=bjorklund(l.steps,Math.min(l.pulses,l.steps)); l.rotation=0;
+    document.getElementById(`lpv-${id}`).textContent=l.pulses;
+    const rotEl=document.getElementById(`lrot-${id}`); if(rotEl) rotEl.textContent='0/'+l.steps;
+    drawRhythmViz();
     if (typeof updateEuclidPresetHighlight === 'function') updateEuclidPresetHighlight();}
 }
 
@@ -2732,6 +2887,13 @@ function renderLayers() {
             oninput="updateLayerPulses(${layer.id},this.value)" style="accent-color:${layer.color}">
           <span class="val" id="lpv-${layer.id}" style="color:${layer.color}">${layer.pulses}</span>
         </div>
+        <div class="slider-row" style="margin-top:0.3rem;">
+          <label>Rotate</label>
+          <button class="layer-btn" onclick="rotateLayer(${layer.id},-1)" title="Rotate earlier">◀</button>
+          <span class="val" id="lrot-${layer.id}" style="color:${layer.color};min-width:2.6rem;text-align:center;">${layer.rotation||0}/${layer.steps}</span>
+          <button class="layer-btn" onclick="rotateLayer(${layer.id},1)" title="Rotate later">▶</button>
+          <button class="layer-btn" onclick="addComplementLayer(${layer.id})" title="Add a new layer that fills exactly this one's gaps" style="margin-left:auto;color:var(--gold);">🧩 Gaps</button>
+        </div>
       </div>`;
     container.appendChild(card);
   });
@@ -2757,7 +2919,7 @@ function setPolygon(n) {
   // Auto-expand steps if needed (e.g. 12 pulses needs at least 12 steps)
   if (n > RS.globalSteps) setSteps(Math.max(16, n));
   document.querySelectorAll('.poly-btn').forEach((b,i)=>b.classList.toggle('active',i+2===n));
-  RS.layers.forEach(l=>{l.pulses=n;l.pattern=bjorklund(l.steps,Math.min(n,l.steps));});
+  RS.layers.forEach(l=>{l.pulses=n;l.pattern=bjorklund(l.steps,Math.min(n,l.steps));l.rotation=0;});
   renderLayers(); drawRhythmViz();
 }
 
@@ -2852,7 +3014,7 @@ function setSteps(val) {
     const b=document.getElementById('stepsBtn'+n);
     if(b) b.classList.toggle('active', n===RS.globalSteps);
   });
-  RS.layers.forEach(l=>{l.steps=RS.globalSteps;l.pattern=bjorklund(l.steps,Math.min(l.pulses,l.steps));});
+  RS.layers.forEach(l=>{l.steps=RS.globalSteps;l.pattern=bjorklund(l.steps,Math.min(l.pulses,l.steps));l.rotation=0;});
   renderLayers(); drawRhythmViz();
 }
 
@@ -2975,16 +3137,27 @@ function drawRhythmViz() {
   });
 
   // Cross-layer polyrhythmic coincidence highlighting (F-6):
-  // when two or more layers fire a pulse at the same scheduled moment, connect their dots.
+  // when two or more layers fire a pulse at the same scheduled moment, connect their dots
+  // AND flash a bright burst at the coincidence point — makes the normally-invisible
+  // "lock points" of a polyrhythm visible the instant they happen.
   if (activeDotPositions.length >= 2) {
-    rCtx.strokeStyle = 'rgba(255,255,255,0.35)';
-    rCtx.lineWidth = 1.2;
+    rCtx.strokeStyle = 'rgba(244,208,63,0.55)';
+    rCtx.lineWidth = 2;
     for (let a = 0; a < activeDotPositions.length; a++) {
       for (let b = a + 1; b < activeDotPositions.length; b++) {
         rCtx.beginPath();
         rCtx.moveTo(activeDotPositions[a].x, activeDotPositions[a].y);
         rCtx.lineTo(activeDotPositions[b].x, activeDotPositions[b].y);
         rCtx.stroke();
+
+        const mx = (activeDotPositions[a].x + activeDotPositions[b].x) / 2;
+        const my = (activeDotPositions[a].y + activeDotPositions[b].y) / 2;
+        const burst = rCtx.createRadialGradient(mx, my, 0, mx, my, 36);
+        burst.addColorStop(0, 'rgba(244,208,63,0.6)');
+        burst.addColorStop(0.55, 'rgba(244,208,63,0.18)');
+        burst.addColorStop(1, 'transparent');
+        rCtx.fillStyle = burst;
+        rCtx.beginPath(); rCtx.arc(mx, my, 36, 0, Math.PI*2); rCtx.fill();
       }
     }
   }
