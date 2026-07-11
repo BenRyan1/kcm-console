@@ -738,6 +738,10 @@ const renderCircle = () => {
   addCirc(158,'none','rgba(0,128,128,0.12)','1','4,4');
   addCirc(84,'#0d1f35','rgba(0,192,192,0.5)','2.5');
   addCirc(74,'none','rgba(244,208,63,0.15)','1');
+  // Small decorative center dot — drawn *before* the hub text below so the
+  // bigger text always layers on top of it instead of the dot poking
+  // through the middle of "Circle of / Fifths".
+  addCirc(5,'rgba(244,208,63,0.35)','none','0');
 
   // Hub text
   const addTxt=(x,y,txt,fs,fill,fw='800',ff='Georgia,serif')=>{
@@ -746,7 +750,6 @@ const renderCircle = () => {
   };
   addTxt(250,241,'Circle of','17','#F4D03F');
   addTxt(250,264,'Fifths','17','#F4D03F');
-  addCirc(5,'rgba(244,208,63,0.35)','none','0');
 
   NOTE_ORDER.forEach((note,index)=>{
     const angle=(index*30-90)*(Math.PI/180);

@@ -34,6 +34,12 @@ Santa Barbara, California | All Rights Reserved
 <script src="js/kcm-midi-recorder.js"></script>
 <script>
 window.addEventListener('load', function() {
+  // Guard: ad-blockers commonly block cookieconsent-style scripts by name,
+  // and if the CDN is ever briefly down this whole listener would otherwise
+  // throw. It's isolated to just the cookie banner (other load listeners on
+  // the page fire independently either way), but there's no reason not to
+  // fail quietly here instead of leaving an error in the console.
+  if (!window.cookieconsent) return;
   window.cookieconsent.initialise({
     palette: { popup: { background: "#0a0a15", text: "#E8E8E8" }, button: { background: "#008080", text: "#ffffff" } },
     theme: "classic", position: "bottom", type: "opt-in", revokable: true, animateRevokable: false,
