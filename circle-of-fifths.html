@@ -453,17 +453,44 @@ const noteToHz = (note,oct=4) => {
   const s=NOTE_CHROMA[note]; if(s===undefined)return 440;
   return 440*Math.pow(2,((oct+1)*12+s-69)/12);
 };
+// Which instrument's timbre to play with — set by the Explorer tabs
+// (keyboard→piano, fretboard→guitar, staff/circle→default synth pad).
+// Only ever read inside playNotes, which only runs from user-triggered
+// clicks (never during the page's initial render()), so no ordering risk.
+let _explTimbre = 'piano';
 const playNotes = (notes,oct=4,dur=0.9,delay=0) => {
   const ctx=getAudio();
   notes.forEach(n=>{
     const osc=ctx.createOscillator(), g=ctx.createGain();
-    osc.type='sine'; osc.frequency.value=noteToHz(n,oct);
-    g.gain.setValueAtTime(0,ctx.currentTime+delay);
-    g.gain.linearRampToValueAtTime(0.18,ctx.currentTime+delay+0.02);
-    g.gain.setValueAtTime(0.18,ctx.currentTime+delay+dur-0.08);
-    g.gain.linearRampToValueAtTime(0,ctx.currentTime+delay+dur);
+    const t0=ctx.currentTime+delay;
+    osc.frequency.value=noteToHz(n,oct);
     osc.connect(g); g.connect(masterGain||ctx.destination);
-    osc.start(ctx.currentTime+delay); osc.stop(ctx.currentTime+delay+dur);
+
+    if (_explTimbre === 'guitar') {
+      // Plucked string: fast attack, no sustain plateau — decays away
+      // exponentially right after the pluck, like a real guitar note.
+      osc.type='sawtooth';
+      g.gain.setValueAtTime(0.0001,t0);
+      g.gain.linearRampToValueAtTime(0.20,t0+0.004);
+      g.gain.exponentialRampToValueAtTime(0.0008,t0+dur);
+    } else if (_explTimbre === 'piano') {
+      // Hammer strike: quick attack, fast initial decay down to a lower
+      // sustain level, then a short release — rings rather than plucks.
+      osc.type='triangle';
+      g.gain.setValueAtTime(0.0001,t0);
+      g.gain.linearRampToValueAtTime(0.24,t0+0.008);
+      g.gain.exponentialRampToValueAtTime(0.09,t0+Math.min(0.18,dur*0.4));
+      g.gain.setValueAtTime(0.09,t0+Math.max(dur-0.08,0.19));
+      g.gain.linearRampToValueAtTime(0,t0+dur);
+    } else {
+      // Default synth pad — original tone, used for Staff / Chromatic Circle.
+      osc.type='sine';
+      g.gain.setValueAtTime(0,t0);
+      g.gain.linearRampToValueAtTime(0.18,t0+0.02);
+      g.gain.setValueAtTime(0.18,t0+dur-0.08);
+      g.gain.linearRampToValueAtTime(0,t0+dur);
+    }
+    osc.start(t0); osc.stop(t0+dur+0.02);
   });
   // Capture for recording
   if(typeof _cof_recording!=='undefined' && _cof_recording && delay===0){
@@ -1247,6 +1274,9 @@ function renderExplorer() {
 }
 
 function _explShowPanel(name) {
+  // Switching tabs also switches what the wheel/buttons actually sound like.
+  const TIMBRE = { keyboard:'piano', fretboard:'guitar', staff:'default', circle:'default' };
+  _explTimbre = TIMBRE[name] || 'default';
   document.querySelectorAll('.explorer-panel').forEach(p => {
     p.style.display = p.dataset.panel === name ? 'block' : 'none';
   });
