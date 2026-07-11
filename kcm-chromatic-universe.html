@@ -2093,6 +2093,12 @@ document.getElementById('keySelect').addEventListener('change', e => {
 document.getElementById('tempoSlider').addEventListener('input', e => {
   currentTempo = parseInt(e.target.value);
   document.getElementById('tempoValue').textContent = currentTempo;
+  // Shared tempo — keep the Rhythm Geometry Lab locked to the same BPM
+  RS.tempo = currentTempo;
+  const rSlider = document.getElementById('rTempoSlider');
+  const rDisplay = document.getElementById('rTempoDisplay');
+  if (rSlider) rSlider.value = currentTempo;
+  if (rDisplay) rDisplay.textContent = currentTempo;
 });
 
 // ── AUTO-PLAY ──
@@ -2242,8 +2248,17 @@ setInterval(()=>{ if(activeMidiNotes.size>0) drawClock(); },60);
 const rCanvas = document.getElementById('rhythmCanvas');
 const rCtx = rCanvas.getContext('2d');
 
+// Shared tempo — sync the Rhythm Lab's slider/display to match the Spoke
+// Clock's tempo on load (HTML has them hardcoded to different defaults: 120 vs 110)
+(function syncRhythmTempoUIOnLoad() {
+  const rSlider = document.getElementById('rTempoSlider');
+  const rDisplay = document.getElementById('rTempoDisplay');
+  if (rSlider) rSlider.value = currentTempo;
+  if (rDisplay) rDisplay.textContent = currentTempo;
+})();
+
 const RS = {
-  playing: false, step: 0, tempo: 110,
+  playing: false, step: 0, tempo: currentTempo, // shared tempo — start synced with the Spoke Clock, not a separate default
   globalSteps: 16, selectedPoly: 5,
   playheadAngle: -Math.PI/2,
   layers: [], audioCtx: null, masterGain: null,
@@ -2635,6 +2650,12 @@ function stopReset() {
 function setRhythmTempo(val) {
   RS.tempo=parseInt(val);
   document.getElementById('rTempoDisplay').textContent=val;
+  // Shared tempo — keep the Chromatic Spoke Clock locked to the same BPM
+  currentTempo = RS.tempo;
+  const cSlider = document.getElementById('tempoSlider');
+  const cDisplay = document.getElementById('tempoValue');
+  if (cSlider) cSlider.value = RS.tempo;
+  if (cDisplay) cDisplay.textContent = RS.tempo;
 }
 
 function setSteps(val) {
