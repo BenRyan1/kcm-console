@@ -357,6 +357,12 @@ body{font-family:var(--font-b);background:radial-gradient(ellipse at 30% 20%,#1e
   <p style="margin-top:.6rem;font-size:.7rem;color:rgba(232,232,248,.3);">FreeStyle&reg; is a registered trademark &middot; U.S. Patents</p>
 </footer>
 
+<!-- Optional: real sampled piano/guitar sounds (soundfont-player, from CDN).
+     Loaded async and used only if it actually loads — if there's no network
+     (e.g. opened straight from file://), the app quietly falls back to its
+     built-in oscillator synth, so nothing breaks either way. -->
+<script src="https://cdn.jsdelivr.net/npm/soundfont-player@0.12.0/dist/soundfont-player.min.js" defer></script>
+
 <script>
 // ══════════════════════════════════════════════════════
 // KCM Circle of Fifths — Pure Vanilla JS, zero dependencies
@@ -382,7 +388,16 @@ const NOTE_CHROMA = {'C':0,'Db':1,'D':2,'Eb':3,'E':4,'F':5,'Gb':6,'G':7,'Ab':8,'
 const DISPLAY_NOTE = {'Db':'D♭','Eb':'E♭','Gb':'G♭','Ab':'A♭','Bb':'B♭'};
 const dn = n => DISPLAY_NOTE[n] || n;
 
-const KEY_SIG_LABELS = ['C\n♮','G\n1♯','D\n2♯','A\n3♯','E\n4♯','B\n5♯','G♭\n6♭','D♭\n5♭','A♭\n4♭','E♭\n3♭','B♭\n2♭','F\n1♭'];
+const KEY_SIG_LABELS = ['C\n♮','G\n1♯','D\n2♯','A\n3♯','E\n4♯','B\n5♯','G♭/F♯\n6♭/6♯','D♭\n5♭','A♭\n4♭','E♭\n3♭','B♭\n2♭','F\n1♭'];
+// Right side of the circle (sharp keys) spells accidentals with sharps;
+// left side (flat keys) keeps flats — matches standard circle-of-fifths
+// convention. Only applies to relative-minor labels: Gb/Db/Ab only ever
+// occur as a relative minor at the sharp-side position that needs this
+// (F#m/C#m/G#m), never on the flat side, so no index check is needed.
+// The Gb/F# major position itself (bottom of the circle) is the genuine
+// enharmonic pivot and shows both names — handled separately below.
+const INNER_SHARP_DISPLAY = {'Gb':'F♯','Db':'C♯','Ab':'G♯'};
+const dnInnerMinor = n => INNER_SHARP_DISPLAY[n] || dn(n);
 const KEY_SIG_MAP = {
   'C':'No sharps or flats','G':'1 sharp (F♯)','D':'2 sharps (F♯,C♯)',
   'A':'3 sharps (F♯,C♯,G♯)','E':'4 sharps','B':'5 sharps',
@@ -398,6 +413,16 @@ const getDim        = r => { const i=CHROMATIC.indexOf(r); return [r,CHROMATIC[(
 const majorDeg      = (root,semis) => CHROMATIC[(CHROMATIC.indexOf(root)+semis)%12];
 const buildChord    = (root,qual) => qual==='maj'?getTriad(root):qual==='min'?getMinorTriad(root):getDim(root);
 const stepNote      = (cur,dir,base) => { const i=base.indexOf(cur); return dir==='up'?base[(i+1)%base.length]:base[(i-1+base.length)%base.length]; };
+// Rotates a 12-key order (NOTE_ORDER or INNER_ORDER) so it starts at
+// startKey, giving the full round-the-circle sequence from that key —
+// used by the CW/CCW sequence buttons and the Loop player. This was
+// referenced in five places but never actually defined, so every click
+// on those controls threw a silent ReferenceError.
+const buildSeq = (base, startKey) => {
+  const i = base.indexOf(startKey);
+  if (i === -1) return base.slice();
+  return [...base.slice(i), ...base.slice(0, i)];
+};
 
 // ── KCM ARPEGGIO LAW (PERMANENT) ─────────────────────
 // Major 1-3-5 ascending, Minor 1-b3-5 ascending.
@@ -458,8 +483,45 @@ const noteToHz = (note,oct=4) => {
 // Only ever read inside playNotes, which only runs from user-triggered
 // clicks (never during the page's initial render()), so no ordering risk.
 let _explTimbre = 'piano';
+
+// ── Optional real sampled instruments (soundfont-player, loaded from a
+// CDN — see the <script defer> tag above <head>/<body>). Used when
+// available; if the library never loads (offline, blocked network, or
+// still mid-load), playNotes below quietly keeps using the built-in
+// oscillator synth instead. Nothing here assumes Soundfont exists yet.
+let _sfPiano = null, _sfGuitar = null, _sfLoadStarted = false;
+function _explLoadSamples() {
+  if (_sfLoadStarted || typeof Soundfont === 'undefined') return;
+  _sfLoadStarted = true;
+  const ctx = getAudio();
+  Soundfont.instrument(ctx, 'acoustic_grand_piano').then(inst => { _sfPiano = inst; }).catch(() => {});
+  Soundfont.instrument(ctx, 'acoustic_guitar_steel').then(inst => { _sfGuitar = inst; }).catch(() => {});
+}
+// Retry a few times in case the deferred CDN script hasn't finished
+// loading yet when the page first paints (Soundfont still undefined).
+window.addEventListener('load', () => {
+  let tries = 0;
+  const retry = setInterval(() => {
+    tries++;
+    if (typeof Soundfont !== 'undefined') { _explLoadSamples(); clearInterval(retry); }
+    else if (tries > 20) clearInterval(retry); // ~10s, then give up quietly
+  }, 500);
+});
+
 const playNotes = (notes,oct=4,dur=0.9,delay=0) => {
   const ctx=getAudio();
+  if (!_sfLoadStarted) _explLoadSamples();
+  const sampledInst = _explTimbre === 'piano' ? _sfPiano : _explTimbre === 'guitar' ? _sfGuitar : null;
+  if (sampledInst) {
+    notes.forEach(n => {
+      try { sampledInst.play(n + oct, ctx.currentTime + delay, { duration: dur, gain: 2.4 }); }
+      catch (e) { /* fall through silently — recording capture below still runs */ }
+    });
+    if (typeof _cof_recording !== 'undefined' && _cof_recording && delay === 0) {
+      setTimeout(() => _cofRecordNote(notes, false, Math.round(dur * 1000)), Math.round(delay * 1000));
+    }
+    return;
+  }
   notes.forEach(n=>{
     const osc=ctx.createOscillator(), g=ctx.createGain();
     const t0=ctx.currentTime+delay;
@@ -682,8 +744,8 @@ const renderCircle = () => {
     const t=svgEl('text',{'x':x,'y':y,'text-anchor':'middle','font-size':fs,'fill':fill,'font-weight':fw,'font-family':ff,'pointer-events':'none','user-select':'none'});
     t.textContent=txt; svg.appendChild(t);
   };
-  addTxt(250,241,'Circle of','11','#F4D03F');
-  addTxt(250,257,'Fifths','11','#F4D03F');
+  addTxt(250,241,'Circle of','17','#F4D03F');
+  addTxt(250,264,'Fifths','17','#F4D03F');
   addCirc(5,'rgba(244,208,63,0.35)','none','0');
 
   NOTE_ORDER.forEach((note,index)=>{
@@ -721,26 +783,30 @@ const renderCircle = () => {
       const glow=svgEl('circle',{cx:ox,cy:oy,r:outerR+8,fill:'none',stroke:'#F4D03F','stroke-width':'2',opacity:'0.5','pointer-events':'none'});
       g.appendChild(glow);
     }
-    const outerDot=svgEl('circle',{cx:ox,cy:oy,r:outerR,fill:col,stroke:isOA?'#F4D03F':'rgba(255,255,255,0.35)','stroke-width':isOA?'3.5':'1.8',opacity:isOA?'1':'0.9',cursor:'pointer',role:'button',tabindex:'0','aria-label':`Play ${dn(note)} major`});
+    // Gb/F# (index 6) is the genuine enharmonic pivot at the bottom of the
+    // circle — both names are equally valid there, so show both instead of
+    // picking one. Everywhere else, dn() already gives the correct spelling.
+    const outerDisplay = note==='Gb' ? 'G♭/F♯' : dn(note);
+    const outerDot=svgEl('circle',{cx:ox,cy:oy,r:outerR,fill:col,stroke:isOA?'#F4D03F':'rgba(255,255,255,0.35)','stroke-width':isOA?'3.5':'1.8',opacity:isOA?'1':'0.9',cursor:'pointer',role:'button',tabindex:'0','aria-label':`Play ${outerDisplay} major`});
     if(isOA) outerDot.setAttribute('filter',`drop-shadow(0 0 10px ${col})`);
     outerDot.addEventListener('click',()=>{ if(!S.soloPlaying){S.majKey=note;S.minKey=REL_MINOR[note]||S.minKey; render(); playTriad(note,false);} });
     outerDot.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();if(!S.soloPlaying){S.majKey=note;S.minKey=REL_MINOR[note]||S.minKey;render();playTriad(note,false);}} });
     g.appendChild(outerDot);
-    const outerLbl=svgEl('text',{'x':ox,'y':oy+5,'text-anchor':'middle','font-size':'14','fill':textOn(note),'font-weight':'900','font-family':'Georgia,serif','pointer-events':'none','user-select':'none'});
-    outerLbl.textContent=dn(note); g.appendChild(outerLbl);
+    const outerLbl=svgEl('text',{'x':ox,'y':oy+5,'text-anchor':'middle','font-size':note==='Gb'?'10':'14','fill':textOn(note),'font-weight':'900','font-family':'Georgia,serif','pointer-events':'none','user-select':'none'});
+    outerLbl.textContent=outerDisplay; g.appendChild(outerLbl);
 
     // ── INNER DOT — Relative Minor ─────────────────
     if(isIA){
       const iglow=svgEl('circle',{cx:ix,cy:iy,r:innerR+7,fill:'none',stroke:'#F4D03F','stroke-width':'1.5',opacity:'0.4','pointer-events':'none'});
       g.appendChild(iglow);
     }
-    const innerDot=svgEl('circle',{cx:ix,cy:iy,r:innerR,fill:rmCol,stroke:isIA?'#F4D03F':'rgba(255,255,255,0.3)','stroke-width':isIA?'3':'1.5',opacity:isIA?'1':'0.88',cursor:'pointer',role:'button',tabindex:'0','aria-label':`Play ${dn(relMin)} minor`});
+    const innerDot=svgEl('circle',{cx:ix,cy:iy,r:innerR,fill:rmCol,stroke:isIA?'#F4D03F':'rgba(255,255,255,0.3)','stroke-width':isIA?'3':'1.5',opacity:isIA?'1':'0.88',cursor:'pointer',role:'button',tabindex:'0','aria-label':`Play ${dnInnerMinor(relMin)} minor`});
     if(isIA) innerDot.setAttribute('filter',`drop-shadow(0 0 7px ${rmCol})`);
     innerDot.addEventListener('click',()=>{ if(!S.soloPlaying){S.minKey=relMin;S.majKey=REL_MAJOR[relMin]||S.majKey;render();playTriad(relMin,true);} });
     innerDot.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();if(!S.soloPlaying){S.minKey=relMin;S.majKey=REL_MAJOR[relMin]||S.majKey;render();playTriad(relMin,true);}} });
     g.appendChild(innerDot);
     const il1=svgEl('text',{'x':ix,'y':iy,'text-anchor':'middle','font-size':'8','fill':textOn(relMin),'font-weight':'800','font-family':'Georgia,serif','pointer-events':'none','user-select':'none'});
-    il1.textContent=dn(relMin); g.appendChild(il1);
+    il1.textContent=dnInnerMinor(relMin); g.appendChild(il1);
     const il2=svgEl('text',{'x':ix,'y':iy+9,'text-anchor':'middle','font-size':'7','fill':textOn(relMin),'font-weight':'700','font-family':'Arial,sans-serif','pointer-events':'none','user-select':'none'});
     il2.textContent='m'; g.appendChild(il2);
 
@@ -1277,6 +1343,7 @@ function _explShowPanel(name) {
   // Switching tabs also switches what the wheel/buttons actually sound like.
   const TIMBRE = { keyboard:'piano', fretboard:'guitar', staff:'default', circle:'default' };
   _explTimbre = TIMBRE[name] || 'default';
+  if (typeof _explLoadSamples === 'function') _explLoadSamples(); // start fetching samples early
   document.querySelectorAll('.explorer-panel').forEach(p => {
     p.style.display = p.dataset.panel === name ? 'block' : 'none';
   });
