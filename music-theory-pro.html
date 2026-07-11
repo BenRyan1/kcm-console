@@ -3425,13 +3425,14 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 }
 
                 // ── ALL OTHER MODES (major scale, minor, modes, single note) ──
+                // Each key press plays exactly the note you clicked — nothing else.
+                // (Previously this auto-replayed the whole ascending scale 350ms
+                // later on Scale/Mode levels, which re-triggered the just-clicked
+                // note as step 1 of that run — sounded like "the first note plays
+                // again" when pressing through notes quickly.)
                 rootNote = noteIndex;
                 playNote(noteIndex, _oct);
                 updateDisplay(rootNote);
-                // For scales/modes/whole-tone, also play the ascending pattern after a short delay
-                if (currentLevel === '6' || currentLevel === 'modes' || currentLevel === 'scales' || currentLevel === 'minor') {
-                    setTimeout(() => { if (typeof playSelection === 'function') playSelection('up'); }, 350);
-                }
 
             } catch(e) { console.error('Note click error:', e); }
             // ── Guide: prompted pulse on small note changes ──
