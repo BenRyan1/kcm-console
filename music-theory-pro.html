@@ -5312,9 +5312,9 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                     const g1 = document.createElement('div'); g1.className = 'control-group';
                     g1.innerHTML = `<label>Scale Degree:</label>
                         <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:0.4rem;" id="degBtnGroup">
-                            ${degLabels.map((l,i) => `<button class="deg-btn${i===currentHarmDegree?' active':''}" data-deg="${i}" style="flex:1; min-width:52px; padding:6px 4px; font-size:0.72rem; font-weight:700; font-family:var(--font-display); border-radius:8px; border:2px solid rgba(0,128,128,0.4); background:${i===currentHarmDegree?'var(--primary-teal)':'rgba(0,128,128,0.12)'}; color:white; cursor:pointer; text-align:center; line-height:1.2;">
+                            ${degLabels.map((l,i) => `<button class="deg-btn${i===currentHarmDegree?' active':''}" data-deg="${i}" style="flex:1; min-width:52px; max-width:100%; padding:6px 4px; font-size:0.72rem; font-weight:700; font-family:var(--font-display); border-radius:8px; border:2px solid rgba(0,128,128,0.4); background:${i===currentHarmDegree?'var(--primary-teal)':'rgba(0,128,128,0.12)'}; color:white; cursor:pointer; text-align:center; line-height:1.2; overflow:hidden; box-sizing:border-box;">
                                 <span style="display:block; font-size:0.85rem;">${l}</span>
-                                <span style="display:block; font-size:0.6rem; opacity:0.75;">${degNames[i]}</span>
+                                <span style="display:block; font-size:0.58rem; opacity:0.75; white-space:normal; overflow-wrap:break-word; word-break:break-word; hyphens:auto;">${degNames[i]}</span>
                             </button>`).join('')}
                         </div>`;
 
