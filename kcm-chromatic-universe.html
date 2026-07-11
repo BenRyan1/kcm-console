@@ -1330,6 +1330,9 @@ input[type="range"] {
       <!-- CENTER: Canvas -->
       <div>
         <div id="clockInfoBar" class="info-bar">Drag center to rotate · Click any note to hear it</div>
+        <div class="info-bar" style="color:#c4a0ff; font-size:0.68rem; cursor:pointer;" onclick="switchPanel('rhythm')" title="Switch to the Rhythm Geometry Lab tab">
+          ◈ Tip: turn your scale into a rhythm — try <strong>Melodic Sync</strong> in the Rhythm Geometry Lab tab
+        </div>
         <div class="canvas-wrap" style="position:relative;">
           <canvas id="mainCanvas" width="900" height="900" tabindex="0" aria-label="Chromatic Spoke Clock - interactive music theory wheel"></canvas>
           <div id="clockSyncFlash"></div>
@@ -1459,6 +1462,19 @@ input[type="range"] {
           <p style="font-size:0.7rem;color:var(--text-ghost);margin-bottom:0.75rem;line-height:1.6;">
             Fuse the rhythm engine with the Spoke Clock. Each beat fires a note from your active scale — <em>rhythm becomes melody.</em>
           </p>
+
+          <!-- Mirrors the Spoke Clock's own Scale + Key pickers — options are
+               cloned in from stencilSelect/keySelect on load (see syncPickerMirror
+               IIFE below) so this list never has to be maintained twice. Lets you
+               see and change what scale/key Sync is using without leaving this tab. -->
+          <div class="ctrl-group" style="margin-bottom:0.5rem;">
+            <label class="ctrl-label" for="syncStencilSelect" style="font-size:0.62rem;">Scale / Mode / Chord</label>
+            <select id="syncStencilSelect"></select>
+          </div>
+          <div class="ctrl-group" style="margin-bottom:0.75rem;">
+            <label class="ctrl-label" for="syncKeySelect" style="font-size:0.62rem;">Root Note (Key)</label>
+            <select id="syncKeySelect"></select>
+          </div>
 
           <button class="btn btn-sync btn-full" id="syncToggleBtn" onclick="toggleSync()">
             ◈ &nbsp;ACTIVATE MELODIC SYNC
@@ -2082,13 +2098,45 @@ canvas.addEventListener('keydown', e => {
 // ── CONTROLS ──
 document.getElementById('stencilSelect').addEventListener('change', e => {
   currentStencil = e.target.value;
+  const mirror = document.getElementById('syncStencilSelect');
+  if (mirror) mirror.value = currentStencil;
   drawClock();
 });
 
 document.getElementById('keySelect').addEventListener('change', e => {
   rotationAngle = -parseInt(e.target.value) * (Math.PI*2)/12;
+  const mirror = document.getElementById('syncKeySelect');
+  if (mirror) mirror.value = e.target.value;
   drawClock();
 });
+
+// ── Melodic Sync card: mirrored Scale + Key pickers ──
+// Clone the option lists in from the main selects (single source of truth
+// for the option markup), then wire them to control the same state and stay
+// in sync with the main pickers in both directions — same pattern as tempo.
+(function syncPickerMirror() {
+  const mainStencil = document.getElementById('stencilSelect');
+  const mainKey      = document.getElementById('keySelect');
+  const syncStencil  = document.getElementById('syncStencilSelect');
+  const syncKey      = document.getElementById('syncKeySelect');
+  if (!mainStencil || !mainKey || !syncStencil || !syncKey) return;
+
+  syncStencil.innerHTML = mainStencil.innerHTML;
+  syncKey.innerHTML     = mainKey.innerHTML;
+  syncStencil.value = currentStencil;
+  syncKey.value     = String(getRootSpokeIndex() % 12);
+
+  syncStencil.addEventListener('change', e => {
+    currentStencil = e.target.value;
+    mainStencil.value = currentStencil;
+    drawClock();
+  });
+  syncKey.addEventListener('change', e => {
+    rotationAngle = -parseInt(e.target.value) * (Math.PI*2)/12;
+    mainKey.value = e.target.value;
+    drawClock();
+  });
+})();
 
 document.getElementById('tempoSlider').addEventListener('input', e => {
   currentTempo = parseInt(e.target.value);
