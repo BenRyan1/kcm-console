@@ -327,10 +327,10 @@ body{font-family:var(--font-b);background:radial-gradient(ellipse at 30% 20%,#1e
     </div>
     <div id="explorerReadout" style="text-align:center; font-size:0.85rem; color:#a0f0f0; margin-bottom:8px; min-height:1.2em;">Click any key or chord on the wheel above</div>
     <div style="background:rgba(10,14,26,0.55); border:1.5px solid rgba(0,192,192,0.28); border-radius:14px; padding:16px; overflow-x:auto;">
-      <div class="explorer-panel" data-panel="keyboard"><svg id="explKeyboardSvg" viewBox="0 0 700 180" style="width:100%; max-width:700px; display:block; margin:0 auto;"></svg></div>
-      <div class="explorer-panel" data-panel="fretboard" style="display:none;"><svg id="explFretboardSvg" viewBox="0 0 700 200" style="width:100%; max-width:700px; display:block; margin:0 auto;"></svg></div>
-      <div class="explorer-panel" data-panel="staff" style="display:none;"><svg id="explStaffSvg" viewBox="0 0 700 150" style="width:100%; max-width:700px; display:block; margin:0 auto;"></svg></div>
-      <div class="explorer-panel" data-panel="circle" style="display:none;"><svg id="explCircleSvg" viewBox="0 0 300 300" style="width:100%; max-width:320px; display:block; margin:0 auto;"></svg></div>
+      <div class="explorer-panel" data-panel="keyboard"><svg id="explKeyboardSvg" viewBox="0 0 700 180" width="700" height="180" preserveAspectRatio="xMidYMid meet" style="width:100%; max-width:700px; height:auto; display:block; margin:0 auto;"></svg></div>
+      <div class="explorer-panel" data-panel="fretboard" style="display:none;"><svg id="explFretboardSvg" viewBox="0 0 700 200" width="700" height="200" preserveAspectRatio="xMidYMid meet" style="width:100%; max-width:700px; height:auto; display:block; margin:0 auto;"></svg></div>
+      <div class="explorer-panel" data-panel="staff" style="display:none;"><svg id="explStaffSvg" viewBox="0 0 700 150" width="700" height="150" preserveAspectRatio="xMidYMid meet" style="width:100%; max-width:700px; height:auto; display:block; margin:0 auto;"></svg></div>
+      <div class="explorer-panel" data-panel="circle" style="display:none;"><svg id="explCircleSvg" viewBox="0 0 300 300" width="300" height="300" preserveAspectRatio="xMidYMid meet" style="width:100%; max-width:320px; height:auto; display:block; margin:0 auto;"></svg></div>
     </div>
   </div>
 </div>
@@ -1169,8 +1169,15 @@ function _explRenderFretboard(tones) {
 // Simplified treble-staff placement: maps each pitch class to the nearest
 // natural line/space (sharps/flats ride their natural neighbor's position).
 // Good for "which notes are in this chord" at a glance — not strict notation.
-const _EXPL_STAFF_STEP = {'C':0,'Db':0,'D':1,'Eb':1,'E':2,'F':3,'Gb':3,'G':4,'Ab':4,'A':5,'Bb':5,'B':6};
-function _explStaffY(n) { return 96 - _EXPL_STAFF_STEP[n]*8; }
+// Note: this lookup lives *inside* the function (not as a top-level const)
+// on purpose — render() is first called near the top of the script, before
+// a top-level const declared down here would be initialized, which throws
+// a temporal-dead-zone ReferenceError and silently kills everything
+// downstream of that render() call (including note playback).
+function _explStaffY(n) {
+  const step = {'C':0,'Db':0,'D':1,'Eb':1,'E':2,'F':3,'Gb':3,'G':4,'Ab':4,'A':5,'Bb':5,'B':6};
+  return 96 - step[n]*8;
+}
 
 function _explRenderStaff(tones) {
   const svg = document.getElementById('explStaffSvg');
