@@ -1510,23 +1510,9 @@ input[type="range"] {
             <div class="euclid-presets-grid" id="euclidCustomPresetsGrid"></div>
           </div>
         </div>
-
-        <!-- ★ TAP-TO-EUCLIDEAN ★ -->
-        <div class="ctrl-card" style="border-color:rgba(74,123,167,0.35);">
-          <div class="ctrl-card-title" style="color:#4A7BA7;">🥁 Tap-to-Euclidean</div>
-          <p style="font-size:0.7rem;color:var(--text-ghost);margin-bottom:0.6rem;line-height:1.5;">
-            Tap out any rhythm below (or press <b>Space</b>) in time with the BPM. We'll quantize it to the step grid, load it as a new layer, and tell you how close it lands to its "perfectly even" Euclidean twin.
-          </p>
-          <button class="btn btn-teal btn-full" id="tapPadBtn" onclick="handleTapInput()" style="font-size:1rem;font-weight:800;padding:1rem;">👆 TAP HERE</button>
-          <div style="display:flex;justify-content:space-between;margin-top:0.5rem;font-size:0.68rem;color:var(--text-ghost);">
-            <span id="tapCountDisplay">0 taps</span>
-            <span id="tapStepsDisplay">Grid: 16 steps</span>
-          </div>
-          <button class="btn btn-full" onclick="resetTapCapture()" style="margin-top:0.4rem;font-size:0.68rem;background:rgba(255,255,255,0.05);color:var(--text-dim);">↺ Reset Taps</button>
-        </div>
       </div>
 
-      <!-- RIGHT: Polygon picker + SYNC -->
+      <!-- RIGHT: Polygon picker + SYNC + TAP -->
       <div>
         <div class="ctrl-card">
           <div class="ctrl-card-title">Rhythm Grid</div>
@@ -1582,6 +1568,20 @@ input[type="range"] {
           </div>
 
           <div id="syncModeDesc" style="font-size:0.68rem;color:var(--text-ghost);margin-top:0.5rem;line-height:1.5;display:none;"></div>
+        </div>
+
+        <!-- ★ TAP-TO-EUCLIDEAN ★ -->
+        <div class="ctrl-card" style="border-color:rgba(74,123,167,0.35);">
+          <div class="ctrl-card-title" style="color:#4A7BA7;">🥁 Tap-to-Euclidean</div>
+          <p style="font-size:0.68rem;color:var(--text-ghost);margin-bottom:0.6rem;line-height:1.5;">
+            Tap below (or press <b>Space</b>) in time with the BPM — we'll quantize it to the step grid and load it as a new layer.
+          </p>
+          <button class="btn btn-teal btn-full" id="tapPadBtn" onclick="handleTapInput()" style="font-weight:800;">👆 TAP HERE</button>
+          <div style="display:flex;justify-content:space-between;margin-top:0.5rem;font-size:0.65rem;color:var(--text-ghost);">
+            <span id="tapCountDisplay">0 taps</span>
+            <span id="tapStepsDisplay">Grid: 16 steps</span>
+          </div>
+          <button class="btn btn-full" onclick="resetTapCapture()" style="margin-top:0.4rem;font-size:0.65rem;background:rgba(255,255,255,0.05);color:var(--text-dim);">↺ Reset Taps</button>
         </div>
       </div>
 
