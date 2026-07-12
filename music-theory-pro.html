@@ -5691,7 +5691,13 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 // regular Circle view, but also enables the QWERTY
                 // type-to-play shortcut (see keydown handler below) —
                 // separate button/state from Piano so both can coexist.
-                if (circle)  circle.style.display  = (currentView === 'circle' || currentView === 'circleType') ? 'block' : 'none';
+                // Sing mode already lights up the circle spheres, piano keys,
+                // guitar cells and staff via _singUpdateDisplays() — but the
+                // circle graphic itself was hidden while on the Sing view, so
+                // none of that was actually visible. Show the same live
+                // circle above the Sing controls so sung notes are visible
+                // on the wheel in real time, not just internal DOM state.
+                if (circle)  circle.style.display  = (currentView === 'circle' || currentView === 'circleType' || currentView === 'sing') ? 'block' : 'none';
                 if (piano) {
                     const showPiano = currentView === 'keyboard';
                     piano.style.display = showPiano ? 'block' : 'none';
