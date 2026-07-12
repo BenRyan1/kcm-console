@@ -890,6 +890,24 @@ select option { background: #1a1a2e; color: white; }
     min-height: 100px;
     max-height: 155px;
 }
+.staff-tab-btn {
+    flex: 1;
+    padding: 5px 0;
+    background: #3a3a45;
+    color: #bbb;
+    border: none;
+    font-size: 0.64rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    font-family: var(--font-display);
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.staff-tab-btn:hover { background: #4a4a58; color: #fff; }
+.staff-tab-btn.active {
+    background: linear-gradient(135deg, var(--primary-teal), #006666);
+    color: #fff;
+}
 
 /* ============================================================
    PIANO KEYBOARD
@@ -1056,7 +1074,7 @@ select option { background: #1a1a2e; color: white; }
     letter-spacing: 1px;
     font-family: var(--font-display);
 }
-#fbStaffSVG { width: 100%; height: 150px; display: block; }
+#fbStaffSVG { width: 100%; height: auto; max-height: 110px; display: block; }
 
 /* ── Piano compact ── */
 .piano-outer { overflow-x: auto; padding-bottom: 4px; padding-top: 26px; }
@@ -1839,7 +1857,7 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                     <div id="fbTable"></div>
                     <!-- Staff notation for guitar view -->
                     <div style="margin-top:0.75rem; text-align:center;">
-                        <svg id="fbStaffSVG" viewBox="0 0 500 90" preserveAspectRatio="xMidYMid meet" aria-hidden="true" style="width:100%;max-width:500px;height:90px;display:block;margin:0 auto;"></svg>
+                        <svg id="fbStaffSVG" viewBox="0 0 500 100" preserveAspectRatio="xMidYMid meet" aria-hidden="true" style="width:100%;max-width:500px;height:auto;display:block;margin:0 auto;"></svg>
                     </div>
                 </div>
 
@@ -1963,12 +1981,16 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
             </div><!-- end panelSwapZone -->
 
             <!-- ── STAFF NOTATION — always visible below swap zone ── -->
-            <div id="staffNotation" aria-label="Staff notation showing selected notes on treble clef" role="img">
-                <div style="background:linear-gradient(135deg, var(--primary-teal), #006666); color:white; padding:5px; border-radius:8px 8px 0 0; margin:-12px -15px 6px -15px; text-align:center; font-size:0.72rem; font-weight:800; letter-spacing:1px; font-family:var(--font-display);">
-                    🎼 STAFF NOTATION
+            <div id="staffNotation" aria-label="Staff notation showing selected notes — switchable between staff, fretboard and keyboard views" role="img">
+                <div style="display:flex;gap:2px;margin:-12px -15px 6px -15px;border-radius:8px 8px 0 0;overflow:hidden;">
+                    <button type="button" class="staff-tab-btn active" data-stafftab="staff" onclick="switchStaffTab('staff')">🎼 STAFF</button>
+                    <button type="button" class="staff-tab-btn" data-stafftab="fretboard" onclick="switchStaffTab('fretboard')">🎸 FRETBOARD</button>
+                    <button type="button" class="staff-tab-btn" data-stafftab="keyboard" onclick="switchStaffTab('keyboard')">🎹 KEYBOARD</button>
                 </div>
                 <div style="display:flex;align-items:center;gap:0;">
-                    <svg id="staffSVG" viewBox="0 0 220 135" preserveAspectRatio="xMidYMid meet" aria-hidden="true" style="flex-shrink:0;width:55%;"></svg>
+                    <svg id="staffSVG" viewBox="0 0 220 100" preserveAspectRatio="xMidYMid meet" aria-hidden="true" style="flex-shrink:0;width:55%;"></svg>
+                    <svg id="fretboardMiniSVG" viewBox="0 0 220 100" preserveAspectRatio="xMidYMid meet" aria-hidden="true" style="flex-shrink:0;width:55%;display:none;"></svg>
+                    <svg id="keyboardMiniSVG" viewBox="0 0 220 100" preserveAspectRatio="xMidYMid meet" aria-hidden="true" style="flex-shrink:0;width:55%;display:none;"></svg>
                     <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:0 12px;">
                         <button id="staffPlayBtn"
                             style="width:100%;padding:10px 0;background:linear-gradient(135deg,#27ae60,#1e8449);color:#fff;border:2px solid #27ae60;border-radius:8px;font-family:'Cinzel',serif;font-size:0.8rem;font-weight:800;letter-spacing:1.5px;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 12px rgba(39,174,96,0.3);"
@@ -4190,7 +4212,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
             if (!svg) return;
             svg.innerHTML = '';
             const W = viewW || 500;
-            svg.setAttribute('viewBox', `0 0 ${W} 135`);
+            svg.setAttribute('viewBox', `0 0 ${W} 100`);
             svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
             // Staff lines (5 lines, y=20..60)
             for (let i = 0; i < 5; i++) {
@@ -4307,45 +4329,168 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 lbl.setAttribute('text-anchor','middle'); lbl.setAttribute('fill','#000'); lbl.textContent = getNoteName(n); svg.appendChild(lbl);
                 x += noteSpacing;
             });
-            if (noteObjs.length >= 1) {
-                const tbg = document.createElementNS('http://www.w3.org/2000/svg','rect');
-                tbg.setAttribute('x','50'); tbg.setAttribute('y','100'); tbg.setAttribute('width','160'); tbg.setAttribute('height','22');
-                tbg.setAttribute('fill','rgba(0,128,128,0.15)'); tbg.setAttribute('rx','3'); svg.appendChild(tbg);
-                const title = document.createElementNS('http://www.w3.org/2000/svg','text');
-                title.setAttribute('x','130'); title.setAttribute('y','113'); title.setAttribute('font-size','11'); title.setAttribute('font-weight','bold');
-                title.setAttribute('text-anchor','middle'); title.setAttribute('fill','#2c3e50');
-                let tt = '';
-                if(currentLevel==='1') tt=getRootName();
-                else if(currentLevel==='2'&&noteObjs.length===2){const int=(noteObjs[1].pc-noteObjs[0].pc+12)%12;tt=intervalNames[int];}
-                else if(currentLevel==='3') {
-                    const _triadSymbols = {major:'', minor:'m', diminished:'°', augmented:'+'};
-                    const _triadFullNames = {major:'Major', minor:'Minor', diminished:'Diminished', augmented:'Augmented'};
-                    tt=`${getRootName()}${_triadSymbols[currentTriadSelection]||''} — ${_triadFullNames[currentTriadSelection]||currentTriadSelection} Triad`;
-                }
-                else if(currentLevel==='4') tt=`${getRootName()} ${currentExtendedSelection}`;
-                else if(currentLevel==='5') tt=`${getRootName()} Pentatonic`;
-                else if(currentLevel==='7') tt=`${getRootName()} Major`;
-                else if(currentLevel==='minor') tt=`${getRootName()} ${currentMinorType}`;
-                else if(currentLevel==='modes') tt=`${getRootName()} ${currentModeSelection}`;
-                else if(currentLevel==='harmMajor'){const cd=currentHarmChordType==='7th'?harmonizedMajor7ths[currentHarmDegree]:harmonizedMajorTriads[currentHarmDegree];tt=`${cd.name} ${cd.quality}`;}
-                else if(currentLevel==='harmMinor'){const cd=currentHarmChordType==='7th'?harmonizedMinor7ths[currentHarmDegree]:harmonizedMinorTriads[currentHarmDegree];tt=`${cd.name} ${cd.quality}`;}
-                else if(currentLevel==='freeplay') tt='Free Play';
-                title.textContent=tt; svg.appendChild(title);
-                const ki=document.createElementNS('http://www.w3.org/2000/svg','text');
-                ki.setAttribute('x','130');ki.setAttribute('y','121');ki.setAttribute('font-size','8');ki.setAttribute('text-anchor','middle');ki.setAttribute('fill','#555');
-                ki.textContent=`Key: ${keySig.name}`; svg.appendChild(ki);
-            }
         }
+
+        // ── Compact mini-keyboard renderer for the STAFF NOTATION panel's
+        //    "KEYBOARD" tab. Single octave, highlights whichever pitch
+        //    classes are currently active (ignores octave — this is a
+        //    compact view, not a full multi-octave keyboard). ──
+        function renderMiniKeyboard(svg, notes, viewW) {
+            if (!svg) return;
+            svg.innerHTML = '';
+            const W = viewW || 220, H = 100;
+            svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+            svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+
+            const activePcs = new Set((notes || []).map(n =>
+                typeof n === 'object' ? (((n.pc % 12) + 12) % 12) : (((Number(n) % 12) + 12) % 12)
+            ));
+
+            const whitePcs = [0, 2, 4, 5, 7, 9, 11];
+            const marginX = 8, marginY = 8;
+            const kbW = W - marginX * 2, kbH = H - marginY * 2 - 14;
+            const wKeyW = kbW / 7;
+
+            whitePcs.forEach((pc, i) => {
+                const x = marginX + i * wKeyW;
+                const isActive = activePcs.has(pc);
+                const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                rect.setAttribute('x', x); rect.setAttribute('y', marginY);
+                rect.setAttribute('width', wKeyW - 1.5); rect.setAttribute('height', kbH);
+                rect.setAttribute('rx', 2);
+                rect.setAttribute('fill', isActive ? colors[pc] : '#fdfdfd');
+                rect.setAttribute('stroke', '#333'); rect.setAttribute('stroke-width', '1');
+                svg.appendChild(rect);
+                const lbl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                lbl.setAttribute('x', x + wKeyW / 2); lbl.setAttribute('y', marginY + kbH + 12);
+                lbl.setAttribute('font-size', '9'); lbl.setAttribute('font-weight', 'bold');
+                lbl.setAttribute('text-anchor', 'middle');
+                lbl.setAttribute('fill', isActive ? colors[pc] : '#666');
+                lbl.textContent = getNoteName(pc);
+                svg.appendChild(lbl);
+            });
+
+            const blackKeyDefs = [{ pc: 1, afterIdx: 0 }, { pc: 3, afterIdx: 1 }, { pc: 6, afterIdx: 3 }, { pc: 8, afterIdx: 4 }, { pc: 10, afterIdx: 5 }];
+            const bKeyW = wKeyW * 0.58, bKeyH = kbH * 0.62;
+            blackKeyDefs.forEach(({ pc, afterIdx }) => {
+                const x = marginX + (afterIdx + 1) * wKeyW - bKeyW / 2;
+                const isActive = activePcs.has(pc);
+                const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                rect.setAttribute('x', x); rect.setAttribute('y', marginY);
+                rect.setAttribute('width', bKeyW); rect.setAttribute('height', bKeyH);
+                rect.setAttribute('rx', 1.5);
+                rect.setAttribute('fill', isActive ? colors[pc] : '#1a1a1a');
+                rect.setAttribute('stroke', '#000'); rect.setAttribute('stroke-width', '1');
+                svg.appendChild(rect);
+            });
+        }
+
+        // ── Compact mini-fretboard renderer for the STAFF NOTATION panel's
+        //    "FRETBOARD" tab. Standard tuning, vertical strings with bass
+        //    on the left (matches the app-wide fretboard convention used by
+        //    the full Guitar view and Circle of Fifths' Explorer). ──
+        function renderMiniFretboard(svg, notes, viewW) {
+            if (!svg) return;
+            svg.innerHTML = '';
+            const W = viewW || 220, H = 100;
+            svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+            svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+
+            const activePcs = new Set((notes || []).map(n =>
+                typeof n === 'object' ? (((n.pc % 12) + 12) % 12) : (((Number(n) % 12) + 12) % 12)
+            ));
+
+            const tuning = [4, 9, 2, 7, 11, 4]; // E A D G B e — vertical strings, bass on left
+            const stringLabels = ['E', 'A', 'D', 'G', 'B', 'e'];
+            const numFrets = 4;
+            const marginX = 16, labelY = 10, openBandH = 14, bottomY = 92;
+            const topY = labelY + 5;
+            const nutY = topY + openBandH;
+            const colW = (W - marginX * 2) / (tuning.length - 1);
+            const rowH = (bottomY - nutY) / numFrets;
+
+            tuning.forEach((base, s) => {
+                const x = marginX + s * colW;
+                const lbl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                lbl.setAttribute('x', x); lbl.setAttribute('y', labelY);
+                lbl.setAttribute('font-size', '9'); lbl.setAttribute('font-weight', 'bold');
+                lbl.setAttribute('text-anchor', 'middle'); lbl.setAttribute('fill', '#888');
+                lbl.textContent = stringLabels[s];
+                svg.appendChild(lbl);
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', x); line.setAttribute('y1', topY);
+                line.setAttribute('x2', x); line.setAttribute('y2', bottomY);
+                line.setAttribute('stroke', '#999'); line.setAttribute('stroke-width', (s === 0 || s === 5) ? 1.4 : 1);
+                svg.appendChild(line);
+            });
+
+            const nutLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            nutLine.setAttribute('x1', marginX); nutLine.setAttribute('y1', nutY);
+            nutLine.setAttribute('x2', marginX + colW * (tuning.length - 1)); nutLine.setAttribute('y2', nutY);
+            nutLine.setAttribute('stroke', '#000'); nutLine.setAttribute('stroke-width', '2.5');
+            svg.appendChild(nutLine);
+            for (let f = 1; f <= numFrets; f++) {
+                const y = nutY + f * rowH;
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', marginX); line.setAttribute('y1', y);
+                line.setAttribute('x2', marginX + colW * (tuning.length - 1)); line.setAttribute('y2', y);
+                line.setAttribute('stroke', '#000'); line.setAttribute('stroke-width', '1');
+                svg.appendChild(line);
+            }
+
+            tuning.forEach((base, s) => {
+                const x = marginX + s * colW;
+                for (let f = 0; f <= numFrets; f++) {
+                    const pc = ((base + f) % 12 + 12) % 12;
+                    if (!activePcs.has(pc)) continue;
+                    const cy = f === 0 ? (topY + openBandH / 2) : (nutY + (f - 0.5) * rowH);
+                    const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    dot.setAttribute('cx', x); dot.setAttribute('cy', cy); dot.setAttribute('r', 6.5);
+                    dot.setAttribute('fill', colors[pc]); dot.setAttribute('stroke', '#000'); dot.setAttribute('stroke-width', '1');
+                    svg.appendChild(dot);
+                    const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    t.setAttribute('x', x); t.setAttribute('y', cy + 3); t.setAttribute('font-size', '7'); t.setAttribute('font-weight', 'bold');
+                    t.setAttribute('text-anchor', 'middle'); t.setAttribute('fill', '#000');
+                    t.textContent = getNoteName(pc);
+                    svg.appendChild(t);
+                }
+            });
+        }
+
+        // ── STAFF NOTATION panel tab switcher — toggles which of the three
+        //    compact renderers (staff / fretboard / keyboard) is visible.
+        //    All three are always kept up to date by updateStaffNotation();
+        //    this function ONLY flips display visibility + tab styling, it
+        //    never re-renders on its own, so it can never fall out of sync.
+        //    The Stencil wheel / chromatic circle above is untouched. ──
+        let activeStaffTab = 'staff';
+        function switchStaffTab(tab) {
+            if (tab !== 'staff' && tab !== 'fretboard' && tab !== 'keyboard') return;
+            activeStaffTab = tab;
+            const svgIds = { staff: 'staffSVG', fretboard: 'fretboardMiniSVG', keyboard: 'keyboardMiniSVG' };
+            Object.keys(svgIds).forEach(t => {
+                const el = document.getElementById(svgIds[t]);
+                if (el) el.style.display = (t === tab) ? '' : 'none';
+            });
+            document.querySelectorAll('.staff-tab-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.getAttribute('data-stafftab') === tab);
+            });
+        }
+        window.switchStaffTab = switchStaffTab;
 
         function updateStaffNotation(notes) {
             try {
                 const svg = document.getElementById('staffSVG');
                 if (!svg) return;
+                const fbMiniSVG = document.getElementById('fretboardMiniSVG');
+                const kbMiniSVG = document.getElementById('keyboardMiniSVG');
                 if (!notes || notes.length === 0) {
                     // Clear staff — redraw empty staff lines only
                     drawStaff(svg, [], 220);
                     const fbSVG = document.getElementById('fbStaffSVG');
                     if (fbSVG) drawStaff(fbSVG, [], 500);
+                    if (fbMiniSVG) renderMiniFretboard(fbMiniSVG, [], 220);
+                    if (kbMiniSVG) renderMiniKeyboard(kbMiniSVG, [], 220);
                     // Un-highlight any staff-driven sphere glows
                     if (window._staffLitPcs) {
                         window._staffLitPcs.forEach(pc => {
@@ -4364,6 +4509,8 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 drawStaff(svg, notes, 220);
                 const fbSVG = document.getElementById('fbStaffSVG');
                 if (fbSVG) drawStaff(fbSVG, notes, 500);
+                if (fbMiniSVG) renderMiniFretboard(fbMiniSVG, notes, 220);
+                if (kbMiniSVG) renderMiniKeyboard(kbMiniSVG, notes, 220);
 
                 // ── Sync: light the matching spheres on the chromatic circle ──
                 // Extract pc values from notes (handles both {pc,oct} objects and plain numbers)
