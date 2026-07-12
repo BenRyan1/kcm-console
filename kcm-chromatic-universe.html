@@ -1964,9 +1964,23 @@ function isNoteInStencil(noteIndex) {
   // root is currently selected (getRootSpokeIndex) before checking membership —
   // otherwise this only lines up correctly when the root happens to be C, and
   // scrambles for every other key (matches the sidebar's own root-shift math).
+  //
+  // Extended chords (9th/11th/13th) store compound intervals in STENCILS as
+  // semitones >= 12 (e.g. a 9th is 14, an 11th is 17, a 13th is 21) so that
+  // pitch math elsewhere (wedgePanelStrum, updateWedgePanel) can add them
+  // straight to a root MIDI number and land a full register higher, not on
+  // top of the root octave. But `rel` here is always reduced to 0-11, so a
+  // straight `.includes(rel)` could never match a 14/17/21 entry — the 9th's
+  // own pitch class (D, rel=2 relative to C) was silently invisible to every
+  // caller of this function (chord highlighting on the wheel, the toolbar's
+  // Strum button, Melodic Sync membership tests). That's why a minor 9th
+  // chord sounded and lit up identically to a plain minor 7th: the 9th was
+  // never being recognized as "in" the stencil at all. Reduce each stencil
+  // entry mod 12 before comparing so every extension's pitch class is
+  // recognized regardless of which register it's voiced in.
   const rootPc = getRootSpokeIndex() % 12;
   const rel = (noteIndex - rootPc + 12) % 12;
-  return (STENCILS[currentStencil] || []).includes(rel);
+  return (STENCILS[currentStencil] || []).some(st => ((st % 12) + 12) % 12 === rel);
 }
 
 function isNoteInWedge(spokeIndex) {
@@ -2348,12 +2362,27 @@ function playNextNoteWholeSphere(interval) {
 
 // ── STRUM ──
 function strumChord() {
-  const aPerSpoke=(Math.PI*2)/SPOKES;
-  let nr=rotationAngle%(Math.PI*2); if(nr<0)nr+=Math.PI*2;
-  const spokeAt12=(SPOKES-Math.round(nr/aPerSpoke))%SPOKES;
-  const notes=notePositions.filter(n=>n.s===spokeAt12&&isNoteInStencil(n.noteIndex));
-  if (!notes.length) return;
+  // Build notes directly from the stencil's own semitone list (0,3,7,10,14,...)
+  // instead of filtering the wheel's notePositions by pitch class. The wheel
+  // only has 12 rings per spoke (one octave of reach), so a 9th/11th/13th's
+  // compound semitone value (14/17/21) could never be reached that way even
+  // after isNoteInStencil recognizes its pitch class — the note would only ever
+  // be found at its in-octave ring, collapsing a "9th" down to sounding like a
+  // 2nd stacked on the root instead of a step above the 7th. Root MIDI + the
+  // stencil's raw semitone value keeps every extension climbing in order —
+  // 1‑3‑5‑7‑9‑11‑13 each strictly higher than the last, crossing into a new
+  // register exactly where real harmony puts it, same math wedgePanelStrum
+  // already used correctly for the side-panel "STRUM ALL" button.
+  const pattern = STENCILS[currentStencil] || [];
+  if (!pattern.length) return;
+  const rootSp = getRootSpokeIndex(), rootIdx = rootSp % 12;
+  const rootNp = notePositions.find(n=>n.s===rootSp&&n.r===0);
+  const rootMidi = rootNp ? rootNp.midiNumber : MIDI_BASE + rootIdx;
   initAudio();
+  const notes = pattern.map(st => {
+    const noteIdx = ((rootIdx + st) % 12 + 12) % 12;
+    return { midiNumber: rootMidi + st, note: NOTES[noteIdx], noteIndex: noteIdx, s: rootSp, r: st % RINGS };
+  });
   notes.forEach((n,i)=>schedulePlayback(()=>playNote(n.midiNumber,1.4),i*30));
   drawClock(notes);
   infoBar.textContent=`Strumming: ${notes.map(n=>n.note).join(' · ')}`;
