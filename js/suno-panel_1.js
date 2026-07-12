@@ -35,10 +35,11 @@
      Added 2026-06-28. Previously this file called api.anthropic.com
      directly from the browser with no API key, which cannot succeed.
      This now points at the Worker's /ai route, which injects the key
-     server-side. REPLACE the placeholder below with this Worker's real
-     invocable URL (workers.dev URL or custom route) — check via
-     `wrangler deployments list` or the Cloudflare dashboard if unsure. */
-  const AI_PROXY_URL = 'https://snowy-rain-84a5.ben-03b.workers.dev/ai';
+     server-side.
+     Fixed 2026-07-12: wrangler.toml sets workers_dev = false, so the
+     *.workers.dev URL is not reachable — only the custom route
+     "console.keyscodesandmodes.com/ai" is live. Pointing there instead. */
+  const AI_PROXY_URL = 'https://console.keyscodesandmodes.com/ai';
 
   /* ── Mode descriptions ─────────────────────────────────────────── */
   const MODE_FEEL = {

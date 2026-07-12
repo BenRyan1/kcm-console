@@ -47,22 +47,33 @@ export default {
           { status: 400, headers: { ...cors, 'Content-Type': 'application/json' } });
       }
 
-      const validCodes = new Set([
-        env.CODE_PREMIUM,
-        env.CODE_FOUNDER,
-        env.CODE_BETA,
-        env.CODE_PRESS,
-        env.CODE_FRIEND,
-        env.CODE_DEMO,
-        env.CODE_SUPT,
-        env.CODE_YMS,
-      ]);
+      // Added 2026-07-12: named by tier (not just a flat Set) so callers
+      // like access-code-entry.html can learn WHICH tier matched — for
+      // showing the right tier name/description/redirect — without ever
+      // holding the actual code strings client-side. The tier label is
+      // not sensitive; only the code values are, and those stay server-
+      // side as Worker secrets.
+      const codesByTier = {
+        premium: env.CODE_PREMIUM,
+        founder: env.CODE_FOUNDER,
+        beta:    env.CODE_BETA,
+        press:   env.CODE_PRESS,
+        friend:  env.CODE_FRIEND,
+        demo:    env.CODE_DEMO,
+        supt:    env.CODE_SUPT,
+        yms:     env.CODE_YMS,
+      };
 
-      const valid = code.length > 0 && validCodes.has(code);
+      let matchedTier = null;
+      if (code.length > 0) {
+        for (const [tier, value] of Object.entries(codesByTier)) {
+          if (value && code === value) { matchedTier = tier; break; }
+        }
+      }
 
-      return new Response(JSON.stringify({ ok: valid }),
+      return new Response(JSON.stringify({ ok: matchedTier !== null, tier: matchedTier }),
         {
-          status: valid ? 200 : 401,
+          status: matchedTier !== null ? 200 : 401,
           headers: { ...cors, 'Content-Type': 'application/json' },
         });
     }
@@ -144,10 +155,25 @@ export default {
         { status: 200, headers: { ...cors, 'Content-Type': 'application/json' } });
     }
 
-    let email = '';
+    let email        = '';
+    let subscriberName = '';
+    // Defaults preserve the original tuner-landing behavior for any
+    // existing caller that doesn't send group/signup_source.
+    let groupId      = '179228643447276862';
+    let signupSource = 'tuner-landing';
     try {
       const body = await request.json();
-      email = sanitize((body.email || '').toLowerCase(), 100);
+      email          = sanitize((body.email || '').toLowerCase(), 100);
+      subscriberName = sanitize(body.name || '', 100);
+      // Group IDs are plain MailerLite list identifiers, not secrets —
+      // safe to accept from the client, but validated as numeric-only
+      // so this can't be abused to inject arbitrary fields.
+      if (typeof body.group === 'string' && /^\d+$/.test(body.group)) {
+        groupId = body.group;
+      }
+      if (typeof body.signup_source === 'string') {
+        signupSource = sanitize(body.signup_source, 60);
+      }
     } catch (e) {
       return new Response(JSON.stringify({ ok: false, error: 'Invalid JSON' }),
         { status: 400, headers: { ...cors, 'Content-Type': 'application/json' } });
@@ -168,8 +194,8 @@ export default {
       },
       body: JSON.stringify({
         email:  email,
-        fields: { signup_source: 'tuner-landing' },
-        groups: ['179228643447276862'],
+        fields: { signup_source: signupSource, ...(subscriberName ? { name: subscriberName } : {}) },
+        groups: [groupId],
         status: 'active',
       }),
     });

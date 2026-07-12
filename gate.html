@@ -401,20 +401,16 @@
 
 <script>
   // ── Configuration ──────────────────────────────────────────────
-  const ML_API_TOKEN = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiI0IiwianRpIjoiYTQ2MjI1ZjU2YjQ5MTA2ZjRkNzUyNzViODZlZjZjOWZkYzdhNTUyNThiNzczNjkyYjFhNWZkNGQ2MWE3ODE4YWNhMDQ2YzFmNzk0OTdkNDUiLCJpYXQiOjE3ODAxNzAzNzMuNDU1OTk3LCJuYmYiOjE3ODAxNzAzNzMuNDU1OTk5LCJleHAiOjQ5MzU4NDM5NzMuNDUxMTQ5LCJzdWIiOiIyMTE4Mzk1Iiwic2NvcGVzIjpbXX0.UyHu2-oINKxXpFS4hmRmOtyMAkKLkpYJdwnHf2TAS4nLTZSPG0qFx1JTMIyLNqIdOAf7-Z2RpHRWlta0mSNvCiaZD9ngmPiE35ls4f339vYSYbLPIUfrXDnIrMgifE8LmKWBgykeD93HQZBuE4FcE4YTEiu_kuqvSn7E_WovWxS0ekldko990IakrvaQlveJ9vxWF6-5x8JyCH2pKjM3x4jdec1xK1ReGlskeDIh5XfI0PAGlahlOWlkuuRQ21WN49RhMiWci1s5pVtWx2ZCrPF7Rt3rf-ERB7auR1ASmlso1lDIBgIhdBTroZ1sXc9ZugcNjsJflLRGj7G9vv31f9q7XdMa_tmcy6JBMd3gOxyZdGdsUxahcQteK-o7fIgE1hf_Qa3A-PMq03XXqigURM8q56GqoAlR_HkVM74G63LX8m2P6dYpc4QJdWWBm8GYYsUAHKRpLb66_hjjsUaseEGSrjiI8nkSEYceIsvcOH1SLPr8MOehWw9wcRACqmHO26dRcIIybgoSLIbtr-s9RbRacUpoUOPoWms77bZw_gsjFJwgA-w07FA1widKu2PqnSJlHGpie7jLsTMPeEhWcdseNxI6MQVhPEQ_1Vs_Qet22H-UIPokMEFOcS9WAmXCWi3081Lqa3Iv7FUtCiDzj2mGdIp9akK-DNbZlcBkFYA';
+  // Fixed 2026-07-12: this file previously held a live MailerLite API
+  // token AND a hardcoded list of every paywall access code in plain
+  // text — both fully visible via view-source, meaning anyone could
+  // read the codes and unlock Premium/Founder access for free without
+  // paying, and use the token to hit MailerLite's API directly. Both
+  // are now removed. Signup and code verification route through the
+  // Cloudflare Worker (worker.js), which holds the real secrets
+  // server-side and is never exposed to the browser.
   const ML_GROUP_ID  = '147630778924778065'; // KCM Console Users group
-
-  // Valid access codes (premium / founder / school)
-  const VALID_CODES = [
-    'KCM2026Premium!',
-    'KCM2026Founder!',
-    'PressAccess2026!',
-    'FriendOfBen2026!',
-    'DemoAccess2026!',
-    'kcm_premium_2026',
-    'kcm_founder_2026',
-    'kcm_school_2026'
-  ];
+  const API_BASE     = 'https://keyscodesandmodes.com/api';
 
   const CONSOLE_URL = '/index.html';
 
@@ -444,17 +440,18 @@
     btn.textContent = 'One moment…';
 
     try {
-      // Post to MailerLite API
-      const res = await fetch('https://snowy-rain-84a5.ben-03b.workers.dev/subscribe', {
+      // Post through the Worker's /api/subscribe route — it holds the
+      // real MailerLite API key server-side. No credential lives here.
+      const res = await fetch(API_BASE + '/subscribe', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + ML_API_TOKEN
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           email: email,
-          fields: { name: name },
-          groups: [ML_GROUP_ID]
+          name: name,
+          group: ML_GROUP_ID,
+          signup_source: 'console-gate'
         })
       });
 
@@ -476,18 +473,37 @@
   }
 
   // ── Access code flow ───────────────────────────────────────────
-  function handleCode() {
+  // Verified server-side via the Worker's /api/verify-code route, which
+  // checks the code against secrets never sent to the browser. No code
+  // list lives in this file anymore.
+  async function handleCode() {
     const code = document.getElementById('codeInput').value.trim();
     const msg  = document.getElementById('codeMsg');
+    const btn  = document.querySelector('.btn-code');
     msg.className = 'msg';
     msg.textContent = '';
 
     if (!code) { showMsg(msg, 'error', 'Please enter your access code.'); return; }
 
-    if (VALID_CODES.includes(code)) {
-      grantAccess(code);
-    } else {
-      showMsg(msg, 'error', 'Invalid access code. Please check and try again.');
+    if (btn) { btn.disabled = true; }
+
+    try {
+      const res  = await fetch(API_BASE + '/verify-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: code })
+      });
+      const data = await res.json().catch(() => ({}));
+
+      if (res.ok && data.ok) {
+        grantAccess(code);
+      } else {
+        showMsg(msg, 'error', 'Invalid access code. Please check and try again.');
+      }
+    } catch (e) {
+      showMsg(msg, 'error', 'Could not verify code — check your connection and try again.');
+    } finally {
+      if (btn) { btn.disabled = false; }
     }
   }
 
