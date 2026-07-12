@@ -6025,6 +6025,22 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 const dur  = e.durMs < 1000 ? e.durMs+'ms' : (e.durMs/1000).toFixed(1)+'s';
                 return '<span style="display:inline-flex;flex-direction:column;align-items:center;background:'+col+';color:'+textC+';border-radius:6px;padding:3px 6px;font-size:0.62rem;font-weight:800;font-family:var(--font-display);min-width:28px;line-height:1.2;"><span>'+_SING_NOTE_NAMES[e.pc]+e.oct+'</span><span style="font-size:0.48rem;opacity:0.75;">'+dur+'</span></span>';
             }).join('');
+            // Play Back / Clear / Download MIDI previously only got enabled
+            // via the explicit Record→Stop-Rec cycle, but notes are actually
+            // captured into _singEvents just from listening (see
+            // _singCommitHeld above) — so the buttons stayed disabled even
+            // with notes visibly captured. Keep them in sync with the real
+            // data any time the history updates, unless a recording is
+            // actively in progress (that flow still manages its own state).
+            if (!_singRecording) {
+                const hasNotes = _singEvents.length > 0;
+                const pbBtn = document.getElementById('singPlaybackBtn');
+                const clBtn = document.getElementById('singClearBtn');
+                const mBtn  = document.getElementById('singMidiBtn');
+                if (pbBtn) { pbBtn.disabled = !hasNotes; pbBtn.style.color = hasNotes ? '#fff' : '#aaa'; if (hasNotes) { pbBtn.style.background = 'linear-gradient(135deg,#008080,#005555)'; pbBtn.style.borderColor = '#008080'; } }
+                if (clBtn) { clBtn.disabled = !hasNotes; clBtn.style.color = hasNotes ? '#fff' : '#aaa'; if (hasNotes) { clBtn.style.background = 'linear-gradient(135deg,#e74c3c,#c0392b)'; clBtn.style.borderColor = '#e74c3c'; } }
+                if (mBtn)  { mBtn.disabled  = !hasNotes; mBtn.style.color  = hasNotes ? '#fff' : '#aaa'; if (hasNotes) { mBtn.style.background  = 'linear-gradient(135deg,#8B6BA3,#6a4f8c)'; mBtn.style.borderColor  = '#8B6BA3'; } }
+            }
         }
 
         // ── Mini piano roll ──
