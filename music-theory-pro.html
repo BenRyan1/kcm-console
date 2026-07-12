@@ -1948,6 +1948,15 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                         <button class="kcm-stencil-play-btn ascend"  id="kcmStencilAscend">▲ ASCEND</button>
                         <button class="kcm-stencil-play-btn descend" id="kcmStencilDescend">▼ DESCEND</button>
                         <button class="kcm-stencil-play-btn" id="kcmStencilSimul" style="background:linear-gradient(135deg,#8B6BA3,#6a4f8c);">● SIMUL</button>
+                        <button class="kcm-stencil-play-btn" id="kcmStencilStop" style="background:linear-gradient(135deg,#6b6b7a,#4a4a55);">■ STOP</button>
+                    </div>
+
+                    <!-- Speed Control — slow playback down to read the synced
+                         label tokens at your own pace, or speed it up -->
+                    <div id="kcmStencilSpeedRow" style="display:flex; align-items:center; gap:10px; max-width:420px; margin:0.6rem auto 0; padding:0 0.5rem;">
+                        <label for="kcmStencilSpeed" style="font-size:0.68rem; color:var(--text-dim,#a0a0c0); letter-spacing:0.05em; white-space:nowrap;">🐢 SPEED</label>
+                        <input type="range" id="kcmStencilSpeed" min="0.25" max="2" step="0.05" value="1" style="flex:1; accent-color:var(--primary-teal);">
+                        <span id="kcmStencilSpeedVal" style="font-size:0.72rem; font-weight:700; color:var(--primary-teal); min-width:3.2rem; text-align:right;">1.0×</span>
                     </div>
 
                 </div><!-- end kcmStencilPanel -->
@@ -8519,6 +8528,11 @@ async function kcmAIAsk(type) {
     let isDragging       = false;
     let dragStartAngle   = 0;
     let dragStartRot     = 0;
+    // Manual playback-speed control for stencilPlay(), independent of the
+    // app's global BPM — lets people slow the wheel + label sync all the
+    // way down to actually read each note before it advances, or speed it
+    // up once they don't need that. 1 = normal speed, <1 = slower, >1 = faster.
+    let stencilSpeedMultiplier = 1;
 
     // ── Build mini SVG preview for shape button ───────────────
     function buildMiniStar(intervals, color) {
@@ -9003,7 +9017,10 @@ async function kcmAIAsk(type) {
 
         const seq    = direction === 'down' ? [...upSeq].reverse() : upSeq;
         const bpm    = typeof window.currentBPM !== 'undefined' ? window.currentBPM : 100;
-        const beatMs = 60000 / bpm;
+        // Manual speed slider divides the beat length — <1x stretches it out
+        // (slower, more time to read each highlighted token), >1x compresses
+        // it (faster).
+        const beatMs = (60000 / bpm) / (stencilSpeedMultiplier || 1);
         const noteDur = (beatMs * 0.78) / 1000;
 
         seq.forEach(({ pc, oct }, i) => {
@@ -9133,9 +9150,11 @@ async function kcmAIAsk(type) {
             upSeq.push({ pc, oct });
             prevMidi = midi;
         });
-        // Light up all notes at once
+        // Light up all notes at once — hold length also respects the speed
+        // slider so a slow setting gives more time to read the chord too.
+        const simulHoldSec = 2.5 / (stencilSpeedMultiplier || 1);
         const allPcs = upSeq.map(n => n.pc);
-        upSeq.forEach(({ pc, oct }) => window.playNote(pc, oct, 2.5));
+        upSeq.forEach(({ pc, oct }) => window.playNote(pc, oct, simulHoldSec));
         // Visual ON — all at once
         document.querySelectorAll('.sphere').forEach(s => {
             const spc = parseInt(s.dataset.note);
@@ -9160,11 +9179,11 @@ async function kcmAIAsk(type) {
             }
         });
         if (typeof window.updateStaffNotation === 'function') window.updateStaffNotation(allPcs);
-        // Visual OFF after 2.5s
+        // Visual OFF after the hold completes
         const tOff = setTimeout(() => {
             highlightMTPNotes(allPcs);
             if (typeof window.updateStaffNotation === 'function') window.updateStaffNotation(allPcs);
-        }, 2600);
+        }, simulHoldSec * 1000 + 100);
         _stencilTimers.push(tOff);
     }
 
@@ -9172,13 +9191,29 @@ async function kcmAIAsk(type) {
         const ascBtn   = document.getElementById('kcmStencilAscend');
         const descBtn  = document.getElementById('kcmStencilDescend');
         const simulBtn = document.getElementById('kcmStencilSimul');
+        const stopBtn  = document.getElementById('kcmStencilStop');
         if (ascBtn)   ascBtn.addEventListener('click',  () => stencilPlay('up'));
         if (descBtn)  descBtn.addEventListener('click', () => stencilPlay('down'));
         if (simulBtn) simulBtn.addEventListener('click', () => stencilPlaySimul());
+        if (stopBtn)  stopBtn.addEventListener('click',  () => _stencilCancelAll());
         // Expose for staff play button
         window._stencilPlayUp   = () => stencilPlay('up');
         window._stencilPlayDown = () => stencilPlay('down');
         window._stencilPlayDownNoCancel = () => stencilPlay('down', true);
+
+        // Speed slider — manual control so people can slow the synced
+        // wheel/label playback down to actually read it, or speed it up
+        const speedSlider = document.getElementById('kcmStencilSpeed');
+        const speedVal     = document.getElementById('kcmStencilSpeedVal');
+        if (speedSlider) {
+            speedSlider.addEventListener('input', function() {
+                stencilSpeedMultiplier = parseFloat(this.value) || 1;
+                if (speedVal) {
+                    const label = stencilSpeedMultiplier < 0.7 ? ' (Slow)' : stencilSpeedMultiplier > 1.4 ? ' (Fast)' : '';
+                    speedVal.textContent = stencilSpeedMultiplier.toFixed(2).replace(/0$/,'') + '×' + label;
+                }
+            });
+        }
 
         wireViewToggle();
     }
