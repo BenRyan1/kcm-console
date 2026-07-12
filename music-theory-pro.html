@@ -1640,6 +1640,56 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
 }
 .kcm-stencil-shape-btn.active .kcm-shape-label { color: var(--primary-gold); }
 
+/* Song chord-practice buttons (Songs tab) */
+.kcm-song-btn { min-width: 180px; align-items: flex-start; }
+.kcm-song-sub {
+    font-size: 0.55rem;
+    color: #8888a8;
+    text-align: left;
+    line-height: 1.3;
+}
+.kcm-song-timeline {
+    max-width: 480px;
+    margin: 0 auto 1rem;
+    background: rgba(0,0,0,0.35);
+    border: 2px solid rgba(0,128,128,0.25);
+    border-radius: 12px;
+    padding: 10px 12px;
+}
+.kcm-song-meta {
+    font-family: var(--font-display);
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--primary-gold);
+    text-align: center;
+    margin-bottom: 8px;
+    letter-spacing: 0.3px;
+}
+.kcm-song-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+}
+.kcm-song-chip {
+    padding: 5px 10px;
+    font-family: var(--font-display);
+    font-size: 0.78rem;
+    font-weight: 800;
+    border-radius: 8px;
+    border: 1.5px solid rgba(0,128,128,0.35);
+    background: rgba(0,128,128,0.08);
+    color: #c0c0e0;
+    transition: all 0.15s;
+}
+.kcm-song-chip.active {
+    border-color: var(--primary-gold);
+    background: rgba(244,208,63,0.18);
+    color: var(--primary-gold);
+    transform: scale(1.1);
+    box-shadow: 0 0 10px rgba(244,208,63,0.4);
+}
+
 /* Key ring */
 .kcm-key-ring {
     display: flex;
@@ -1936,6 +1986,7 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                         <button class="kcm-stencil-tab" data-cat="modes">Modes</button>
                         <button class="kcm-stencil-tab" data-cat="chords">Chords</button>
                         <button class="kcm-stencil-tab" data-cat="thirteenths">13ths</button>
+                        <button class="kcm-stencil-tab" data-cat="songs">🎵 Songs</button>
                     </div>
 
                     <!-- Shape Grid -->
@@ -1943,6 +1994,11 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
 
                     <!-- Key Ring -->
                     <div class="kcm-key-ring" id="kcmKeyRing"></div>
+
+                    <!-- Song Chord Timeline — visible only on the Songs tab.
+                         Chord symbols only (like any lead-sheet chord chart) —
+                         no melody transcription, no lyrics. ── -->
+                    <div class="kcm-song-timeline" id="kcmSongTimeline" style="display:none;"></div>
 
                     <!-- Circle + SVG Overlay -->
                     <div class="kcm-stencil-wrap" id="kcmStencilWrap">
@@ -1966,6 +2022,7 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                         <button class="kcm-stencil-play-btn ascend"  id="kcmStencilAscend">▲ ASCEND</button>
                         <button class="kcm-stencil-play-btn descend" id="kcmStencilDescend">▼ DESCEND</button>
                         <button class="kcm-stencil-play-btn" id="kcmStencilSimul" style="background:linear-gradient(135deg,#8B6BA3,#6a4f8c);">● SIMUL</button>
+                        <button class="kcm-stencil-play-btn" id="kcmSongPlayBtn" style="background:linear-gradient(135deg,#27ae60,#1e8449); display:none;">▶ PLAY PROGRESSION</button>
                         <button class="kcm-stencil-play-btn" id="kcmStencilStop" style="background:linear-gradient(135deg,#6b6b7a,#4a4a55);">■ STOP</button>
                     </div>
 
@@ -8680,6 +8737,131 @@ async function kcmAIAsk(type) {
     // way down to actually read each note before it advances, or speed it
     // up once they don't need that. 1 = normal speed, <1 = slower, >1 = faster.
     let stencilSpeedMultiplier = 1;
+    let currentSong           = null;
+    let currentSongStepIndex  = -1;
+
+    // ── Song Chord Practice ───────────────────────────────────
+    // Chord-progression practice charts — chord symbols only, the same
+    // kind of information published on any lead sheet / chord chart site
+    // (e.g. "G  A  D  Bm ..."). No melody transcription, no lyrics.
+    // Lets you practice comping over a tune's changes using the exact
+    // same wheel / staff / fretboard / keyboard sync as the rest of the
+    // Stencil system. Root numbers are pitch classes (0=C ... 11=B).
+    const SONGS = {
+        humanNatureChorus: {
+            name: 'Human Nature — Chorus',
+            artist: 'Michael Jackson',
+            key: 'D Major',
+            bpm: 94,
+            // One chord per bar (4 beats).
+            progression: [
+                { root: 7,  quality: 'major' }, // G
+                { root: 9,  quality: 'major' }, // A
+                { root: 2,  quality: 'major' }, // D
+                { root: 11, quality: 'minor' }, // Bm
+                { root: 7,  quality: 'major' }, // G
+                { root: 6,  quality: 'minor' }, // F#m
+                { root: 4,  quality: 'minor' }, // Em
+                { root: 11, quality: 'minor' }, // Bm
+            ]
+        }
+    };
+
+    function _chordSymbol(root, quality) {
+        return NOTE_NAMES[root] + (quality === 'minor' ? 'm' : '');
+    }
+
+    // Loads one progression chord into the same currentStencil/currentStencilRoot
+    // state the rest of the Stencil system already reads — so drawStencil(),
+    // updateLabelBlock(), highlightMTPNotes() etc. all "just work" for songs
+    // with zero duplicated rendering code.
+    function loadChordAsStencil(chordDef) {
+        const base = STENCIL_LIBRARY.chords.find(c => c.id === (chordDef.quality === 'minor' ? 'minor_triad' : 'major_triad'));
+        currentStencil = Object.assign({}, base, { name: chordDef.quality === 'minor' ? 'Minor' : 'Major' });
+        window.currentStencil = currentStencil;
+        currentStencilRoot = chordDef.root;
+    }
+
+    function renderSongTimeline() {
+        const el = document.getElementById('kcmSongTimeline');
+        if (!el) return;
+        if (!currentSong) { el.innerHTML = ''; return; }
+        const meta = `<div class="kcm-song-meta">${currentSong.name} · ${currentSong.artist} · Key: ${currentSong.key} · ${currentSong.bpm} BPM</div>`;
+        const chips = currentSong.progression.map((c, i) =>
+            `<span class="kcm-song-chip${i === currentSongStepIndex ? ' active' : ''}" data-step="${i}">${_chordSymbol(c.root, c.quality)}</span>`
+        ).join('');
+        el.innerHTML = meta + `<div class="kcm-song-chips">${chips}</div>`;
+    }
+
+    function selectSong(songId) {
+        const song = SONGS[songId];
+        if (!song) return;
+        currentSong = song;
+        currentSongStepIndex = 0;
+        renderSongTimeline();
+        loadChordAsStencil(song.progression[0]);
+        drawStencil();
+        updateLabelBlock();
+    }
+
+    function playSongProgression() {
+        if (!currentSong) { alert('Select a song first!'); return; }
+        if (typeof window.playNote !== 'function') { alert('Click START AUDIO ENGINE first!'); return; }
+        _stencilCancelAll();
+        const bpm    = currentSong.bpm;
+        const beatMs = (60000 / bpm) / (stencilSpeedMultiplier || 1);
+        const barMs  = beatMs * 4;
+
+        currentSong.progression.forEach((chordDef, i) => {
+            const delay = i * barMs;
+            const tOn = setTimeout(() => {
+                currentSongStepIndex = i;
+                loadChordAsStencil(chordDef);
+                drawStencil();
+                updateLabelBlock();
+                renderSongTimeline();
+
+                // Build ascending triad voicing and stab it as a chord.
+                const pcs = currentStencil.intervals.map(iv => (chordDef.root + iv) % 12);
+                let oct = 4, prevMidi = -1;
+                const notes = [];
+                pcs.forEach(pc => {
+                    let midi = (oct + 1) * 12 + pc;
+                    while (midi <= prevMidi) { oct++; midi = (oct + 1) * 12 + pc; }
+                    notes.push({ pc, oct });
+                    prevMidi = midi;
+                });
+                notes.forEach(({ pc, oct }) => window.playNote(pc, oct, (barMs * 0.85) / 1000));
+                highlightMTPNotes(pcs);
+                if (typeof window.updateStaffNotation === 'function') window.updateStaffNotation(notes);
+            }, delay);
+            _stencilTimers.push(tOn);
+        });
+
+        const tEnd = setTimeout(() => {
+            currentSongStepIndex = -1;
+            renderSongTimeline();
+        }, currentSong.progression.length * barMs + 200);
+        _stencilTimers.push(tEnd);
+    }
+    window._playSongProgression = playSongProgression;
+
+    // Show/hide the song-specific controls (chord timeline, Play Progression
+    // button) vs the normal stencil controls (key ring, Ascend/Descend/Simul)
+    // depending on which tab is active. Stop always stays visible since it
+    // drives _stencilCancelAll(), which both playback paths share.
+    function toggleSongUI(isSongs) {
+        const keyRing  = document.getElementById('kcmKeyRing');
+        const ascBtn   = document.getElementById('kcmStencilAscend');
+        const descBtn  = document.getElementById('kcmStencilDescend');
+        const simulBtn = document.getElementById('kcmStencilSimul');
+        const songBtn  = document.getElementById('kcmSongPlayBtn');
+        const timeline = document.getElementById('kcmSongTimeline');
+        if (keyRing) keyRing.style.display = isSongs ? 'none' : '';
+        [ascBtn, descBtn, simulBtn].forEach(b => { if (b) b.style.display = isSongs ? 'none' : ''; });
+        if (songBtn) songBtn.style.display = isSongs ? '' : 'none';
+        if (timeline) { timeline.style.display = isSongs ? '' : 'none'; if (!isSongs) timeline.innerHTML = ''; }
+    }
 
     // ── Build mini SVG preview for shape button ───────────────
     function buildMiniStar(intervals, color) {
@@ -8717,6 +8899,23 @@ async function kcmAIAsk(type) {
     function renderGrid() {
         const grid = document.getElementById('kcmStencilGrid');
         if (!grid) return;
+        if (currentCat === 'songs') {
+            grid.innerHTML = Object.keys(SONGS).map(id => {
+                const s = SONGS[id];
+                return `<button class="kcm-stencil-shape-btn kcm-song-btn${currentSong && currentSong === s ? ' active' : ''}" data-song-id="${id}">
+                    <div class="kcm-shape-label">${s.name}</div>
+                    <div class="kcm-song-sub">${s.artist} · ${s.key} · ${s.bpm} BPM</div>
+                </button>`;
+            }).join('');
+            grid.querySelectorAll('.kcm-song-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    grid.querySelectorAll('.kcm-song-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    selectSong(this.dataset.songId);
+                });
+            });
+            return;
+        }
         const list = STENCIL_LIBRARY[currentCat] || [];
         grid.innerHTML = list.map(s => `
             <button class="kcm-stencil-shape-btn${currentStencil && currentStencil.id===s.id?' active':''}"
@@ -9270,8 +9469,11 @@ async function kcmAIAsk(type) {
                 this.classList.add('active');
                 currentCat = this.dataset.cat;
                 currentStencil = null;
+                currentSong = null;
+                currentSongStepIndex = -1;
                 renderGrid();
                 updateLabelBlock();
+                toggleSongUI(currentCat === 'songs');
                 const svg = document.getElementById('kcmStencilSVG');
                 if (svg) svg.innerHTML = '';
             });
@@ -9338,11 +9540,14 @@ async function kcmAIAsk(type) {
         const ascBtn   = document.getElementById('kcmStencilAscend');
         const descBtn  = document.getElementById('kcmStencilDescend');
         const simulBtn = document.getElementById('kcmStencilSimul');
+        const songBtn  = document.getElementById('kcmSongPlayBtn');
         const stopBtn  = document.getElementById('kcmStencilStop');
         if (ascBtn)   ascBtn.addEventListener('click',  () => stencilPlay('up'));
         if (descBtn)  descBtn.addEventListener('click', () => stencilPlay('down'));
         if (simulBtn) simulBtn.addEventListener('click', () => stencilPlaySimul());
+        if (songBtn)  songBtn.addEventListener('click',  () => playSongProgression());
         if (stopBtn)  stopBtn.addEventListener('click',  () => _stencilCancelAll());
+        toggleSongUI(false);
         // Expose for staff play button
         window._stencilPlayUp   = () => stencilPlay('up');
         window._stencilPlayDown = () => stencilPlay('down');
