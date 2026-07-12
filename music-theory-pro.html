@@ -880,7 +880,7 @@ select option { background: #1a1a2e; color: white; }
     padding: 12px 15px 10px;
     box-shadow: 0 6px 25px rgba(0,0,0,0.6);
     border: 3px solid var(--primary-teal);
-    margin: 0.75rem auto 0;
+    margin: 0.35rem auto 0;
     display: block;
 }
 #staffNotation svg {
@@ -934,7 +934,7 @@ select option { background: #1a1a2e; color: white; }
 #guitarFretboard {
     display: none;
     background: rgba(0,0,0,0.4);
-    padding: 1.25rem 1rem 1.5rem;
+    padding: 1.25rem 1rem 0.35rem;
     border-radius: 16px;
     margin: 1rem auto 0;
     border: 2px solid rgba(0,128,128,0.2);
@@ -1074,7 +1074,7 @@ select option { background: #1a1a2e; color: white; }
     letter-spacing: 1px;
     font-family: var(--font-display);
 }
-#fbStaffSVG { width: 100%; height: auto; max-height: 110px; display: block; }
+#fbStaffSVG { width: 100%; height: auto; max-height: 58px; display: block; }
 
 /* ── Piano compact ── */
 .piano-outer { overflow-x: auto; padding-bottom: 4px; padding-top: 26px; }
@@ -1899,15 +1899,18 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                 <div id="guitarFretboard" style="margin:0 auto; width:100%;" role="region" aria-label="Guitar fretboard">
                     <h3 style="text-align:center; margin:0 0 0.75rem 0; font-family:var(--font-display); font-size:1.15rem; font-weight:800; color:var(--primary-gold);">🎸 Guitar Fretboard — Standard Tuning  E · A · D · G · B · e</h3>
                     <div style="display:flex; justify-content:center; margin-bottom:0.85rem; gap:6px;">
-                        <button class="level-btn" id="fret4Btn"  style="padding:6px 14px; font-size:0.68rem; min-width:70px;">4 Frets</button>
-                        <button class="level-btn active" id="fret5Btn"  style="padding:6px 14px; font-size:0.68rem; min-width:70px;">5 Frets</button>
+                        <button class="level-btn active" id="fret4Btn"  style="padding:6px 14px; font-size:0.68rem; min-width:70px;">4 Frets</button>
+                        <button class="level-btn" id="fret5Btn"  style="padding:6px 14px; font-size:0.68rem; min-width:70px;">5 Frets</button>
                         <button class="level-btn" id="fret12Btn" style="padding:6px 14px; font-size:0.68rem; min-width:70px;">12 Frets</button>
                     </div>
                     <p style="text-align:center; color:#4CAF50; font-weight:700; font-size:0.78rem; margin-bottom:0.75rem;">Active notes glow in KCM color · Click string names or dots to play</p>
                     <div id="fbTable"></div>
-                    <!-- Staff notation for guitar view -->
-                    <div style="margin-top:0.75rem; text-align:center;">
-                        <svg id="fbStaffSVG" viewBox="0 0 500 100" preserveAspectRatio="xMidYMid meet" aria-hidden="true" style="width:100%;max-width:500px;height:auto;display:block;margin:0 auto;"></svg>
+                    <!-- Staff notation for guitar view — capped narrower than
+                         the fretboard's own width so the mostly-empty staff
+                         graphic doesn't read as dead space; it now scales to
+                         its own content instead of stretching full-width. -->
+                    <div style="margin-top:0; text-align:center;">
+                        <svg id="fbStaffSVG" viewBox="0 0 500 100" preserveAspectRatio="xMidYMid meet" aria-hidden="true" style="width:100%;max-width:260px;height:auto;display:block;margin:0 auto;"></svg>
                     </div>
                 </div>
 
@@ -2085,7 +2088,7 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
             <div class="view-toggle" role="group" aria-label="View selector">
                 <button class="view-btn active" data-view="circle">⭕ Circle</button>
                 <button class="view-btn" data-view="guitar">🎸 Guitar</button>
-                <button class="view-btn" data-view="keyboard">🎹 Piano</button>
+                <button class="view-btn" data-view="keyboard">⭕ Circle · Type-to-Play</button>
                 <button class="view-btn" data-view="ear">👂 Ear</button>
                 <button class="view-btn" data-view="sing">🎤 Sing</button>
                 <button class="view-btn" data-view="stencil">✦ Stencil</button>
@@ -2494,7 +2497,7 @@ window.addEventListener('unhandledrejection', function(event) {
         let currentMinorType = 'naturalMinor', currentHarmDegree = 0, currentHarmChordType = 'triad';
         let quizCorrect = 0, quizTotal = 0, currentQuiz = null, earTrainingOpen = false;
         let isRecording = false, recordedNotes = [], recordingStartTime = 0;
-        let guitarFretCount = 5;
+        let guitarFretCount = 4;
 
         // ── Musical data ──────────────────────────────────────────
         const noteNames      = ['C','C#/Db','D','D#/Eb','E','F','F#/Gb','G','G#/Ab','A','A#/Bb','B'];
@@ -5683,12 +5686,16 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 const ear     = el('earTraining');
                 const staff   = el('staffNotation');
 
-                if (circle)  circle.style.display  = currentView === 'circle'   ? 'block' : 'none';
-                if (piano) {
-                    const showPiano = currentView === 'keyboard';
-                    piano.style.display = showPiano ? 'block' : 'none';
-                    if (showPiano) { createPiano(); updatePianoDisplay(); }
-                }
+                // The "Piano Keyboard" view now shows the Chromatic Circle
+                // instead of the piano graphic — same live circle element as
+                // the Circle view, so it carries every attribute (colors,
+                // active/included/excluded highlighting, click-to-play,
+                // degree sync) automatically. currentView still switches to
+                // 'keyboard' internally so the QWERTY type-to-play shortcut
+                // and octave-display wiring below keep working unchanged.
+                const showCircle = currentView === 'circle' || currentView === 'keyboard';
+                if (circle)  circle.style.display  = showCircle ? 'block' : 'none';
+                if (piano)   piano.style.display   = 'none';
                 if (guitar)  guitar.style.display  = currentView === 'guitar'   ? 'block' : 'none';
                 // Ear Training is a docked panel now (see updateEarOverlay) —
                 // it's independent of currentView and never hidden by a view switch.
