@@ -114,6 +114,30 @@
         .panel-col{display:flex;flex-direction:column;align-items:center;padding:0 1.5rem;}
         .panel-col+.panel-col{border-left:1px solid rgba(74,123,167,0.2);}
         .panel-col-label{font-family:var(--font-display);font-size:0.65rem;color:var(--primary-gold);text-transform:uppercase;letter-spacing:2px;margin-bottom:10px;opacity:0.7;text-align:center;}
+        .panel-col-caption{font-family:var(--font-accent);font-size:0.68rem;color:#888;font-style:italic;text-align:center;margin:-6px 0 10px;line-height:1.3;max-width:150px;}
+
+        /* ── SEQUENCER: distinct "transport" identity so it doesn't read as a
+           duplicate of the Stencil column at rest. Idle = dimmed + a plain
+           border. Active (Start pressed) = full brightness + a live gold
+           border, so the two states are obvious without reading any label. ── */
+        .sequencer-col{border-radius:10px;transition:opacity 0.25s,filter 0.25s;}
+        .sequencer-col.seq-idle{opacity:0.62;filter:saturate(0.55);}
+        .sequencer-col.seq-active{opacity:1;filter:saturate(1);}
+        .sequencer-col.seq-active .stencil{border-color:var(--primary-gold);box-shadow:0 0 18px rgba(244,208,63,0.25);}
+        .seq-reset-btn{font-family:var(--font-accent);font-size:0.68rem;color:var(--primary-gold);background:none;border:1px solid rgba(244,208,63,0.4);border-radius:12px;padding:2px 10px;margin-bottom:8px;cursor:pointer;letter-spacing:1px;transition:all 0.15s;}
+        .seq-reset-btn:hover{background:rgba(244,208,63,0.15);}
+        .seq-reset-btn:disabled{opacity:0.3;cursor:default;}
+
+        /* ── Drag-and-drop reordering (Sequencer cells only) ── */
+        .degree-cell.seq-cell{cursor:grab;}
+        .degree-cell.seq-cell:active{cursor:grabbing;}
+        .degree-cell.seq-cell.dragging{opacity:0.35;}
+        .degree-cell.seq-cell.drag-over{outline:2px dashed rgba(255,255,255,0.85);outline-offset:2px;}
+        .seq-drag-handle{font-size:11px;color:rgba(0,0,0,0.35);letter-spacing:-1px;margin-right:2px;cursor:grab;}
+        .seq-reorder-btns{display:flex;flex-direction:column;gap:0;margin-left:4px;}
+        .seq-reorder-btns button{background:none;border:none;color:rgba(0,0,0,0.45);font-size:9px;line-height:1;padding:1px 2px;cursor:pointer;}
+        .seq-reorder-btns button:hover{color:rgba(0,0,0,0.85);}
+        .seq-reorder-btns button:disabled{opacity:0.2;cursor:default;}
 
         /* ── STENCIL DISPLAY (left of active panel) ── */
         .stencil-display{display:flex;flex-direction:column;align-items:center;gap:4px;width:100%;}
@@ -339,8 +363,10 @@
                         <div class="interval-map" id="interval-map" style="width:100%;"></div>
                     </div>
                     <!-- COL 3: Sequencer -->
-                    <div class="panel-col">
+                    <div class="panel-col sequencer-col seq-idle" id="sequencer-col">
                         <div class="panel-col-label">Sequencer</div>
+                        <div class="panel-col-caption">Drag notes to reorder · lights up during playback</div>
+                        <button class="seq-reset-btn" id="seq-reset-btn" title="Restore scale-degree order">↺ Reset Order</button>
                         <div class="stencil" id="play-stencil" style="width:100%;max-width:160px;"></div>
                     </div>
                     <!-- COL 4: Compare (hidden until selected) -->
@@ -396,6 +422,12 @@
         let loopMode=false;
         let previousMode=null;
         let compareMode=null;
+        // Custom playback order for the Sequencer column, as an array of degree
+        // numbers (e.g. [1,2,3,4,5,6,7,8], or reordered by drag/drop to
+        // [3,1,2,4,5,6,7,8]). Independent of the Stencil column, which always
+        // shows the mode's fixed scale-degree order. Resets to scale order
+        // whenever the mode or tonic changes (see renderActivePanel).
+        let sequenceOrder=[];
 
         function initAudio(){if(!audioContext)audioContext=new(window.AudioContext||window.webkitAudioContext)();}
         function playNote(freq,dur=0.3){initAudio();const o=audioContext.createOscillator(),g=audioContext.createGain();o.connect(g);g.connect(audioContext.destination);o.frequency.value=freq;o.type=currentWaveform;g.gain.setValueAtTime(0.3,audioContext.currentTime);g.gain.exponentialRampToValueAtTime(0.01,audioContext.currentTime+dur);o.start(audioContext.currentTime);o.stop(audioContext.currentTime+dur);}
@@ -426,6 +458,84 @@
                 });
                 containerEl.appendChild(cell);
             }
+        }
+
+        // ── SEQUENCER: a second, independently-orderable cell set ──────────
+        // Built from the same mode data as buildStencilCells, but walked in
+        // `sequenceOrder` (not raw scale-degree order) and made reorderable —
+        // via native HTML5 drag-and-drop for mouse/trackpad, and via ▲▼ buttons
+        // on each cell as a keyboard/touch-friendly fallback that doesn't
+        // depend on drag support. Clicking a cell still plays its note, same
+        // as the Stencil column, so browsing behavior stays consistent.
+        let seqDragFromIdx=null;
+
+        function resetSequenceOrder(modeData){
+            sequenceOrder=Array.from({length:modeData.intervals.length},(_,i)=>i+1);
+        }
+
+        function moveSequencePosition(fromIdx,toIdx){
+            if(fromIdx===toIdx||fromIdx<0||toIdx<0||fromIdx>=sequenceOrder.length||toIdx>=sequenceOrder.length)return;
+            const [moved]=sequenceOrder.splice(fromIdx,1);
+            sequenceOrder.splice(toIdx,0,moved);
+        }
+
+        function buildSequencerCells(containerEl,modeKey,modeData){
+            containerEl.innerHTML="";
+            const ti=NOTES.indexOf(currentTonic),iv=modeData.intervals;
+            sequenceOrder.forEach((deg,idx)=>{
+                const cell=document.createElement("div");
+                const handle=document.createElement("span");handle.className="seq-drag-handle";handle.textContent="⋮⋮";
+                const dn=document.createElement("span");dn.className="degree-number";dn.textContent=deg;
+                const nn=document.createElement("span");nn.className="note-name";
+                const ni=(ti+iv[deg-1])%12,note=NOTES[ni];nn.textContent=note;
+                const midi=MIDI_BASE+iv[deg-1];
+                cell.dataset.midi=midi;cell.dataset.note=note;cell.dataset.degree=deg;cell.dataset.seqIdx=idx;
+                cell.className=`degree-cell seq-cell note-${NOTE_COLORS[note]}`;
+                cell.draggable=true;
+                cell.appendChild(handle);cell.appendChild(dn);cell.appendChild(nn);
+
+                // Up/down reorder buttons — accessible fallback, no drag required
+                const btns=document.createElement("span");btns.className="seq-reorder-btns";
+                const up=document.createElement("button");up.type="button";up.textContent="▲";up.title="Move earlier in sequence";
+                up.disabled=idx===0;
+                up.addEventListener("click",(e)=>{e.stopPropagation();moveSequencePosition(idx,idx-1);buildSequencerCells(containerEl,modeKey,modeData);});
+                const down=document.createElement("button");down.type="button";down.textContent="▼";down.title="Move later in sequence";
+                down.disabled=idx===sequenceOrder.length-1;
+                down.addEventListener("click",(e)=>{e.stopPropagation();moveSequencePosition(idx,idx+1);buildSequencerCells(containerEl,modeKey,modeData);});
+                btns.appendChild(up);btns.appendChild(down);
+                cell.appendChild(btns);
+
+                // Click still plays the note, same as the Stencil column
+                cell.addEventListener("click",(e)=>{
+                    e.stopPropagation();playNoteByMidi(midi);
+                    cell.classList.add("playing");setTimeout(()=>cell.classList.remove("playing"),300);
+                    document.querySelectorAll(`.degree-cell[data-degree="${deg}"]`).forEach(c=>{c.classList.add("playing");setTimeout(()=>c.classList.remove("playing"),300);});
+                    if(isRecording){const ts=Date.now()-recordingStartTime;recordedNotes.push({midi,time:ts,note,degree:deg});updateRecCounter();}
+                });
+
+                // Drag-and-drop reordering
+                cell.addEventListener("dragstart",(e)=>{
+                    seqDragFromIdx=idx;cell.classList.add("dragging");
+                    e.dataTransfer.effectAllowed="move";
+                    try{e.dataTransfer.setData("text/plain",String(idx));}catch(err){}
+                });
+                cell.addEventListener("dragend",()=>{
+                    cell.classList.remove("dragging");
+                    containerEl.querySelectorAll(".degree-cell").forEach(c=>c.classList.remove("drag-over"));
+                    seqDragFromIdx=null;
+                });
+                cell.addEventListener("dragover",(e)=>{e.preventDefault();e.dataTransfer.dropEffect="move";cell.classList.add("drag-over");});
+                cell.addEventListener("dragleave",()=>cell.classList.remove("drag-over"));
+                cell.addEventListener("drop",(e)=>{
+                    e.preventDefault();cell.classList.remove("drag-over");
+                    const fromIdx=seqDragFromIdx!==null?seqDragFromIdx:parseInt(e.dataTransfer.getData("text/plain"));
+                    if(Number.isNaN(fromIdx))return;
+                    moveSequencePosition(fromIdx,idx);
+                    buildSequencerCells(containerEl,modeKey,modeData);
+                });
+
+                containerEl.appendChild(cell);
+            });
         }
 
         function buildIntervalMap(modeData) {
@@ -549,8 +659,16 @@
 
             // Build main stencil
             buildStencilCells(document.getElementById("stencil-cells"),playingMode,md,false);
-            // Build sequencer stencil
-            buildStencilCells(document.getElementById("play-stencil"),playingMode,md,true);
+            // Build sequencer — resets to plain scale-degree order on every
+            // mode/tonic change (a custom drag order from a previous mode
+            // wouldn't map onto a different set of intervals meaningfully),
+            // then renders in whatever order sequenceOrder currently holds.
+            resetSequenceOrder(md);
+            buildSequencerCells(document.getElementById("play-stencil"),playingMode,md);
+            const seqCol=document.getElementById("sequencer-col");
+            if(seqCol){seqCol.classList.remove("seq-active");seqCol.classList.add("seq-idle");}
+            const seqResetBtn=document.getElementById("seq-reset-btn");
+            if(seqResetBtn)seqResetBtn.disabled=false;
             // Build interval map
             buildIntervalMap(md);
             // Mode info
@@ -561,25 +679,33 @@
             if(playInterval)clearInterval(playInterval);if(!playingMode)return;
             initAudio();isPlaying=true;playStep=0;playDir=1;
             const pb=document.getElementById("play-button");if(pb){pb.textContent="⏸ Pause";pb.classList.add("playing");}
+            // Sequencer switches from idle (dimmed) to active (full brightness,
+            // gold border) the moment playback actually starts — this is the
+            // main visual cue that distinguishes it from the reference Stencil
+            // column, which never changes appearance based on play state.
+            const seqCol=document.getElementById("sequencer-col");
+            if(seqCol){seqCol.classList.remove("seq-idle");seqCol.classList.add("seq-active");}
             playInterval=setInterval(()=>{
-                const cells=document.querySelectorAll("#stencil-cells .degree-cell");
-                const pcells=document.querySelectorAll("#play-stencil .degree-cell");
-                const count=cells.length;if(!count){stopPlaying();return;}
+                // Walk sequenceOrder (the Sequencer's own, possibly custom,
+                // order) rather than raw DOM index — the Stencil column is
+                // always in fixed scale-degree order, so its matching cell has
+                // to be looked up by degree, not by position.
+                const count=sequenceOrder.length;if(!count){stopPlaying();return;}
                 if(loopMode){if(playStep>=count)playStep=0;}else{if(playStep>=count){playDir=-1;playStep=count-2;}if(playStep<0){playDir=1;playStep=1;}}
-                cells.forEach(c=>c.classList.remove("active"));
-                pcells.forEach(c=>c.classList.remove("active"));
-                const cell=cells[playStep];const pcell=pcells[playStep];
+                document.querySelectorAll("#stencil-cells .degree-cell, #play-stencil .degree-cell").forEach(c=>c.classList.remove("active"));
+                const deg=sequenceOrder[playStep];
+                const cell=document.querySelector(`#stencil-cells .degree-cell[data-degree="${deg}"]`);
+                const pcell=document.querySelector(`#play-stencil .degree-cell[data-seq-idx="${playStep}"]`);
                 if(cell){
                     cell.classList.add("active");if(pcell)pcell.classList.add("active");
                     // highlight matching interval row
                     document.querySelectorAll(".interval-row").forEach(r=>r.classList.remove("active"));
-                    const deg=cell.dataset.degree;
                     const irow=document.querySelector(`.interval-row[data-degree="${deg}"]`);
                     if(irow)irow.classList.add("active");
                     const midi=parseInt(cell.dataset.midi);
                     playNoteByMidi(midi,playSpeed/1000*0.75);
                     postToConsole({activeNotes:[midi]});
-                    if(isRecording){const ts=Date.now()-recordingStartTime;recordedNotes.push({midi,time:ts,note:cell.dataset.note,degree:parseInt(cell.dataset.degree)});updateRecCounter();}
+                    if(isRecording){const ts=Date.now()-recordingStartTime;recordedNotes.push({midi,time:ts,note:cell.dataset.note,degree:deg});updateRecCounter();}
                 }
                 playStep+=playDir;
             },playSpeed);
@@ -591,6 +717,8 @@
             document.querySelectorAll(".degree-cell").forEach(c=>c.classList.remove("active"));
             document.querySelectorAll(".interval-row").forEach(r=>r.classList.remove("active"));
             const pb=document.getElementById("play-button");if(pb){pb.textContent="▶ Start";pb.classList.remove("playing");}
+            const seqCol=document.getElementById("sequencer-col");
+            if(seqCol){seqCol.classList.remove("seq-active");seqCol.classList.add("seq-idle");}
             postToConsole({activeNotes:[]});
         }
 
@@ -636,6 +764,11 @@
             document.getElementById("midi-download-button").disabled=true;
         });
         document.getElementById("midi-download-button").addEventListener("click", exportMIDI);
+        document.getElementById("seq-reset-btn").addEventListener("click",()=>{
+            if(!playingMode)return;
+            resetSequenceOrder(MODES[playingMode]);
+            buildSequencerCells(document.getElementById("play-stencil"),playingMode,MODES[playingMode]);
+        });
         document.getElementById("tonicSelect").addEventListener("change",(e)=>{
             currentTonic=e.target.value;renderTabs();renderActivePanel();postToConsole({root:currentTonic});
         });
