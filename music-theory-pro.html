@@ -2088,7 +2088,8 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
             <div class="view-toggle" role="group" aria-label="View selector">
                 <button class="view-btn active" data-view="circle">⭕ Circle</button>
                 <button class="view-btn" data-view="guitar">🎸 Guitar</button>
-                <button class="view-btn" data-view="keyboard">⭕ Circle · Type-to-Play</button>
+                <button class="view-btn" data-view="keyboard">🎹 Piano</button>
+                <button class="view-btn" data-view="circleType">⭕ Circle · Type-to-Play</button>
                 <button class="view-btn" data-view="ear">👂 Ear</button>
                 <button class="view-btn" data-view="sing">🎤 Sing</button>
                 <button class="view-btn" data-view="stencil">✦ Stencil</button>
@@ -2898,7 +2899,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 if (_pianoKeysActive.has(lk)) {
                     _pianoKeysActive.delete(lk);
                     const m = _pianoKeys[lk];
-                    if (m && currentView === 'keyboard') {
+                    if (m && (currentView === 'keyboard' || currentView === 'circleType')) {
                         const oct = currentOctave + m.oct;
                         // Un-highlight the key
                         document.querySelectorAll(`.white-key[data-note="${m.pc}"][data-octave="${oct}"], .black-key[data-note="${m.pc}"][data-octave="${oct}"]`).forEach(k => {
@@ -2915,7 +2916,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
 
                 if (!audioReady) return;
                 // ── Piano key playback when keyboard view is active ──
-                if (currentView === 'keyboard' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                if ((currentView === 'keyboard' || currentView === 'circleType') && !e.ctrlKey && !e.metaKey && !e.altKey) {
                     const lk = e.key.toLowerCase();
                     const m = _pianoKeys[lk];
                     if (m && !_pianoKeysActive.has(lk)) {
@@ -5686,16 +5687,16 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 const ear     = el('earTraining');
                 const staff   = el('staffNotation');
 
-                // The "Piano Keyboard" view now shows the Chromatic Circle
-                // instead of the piano graphic — same live circle element as
-                // the Circle view, so it carries every attribute (colors,
-                // active/included/excluded highlighting, click-to-play,
-                // degree sync) automatically. currentView still switches to
-                // 'keyboard' internally so the QWERTY type-to-play shortcut
-                // and octave-display wiring below keep working unchanged.
-                const showCircle = currentView === 'circle' || currentView === 'keyboard';
-                if (circle)  circle.style.display  = showCircle ? 'block' : 'none';
-                if (piano)   piano.style.display   = 'none';
+                // "Circle · Type-to-Play" shows the same live circle as the
+                // regular Circle view, but also enables the QWERTY
+                // type-to-play shortcut (see keydown handler below) —
+                // separate button/state from Piano so both can coexist.
+                if (circle)  circle.style.display  = (currentView === 'circle' || currentView === 'circleType') ? 'block' : 'none';
+                if (piano) {
+                    const showPiano = currentView === 'keyboard';
+                    piano.style.display = showPiano ? 'block' : 'none';
+                    if (showPiano) { createPiano(); updatePianoDisplay(); }
+                }
                 if (guitar)  guitar.style.display  = currentView === 'guitar'   ? 'block' : 'none';
                 // Ear Training is a docked panel now (see updateEarOverlay) —
                 // it's independent of currentView and never hidden by a view switch.
