@@ -9393,6 +9393,12 @@ async function kcmAIAsk(type) {
 
         seq.forEach(({ pc, oct }, i) => {
             const delay = i * beatMs;
+            // The label lines (notes/intervals/semitones/degrees) are always
+            // laid out in ascending order (token 0 = root), regardless of
+            // playback direction. When descending, seq is upSeq reversed, so
+            // the loop index i no longer matches the token position — map
+            // back to the original ascending index for correct highlighting.
+            const labelIdx = direction === 'down' ? (seq.length - 1 - i) : i;
 
             // Sound + Visual ON — single callback, perfectly in sync
             const tOn = setTimeout(() => {
@@ -9414,7 +9420,7 @@ async function kcmAIAsk(type) {
                 });
                 // LABEL BLOCK — highlight this note's token on every line
                 // (name/notes/intervals/semitones/degrees) in sync
-                if (typeof highlightStencilLabelToken === 'function') highlightStencilLabelToken(i);
+                if (typeof highlightStencilLabelToken === 'function') highlightStencilLabelToken(labelIdx);
                 // PIANO
                 document.querySelectorAll('.white-key,.black-key').forEach(k => {
                     k.style.background = ''; k.style.boxShadow = '';
