@@ -1695,6 +1695,19 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
     color: var(--primary-purple);
     font-weight: 700;
 }
+/* Individual note/number tokens within each label line — highlighted in
+   sync with the wheel + audio during stencilPlay() playback, so every
+   line (notes, intervals, semitones, degrees) lights up the exact same
+   token at the exact same moment the corresponding note sounds. */
+#kcmStencilLabel .sl-tok {
+    display: inline-block;
+    transition: color 0.08s ease, text-shadow 0.08s ease, transform 0.08s ease;
+}
+#kcmStencilLabel .sl-tok.active {
+    text-shadow: 0 0 10px currentColor, 0 0 18px currentColor;
+    filter: brightness(1.4);
+    transform: scale(1.18);
+}
 
 /* Play buttons */
 .kcm-stencil-play-row {
@@ -8894,29 +8907,61 @@ async function kcmAIAsk(type) {
         const rootPc  = currentStencilRoot;
         const rootStr = NOTE_NAMES[rootPc];
         const pcs     = currentStencil.intervals.map(iv => (rootPc + iv) % 12);
-        const noteStr = pcs.map(pc => noteName(pc, rootPc)).join('  ');
+        // Each token below is wrapped in a .sl-tok span carrying data-idx so
+        // stencilPlay() can highlight the exact same token, on every line,
+        // at the exact moment the corresponding note sounds — see
+        // highlightStencilLabelToken().
+        const tok = (idx, text) => `<span class="sl-tok" data-idx="${idx}">${text}</span>`;
+        const noteStr = pcs.map((pc,i) => tok(i, noteName(pc, rootPc))).join('  ');
 
         nameEl.textContent      = `${rootStr} ${currentStencil.name}`;
-        notesEl.textContent     = noteStr;
+        notesEl.innerHTML       = noteStr;
         const ivs = currentStencil.intervals;
         const steps = [];
         for (let i = 1; i < ivs.length; i++) steps.push(((ivs[i]-ivs[i-1]+12)%12));
         const WH = {1:'H',2:'W',3:'WH',4:'3H',5:'4H',6:'TT'};
 
         // Interval names: W/H step-quality for scales/modes, interval formula for chords/13ths.
-        intervalsEl.textContent = (currentCat === 'scales' || currentCat === 'modes')
-            ? steps.map(s => WH[s]||s).join('  ')
-            : (currentStencil.intervals_str || '');
+        // Step tokens use idx = arrival-note-index - 1 (a "step" lands ON the
+        // next note, so it highlights in sync with that note, not idx 0).
+        intervalsEl.innerHTML = (currentCat === 'scales' || currentCat === 'modes')
+            ? steps.map((s,i) => tok(i, WH[s]||s)).join('  ')
+            : (currentStencil.intervals_str || '').split('-').map((t,i) => tok(i,t)).join('-');
 
         // Semitone offset values from the root — shown for every category (Claim D-10).
         if (semiEl) {
-            semiEl.textContent   = ivs.join('  ');
+            semiEl.innerHTML     = ivs.map((v,i) => tok(i, v)).join('  ');
             semiEl.style.display = '';
         }
 
         // Scale degree names — shown for every category (Claim D-10); previously
         // scales/modes substituted raw step-counts here instead of degree names.
-        degreesEl.textContent = currentStencil.degrees || '';
+        degreesEl.innerHTML = (currentStencil.degrees || '').split(' ').map((t,i) => tok(i,t)).join(' ');
+    }
+
+    // Highlights the Nth token (by data-idx) across every label line at
+    // once — notes/semitones/degrees match the note index directly; the
+    // intervals line uses the same index for chords/13ths (per-note,
+    // hyphen-joined) but shifts by one for scales/modes (space-joined
+    // step-qualities, which describe the gap ARRIVING at note idx).
+    function highlightStencilLabelToken(idx) {
+        clearStencilLabelHighlight();
+        const isStepLine = (currentCat === 'scales' || currentCat === 'modes');
+        [document.getElementById('slNotes'), document.getElementById('slSemitones'), document.getElementById('slDegrees')]
+            .forEach(container => {
+                if (!container) return;
+                const t = container.querySelector(`.sl-tok[data-idx="${idx}"]`);
+                if (t) t.classList.add('active');
+            });
+        const intervalsContainer = document.getElementById('slIntervals');
+        if (intervalsContainer) {
+            const targetIdx = isStepLine ? idx - 1 : idx;
+            const t = intervalsContainer.querySelector(`.sl-tok[data-idx="${targetIdx}"]`);
+            if (t) t.classList.add('active');
+        }
+    }
+    function clearStencilLabelHighlight() {
+        document.querySelectorAll('#kcmStencilLabel .sl-tok.active').forEach(el => el.classList.remove('active'));
     }
 
     // ── Select a stencil ────────────────────────────────────
@@ -8932,6 +8977,7 @@ async function kcmAIAsk(type) {
     const _stencilTimers = [];
     function _stencilCancelAll() {
         while (_stencilTimers.length) clearTimeout(_stencilTimers.pop());
+        if (typeof clearStencilLabelHighlight === 'function') clearStencilLabelHighlight();
     }
     function stencilPlay(direction, noCancel) {
         if (!currentStencil) { alert('Select a stencil first!'); return; }
@@ -8981,6 +9027,9 @@ async function kcmAIAsk(type) {
                     d.setAttribute('stroke-width', dpc === pc ? '4' : '2');
                     d.setAttribute('opacity', dpc === pc ? '1' : '0.6');
                 });
+                // LABEL BLOCK — highlight this note's token on every line
+                // (name/notes/intervals/semitones/degrees) in sync
+                if (typeof highlightStencilLabelToken === 'function') highlightStencilLabelToken(i);
                 // PIANO
                 document.querySelectorAll('.white-key,.black-key').forEach(k => {
                     k.style.background = ''; k.style.boxShadow = '';
@@ -9035,6 +9084,7 @@ async function kcmAIAsk(type) {
             if (typeof window.updateStaffNotation === 'function') {
                 window.updateStaffNotation(intervals.map(iv => (rootPc + iv) % 12));
             }
+            if (typeof clearStencilLabelHighlight === 'function') clearStencilLabelHighlight();
         }, seq.length * beatMs + 200);
         _stencilTimers.push(tEnd);
     }
