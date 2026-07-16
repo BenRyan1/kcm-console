@@ -2139,36 +2139,8 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
             <div id="recordingStatus" style="text-align:center; min-height:1.25rem; font-size:0.82rem;" aria-live="polite"></div>
             <svg id="recTimelineSVG" viewBox="0 0 320 100" preserveAspectRatio="xMidYMid meet" aria-hidden="true" style="display:none; width:100%; max-width:520px; margin:0.75rem auto 0; background:rgba(255,255,255,0.97); border-radius:8px;"></svg>
         </div>
-            </div><!-- end kcm-center-col -->
-
-            <div class="kcm-right-col" style="flex:0 0 260px; min-width:220px; max-width:280px;">
-
-            <div style="display:flex; justify-content:center; margin-bottom:0.5rem;">
-                <button class="level-btn" id="playChromaticBtn" style="background:linear-gradient(135deg, var(--primary-teal) 0%, #006666 100%); border-color:var(--primary-teal); color:#fff; min-width:220px; font-size:0.85rem; letter-spacing:1px; box-shadow:var(--teal-glow);">🎹 CHROMATIC SCALE</button>
-            </div>
-
-            <div class="level-selector" role="group" aria-label="Learning mode selector" style="flex-direction:column; align-items:stretch; max-width:none;">
-                <button class="level-btn active" data-level="1"         title="1 Note">Single Note</button>
-                <button class="level-btn"         data-level="2"         title="2 Notes">Intervals</button>
-                <button class="level-btn"         data-level="3"         title="3 Notes">Triads</button>
-                <button class="level-btn"         data-level="4"         title="4 Notes">7th Chords</button>
-                <button class="level-btn"         data-level="5"         title="5 Notes">Pentatonic</button>
-                <button class="level-btn"         data-level="6"         title="6 Notes">Whole Tone</button>
-                <button class="level-btn"         data-level="scales"    title="7 Notes">Scales</button>
-                <button class="level-btn"         data-level="modes"     title="7 Notes · Modes">Modes</button>
-                <button class="level-btn"         data-level="harm"      title="Harmonized">Harmonized</button>
-                <button class="level-btn"         data-level="freeplay"  title="Free Play">Free Play</button>
-            </div>
-
-            <div style="display:flex; flex-direction:column; gap:8px;">
-                <button class="play-btn" id="playUpBtn">↑ Ascending</button>
-                <button class="play-btn" id="playDownBtn">↓ Descending</button>
-                <button class="play-btn" id="playScaleBtn">♫ Full Scale</button>
-                <button class="play-btn" id="playChordBtn">♪ Play Chord</button>
-                <button class="play-btn" id="stopPlayBtn" style="background:linear-gradient(135deg, var(--primary-coral) 0%, #a8583a 100%); border-color:var(--primary-coral);">⏹ Stop</button>
-            </div>
             
-            <div style="margin-top:1.25rem; width:100%; max-width:100%;">
+            <div style="margin-top:1.25rem;">
 <h3 id="status" role="status" aria-live="polite">Click START AUDIO ENGINE to begin!</h3>
 
         <div class="two-col-controls">
@@ -2206,6 +2178,38 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
 
             </div><!-- end right column -->
         </div><!-- end grid -->
+            </div>
+            </div><!-- end kcm-center-col -->
+
+            <div class="kcm-right-col" style="flex:0 0 260px; min-width:220px; max-width:280px;">
+
+            <div style="display:flex; justify-content:center; margin-bottom:0.5rem;">
+                <button class="level-btn" id="playChromaticBtn" style="background:linear-gradient(135deg, var(--primary-teal) 0%, #006666 100%); border-color:var(--primary-teal); color:#fff; min-width:220px; font-size:0.85rem; letter-spacing:1px; box-shadow:var(--teal-glow);">🎹 CHROMATIC SCALE</button>
+            </div>
+
+            <div class="level-selector" role="group" aria-label="Learning mode selector" style="flex-direction:column; align-items:stretch; max-width:none;">
+                <button class="level-btn active" data-level="1"         title="1 Note">Single Note</button>
+                <button class="level-btn"         data-level="2"         title="2 Notes">Intervals</button>
+                <button class="level-btn"         data-level="3"         title="3 Notes">Triads</button>
+                <button class="level-btn"         data-level="4"         title="4 Notes">7th Chords</button>
+                <button class="level-btn"         data-level="5"         title="5 Notes">Pentatonic</button>
+                <button class="level-btn"         data-level="6"         title="6 Notes">Whole Tone</button>
+                <button class="level-btn"         data-level="scales"    title="7 Notes">Scales</button>
+                <button class="level-btn"         data-level="modes"     title="7 Notes · Modes">Modes</button>
+                <button class="level-btn"         data-level="harm"      title="Harmonized">Harmonized</button>
+                <button class="level-btn"         data-level="freeplay"  title="Free Play">Free Play</button>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:8px;">
+                <button class="play-btn" id="playUpBtn">↑ Ascending</button>
+                <button class="play-btn" id="playDownBtn">↓ Descending</button>
+                <button class="play-btn" id="playScaleBtn">♫ Full Scale</button>
+                <button class="play-btn" id="playChordBtn">♪ Play Chord</button>
+                <button class="play-btn" id="stopPlayBtn" style="background:linear-gradient(135deg, var(--primary-coral) 0%, #a8583a 100%); border-color:var(--primary-coral);">⏹ Stop</button>
+            </div>
+            
+            <div style="margin-top:1.25rem; width:100%; max-width:100%;">
+
             </div>
                         <div style="margin-top:1.25rem;">
 <!-- PROGRESSION CONTROLS — shown only for Harmonized Major/Minor -->
