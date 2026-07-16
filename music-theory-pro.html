@@ -1256,7 +1256,7 @@ select option { background: #1a1a2e; color: white; }
     cursor: pointer;
     border: 4px solid rgba(255,255,255,0.55);
     box-shadow: 0 4px 14px rgba(0,0,0,0.55);
-    transition: transform 0.2s, opacity 0.2s, filter 0.2s;
+    transition: transform 0.2s, opacity 0.2s, filter 0.2s, left 0.4s ease, top 0.4s ease;
     touch-action: manipulation;
     text-shadow: 0 1px 3px rgba(0,0,0,0.45);
 }
@@ -1948,6 +1948,8 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
 
                 <!-- PANEL 1: CHROMATIC CIRCLE -->
                 <div id="chromaticCircle" style="margin:0 auto; display:block; left:0; right:0; position:relative;" role="region" aria-label="Chromatic circle">
+                    <button type="button" id="rotateWheelBtn" onclick="rotateChromaticWheel()" aria-label="Rotate wheel 30 degrees clockwise"
+                        style="position:absolute; top:-42px; left:50%; transform:translateX(-50%); z-index:5; padding:6px 16px; font-family:var(--font-display); font-size:0.72rem; font-weight:800; letter-spacing:1px; text-transform:uppercase; background:linear-gradient(135deg, var(--primary-teal) 0%, #006666 100%); color:#fff; border:2px solid var(--primary-teal); border-radius:20px; cursor:pointer; box-shadow:0 3px 10px rgba(0,0,0,0.3); white-space:nowrap;">⟳ Rotate 30°</button>
                     <div class="sphere" data-note="0"  style="left:215px;top:30px; background:#FFFF00;color:#000;font-size:16px;line-height:1.2;white-space:pre-line;text-align:center;">C</div>
                     <div class="sphere" data-note="1"  style="left:308px;top:55px; background:#FFC400;color:#000;font-size:13px;line-height:1.2;white-space:pre-line;text-align:center;">C♯&#10;D♭</div>
                     <div class="sphere" data-note="2"  style="left:375px;top:122px;background:#FF8000;color:#000;font-size:16px;line-height:1.2;white-space:pre-line;text-align:center;">D</div>
@@ -3138,7 +3140,8 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
             if (existing.length === 12) {
                 existing.forEach(s => {
                     const i = parseInt(s.dataset.note);
-                    const angle = (i * 30 - 90) * Math.PI / 180;
+                    const slot = (i + (typeof wheelRotationSteps !== 'undefined' ? wheelRotationSteps : 0)) % 12;
+                    const angle = (slot * 30 - 90) * Math.PI / 180;
                     const x = cx + radius * Math.cos(angle);
                     const y = cx + radius * Math.sin(angle);
                     s.style.position = 'absolute';
@@ -3163,7 +3166,8 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
             // Fallback: build spheres dynamically if pre-rendered HTML is missing
             circle.innerHTML = '';
             for (let i = 0; i < 12; i++) {
-                const angle = (i * 30 - 90) * Math.PI / 180;
+                const slot = (i + (typeof wheelRotationSteps !== 'undefined' ? wheelRotationSteps : 0)) % 12;
+                const angle = (slot * 30 - 90) * Math.PI / 180;
                 const x = cx + radius * Math.cos(angle);
                 const y = cx + radius * Math.sin(angle);
                 const s = document.createElement('div');
@@ -5780,6 +5784,24 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         } else {
             initInstrumentPicker();
         }
+
+        // ── Chromatic Circle rotation — steps the whole wheel 30°
+        //    clockwise per click (12 positions total, back to start after
+        //    12 clicks). Each .sphere already relies heavily on `transform`
+        //    elsewhere (hover/active/playing scale effects set via both CSS
+        //    classes and direct JS assignment), so rotating via CSS
+        //    transform:rotate() would fight those. Instead, wheelRotationSteps
+        //    feeds directly into createSpheres()'s own angle formula (see
+        //    below) — the same responsive, resize-aware function that
+        //    already computes every sphere's real left/top from the live
+        //    container size. Each sphere's own box is never rotated, so its
+        //    note text is always upright automatically.
+        let wheelRotationSteps = 0;
+        function rotateChromaticWheel() {
+            wheelRotationSteps = (wheelRotationSteps + 1) % 12;
+            if (typeof createSpheres === 'function') createSpheres();
+        }
+        window.rotateChromaticWheel = rotateChromaticWheel;
 
         // ── Update note list ──────────────────────────────────────
         function updateNoteList() {
