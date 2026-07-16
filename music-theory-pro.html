@@ -6330,13 +6330,22 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                     const row  = document.getElementById('kcmTwoColRow');
                     if (!wrap || !row) return;
 
-                    // Measure the TRUE natural side-by-side size: reset any
-                    // previous scale AND force nowrap first, otherwise
-                    // either a stale transform or an already-wrapped stack
-                    // would corrupt this reading.
-                    row.style.transform = 'none';
-                    row.style.flexWrap  = 'nowrap';
-                    wrap.style.height   = 'auto';
+                    // Measure the TRUE natural side-by-side size. Two things
+                    // have to be reset first: any previous transform (or it
+                    // corrupts the reading), and — importantly —
+                    // justify-content:center swapped to flex-start. Centered
+                    // overflow is a known browser quirk: scrollWidth only
+                    // reliably measures RIGHTWARD overflow, so with content
+                    // centered and overflowing on both sides, it silently
+                    // undercounts the true width, which was producing a
+                    // wrong (too-aggressive) scale. flex-start keeps all
+                    // overflow on the right, where scrollWidth measures it
+                    // correctly.
+                    row.style.transform      = 'none';
+                    row.style.marginLeft     = '0';
+                    row.style.flexWrap       = 'nowrap';
+                    row.style.justifyContent = 'flex-start';
+                    wrap.style.height        = 'auto';
                     const naturalW = row.scrollWidth;
                     const naturalH = row.scrollHeight;
                     if (naturalW === 0 || naturalH === 0) return; // not laid out yet
@@ -6353,13 +6362,24 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                         // scale (genuinely phone-narrow) — fall back to the
                         // original responsive stacking instead of forcing
                         // illegibly small text.
-                        row.style.flexWrap  = 'wrap';
-                        row.style.transform = 'none';
-                        wrap.style.height   = 'auto';
+                        row.style.flexWrap       = 'wrap';
+                        row.style.justifyContent = 'center';
+                        row.style.transform      = 'none';
+                        row.style.marginLeft     = '0';
+                        wrap.style.height        = 'auto';
                         return;
                     }
 
-                    row.style.transformOrigin = 'top center';
+                    // Anchor scaling at the top-left so the math is exact
+                    // and predictable (no interaction with justify-content
+                    // or overflow direction), then re-center the *scaled*
+                    // result explicitly via margin — simple, reliable,
+                    // works the same regardless of how much room is spare.
+                    row.style.transformOrigin = 'top left';
+                    const scaledW = naturalW * scale;
+                    const offsetX = Math.max(0, (availW - scaledW) / 2);
+                    row.style.marginLeft = offsetX + 'px';
+
                     if (scale >= 0.999) {
                         // Fits already at full size — keep nowrap (so the
                         // three columns stay side-by-side) but no scaling.
