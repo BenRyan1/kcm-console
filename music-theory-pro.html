@@ -393,6 +393,36 @@ nav a.active { color: var(--primary-teal); }
     box-shadow: var(--teal-glow);
     transform: scale(1.04);
 }
+/* -- Hover-collapse nav rail --------------------------------------
+   Desktop-with-a-real-mouse only (hover:hover + pointer:fine skips
+   touchscreens and coarse pointers entirely -- those devices get the
+   nav exactly as before, always fully visible, no hidden-until-hover
+   trap with no way to reveal it). Collapses the view-toggle group to
+   a narrow icon rail; hovering (or tabbing into it with a keyboard)
+   expands it back to full labeled buttons. justify-content:flex-start
+   in the collapsed state keeps each button's leading icon glyph
+   visible while the trailing label clips out of view, entirely via
+   CSS -- no button markup changes needed. */
+@media (hover: hover) and (pointer: fine) {
+    .kcm-hover-nav {
+        width: 64px;
+        overflow: hidden;
+        flex-wrap: nowrap;
+        transition: width 0.28s ease;
+    }
+    .kcm-hover-nav:hover,
+    .kcm-hover-nav:focus-within {
+        width: 232px;
+    }
+    .kcm-hover-nav .view-btn,
+    .kcm-hover-nav .view-action-btn {
+        width: 100%;
+        box-sizing: border-box;
+        justify-content: flex-start;
+        white-space: nowrap;
+        overflow: hidden;
+    }
+}
 /* Action buttons in view row — same style as view-btn but excluded from view switching */
 .view-action-btn {
     padding: 6px 12px;
@@ -1989,7 +2019,7 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
 
             <!-- ── CONTROLS (always visible below panels) ── -->
 
-            <div class="view-toggle" role="group" aria-label="View selector" style="flex-direction:column; align-items:stretch;">
+            <div class="view-toggle kcm-hover-nav" role="group" aria-label="View selector" style="flex-direction:column; align-items:stretch;">
                 <button class="view-btn active" data-view="circle">⭕ Circle</button>
                 <button class="view-btn" data-view="guitar">🎸 Guitar</button>
                 <button class="view-btn" data-view="keyboard">🎹 Piano</button>
