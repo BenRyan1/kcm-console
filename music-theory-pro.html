@@ -2037,7 +2037,14 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                  buttons, ascending/descending/etc. Purely additive wrapper
                  divs -- every element inside keeps its existing id, classes,
                  and onclick handlers untouched. -->
-            <div class="kcm-two-col-row" style="display:flex; gap:1.75rem; align-items:flex-start; flex-wrap:wrap; justify-content:center;">
+            <!-- Scale-to-fit wrapper — JS (kcmFitLayout, wired near the end
+                 of the classic app closure) measures the row's natural
+                 unscaled size against the viewport and shrinks it down via
+                 CSS transform so Left/Center/Right all stay visible on one
+                 screen without scrolling, on any screen where they'd
+                 otherwise fit side-by-side but not fully in view. -->
+            <div id="kcmFitWrap" style="overflow:hidden;">
+            <div class="kcm-two-col-row" id="kcmTwoColRow" style="display:flex; gap:1.75rem; align-items:flex-start; flex-wrap:wrap; justify-content:center;">
                         <div class="kcm-left-col" style="flex:0 0 220px; min-width:180px; max-width:240px; display:flex; flex-direction:column; gap:0.75rem;">
 
 
@@ -2502,6 +2509,7 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
             </div>
             </div><!-- end kcm-right-col -->
             </div><!-- end kcm-two-col-row -->
+            </div><!-- end kcmFitWrap -->
 
         </div><!-- end views swap zone -->
     </div><!-- end info-panel -->
@@ -6294,6 +6302,100 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
             setTimeout(() => document.addEventListener('click', closeHandler), 200);
         }
         window.toggleScaleLibraryPanel = toggleScaleLibraryPanel;
+
+        // ── Scale-to-fit: keep Left / Center / Right all visible on one
+        //    screen ─────────────────────────────────────────────────────
+        //    The 3-column row (view nav / Circle+Stencil panel / level
+        //    selector) is laid out with fixed-ish min-widths per column,
+        //    so on shorter or narrower viewports it either wraps to a
+        //    stacked column (needs vertical scrolling) or just runs off
+        //    the bottom of the screen. This measures the row's natural,
+        //    unscaled size against the actual viewport and shrinks the
+        //    whole row down (uniformly, via CSS transform so nothing
+        //    reflows or gets cut off mid-element) until all three columns
+        //    fit together in view. Never scales UP past 1 on big screens,
+        //    and never shrinks below a readability floor — past that
+        //    point it falls back to the existing responsive wrap/scroll
+        //    behavior rather than rendering illegibly small text.
+        const KCM_FIT_MIN_SCALE = 0.55;
+        let _kcmFitRAF = null;
+        function kcmFitLayout() {
+            if (_kcmFitRAF) cancelAnimationFrame(_kcmFitRAF);
+            _kcmFitRAF = requestAnimationFrame(() => {
+                try {
+                    const wrap = document.getElementById('kcmFitWrap');
+                    const row  = document.getElementById('kcmTwoColRow');
+                    if (!wrap || !row) return;
+
+                    // Measure natural size with scaling reset first —
+                    // otherwise a previous scale would corrupt this reading.
+                    row.style.transform = 'none';
+                    wrap.style.height = 'auto';
+                    const naturalW = row.offsetWidth;
+                    const naturalH = row.offsetHeight;
+                    if (naturalW === 0 || naturalH === 0) return; // not laid out yet
+
+                    const topOffset   = wrap.getBoundingClientRect().top;
+                    const availH      = window.innerHeight - topOffset - 16; // small bottom margin
+                    const availW      = wrap.clientWidth;
+
+                    let scale = Math.min(1, availW / naturalW, availH / naturalH);
+                    if (!isFinite(scale) || scale <= 0) scale = 1;
+
+                    if (scale < KCM_FIT_MIN_SCALE) {
+                        // Too tight to shrink further without hurting
+                        // readability — leave it unscaled and let the
+                        // page's normal scroll/wrap behavior take over.
+                        row.style.transform = 'none';
+                        wrap.style.height = 'auto';
+                        return;
+                    }
+                    if (scale >= 0.999) {
+                        row.style.transform = 'none';
+                        wrap.style.height = 'auto';
+                        return;
+                    }
+
+                    row.style.transformOrigin = 'top center';
+                    row.style.transform = `scale(${scale})`;
+                    // transform doesn't affect layout size, so the wrapper
+                    // would otherwise still reserve the full unscaled
+                    // height below it — pin it to the scaled height.
+                    wrap.style.height = (naturalH * scale) + 'px';
+                } catch (e) { console.error('kcmFitLayout error:', e); }
+            });
+        }
+        window.kcmFitLayout = kcmFitLayout;
+
+        window.addEventListener('resize', kcmFitLayout);
+        window.addEventListener('orientationchange', kcmFitLayout);
+
+        // Content-driven size changes (opening a Scale Type/Mode/Harmonized
+        // dropdown, switching views, switching level, etc.) all change the
+        // row's natural height without a window resize ever firing — a
+        // ResizeObserver on the row itself catches every one of those
+        // automatically instead of needing a hook in each toggle function.
+        // ResizeObserver measures the pre-transform layout box, so it does
+        // NOT re-fire because of kcmFitLayout's own scale() calls — no
+        // feedback loop.
+        if (typeof ResizeObserver !== 'undefined') {
+            const _kcmFitObserver = new ResizeObserver(() => kcmFitLayout());
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', () => {
+                    const row = document.getElementById('kcmTwoColRow');
+                    if (row) _kcmFitObserver.observe(row);
+                });
+            } else {
+                const row = document.getElementById('kcmTwoColRow');
+                if (row) _kcmFitObserver.observe(row);
+            }
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => setTimeout(kcmFitLayout, 100));
+        } else {
+            setTimeout(kcmFitLayout, 100);
+        }
 
         // ── Select Mode sub-dropdown (under the Modes level button) —
         //    static, wired once. Builds the 7 mode pills + play buttons
