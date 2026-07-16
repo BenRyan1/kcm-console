@@ -2175,13 +2175,13 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
 
             <h3 id="status" role="status" aria-live="polite" style="margin-top:1.5rem;">Click START AUDIO ENGINE to begin!</h3>
 
-            <!-- RECORDING STUDIO (left) + NOTE/SCALE + REGISTER/TEMPO (right,
-                 stacked) — side by side, controls moved to the right of
-                 Recording Studio per request. Same ids/wiring throughout,
-                 only position/grouping changed. -->
+            <!-- CONTROLS ROW — Recording Studio, Note & Scale Controls, and
+                 Register & Tempo all as peer columns in one row (Recording
+                 Studio moved into the control-row position per request).
+                 Same ids/wiring throughout, only position/grouping changed. -->
             <div style="display:flex; gap:1rem; align-items:flex-start; margin-top:1rem; flex-wrap:wrap;">
 
-                <div style="flex:1 1 240px; min-width:220px; background:rgba(0,0,0,0.4); padding:1.5rem; border-radius:12px; border:2px solid rgba(0,128,128,0.2); box-sizing:border-box;">
+                <div style="flex:1 1 220px; min-width:200px; background:rgba(0,0,0,0.4); padding:1.5rem; border-radius:12px; border:2px solid rgba(0,128,128,0.2); box-sizing:border-box;">
                     <h4 style="margin:0 0 1rem 0; text-align:center; font-family:var(--font-display); font-size:1rem; font-weight:700; color:var(--primary-gold); text-transform:uppercase; letter-spacing:1px;">🎙️ Recording Studio</h4>
                     <div style="display:flex; gap:10px; margin-bottom:1rem; flex-wrap:wrap; justify-content:center;">
                         <button class="rec-btn" id="recordBtn" aria-pressed="false">⏺ Record</button>
@@ -2197,43 +2197,39 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                     <svg id="recTimelineSVG" viewBox="0 0 320 100" preserveAspectRatio="xMidYMid meet" aria-hidden="true" style="display:none; width:100%; max-width:520px; margin:0.75rem auto 0; background:rgba(255,255,255,0.97); border-radius:8px;"></svg>
                 </div>
 
-                <div class="two-col-controls" style="flex:1 1 240px; min-width:220px; display:flex; flex-direction:column; gap:1rem; margin-top:0; box-sizing:border-box;">
+                <!-- Root Note, Scale Degree, Chord Type, Waveform -->
+                <div class="two-col-controls" style="flex:1 1 200px; min-width:190px; display:flex; flex-direction:column; margin-top:0; box-sizing:border-box;">
+                    <div class="col-header">🎵 Note &amp; Scale Controls</div>
+                    <div id="controls"></div>
+                </div>
 
-                    <!-- Root Note, Scale Degree, Chord Type, Waveform -->
-                    <div style="display:flex; flex-direction:column;">
-                        <div class="col-header">🎵 Note &amp; Scale Controls</div>
-                        <div id="controls"></div>
+                <!-- Octave + Speed -->
+                <div style="flex:1 1 200px; min-width:190px; display:flex; flex-direction:column; box-sizing:border-box;">
+                    <div class="col-header">🎚 Register &amp; Tempo</div>
+
+                    <!-- OCTAVE -->
+                    <div class="control-group">
+                        <label>Octave / Register</label>
+                        <div style="display:flex; gap:8px; align-items:center; justify-content:center; margin-top:0.25rem;">
+                            <button class="octave-btn" id="octaveDown" aria-label="Lower octave" style="flex:1; padding:0.5rem; font-size:0.8rem;">◀ Lower</button>
+                            <div id="octaveLabel" style="font-size:0.88rem; color:var(--primary-gold); font-weight:700; text-align:center; min-width:100px;">Octave 4 (Middle C)</div>
+                            <button class="octave-btn" id="octaveUp" aria-label="Raise octave" style="flex:1; padding:0.5rem; font-size:0.8rem;">Higher ▶</button>
+                        </div>
                     </div>
 
-                    <!-- Octave + Speed -->
-                    <div style="display:flex; flex-direction:column;">
-                        <div class="col-header">🎚 Register &amp; Tempo</div>
-
-                        <!-- OCTAVE -->
-                        <div class="control-group">
-                            <label>Octave / Register</label>
-                            <div style="display:flex; gap:8px; align-items:center; justify-content:center; margin-top:0.25rem;">
-                                <button class="octave-btn" id="octaveDown" aria-label="Lower octave" style="flex:1; padding:0.5rem; font-size:0.8rem;">◀ Lower</button>
-                                <div id="octaveLabel" style="font-size:0.88rem; color:var(--primary-gold); font-weight:700; text-align:center; min-width:100px;">Octave 4 (Middle C)</div>
-                                <button class="octave-btn" id="octaveUp" aria-label="Raise octave" style="flex:1; padding:0.5rem; font-size:0.8rem;">Higher ▶</button>
-                            </div>
+                    <!-- TEMPO -->
+                    <div class="control-group">
+                        <label>⏱ Playback Speed</label>
+                        <div style="display:flex; align-items:center; gap:8px; margin-top:0.25rem;">
+                            <span style="font-size:0.68rem; font-weight:700; min-width:32px;">SLOW</span>
+                            <input type="range" id="tempoSlider" min="40" max="240" value="120" step="10" style="flex:1;" aria-label="Tempo in BPM">
+                            <span style="font-size:0.68rem; font-weight:700; min-width:32px; text-align:right;">FAST</span>
                         </div>
-
-                        <!-- TEMPO -->
-                        <div class="control-group">
-                            <label>⏱ Playback Speed</label>
-                            <div style="display:flex; align-items:center; gap:8px; margin-top:0.25rem;">
-                                <span style="font-size:0.68rem; font-weight:700; min-width:32px;">SLOW</span>
-                                <input type="range" id="tempoSlider" min="40" max="240" value="120" step="10" style="flex:1;" aria-label="Tempo in BPM">
-                                <span style="font-size:0.68rem; font-weight:700; min-width:32px; text-align:right;">FAST</span>
-                            </div>
-                            <div style="text-align:center; margin-top:6px; font-size:1.1rem; font-weight:800; color:var(--primary-gold);"><span id="bpmDisplay">120</span> BPM</div>
-                        </div>
-
+                        <div style="text-align:center; margin-top:6px; font-size:1.1rem; font-weight:800; color:var(--primary-gold);"><span id="bpmDisplay">120</span> BPM</div>
                     </div>
-                </div><!-- end two-col-controls -->
+                </div>
 
-            </div><!-- end recording-studio + controls row -->
+            </div><!-- end controls row -->
             </div><!-- end kcm-center-col -->
 
             <div class="kcm-right-col" style="flex:0 0 260px; min-width:220px; max-width:280px;">
