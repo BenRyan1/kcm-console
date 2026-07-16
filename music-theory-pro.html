@@ -5534,17 +5534,16 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 const c = document.getElementById('controls');
                 if (!c) return;
                 c.innerHTML = '';
-                if (currentLevel !== 'freeplay' && currentLevel !== '2') {
-                    const g = document.createElement('div'); g.className = 'control-group';
-                    g.innerHTML = `<label>Root Note:</label><select id="rootSelect" autocomplete="off">${noteNamesFlat.map((n,i)=>{const displayName = keySignatures[i].flats > 0 ? noteNamesFlat[i] : noteNamesSharp[i]; return `<option value="${i}">${displayName}</option>`}).join('')}</select>`;
-                    c.appendChild(g);
-                    // Set value synchronously right after appending
-                    const _rsEl = document.getElementById('rootSelect');
-                    if (_rsEl) {
-                        _rsEl.value = String(rootNote);
-                        _rsEl.onchange = e => { clearAllHighlights(); rootNote = parseInt(e.target.value); updateDisplay(); if (currentView==='circle') setTimeout(()=>playSelection('chord'),100); };
-                    }
-                }
+                // Root Note dropdown removed — redundant with the Key
+                // picker (right column), which is already the single
+                // fully-connected way to change the root/key: it updates
+                // rootNote via window._setKeyGlobal(), which calls
+                // updateDisplay() -> syncKeyPickerLabel(), keeping the Key
+                // button label, status text, staff notation, and every
+                // panel in sync. Clicking any note (circle/guitar/piano)
+                // does the same via handleNoteClick(). Two extra controls
+                // doing the identical job was just clutter/confusion, not
+                // a second source of truth.
                 if (currentLevel === '3') {
                     const g = document.createElement('div'); g.className = 'control-group';
                     g.innerHTML = `<label>Triad Type:</label><select id="triadSelect"><option value="major">Major</option><option value="minor">Minor</option><option value="diminished">Diminished</option><option value="augmented">Augmented</option></select>`;
