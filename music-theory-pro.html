@@ -2741,6 +2741,16 @@ window.addEventListener('unhandledrejection', function(event) {
         // active (Circle/Guitar/Piano), instead of requiring the view toggle
         // to switch away from it. See updateView()/toggleStencilOverlay().
         let stencilOverlayOn = false;
+        // The overlay only makes visual sense floating over the actual
+        // Chromatic Circle graphic (it's centered/sized to sit on top of
+        // the spheres) -- not the Guitar fretboard, Piano keyboard, or any
+        // other panel, where it would just be a random shape with nothing
+        // underneath it to relate to. Matches the exact view set where the
+        // circle graphic itself is shown (see updateView()'s `circle`
+        // display logic just below).
+        function _isCircleFamilyView() {
+            return currentView === 'circle' || currentView === 'circleType' || currentView === 'sing';
+        }
         const _noteOffTimers = {};
         const _playTimers = [];  // all active sequence/progression setTimeout IDs
         function _schedPlay(fn, ms) { const id = setTimeout(fn, ms); _playTimers.push(id); return id; }
@@ -6303,14 +6313,16 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 if (sing)    sing.style.display    = currentView === 'sing'     ? 'block' : 'none';
                 // ── KCM STENCIL PANEL ──
                 // Three states: full main panel (view === 'stencil'), a
-                // shrunk corner overlay layered on top of whatever else is
-                // showing (stencilOverlayOn, any other view), or hidden.
+                // floating overlay layered on top of the Circle specifically
+                // (stencilOverlayOn AND currentView is a circle-family view),
+                // or hidden -- including on Guitar/Piano/Ear/etc, where
+                // there's no circle underneath for it to float over.
                 const stencil = el('kcmStencilPanel');
                 if (stencil) {
                     if (currentView === 'stencil') {
                         stencil.classList.remove('kcm-stencil-overlay');
                         stencil.style.display = 'block';
-                    } else if (stencilOverlayOn) {
+                    } else if (stencilOverlayOn && _isCircleFamilyView()) {
                         stencil.classList.add('kcm-stencil-overlay');
                         stencil.style.display = 'block';
                     } else {
@@ -6481,7 +6493,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                         // onto it too, so the wheel never sits frozen on
                         // whatever was selected last while the rest of the
                         // app plays through.
-                        if ((currentView === 'stencil' || stencilOverlayOn) && typeof window._stencilShowChord === 'function') {
+                        if ((currentView === 'stencil' || (stencilOverlayOn && _isCircleFamilyView())) && typeof window._stencilShowChord === 'function') {
                             window._stencilShowChord(rootNote, chord.intervals, chord.name);
                         }
                         const statusEl = document.getElementById('status');
