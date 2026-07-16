@@ -399,12 +399,13 @@ nav a.active { color: var(--primary-teal); }
     font-size: 0.72rem;
     font-weight: 700;
     font-family: var(--font-body);
-    border-radius: 20px;
+    border-radius: 10px;
     border: 2px solid transparent;
     cursor: pointer;
     transition: all 0.2s;
     white-space: nowrap;
 }
+.view-action-btn:hover { transform: translateY(-2px); filter: brightness(1.12); }
 .key-selector-btn {
     background: linear-gradient(135deg, rgba(244,208,63,0.15) 0%, rgba(244,208,63,0.05) 100%) !important;
     border-color: rgba(244,208,63,0.5) !important;
@@ -479,7 +480,7 @@ nav a.active { color: var(--primary-teal); }
     padding: 0.65rem 1.1rem;
     background: rgba(255,255,255,0.08);
     border: 2px solid rgba(255,255,255,0.15);
-    border-radius: 20px;
+    border-radius: 10px;
     color: var(--light-text);
     cursor: pointer;
     font-size: 0.75rem;
@@ -545,7 +546,7 @@ nav a.active { color: var(--primary-teal); }
    PLAY BUTTONS
    ============================================================ */
 .play-btn {
-    background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+    background: linear-gradient(135deg, var(--primary-teal) 0%, #006666 100%);
     padding: 0.7rem 1.2rem;
     font-size: 0.78rem;
     border: 2px solid rgba(255,255,255,0.2);
@@ -565,9 +566,9 @@ nav a.active { color: var(--primary-teal); }
     touch-action: manipulation;
 }
 .play-btn:hover {
-    background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+    background: linear-gradient(135deg, #00a0a0 0%, var(--primary-teal) 100%);
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(46,204,113,0.4);
+    box-shadow: 0 6px 20px rgba(0,128,128,0.4);
 }
 
 /* ============================================================
@@ -2126,8 +2127,8 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                 <button class="view-btn" data-view="sing">🎤 Sing</button>
                 <button class="view-btn" data-view="stencil">✦ Stencil</button>
                 <button class="view-btn key-selector-btn" id="keyPickerBtn" onclick="toggleKeyPicker()" aria-haspopup="true" aria-expanded="false">🎵 Key: <span id="keyPickerLabel">C</span></button>
-                <button id="globalPlayBtn" class="view-action-btn" style="background:linear-gradient(135deg,#27ae60,#1e8449); border-color:#27ae60; color:#fff; font-weight:800;">▶ Play</button>
-                <button id="globalStopBtn" class="view-action-btn" style="background:linear-gradient(135deg,#e74c3c,#c0392b); border-color:#e74c3c; color:#fff; font-weight:800;">■ Stop</button>
+                <button id="globalPlayBtn" class="view-action-btn" style="background:linear-gradient(135deg, var(--primary-teal) 0%, #006666 100%); border-color:var(--primary-teal); color:#fff; font-weight:800;">▶ Play</button>
+                <button id="globalStopBtn" class="view-action-btn" style="background:linear-gradient(135deg, var(--primary-coral) 0%, #a8583a 100%); border-color:var(--primary-coral); color:#fff; font-weight:800;">■ Stop</button>
             </div>
 
             <!-- ── KEY PICKER PANEL ─────────────────────────────── -->
@@ -2161,7 +2162,7 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                 <button class="play-btn" id="playDownBtn" style="flex:1; max-width:160px;">↓ Descending</button>
                 <button class="play-btn" id="playScaleBtn" style="flex:1; max-width:160px;">♫ Full Scale</button>
                 <button class="play-btn" id="playChordBtn" style="flex:1; max-width:160px;">♪ Play Chord</button>
-                <button class="play-btn" id="stopPlayBtn" style="flex:1; max-width:130px; background:linear-gradient(135deg,#7f8c8d,#555); border-color:#7f8c8d;">⏹ Stop</button>
+                <button class="play-btn" id="stopPlayBtn" style="flex:1; max-width:130px; background:linear-gradient(135deg, var(--primary-coral) 0%, #a8583a 100%); border-color:var(--primary-coral);">⏹ Stop</button>
             </div>
             
             <div style="margin-top:1.25rem; width:100%; max-width:100%;">
