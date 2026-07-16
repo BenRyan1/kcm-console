@@ -6462,6 +6462,23 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
             _kcmFitRetrySchedule();
         }
 
+        // Cinzel/Montserrat load via a deferred preload+swap <link> (see
+        // <head>) so the page can render immediately on a fallback font
+        // rather than blocking on the web font request. That means every
+        // button/label measured BEFORE the real font finishes loading is
+        // narrower than its final rendered width -- so an early
+        // kcmFitLayout() call can compute a too-generous scale that then
+        // visibly shrinks once the real font swaps in and widens the row.
+        // document.fonts.ready is the precise signal for "every font used
+        // on this page has now actually loaded" -- firing one more,
+        // authoritative measurement off of it (rather than just hoping one
+        // of the timed retries above happens to land after the font swap)
+        // is what actually fixes the "starts right, then visibly shrinks"
+        // symptom at its real cause.
+        if (window.document && document.fonts && document.fonts.ready && typeof document.fonts.ready.then === 'function') {
+            document.fonts.ready.then(() => kcmFitLayout()).catch(() => {});
+        }
+
         // ── Select Mode sub-dropdown (under the Modes level button) —
         //    static, wired once. Builds the 7 mode pills + play buttons
         //    into modeSubBtnGroup/modeSubPlayGroup a single time instead of
