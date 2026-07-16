@@ -5269,7 +5269,21 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         // ── Update pattern ────────────────────────────────────────
         function updatePattern() {
             try {
-                if (currentLevel === 'freeplay' || currentLevel === '2') return;
+                if (currentLevel === 'freeplay' || currentLevel === '2') {
+                    // Free Play / Intervals don't follow a fixed interval
+                    // formula (arbitrary note picks), but per the same
+                    // "picker is the source, Stencil just visualizes it"
+                    // rule as every other level, they should still drive
+                    // the wheel -- compute intervals relative to the
+                    // current global root from whatever's selected.
+                    if (typeof window._stencilShowChord === 'function' && selectedNotes.size > 0) {
+                        const ivs = Array.from(selectedNotes)
+                            .map(n => ((n - rootNote) % 12 + 12) % 12)
+                            .sort((a, b) => a - b);
+                        window._stencilShowChord(rootNote, ivs, `${getRootName()} ${currentLevel === 'freeplay' ? 'Free Play' : 'Interval'}`);
+                    }
+                    return;
+                }
                 let pattern = [], currentIntervals = [];
                 switch(currentLevel) {
                     case '1': pattern = [rootNote]; currentIntervals = [0]; break;
