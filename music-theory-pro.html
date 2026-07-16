@@ -1685,6 +1685,7 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
 .kcm-stencil-overlay .kcm-stencil-grid,
 .kcm-stencil-overlay .kcm-key-ring,
 .kcm-stencil-overlay .kcm-song-timeline,
+.kcm-stencil-overlay .kcm-song-melody-line,
 .kcm-stencil-overlay .kcm-stencil-play-row,
 .kcm-stencil-overlay #kcmStencilSpeedRow,
 .kcm-stencil-overlay #kcmStencilLabel {
@@ -1789,13 +1790,16 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
     text-align: left;
     line-height: 1.3;
 }
-.kcm-song-timeline {
+.kcm-song-timeline, .kcm-song-melody-line {
     max-width: 480px;
     margin: 0 auto 1rem;
     background: rgba(0,0,0,0.35);
     border: 2px solid rgba(0,128,128,0.25);
     border-radius: 12px;
     padding: 10px 12px;
+}
+.kcm-song-melody-line {
+    border-color: rgba(244,208,63,0.3);
 }
 .kcm-song-meta {
     font-family: var(--font-display);
@@ -1829,6 +1833,24 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
     color: var(--primary-gold);
     transform: scale(1.1);
     box-shadow: 0 0 10px rgba(244,208,63,0.4);
+}
+.kcm-melody-note-chip {
+    padding: 5px 10px;
+    font-family: var(--font-display);
+    font-size: 0.78rem;
+    font-weight: 800;
+    border-radius: 8px;
+    border: 1.5px solid rgba(244,208,63,0.3);
+    background: rgba(244,208,63,0.06);
+    color: #e8d8a0;
+    transition: all 0.15s;
+}
+.kcm-melody-note-chip.active {
+    border-color: var(--primary-gold);
+    background: var(--primary-gold);
+    color: #1a1a2e;
+    transform: scale(1.15);
+    box-shadow: 0 0 12px rgba(244,208,63,0.6);
 }
 
 /* Key ring */
@@ -2217,6 +2239,12 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                          Chord symbols only (like any lead-sheet chord chart) —
                          no melody transcription, no lyrics. ── -->
                     <div class="kcm-song-timeline" id="kcmSongTimeline" style="display:none;"></div>
+
+                    <!-- Song Melody Line — the actual note-by-note tune,
+                         separate from the chord chart above. Shows note
+                         names in playback order; the currently-sounding
+                         note is highlighted during playSongMelody(). ── -->
+                    <div class="kcm-song-melody-line" id="kcmSongMelodyLine" style="display:none;"></div>
 
                     <!-- Label Block -->
                     <div id="kcmStencilLabel">
@@ -9628,6 +9656,24 @@ async function kcmAIAsk(type) {
         el.innerHTML = meta + `<div class="kcm-song-chips">${chips}</div>`;
     }
 
+    // Renders the song's actual melody — note names in playback order —
+    // as its own row of chips, separate from the chord chart above.
+    // activeIdx (optional) highlights whichever note is currently
+    // sounding during playSongMelody(); pass -1/undefined for a plain
+    // static listing (e.g. right after selecting a song, before playing).
+    function renderSongMelodyLine(activeIdx) {
+        const el = document.getElementById('kcmSongMelodyLine');
+        if (!el) return;
+        if (!currentSong || !currentSong.melody || !currentSong.melody.length) { el.innerHTML = ''; return; }
+        const rootPc = (typeof currentSong.root === 'number') ? currentSong.root : currentSong.progression[0].root;
+        const meta = `<div class="kcm-song-meta">🎼 Melody Line</div>`;
+        const chips = currentSong.melody.map((note, i) => {
+            const pc = ((rootPc + note.iv) % 12 + 12) % 12;
+            return `<span class="kcm-melody-note-chip${i === activeIdx ? ' active' : ''}" data-idx="${i}">${NOTE_NAMES[pc]}</span>`;
+        }).join('');
+        el.innerHTML = meta + `<div class="kcm-song-chips">${chips}</div>`;
+    }
+
     function selectSong(songId) {
         const song = SONGS[songId];
         if (!song) return;
@@ -9638,6 +9684,7 @@ async function kcmAIAsk(type) {
         drawStencil();
         updateLabelBlock();
         _stencilSyncPanels();
+        renderSongMelodyLine(-1);
         _updateMelodyBtnVisibility();
     }
 
@@ -9645,10 +9692,16 @@ async function kcmAIAsk(type) {
     // line is loaded — songs that only have chord data (progression-only)
     // shouldn't show a button that would just alert "no melody yet".
     function _updateMelodyBtnVisibility() {
-        const melodyBtn = document.getElementById('kcmSongMelodyBtn');
+        const melodyBtn  = document.getElementById('kcmSongMelodyBtn');
+        const melodyLine = document.getElementById('kcmSongMelodyLine');
         if (!melodyBtn) return;
         const isSongsTab = document.getElementById('kcmSongTimeline')?.style.display !== 'none';
-        melodyBtn.style.display = (isSongsTab && currentSong && currentSong.melody && currentSong.melody.length) ? '' : 'none';
+        const hasMelody  = !!(isSongsTab && currentSong && currentSong.melody && currentSong.melody.length);
+        melodyBtn.style.display = hasMelody ? '' : 'none';
+        if (melodyLine) {
+            melodyLine.style.display = hasMelody ? '' : 'none';
+            if (!hasMelody) melodyLine.innerHTML = '';
+        }
     }
 
     function playSongProgression() {
@@ -9740,16 +9793,34 @@ async function kcmAIAsk(type) {
         const rootPc = (typeof currentSong.root === 'number') ? currentSong.root : currentSong.progression[0].root;
         const oct    = 5; // sits above the chord voicings playSongProgression() uses
 
+        // Redraw the Stencil wheel to show every distinct pitch the melody
+        // actually uses (not whatever chord happened to be loaded last) —
+        // otherwise a melody note outside that chord's shape has no dot to
+        // pulse and the wheel silently falls out of sync with what's
+        // sounding. Same generic sync hook used everywhere else this
+        // session (_stencilShowChord), so the key ring / label block all
+        // update consistently with the rest of the platform's language.
+        const uniquePcs = Array.from(new Set(currentSong.melody.map(n => ((rootPc + n.iv) % 12 + 12) % 12))).sort((a,b)=>a-b);
+        const uniqueIvsFromRoot = uniquePcs.map(pc => (pc - rootPc + 12) % 12).sort((a,b)=>a-b);
+        if (typeof _stencilShowChord === 'function') {
+            _stencilShowChord(rootPc, uniqueIvsFromRoot, `${currentSong.name} — Melody`);
+        }
+
         let elapsed = 0;
-        currentSong.melody.forEach(note => {
+        currentSong.melody.forEach((note, i) => {
             const durMs = note.dur * beatMs;
             const pc = ((rootPc + note.iv) % 12 + 12) % 12;
             const delay = elapsed;
 
             const tOn = setTimeout(() => {
+                // Circle, wheel, staff, and the melody-line chip row all
+                // update together, in the exact order the notes sound —
+                // same left-to-right sync language used by every other
+                // playback path in this app (Ascend/Descend/Progression).
                 window.playNote(pc, oct, (durMs * 0.9) / 1000);
                 highlightMTPNotes([pc]);
                 _pulseMelodyDot(pc);
+                renderSongMelodyLine(i);
                 if (typeof window.updateStaffNotation === 'function') window.updateStaffNotation([{ pc, oct }]);
             }, delay);
             _stencilTimers.push(tOn);
@@ -9761,10 +9832,7 @@ async function kcmAIAsk(type) {
         });
 
         const tEnd = setTimeout(() => {
-            // Restore the wheel/timeline to reflect the underlying harmony
-            // (melody playback doesn't touch currentStencil/step index).
-            drawStencil();
-            renderSongTimeline();
+            renderSongMelodyLine(-1);
         }, elapsed + 150);
         _stencilTimers.push(tEnd);
     }
@@ -10290,6 +10358,11 @@ async function kcmAIAsk(type) {
     function _stencilCancelAll() {
         while (_stencilTimers.length) clearTimeout(_stencilTimers.pop());
         if (typeof clearStencilLabelHighlight === 'function') clearStencilLabelHighlight();
+        // Stop can interrupt melody playback before its own tEnd timer
+        // (which normally clears the active chip) ever fires — without
+        // this, the last-played note stays highlighted forever. Safe to
+        // call unconditionally: it's a no-op once there's no active chip.
+        if (typeof renderSongMelodyLine === 'function') renderSongMelodyLine(-1);
     }
     function stencilPlay(direction, noCancel) {
         if (!currentStencil) { alert('Select a stencil first!'); return; }
