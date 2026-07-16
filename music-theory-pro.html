@@ -9402,6 +9402,16 @@ async function kcmAIAsk(type) {
             degrees: intervals.map((_, i) => String(i + 1)).join(' '), color: '#00c0c0' };
         window.currentStencil = currentStencil;
         currentStencilRoot = ((rootPc % 12) + 12) % 12;
+        // The Mode/Scale/Chord pickers are the source of truth here — the
+        // wheel just visualizes whatever they say. Since '_extChord' never
+        // matches a real STENCIL_LIBRARY id, clear any stale 'active' highlight
+        // left over in the shape grid from an earlier real grid pick (it would
+        // otherwise keep showing e.g. "Major" selected while the wheel itself
+        // has moved on to whatever Mode/Scale is actually active — exactly the
+        // desync reported). Rebuild the key ring too so its highlighted pill
+        // always matches the real current root, not a stale one.
+        document.querySelectorAll('.kcm-stencil-shape-btn.active, .kcm-song-btn.active').forEach(b => b.classList.remove('active'));
+        buildKeyRing();
         drawStencil();
         updateLabelBlock();
     }
