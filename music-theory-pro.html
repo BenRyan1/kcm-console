@@ -9457,6 +9457,22 @@ async function kcmAIAsk(type) {
                 { root: 2, quality: 'major' }, // D
                 { root: 7, quality: 'major' }, // G
             ]
+        },
+        saintsGoMarching: {
+            name: 'When the Saints Go Marching In',
+            artist: 'Traditional (New Orleans gospel/jazz standard)',
+            key: 'C Major',
+            bpm: 112,
+            // One chord per phrase — the standard simplified three-chord
+            // (I-IV-V) folk/gospel harmonization of this traditional tune.
+            progression: [
+                { root: 0, quality: 'major' }, // C
+                { root: 0, quality: 'major' }, // C
+                { root: 5, quality: 'major' }, // F
+                { root: 0, quality: 'major' }, // C
+                { root: 7, quality: 'major' }, // G
+                { root: 0, quality: 'major' }, // C
+            ]
         }
     };
 
@@ -9469,15 +9485,21 @@ async function kcmAIAsk(type) {
     // updateLabelBlock(), highlightMTPNotes() etc. all "just work" for songs
     // with zero duplicated rendering code.
     function loadChordAsStencil(chordDef) {
-        const base = STENCIL_LIBRARY.chords.find(c => c.id === (chordDef.quality === 'minor' ? 'minor_triad' : 'major_triad'));
-        currentStencil = Object.assign({}, base, { name: chordDef.quality === 'minor' ? 'Minor' : 'Major' });
-        window.currentStencil = currentStencil;
         currentStencilRoot = chordDef.root;
         // Keep the global key (Key button, Harmonized panel, Staff/Timeline
         // key display) in sync with whatever chord the song is actually on —
         // this was previously only set via the key ring / drag rotate, so a
-        // song's key silently diverged from the rest of the app.
+        // song's key silently diverged from the rest of the app. Must run
+        // BEFORE currentStencil is set below: _setKeyGlobal() -> updateDisplay()
+        // -> updatePattern() also pushes the *classic app's own* current
+        // level pattern onto currentStencil (the generic Stencil-sync hook
+        // every picker now shares), which would otherwise silently clobber
+        // the song chord we're about to set with whatever unrelated level
+        // (Single Note, Triads, etc) happened to be active in the main app.
         if (typeof window._setKeyGlobal === 'function') window._setKeyGlobal(chordDef.root);
+        const base = STENCIL_LIBRARY.chords.find(c => c.id === (chordDef.quality === 'minor' ? 'minor_triad' : 'major_triad'));
+        currentStencil = Object.assign({}, base, { name: chordDef.quality === 'minor' ? 'Minor' : 'Major' });
+        window.currentStencil = currentStencil;
     }
 
     // Mirrors a Harmonized-panel chord (or any external chord) onto the
