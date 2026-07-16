@@ -6019,11 +6019,11 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
 
         // Observatory FFT constants
         const _SING_FFT          = 4096;
-        const _SING_SILENCE_GATE = 0.004;  // RMS gate
-        const _SING_HEADROOM_DB  = 10;     // dB above noise floor
+        const _SING_SILENCE_GATE = 0.0018;  // RMS gate -- lowered for guitar picked up via laptop/built-in mic (quieter than direct/vocal input)
+        const _SING_HEADROOM_DB  = 7;     // dB above noise floor -- lowered so quieter guitar peaks still register above the noise floor
         const _SING_SMOOTH_DECAY = 0.60;
         const _SING_SMOOTH_RISE  = 0.40;
-        const _SING_STRENGTH_MIN = 0.05;
+        const _SING_STRENGTH_MIN = 0.035;
         const _SING_LOCK_FRAMES  = 3;
 
         // KCM colors + note names for SING display
