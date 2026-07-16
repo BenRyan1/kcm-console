@@ -471,7 +471,7 @@ nav a.active { color: var(--primary-teal); }
     background: var(--primary-teal);
     border-color: var(--primary-teal);
 }
-.scale-type-btn {
+.scale-type-btn, .harm-key-btn {
     padding: 7px 10px;
     font-size: 0.72rem;
     font-weight: 700;
@@ -484,7 +484,7 @@ nav a.active { color: var(--primary-teal); }
     text-align: center;
     transition: all 0.2s;
 }
-.scale-type-btn.active {
+.scale-type-btn.active, .harm-key-btn.active {
     background: var(--primary-teal);
     border-color: var(--primary-teal);
 }
@@ -2233,6 +2233,7 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                         <button class="kcm-stencil-play-btn descend" id="kcmStencilDescend">▼ DESCEND</button>
                         <button class="kcm-stencil-play-btn" id="kcmStencilSimul" style="background:linear-gradient(135deg,#8B6BA3,#6a4f8c);">● SIMUL</button>
                         <button class="kcm-stencil-play-btn" id="kcmSongPlayBtn" style="background:linear-gradient(135deg,#27ae60,#1e8449); display:none;">▶ PLAY PROGRESSION</button>
+                        <button class="kcm-stencil-play-btn" id="kcmSongMelodyBtn" style="background:linear-gradient(135deg,#F4D03F,#d4ac0d); color:#1a1a2e; display:none;" title="Plays the song's melody line, not just its chords">🎼 PLAY MELODY</button>
                         <button class="kcm-stencil-play-btn" id="kcmStencilStop" style="background:linear-gradient(135deg,#6b6b7a,#4a4a55);">■ STOP</button>
                     </div>
 
@@ -2411,6 +2412,19 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                         <button class="scale-type-btn" data-scale-type="harmonicMinor">Harmonic Minor</button>
                         <button class="scale-type-btn" data-scale-type="melodicMinor">Melodic Minor</button>
                     </div>
+                    <button type="button" id="scaleLibraryToggleBtn" onclick="toggleScaleLibraryPanel()"
+                        style="width:100%; margin-top:6px; padding:0.4rem; background:rgba(0,128,128,0.12); border:1px dashed var(--primary-teal);
+                        border-radius:8px; color:var(--primary-teal); font-size:0.65rem; font-weight:700; letter-spacing:0.5px;
+                        cursor:pointer; font-family:var(--font-display);">🗂 MORE SCALES (FULL LIBRARY)</button>
+                    <div id="scaleLibraryPanel" style="display:none; flex-direction:column; gap:5px; margin-top:6px; padding-top:6px;
+                        border-top:1px dashed rgba(0,128,128,0.4);">
+                        <button class="scale-type-btn" data-scale-type="majorPentatonic">Major Pentatonic</button>
+                        <button class="scale-type-btn" data-scale-type="minorPentatonic">Minor Pentatonic</button>
+                        <button class="scale-type-btn" data-scale-type="blues">Blues</button>
+                        <button class="scale-type-btn" data-scale-type="wholeTone">Whole Tone</button>
+                        <button class="scale-type-btn" data-scale-type="dimWH">Diminished (Whole-Half)</button>
+                        <button class="scale-type-btn" data-scale-type="dimHW">Diminished (Half-Whole)</button>
+                    </div>
                 </div>
                 <button class="level-btn"         data-level="modes"     title="7 Notes · Modes">Modes</button>
                 <div id="modeSubPanel" style="display:none; width:100%; box-sizing:border-box; background:rgba(10,10,25,0.97); border:2px solid var(--primary-purple); border-radius:14px; padding:0.6rem 0.75rem; margin:2px 0;">
@@ -2420,6 +2434,13 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                     <div style="display:flex; flex-wrap:wrap; gap:5px; margin-top:0.5rem; justify-content:center;" id="modeSubPlayGroup"></div>
                 </div>
                 <button class="level-btn"         data-level="harm"      title="Harmonized">Harmonized</button>
+                <div id="harmSubPanel" style="display:none; width:100%; box-sizing:border-box; background:rgba(10,10,25,0.97); border:2px solid var(--primary-teal); border-radius:14px; padding:0.6rem 0.75rem; margin:2px 0;">
+                    <div style="font-size:0.6rem; font-weight:700; letter-spacing:1px; color:var(--primary-teal); text-align:center; margin-bottom:0.5rem; font-family:var(--font-display);">HARMONIZED SCALE</div>
+                    <div style="display:flex; gap:5px;" id="harmSubBtns">
+                        <button class="harm-key-btn active" data-harm-key="harmMajor" onclick="switchHarm('harmMajor')" style="flex:1;">Major</button>
+                        <button class="harm-key-btn" data-harm-key="harmMinor" onclick="switchHarm('harmMinor')" style="flex:1;">Minor</button>
+                    </div>
+                </div>
                 <button class="level-btn"         data-level="freeplay"  title="Free Play">Free Play</button>
             </div>
 
@@ -2796,7 +2817,8 @@ window.addEventListener('unhandledrejection', function(event) {
             majorPentatonic:[0,2,4,7,9], minorPentatonic:[0,3,5,7,10],
             wholeTone:[0,2,4,6,8,10],
             major:[0,2,4,5,7,9,11], naturalMinor:[0,2,3,5,7,8,10],
-            harmonicMinor:[0,2,3,5,7,8,11], melodicMinor:[0,2,3,5,7,9,11]
+            harmonicMinor:[0,2,3,5,7,8,11], melodicMinor:[0,2,3,5,7,9,11],
+            blues:[0,3,5,6,7,10], dimWH:[0,2,3,5,6,8,9,11], dimHW:[0,1,3,4,6,7,9,10]
         };
         const modes = {
             ionian:[0,2,4,5,7,9,11], dorian:[0,2,3,5,7,9,10],
@@ -2973,8 +2995,26 @@ window.addEventListener('unhandledrejection', function(event) {
                         // one matching the level just clicked, hide the other.
                         const scaleTypeSub = document.getElementById('scaleTypeSubPanel');
                         const modeSub = document.getElementById('modeSubPanel');
+                        const harmSub = document.getElementById('harmSubPanel');
                         if (scaleTypeSub) scaleTypeSub.style.display = (this.dataset.level === 'scales') ? 'block' : 'none';
                         if (modeSub) modeSub.style.display = (this.dataset.level === 'modes') ? 'block' : 'none';
+                        if (harmSub) harmSub.style.display = (this.dataset.level === 'harm') ? 'block' : 'none';
+                        // Also close the "more scales" repository panel whenever
+                        // a different level is chosen, so it doesn't stay open
+                        // showing stale content behind the newly selected level.
+                        if (this.dataset.level !== 'scales') {
+                            const scaleLib = document.getElementById('scaleLibraryPanel');
+                            if (scaleLib) scaleLib.style.display = 'none';
+                        }
+                        // Keep the harm-key-btn pills in sync with whichever
+                        // key (major/minor) was last active, in case the user
+                        // switches away and back to Harmonized.
+                        if (this.dataset.level === 'harm') {
+                            const _hk = window.currentHarmKey || 'harmMajor';
+                            document.querySelectorAll('.harm-key-btn').forEach(b => {
+                                b.classList.toggle('active', b.dataset.harmKey === _hk);
+                            });
+                        }
                         // Resolve unified 'harm' button to actual harmMajor/harmMinor immediately
                         if (currentLevel === 'harm') {
                             if (!window.currentHarmKey) window.currentHarmKey = 'harmMajor';
@@ -5797,6 +5837,30 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         }
         window.setHarmDegreeAndSync = setHarmDegreeAndSync;
 
+        // ── switchHarm: single source of truth for Major/Minor switching
+        //    inside Harmonized mode. Called from both the inline in-content
+        //    toggle (rebuilt fresh each updateControls() render) and the
+        //    harmSubPanel dropdown pills (persistent, live under the
+        //    Harmonized level button) — top-level so both call sites share
+        //    one implementation instead of drifting apart.
+        function switchHarm(key) {
+            window.currentHarmKey = key;
+            currentLevel = key;
+            currentHarmDegree = 0;
+            // Sync the dropdown pills under the Harmonized button, if present
+            document.querySelectorAll('.harm-key-btn').forEach(b => {
+                b.classList.toggle('active', b.dataset.harmKey === key);
+            });
+            // Sync dock play labels
+            if (typeof dockUpdatePlayLabels === 'function') dockUpdatePlayLabels(key);
+            if (typeof dockShowDegrees === 'function') dockShowDegrees(key);
+            updateDisplay();
+            setTimeout(() => { if (typeof playHarmChordAscending === 'function') playHarmChordAscending(); }, 200);
+            // Rebuild controls to reflect new major/minor degree labels
+            setTimeout(() => { if (typeof updateControls === 'function') updateControls(); }, 50);
+        }
+        window.switchHarm = switchHarm;
+
         // ── Update controls ───────────────────────────────────────
         function updateControls() {
             try {
@@ -5860,21 +5924,6 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                     setTimeout(() => {
                         const btnMaj = document.getElementById('harmKeyMajor');
                         const btnMin = document.getElementById('harmKeyMinor');
-                        function switchHarm(key) {
-                            window.currentHarmKey = key;
-                            currentLevel = key;
-                            currentHarmDegree = 0;
-                            // Update button styles
-                            if (btnMaj) { btnMaj.style.background = key==='harmMajor'?'var(--primary-teal)':'rgba(0,128,128,0.1)'; btnMaj.style.borderColor = key==='harmMajor'?'var(--primary-teal)':'rgba(0,128,128,0.3)'; }
-                            if (btnMin) { btnMin.style.background = key==='harmMinor'?'var(--primary-teal)':'rgba(0,128,128,0.1)'; btnMin.style.borderColor = key==='harmMinor'?'var(--primary-teal)':'rgba(0,128,128,0.3)'; }
-                            // Sync dock play labels
-                            if (typeof dockUpdatePlayLabels === 'function') dockUpdatePlayLabels(key);
-                            if (typeof dockShowDegrees === 'function') dockShowDegrees(key);
-                            updateDisplay();
-                            setTimeout(() => { if (typeof playHarmChordAscending === 'function') playHarmChordAscending(); }, 200);
-                            // Rebuild controls to reflect new major/minor degree labels
-                            setTimeout(() => { if (typeof updateControls === 'function') updateControls(); }, 50);
-                        }
                         if (btnMaj) btnMaj.onclick = () => switchHarm('harmMajor');
                         if (btnMin) btnMin.onclick = () => switchHarm('harmMinor');
                     }, 0);
@@ -6123,7 +6172,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
 
         // ── Scale Type sub-dropdown (under the Scales level button) —
         //    static, wired once, same pattern as the Instrument picker.
-        const SCALE_TYPE_LABELS = { major:'Major (Ionian)', naturalMinor:'Natural Minor (Aeolian)', harmonicMinor:'Harmonic Minor', melodicMinor:'Melodic Minor' };
+        const SCALE_TYPE_LABELS = { major:'Major (Ionian)', naturalMinor:'Natural Minor (Aeolian)', harmonicMinor:'Harmonic Minor', melodicMinor:'Melodic Minor', majorPentatonic:'Major Pentatonic', minorPentatonic:'Minor Pentatonic', blues:'Blues', wholeTone:'Whole Tone', dimWH:'Diminished (Whole-Half)', dimHW:'Diminished (Half-Whole)' };
         function initScaleTypePicker() {
             if (!window.currentScaleType) window.currentScaleType = 'major';
             document.querySelectorAll('.scale-type-btn').forEach(btn => {
@@ -6144,6 +6193,29 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         } else {
             initScaleTypePicker();
         }
+
+        // ── "More Scales" repository toggle — reveals the rest of the
+        //    scale collection (Pentatonic/Blues/Whole Tone/Diminished)
+        //    right inside the Scale Type dropdown, same open/outside-click
+        //    -to-close pattern as the Octave/Tempo picker buttons.
+        function toggleScaleLibraryPanel() {
+            const panel = document.getElementById('scaleLibraryPanel');
+            const btn   = document.getElementById('scaleLibraryToggleBtn');
+            if (!panel) return;
+            const isOpen = panel.style.display !== 'none';
+            if (isOpen) {
+                panel.style.display = 'none';
+                return;
+            }
+            panel.style.display = 'flex';
+            const closeHandler = (e) => {
+                if (panel.contains(e.target) || (btn && btn.contains(e.target))) return;
+                panel.style.display = 'none';
+                document.removeEventListener('click', closeHandler);
+            };
+            setTimeout(() => document.addEventListener('click', closeHandler), 200);
+        }
+        window.toggleScaleLibraryPanel = toggleScaleLibraryPanel;
 
         // ── Select Mode sub-dropdown (under the Modes level button) —
         //    static, wired once. Builds the 7 mode pills + play buttons
@@ -6420,7 +6492,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 } else if (currentLevel === '6') {
                     status.textContent = `🎵 ${getRootName()} Whole Tone Scale — 6 equal steps · Click note to change root`;
                 } else if (currentLevel === 'scales') {
-                    const _scNames = {major:'Major',naturalMinor:'Natural Minor',harmonicMinor:'Harmonic Minor',melodicMinor:'Melodic Minor'};
+                    const _scNames = {major:'Major',naturalMinor:'Natural Minor',harmonicMinor:'Harmonic Minor',melodicMinor:'Melodic Minor',majorPentatonic:'Major Pentatonic',minorPentatonic:'Minor Pentatonic',blues:'Blues',wholeTone:'Whole Tone',dimWH:'Diminished (Whole-Half)',dimHW:'Diminished (Half-Whole)'};
                     status.textContent = `🎵 ${getRootName()} ${_scNames[window.currentScaleType||'major']||'Major'} Scale · Click note to change root`;
                 } else {
                     status.textContent = `🎵 Root Note: ${getRootName()} — Click note to change`;
@@ -9462,6 +9534,7 @@ async function kcmAIAsk(type) {
             name: 'When the Saints Go Marching In',
             artist: 'Traditional (New Orleans gospel/jazz standard)',
             key: 'C Major',
+            root: 0,   // tonic pitch class (0=C) — melody `iv` values are semitones above this
             bpm: 112,
             // One chord per phrase — the standard simplified three-chord
             // (I-IV-V) folk/gospel harmonization of this traditional tune.
@@ -9472,6 +9545,22 @@ async function kcmAIAsk(type) {
                 { root: 0, quality: 'major' }, // C
                 { root: 7, quality: 'major' }, // G
                 { root: 0, quality: 'major' }, // C
+            ],
+            // Melody line — the famous opening phrase (a simplified,
+            // representative rendition of the traditional tune's
+            // instantly-recognizable ascending 1-3-4-5 figure, stated
+            // twice). `iv` is semitones above the song's root (key above),
+            // `dur` is length in beats. Octave is derived automatically
+            // (see playSongMelody()), so this reads correctly at any root.
+            melody: [
+                { iv: 0,  dur: 1 },   // Do
+                { iv: 4,  dur: 1 },   // Mi
+                { iv: 5,  dur: 1 },   // Fa
+                { iv: 7,  dur: 2 },   // Sol (held)
+                { iv: 0,  dur: 1 },   // Do
+                { iv: 4,  dur: 1 },   // Mi
+                { iv: 5,  dur: 1 },   // Fa
+                { iv: 7,  dur: 2 },   // Sol (held)
             ]
         }
     };
@@ -9549,6 +9638,17 @@ async function kcmAIAsk(type) {
         drawStencil();
         updateLabelBlock();
         _stencilSyncPanels();
+        _updateMelodyBtnVisibility();
+    }
+
+    // Melody button only makes sense once a song with an actual melody
+    // line is loaded — songs that only have chord data (progression-only)
+    // shouldn't show a button that would just alert "no melody yet".
+    function _updateMelodyBtnVisibility() {
+        const melodyBtn = document.getElementById('kcmSongMelodyBtn');
+        if (!melodyBtn) return;
+        const isSongsTab = document.getElementById('kcmSongTimeline')?.style.display !== 'none';
+        melodyBtn.style.display = (isSongsTab && currentSong && currentSong.melody && currentSong.melody.length) ? '' : 'none';
     }
 
     function playSongProgression() {
@@ -9593,6 +9693,83 @@ async function kcmAIAsk(type) {
     }
     window._playSongProgression = playSongProgression;
 
+    // ── Melody dot pulse/settle — lightweight per-note glow on the
+    //    Stencil wheel's own note markers, independent of the classic
+    //    app's pulseStencilDot/settleStencilDot (those live in a separate
+    //    closure and aren't reachable from here). Notes outside the
+    //    currently-drawn chord/scale simply have no matching dot in the
+    //    DOM, so this is a safe no-op for them rather than an error.
+    function _pulseMelodyDot(pc) {
+        document.querySelectorAll(`.stencil-note-dot[data-pc="${pc}"]`).forEach(d => {
+            d.setAttribute('filter', 'url(#rootGlow)');
+            d.setAttribute('stroke', '#ffffff');
+            d.setAttribute('stroke-width', '4');
+            d.setAttribute('opacity', '1');
+        });
+    }
+    function _settleMelodyDot(pc) {
+        document.querySelectorAll(`.stencil-note-dot[data-pc="${pc}"]`).forEach(d => {
+            const isRoot = pc === currentStencilRoot;
+            d.setAttribute('filter', isRoot ? 'url(#rootGlow)' : '');
+            d.setAttribute('stroke', isRoot ? '#F4D03F' : 'rgba(255,255,255,0.6)');
+            d.setAttribute('stroke-width', isRoot ? '3.5' : '2');
+            d.setAttribute('opacity', '1');
+        });
+    }
+
+    // ── playSongMelody: plays the song's actual note-by-note melody line
+    //    (as opposed to playSongProgression(), which plays the harmonic
+    //    backing/chords). Reuses the same timer bookkeeping (_stencilTimers
+    //    / _stencilCancelAll) so Stop halts either playback path, and the
+    //    same cross-panel sync primitives (highlightMTPNotes,
+    //    window.updateStaffNotation) already used everywhere else in this
+    //    session's Stencil-sync work — plus a wheel-local per-note dot glow.
+    //    The underlying chord/scale shown on the wheel is left alone; only
+    //    individual melody notes pulse across Circle / Piano / Guitar / Staff.
+    function playSongMelody() {
+        if (!currentSong) { alert('Select a song first!'); return; }
+        if (!currentSong.melody || !currentSong.melody.length) {
+            alert("This song doesn't have a melody line yet — only its chord progression.");
+            return;
+        }
+        if (typeof window.playNote !== 'function') { alert('Click START AUDIO ENGINE first!'); return; }
+        _stencilCancelAll();
+
+        const bpm    = currentSong.bpm;
+        const beatMs = (60000 / bpm) / (stencilSpeedMultiplier || 1);
+        const rootPc = (typeof currentSong.root === 'number') ? currentSong.root : currentSong.progression[0].root;
+        const oct    = 5; // sits above the chord voicings playSongProgression() uses
+
+        let elapsed = 0;
+        currentSong.melody.forEach(note => {
+            const durMs = note.dur * beatMs;
+            const pc = ((rootPc + note.iv) % 12 + 12) % 12;
+            const delay = elapsed;
+
+            const tOn = setTimeout(() => {
+                window.playNote(pc, oct, (durMs * 0.9) / 1000);
+                highlightMTPNotes([pc]);
+                _pulseMelodyDot(pc);
+                if (typeof window.updateStaffNotation === 'function') window.updateStaffNotation([{ pc, oct }]);
+            }, delay);
+            _stencilTimers.push(tOn);
+
+            const tOff = setTimeout(() => { _settleMelodyDot(pc); }, delay + durMs * 0.92);
+            _stencilTimers.push(tOff);
+
+            elapsed += durMs;
+        });
+
+        const tEnd = setTimeout(() => {
+            // Restore the wheel/timeline to reflect the underlying harmony
+            // (melody playback doesn't touch currentStencil/step index).
+            drawStencil();
+            renderSongTimeline();
+        }, elapsed + 150);
+        _stencilTimers.push(tEnd);
+    }
+    window._playSongMelody = playSongMelody;
+
     // Show/hide the song-specific controls (chord timeline, Play Progression
     // button) vs the normal stencil controls (key ring, Ascend/Descend/Simul)
     // depending on which tab is active. Stop always stays visible since it
@@ -9608,6 +9785,10 @@ async function kcmAIAsk(type) {
         [ascBtn, descBtn, simulBtn].forEach(b => { if (b) b.style.display = isSongs ? 'none' : ''; });
         if (songBtn) songBtn.style.display = isSongs ? '' : 'none';
         if (timeline) { timeline.style.display = isSongs ? '' : 'none'; if (!isSongs) timeline.innerHTML = ''; }
+        // Melody button additionally requires the loaded song to actually
+        // have a melody field — recompute now that timeline visibility
+        // (used as the isSongsTab check) has just changed.
+        if (typeof _updateMelodyBtnVisibility === 'function') _updateMelodyBtnVisibility();
     }
 
     // ── Build mini SVG preview for shape button ───────────────
@@ -10317,12 +10498,14 @@ async function kcmAIAsk(type) {
         const ascBtn   = document.getElementById('kcmStencilAscend');
         const descBtn  = document.getElementById('kcmStencilDescend');
         const simulBtn = document.getElementById('kcmStencilSimul');
-        const songBtn  = document.getElementById('kcmSongPlayBtn');
-        const stopBtn  = document.getElementById('kcmStencilStop');
+        const songBtn    = document.getElementById('kcmSongPlayBtn');
+        const melodyBtn  = document.getElementById('kcmSongMelodyBtn');
+        const stopBtn    = document.getElementById('kcmStencilStop');
         if (ascBtn)   ascBtn.addEventListener('click',  () => stencilPlay('up'));
         if (descBtn)  descBtn.addEventListener('click', () => stencilPlay('down'));
         if (simulBtn) simulBtn.addEventListener('click', () => stencilPlaySimul());
         if (songBtn)  songBtn.addEventListener('click',  () => playSongProgression());
+        if (melodyBtn) melodyBtn.addEventListener('click', () => playSongMelody());
         if (stopBtn)  stopBtn.addEventListener('click',  () => _stencilCancelAll());
         toggleSongUI(false);
         // Expose for staff play button
