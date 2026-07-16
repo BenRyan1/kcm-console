@@ -203,7 +203,7 @@ function trackEvent(n,p){if(typeof gtag==='function')gtag('event',n,p);}
     --primary-teal:   #008080;
     --primary-gold:   #F4D03F;
     --primary-purple: #8B6BA3;
-    --primary-coral:  #CF7A5A;
+    --primary-coral:  #FF5A3C;
     --dark-bg:        #0a0a15;
     --darker-bg:      #050508;
     --panel-bg:       rgba(26, 61, 95, 0.25);
@@ -495,8 +495,8 @@ nav a.active { color: var(--primary-teal); }
 }
 .level-btn {
     padding: 0.65rem 1.1rem;
-    background: rgba(255,255,255,0.08);
-    border: 2px solid rgba(255,255,255,0.15);
+    background: rgba(0,128,128,0.15);
+    border: 2px solid rgba(0,128,128,0.3);
     border-radius: 10px;
     color: var(--light-text);
     cursor: pointer;
@@ -1916,7 +1916,7 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                 <button class="view-btn" data-view="circleType">⭕ Type-to-Play</button>
                 <button class="view-btn" id="instrumentBtn" onclick="toggleInstrumentPicker()" aria-haspopup="true" aria-expanded="false">🎸 Instrument: <span id="instrumentBtnLabel">Synth</span></button>
                 <button id="globalPlayBtn" class="view-action-btn" style="background:linear-gradient(135deg, var(--primary-teal) 0%, #006666 100%); border-color:var(--primary-teal); color:#fff; font-weight:800;">▶ Play</button>
-                <button id="globalStopBtn" class="view-action-btn" style="background:linear-gradient(135deg, var(--primary-coral) 0%, #a8583a 100%); border-color:var(--primary-coral); color:#fff; font-weight:800;">■ Stop</button>
+                <button id="globalStopBtn" class="view-action-btn" style="background:linear-gradient(135deg, var(--primary-coral) 0%, #C4341C 100%); border-color:var(--primary-coral); color:#fff; font-weight:800;">■ Stop</button>
             </div>
 
             <!-- ── INSTRUMENT PICKER PANEL — collapsed to a single button
@@ -1954,8 +1954,13 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
 
                 <!-- PANEL 1: CHROMATIC CIRCLE -->
                 <div id="chromaticCircle" style="margin:0 auto; display:block; left:0; right:0; position:relative;" role="region" aria-label="Chromatic circle">
-                    <button type="button" id="rotateWheelBtn" onclick="rotateChromaticWheel()" aria-label="Rotate wheel 30 degrees clockwise"
-                        style="position:absolute; top:-42px; left:50%; transform:translateX(-50%); z-index:5; padding:6px 16px; font-family:var(--font-display); font-size:0.72rem; font-weight:800; letter-spacing:1px; text-transform:uppercase; background:linear-gradient(135deg, var(--primary-teal) 0%, #006666 100%); color:#fff; border:2px solid var(--primary-teal); border-radius:20px; cursor:pointer; box-shadow:0 3px 10px rgba(0,0,0,0.3); white-space:nowrap;">⟳ Rotate 30°</button>
+                    <div style="position:absolute; top:-46px; left:50%; transform:translateX(-50%); z-index:5; display:flex; align-items:center; gap:8px; width:80%; max-width:260px;">
+                        <span style="font-size:0.85rem; color:var(--primary-teal);">⟳</span>
+                        <input type="range" id="wheelRotateSlider" min="0" max="330" step="30" value="0"
+                            aria-label="Rotate wheel — 30 degree increments, all the way around"
+                            style="flex:1;" oninput="rotateChromaticWheelTo(this.value)">
+                        <span id="wheelRotateLabel" style="font-family:var(--font-display); font-size:0.7rem; font-weight:800; color:var(--primary-gold); min-width:34px; text-align:right;">0°</span>
+                    </div>
                     <div class="sphere" data-note="0"  style="left:215px;top:30px; background:#FFFF00;color:#000;font-size:16px;line-height:1.2;white-space:pre-line;text-align:center;">C</div>
                     <div class="sphere" data-note="1"  style="left:308px;top:55px; background:#FFC400;color:#000;font-size:13px;line-height:1.2;white-space:pre-line;text-align:center;">C♯&#10;D♭</div>
                     <div class="sphere" data-note="2"  style="left:375px;top:122px;background:#FF8000;color:#000;font-size:16px;line-height:1.2;white-space:pre-line;text-align:center;">D</div>
@@ -2176,7 +2181,7 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                 <button class="play-btn" id="playDownBtn" style="flex:1 1 100px;">↓ Descending</button>
                 <button class="play-btn" id="playScaleBtn" style="flex:1 1 100px;">♫ Full Scale</button>
                 <button class="play-btn" id="playChordBtn" style="flex:1 1 100px;">♪ Play Chord</button>
-                <button class="play-btn" id="stopPlayBtn" style="flex:1 1 100px; background:linear-gradient(135deg, var(--primary-coral) 0%, #a8583a 100%); border-color:var(--primary-coral);">⏹ Stop</button>
+                <button class="play-btn" id="stopPlayBtn" style="flex:1 1 100px; background:linear-gradient(135deg, var(--primary-coral) 0%, #C4341C 100%); border-color:var(--primary-coral);">⏹ Stop</button>
             </div>
 
             <h3 id="status" role="status" aria-live="polite" style="margin-top:1.5rem;">Click START AUDIO ENGINE to begin!</h3>
@@ -5805,9 +5810,21 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         //    container size. Each sphere's own box is never rotated, so its
         //    note text is always upright automatically.
         let wheelRotationSteps = 0;
-        function rotateChromaticWheel() {
-            wheelRotationSteps = (wheelRotationSteps + 1) % 12;
+        function rotateChromaticWheelTo(degrees) {
+            const deg = ((parseInt(degrees, 10) || 0) % 360 + 360) % 360;
+            wheelRotationSteps = Math.round(deg / 30) % 12;
+            const lbl = document.getElementById('wheelRotateLabel');
+            if (lbl) lbl.textContent = deg + '°';
             if (typeof createSpheres === 'function') createSpheres();
+        }
+        window.rotateChromaticWheelTo = rotateChromaticWheelTo;
+        // Kept for backward compatibility with anything still calling the
+        // old click-to-step name — advances the slider by one 30° notch.
+        function rotateChromaticWheel() {
+            const slider = document.getElementById('wheelRotateSlider');
+            const next = ((wheelRotationSteps + 1) % 12) * 30;
+            if (slider) slider.value = next;
+            rotateChromaticWheelTo(next);
         }
         window.rotateChromaticWheel = rotateChromaticWheel;
 
