@@ -1610,22 +1610,32 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
 }
 
 /* -- Stencil Overlay Mode --------------------------------------
-   A layer, not a tab: the Stencil wheel occupies the SAME space as
-   whichever main view (Circle/Guitar/Piano) is active, shrunk into a
-   corner and stripped of its chooser/grid/tabs, so picking a chord in
-   the Harmonized progression panel is visible on the main view AND
-   the wheel at once -- no switching the view toggle back and forth. */
+   A layer, not a tab: the Stencil wheel floats directly over the
+   center of whichever main view (Circle/Guitar/Piano) is active --
+   just the wheel graphic itself, no background box/border/label text
+   competing with it, so it doesn't cover or interfere with the
+   spheres underneath. Stripped of its chooser/grid/tabs/label; only
+   the star/wheel graphic is shown. Picking a chord in the Harmonized
+   progression panel updates it live, visible on the main view AND
+   the wheel at once -- no switching the view toggle back and forth.
+   #kcmStencilPanel's base rule (width:100%; max-width:900px) is an ID
+   selector and beats a plain class on specificity, so every property
+   that needs to win here carries !important. */
 .kcm-stencil-overlay {
-    position: absolute;
-    bottom: 8px;
-    right: 8px;
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    bottom: auto !important;
+    right: auto !important;
+    transform: translate(-50%, -50%) !important;
+    margin: 0 !important;
     z-index: 30;
-    width: 200px;
-    background: rgba(8,8,20,0.95);
-    border: 2px solid var(--primary-teal);
-    border-radius: 14px;
-    padding: 8px 8px 10px;
-    box-shadow: 0 10px 36px rgba(0,0,0,0.55);
+    width: 240px !important;
+    max-width: 240px !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
     pointer-events: none;
 }
 .kcm-stencil-overlay h3,
@@ -1634,27 +1644,23 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
 .kcm-stencil-overlay .kcm-key-ring,
 .kcm-stencil-overlay .kcm-song-timeline,
 .kcm-stencil-overlay .kcm-stencil-play-row,
-.kcm-stencil-overlay #kcmStencilSpeedRow {
+.kcm-stencil-overlay #kcmStencilSpeedRow,
+.kcm-stencil-overlay #kcmStencilLabel {
     display: none !important;
 }
 .kcm-stencil-overlay .kcm-stencil-wrap-frame {
-    width: 184px;
-    height: 184px;
+    width: 240px !important;
+    height: 240px !important;
     overflow: hidden;
     position: relative;
     margin: 0 auto;
 }
 .kcm-stencil-overlay .kcm-stencil-wrap {
-    transform: scale(0.368);
+    transform: scale(0.48);
     transform-origin: top left;
 }
-.kcm-stencil-overlay #kcmStencilLabel {
-    transform: scale(0.82);
-    transform-origin: top center;
-    margin-top: 4px;
-}
 @media (max-width: 700px) {
-    /* Corner overlay gets cramped once the two-column layout stacks --
+    /* Floating overlay gets cramped once the two-column layout stacks --
        hide it rather than let it cover the main view on small screens. */
     .kcm-stencil-overlay { display: none !important; }
 }
