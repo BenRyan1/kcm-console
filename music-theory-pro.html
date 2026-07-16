@@ -6306,18 +6306,21 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         // ── Scale-to-fit: keep Left / Center / Right all visible on one
         //    screen ─────────────────────────────────────────────────────
         //    The 3-column row (view nav / Circle+Stencil panel / level
-        //    selector) is laid out with fixed-ish min-widths per column,
-        //    so on shorter or narrower viewports it either wraps to a
-        //    stacked column (needs vertical scrolling) or just runs off
-        //    the bottom of the screen. This measures the row's natural,
-        //    unscaled size against the actual viewport and shrinks the
-        //    whole row down (uniformly, via CSS transform so nothing
-        //    reflows or gets cut off mid-element) until all three columns
-        //    fit together in view. Never scales UP past 1 on big screens,
-        //    and never shrinks below a readability floor — past that
-        //    point it falls back to the existing responsive wrap/scroll
-        //    behavior rather than rendering illegibly small text.
-        const KCM_FIT_MIN_SCALE = 0.55;
+        //    selector) has `flex-wrap: wrap` in its base CSS, meant for
+        //    genuinely narrow (phone-width) fallback. But that same wrap
+        //    also kicks in any time the row's *unscaled* natural width
+        //    exceeds whatever container it's sitting in — including
+        //    inside a narrower embedded panel (e.g. the KCM Console shell
+        //    iframe) — which stacks all three columns full-width instead
+        //    of shrinking them to fit side-by-side. That's the bug: it
+        //    was measuring and scaling an already-vertically-stacked
+        //    layout instead of preventing the stack in the first place.
+        //
+        //    Fix: force nowrap while measuring/fitting, so the three
+        //    columns always attempt to sit side-by-side first; only fall
+        //    back to the original wrap/stack behavior if even the floor
+        //    scale can't make that fit (genuinely phone-narrow).
+        const KCM_FIT_MIN_SCALE = 0.4;
         let _kcmFitRAF = null;
         function kcmFitLayout() {
             if (_kcmFitRAF) cancelAnimationFrame(_kcmFitRAF);
@@ -6327,12 +6330,15 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                     const row  = document.getElementById('kcmTwoColRow');
                     if (!wrap || !row) return;
 
-                    // Measure natural size with scaling reset first —
-                    // otherwise a previous scale would corrupt this reading.
+                    // Measure the TRUE natural side-by-side size: reset any
+                    // previous scale AND force nowrap first, otherwise
+                    // either a stale transform or an already-wrapped stack
+                    // would corrupt this reading.
                     row.style.transform = 'none';
-                    wrap.style.height = 'auto';
-                    const naturalW = row.offsetWidth;
-                    const naturalH = row.offsetHeight;
+                    row.style.flexWrap  = 'nowrap';
+                    wrap.style.height   = 'auto';
+                    const naturalW = row.scrollWidth;
+                    const naturalH = row.scrollHeight;
                     if (naturalW === 0 || naturalH === 0) return; // not laid out yet
 
                     const topOffset   = wrap.getBoundingClientRect().top;
@@ -6343,20 +6349,25 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                     if (!isFinite(scale) || scale <= 0) scale = 1;
 
                     if (scale < KCM_FIT_MIN_SCALE) {
-                        // Too tight to shrink further without hurting
-                        // readability — leave it unscaled and let the
-                        // page's normal scroll/wrap behavior take over.
+                        // Too tight to fit side-by-side even at the floor
+                        // scale (genuinely phone-narrow) — fall back to the
+                        // original responsive stacking instead of forcing
+                        // illegibly small text.
+                        row.style.flexWrap  = 'wrap';
                         row.style.transform = 'none';
-                        wrap.style.height = 'auto';
-                        return;
-                    }
-                    if (scale >= 0.999) {
-                        row.style.transform = 'none';
-                        wrap.style.height = 'auto';
+                        wrap.style.height   = 'auto';
                         return;
                     }
 
                     row.style.transformOrigin = 'top center';
+                    if (scale >= 0.999) {
+                        // Fits already at full size — keep nowrap (so the
+                        // three columns stay side-by-side) but no scaling.
+                        row.style.transform = 'none';
+                        wrap.style.height   = naturalH + 'px';
+                        return;
+                    }
+
                     row.style.transform = `scale(${scale})`;
                     // transform doesn't affect layout size, so the wrapper
                     // would otherwise still reserve the full unscaled
