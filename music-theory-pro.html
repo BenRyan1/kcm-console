@@ -3237,10 +3237,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 lbl.dataset.note = tuning[s];
                 lbl.dataset.stringIdx = s;
                 lbl.setAttribute('aria-label', `${names[s]} string`);
-                lbl.onclick = () => {
-                    if (!audioReady) { alert('Click START AUDIO ENGINE first!'); return; }
-                    playNote(tuning[s], octs[s], 0.8, 0.34); // louder — guitar fretboard notes were quieter than the rest of the app
-                };
+                lbl.onclick = () => handleNoteClick(tuning[s], octs[s]); // wired into the shared note-click flow (same as Circle/Piano) so it updates selection state and every other panel, not just audio
                 headerRow.appendChild(lbl);
             }
             table.appendChild(headerRow);
@@ -3282,10 +3279,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 dot.textContent = noteNamesShort[tuning[s]];
                 cell.appendChild(dot);
 
-                cell.onclick = () => {
-                    if (!audioReady) { alert('Click START AUDIO ENGINE first!'); return; }
-                    playNote(tuning[s], octs[s], 0.8, 0.34); // louder — matches string label volume boost
-                };
+                cell.onclick = () => handleNoteClick(tuning[s], octs[s]); // wired into the shared note-click flow, matching Circle/Piano
                 nutRow.appendChild(cell);
             }
             table.appendChild(nutRow);
@@ -3335,10 +3329,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                     dot.textContent = noteNamesShort[pc];
                     cell.appendChild(dot);
 
-                    cell.onclick = () => {
-                        if (!audioReady) { alert('Click START AUDIO ENGINE first!'); return; }
-                        playNote(pc, oct, 0.8, 0.34); // louder — matches other guitar fretboard volume boost
-                    };
+                    cell.onclick = () => handleNoteClick(pc, oct); // wired into the shared note-click flow, matching Circle/Piano
                     row.appendChild(cell);
                 }
                 table.appendChild(row);
