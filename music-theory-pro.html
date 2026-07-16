@@ -2090,7 +2090,7 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                     <svg id="staffSVG" viewBox="0 0 220 100" preserveAspectRatio="xMidYMid meet" aria-hidden="true" style="flex-shrink:0;width:55%;"></svg>
                     <svg id="fretboardMiniSVG" viewBox="0 0 220 100" preserveAspectRatio="xMidYMid meet" aria-hidden="true" style="flex-shrink:0;width:55%;display:none;"></svg>
                     <svg id="keyboardMiniSVG" viewBox="0 0 220 100" preserveAspectRatio="xMidYMid meet" aria-hidden="true" style="flex-shrink:0;width:55%;display:none;"></svg>
-                    <svg id="timelineSVG" viewBox="0 0 220 100" preserveAspectRatio="xMidYMid meet" aria-hidden="true" style="flex-shrink:0;width:55%;display:none;"></svg>
+                    <svg id="timelineSVG" viewBox="0 0 220 100" preserveAspectRatio="xMidYMid meet" aria-hidden="true" style="flex-shrink:0;width:100%;display:none;"></svg>
                     <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:0 12px;">
                         <button id="staffPlayBtn"
                             style="width:100%;padding:10px 0;background:linear-gradient(135deg,#27ae60,#1e8449);color:#fff;border:2px solid #27ae60;border-radius:8px;font-family:'Cinzel',serif;font-size:0.8rem;font-weight:800;letter-spacing:1.5px;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 12px rgba(39,174,96,0.3);"
@@ -9991,7 +9991,11 @@ async function kcmAIAsk(type) {
     tlInjected = true;
     const wrap = document.createElement('div');
     wrap.id = 'tlControls';
-    wrap.style.cssText = 'flex:1;display:flex;flex-direction:column;gap:8px;padding:0 12px;justify-content:center;';
+    // Full-width block below the SVG/row (not squeezed beside it as a
+    // flex sibling) — guarantees every button has the panel's full
+    // ~390px of usable width to lay out in, so nothing overflows past
+    // #staffNotation's card border regardless of label length.
+    wrap.style.cssText = 'width:100%;box-sizing:border-box;display:flex;flex-direction:column;gap:8px;padding:10px 4px 0;';
     wrap.innerHTML = `
       <div style="display:flex;gap:6px;">
         <button type="button" id="tlModeSeq" style="flex:1;${TL_ACTIVE}">Sequential</button>
@@ -10009,7 +10013,11 @@ async function kcmAIAsk(type) {
       </div>
       <div id="tlStatus" style="font-family:'Montserrat',sans-serif;font-size:0.65rem;color:#555;line-height:1.5;min-height:2.4em;font-weight:600;letter-spacing:0.2px;"></div>
     `;
-    svg.insertAdjacentElement('afterend', wrap);
+    // Insert after the whole staff-row (svg's flex-row parent), not just
+    // after the svg itself, so tlControls sits as its own full-width block
+    // below the row instead of as a cramped flex item inside it.
+    const row = svg.parentElement;
+    (row && row.parentElement ? row : svg).insertAdjacentElement('afterend', wrap);
     document.getElementById('tlModeSeq').onclick = function() {
       tlStopAll();
       tlMode = 'sequential';
@@ -10031,11 +10039,13 @@ async function kcmAIAsk(type) {
   function _tlShowError(msg) {
     let el = document.getElementById('tlErrorBanner');
     const svg = document.getElementById('timelineSVG');
-    if (!el && svg) {
+    const controls = document.getElementById('tlControls');
+    const anchor = controls || svg;
+    if (!el && anchor) {
       el = document.createElement('div');
       el.id = 'tlErrorBanner';
-      el.style.cssText = 'font-size:0.55rem;color:#e74c3c;font-weight:800;padding:2px 4px;';
-      svg.insertAdjacentElement('afterend', el);
+      el.style.cssText = 'font-size:0.55rem;color:#e74c3c;font-weight:800;padding:2px 4px 0;width:100%;box-sizing:border-box;';
+      anchor.insertAdjacentElement(controls ? 'beforebegin' : 'afterend', el);
     }
     if (el) el.textContent = msg ? ('⚠ Timeline error: ' + msg) : '';
   }
