@@ -207,7 +207,8 @@ function trackEvent(n,p){if(typeof gtag==='function')gtag('event',n,p);}
     --dark-bg:        #0a0a15;
     --darker-bg:      #050508;
     --panel-bg:       rgba(26, 61, 95, 0.25);
-    --light-text:     #E8E8E8;
+    --light-text:     #e8e8f8;
+    --text-dim:       #a0a0c0;
     --font-display:   'Cinzel', serif;
     --font-body:      'Montserrat', sans-serif;
     --teal-glow:      0 0 20px rgba(0,128,128,0.4);
@@ -1102,7 +1103,7 @@ select option { background: #1a1a2e; color: white; }
     transform: translateY(2px);
     background: var(--key-color, #fff) !important;
     border-color: var(--key-color, #fff) !important;
-    box-shadow: 0 0 22px var(--key-color, #fff), 0 0 44px var(--key-color, #fff88), inset 0 3px 8px rgba(0,0,0,0.15) !important;
+    box-shadow: 0 0 22px var(--key-color, #fff), 0 0 44px var(--key-color, #fff), inset 0 3px 8px rgba(0,0,0,0.15) !important;
 }
 .black-key {
     width: 22px; height: 82px;
@@ -1121,7 +1122,7 @@ select option { background: #1a1a2e; color: white; }
     transform: translateY(2px);
     background: var(--key-color, #333) !important;
     border-color: var(--key-color, #333) !important;
-    box-shadow: 0 0 28px var(--key-color, #fff), 0 0 50px var(--key-color, #fff88), inset 0 2px 6px rgba(0,0,0,0.5) !important;
+    box-shadow: 0 0 28px var(--key-color, #fff), 0 0 50px var(--key-color, #fff), inset 0 2px 6px rgba(0,0,0,0.5) !important;
 }
 .key-label {
     position: absolute; bottom: 4px; width: 100%;
@@ -1852,7 +1853,7 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
 <div class="app-container" id="main-content" role="main">
 
     <!-- MAIN CONTROLS PANEL -->
-    <div class="info-panel">
+    <div class="info-panel" style="max-width:1360px;">
 
         <div id="freeplayHint" class="freeplay-hint" style="display:none;" aria-live="polite">
             🎨 FREE PLAY MODE — Click multiple notes to select them, then use the buttons below to play as CHORD (simultaneous) or SEQUENCE (one by one)!
@@ -1868,6 +1869,14 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
         ══════════════════════════════════════════════════════════ -->
         <div style="display:flex; flex-direction:column; gap:1.25rem; background:rgba(0,0,0,0.35); padding:1.75rem; border-radius:14px; border:1px solid rgba(0,128,128,0.15);">
 
+            <!-- KCM TWO-COLUMN LAYOUT -- left: circle/piano/guitar/sing/stencil view
+                 + staff/fretboard/keyboard/timeline panel + ear training.
+                 right: view selector, key picker, chromatic scale, level
+                 buttons, ascending/descending/etc. Purely additive wrapper
+                 divs -- every element inside keeps its existing id, classes,
+                 and onclick handlers untouched. -->
+            <div class="kcm-two-col-row" style="display:flex; gap:1.75rem; align-items:flex-start; flex-wrap:wrap; justify-content:center;">
+            <div class="kcm-left-col" style="flex:1 1 480px; max-width:520px; min-width:300px;">
             <!-- ══ PANEL SWAP ZONE — only one panel visible at a time ══ -->
             <div id="panelSwapZone" style="width:100%;">
 
@@ -2046,11 +2055,13 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                     <button type="button" class="staff-tab-btn active" data-stafftab="staff" onclick="switchStaffTab('staff')">🎼 STAFF</button>
                     <button type="button" class="staff-tab-btn" data-stafftab="fretboard" onclick="switchStaffTab('fretboard')">🎸 FRETBOARD</button>
                     <button type="button" class="staff-tab-btn" data-stafftab="keyboard" onclick="switchStaffTab('keyboard')">🎹 KEYBOARD</button>
+                    <button type="button" class="staff-tab-btn" data-stafftab="timeline" onclick="switchStaffTab('timeline')">⏱ TIMELINE</button>
                 </div>
                 <div style="display:flex;align-items:center;gap:0;">
                     <svg id="staffSVG" viewBox="0 0 220 100" preserveAspectRatio="xMidYMid meet" aria-hidden="true" style="flex-shrink:0;width:55%;"></svg>
                     <svg id="fretboardMiniSVG" viewBox="0 0 220 100" preserveAspectRatio="xMidYMid meet" aria-hidden="true" style="flex-shrink:0;width:55%;display:none;"></svg>
                     <svg id="keyboardMiniSVG" viewBox="0 0 220 100" preserveAspectRatio="xMidYMid meet" aria-hidden="true" style="flex-shrink:0;width:55%;display:none;"></svg>
+                    <svg id="timelineSVG" viewBox="0 0 220 100" preserveAspectRatio="xMidYMid meet" aria-hidden="true" style="flex-shrink:0;width:55%;display:none;"></svg>
                     <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:0 12px;">
                         <button id="staffPlayBtn"
                             style="width:100%;padding:10px 0;background:linear-gradient(135deg,#27ae60,#1e8449);color:#fff;border:2px solid #27ae60;border-radius:8px;font-family:'Cinzel',serif;font-size:0.8rem;font-weight:800;letter-spacing:1.5px;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 12px rgba(39,174,96,0.3);"
@@ -2082,6 +2093,10 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                 </div>
                 <p id="quizScore" style="margin-top:1.25rem; font-family:var(--font-display); font-size:1.2rem; font-weight:700; color:var(--primary-gold);" aria-live="polite">Score: 0/0</p>
             </div>
+            </div><!-- end kcm-left-col -->
+
+            <div class="kcm-right-col" style="flex:1 1 420px; min-width:300px;">
+
 
             <!-- ── CONTROLS (always visible below panels) ── -->
 
@@ -2131,33 +2146,9 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                 <button class="play-btn" id="playChordBtn" style="flex:1; max-width:160px;">♪ Play Chord</button>
                 <button class="play-btn" id="stopPlayBtn" style="flex:1; max-width:130px; background:linear-gradient(135deg,#7f8c8d,#555); border-color:#7f8c8d;">⏹ Stop</button>
             </div>
-
-        </div><!-- end views swap zone -->
-    </div><!-- end info-panel -->
-
-    <!-- PROGRESSION CONTROLS — shown only for Harmonized Major/Minor -->
-    <div class="progression-controls" id="progressionControls" aria-live="polite" style="display:none;">
-        <h4>🎼 Chord Progressions in Key of <span id="progressionKey">C</span></h4>
-        <div style="text-align:center; font-size:0.75rem; opacity:0.8; margin-bottom:0.85rem; font-weight:600;">
-            Using <span id="progressionChordType">Triads</span> · Scale: <span id="progressionScaleType">Major</span>
-        </div>
-        <div style="text-align:center; margin-bottom:0.85rem;">
-            <button class="play-btn" id="playAllChordsBtn" style="margin:0 auto; display:inline-flex;">🎹 Play All Scale Chords</button>
-        </div>
-        <div class="progression-buttons" id="progressionButtons"></div>
-    </div>
-
-    <!-- CHORD VOICING DISPLAY PANEL — shown below progressions in Harmonized mode -->
-    <div id="chordVoicingPanel" style="display:none; margin:1rem auto; max-width:860px; background:rgba(0,0,0,0.35); border:2px solid rgba(0,128,128,0.3); border-radius:16px; padding:1.25rem 1.5rem;">
-        <div style="text-align:center; font-family:var(--font-display); font-size:0.85rem; font-weight:800; color:var(--primary-teal); letter-spacing:1.5px; text-transform:uppercase; margin-bottom:1rem;">
-            🎹 <span id="voicingTitle">Scale Chords</span>
-        </div>
-        <div id="voicingGrid" style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center;"></div>
-    </div>
-
-    <!-- TWO-COLUMN CONTROLS PANEL -->
-    <div class="info-panel">
-        <h3 id="status" role="status" aria-live="polite">Click START AUDIO ENGINE to begin!</h3>
+            
+            <div style="margin-top:1.25rem; width:100%; max-width:100%;">
+<h3 id="status" role="status" aria-live="polite">Click START AUDIO ENGINE to begin!</h3>
 
         <div class="two-col-controls">
 
@@ -2194,6 +2185,40 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
 
             </div><!-- end right column -->
         </div><!-- end grid -->
+            </div>
+            </div><!-- end kcm-right-col -->
+            </div><!-- end kcm-two-col-row -->
+
+        </div><!-- end views swap zone -->
+    </div><!-- end info-panel -->
+
+    <!-- PROGRESSION CONTROLS — shown only for Harmonized Major/Minor -->
+    <div class="progression-controls" id="progressionControls" aria-live="polite" style="display:none;">
+        <h4>🎼 Chord Progressions in Key of <span id="progressionKey">C</span></h4>
+        <div style="text-align:center; font-size:0.75rem; opacity:0.8; margin-bottom:0.85rem; font-weight:600;">
+            Using <span id="progressionChordType">Triads</span> · Scale: <span id="progressionScaleType">Major</span>
+        </div>
+        <div style="text-align:center; margin-bottom:0.85rem;">
+            <button class="play-btn" id="playAllChordsBtn" style="margin:0 auto; display:inline-flex;">🎹 Play All Scale Chords</button>
+        </div>
+        <div class="progression-buttons" id="progressionButtons"></div>
+        <div id="progTimeline" style="display:none; margin-top:1rem;">
+            <div id="progTimelineTrack" style="display:flex; gap:6px; justify-content:center; flex-wrap:nowrap;"></div>
+            <div id="progTimelineStatus" style="text-align:center; font-size:0.68rem; color:rgba(255,255,255,0.75); font-weight:600; margin-top:0.5rem; min-height:1.4em;"></div>
+        </div>
+    </div>
+
+    <!-- CHORD VOICING DISPLAY PANEL — shown below progressions in Harmonized mode -->
+    <div id="chordVoicingPanel" style="display:none; margin:1rem auto; max-width:860px; background:rgba(0,0,0,0.35); border:2px solid rgba(0,128,128,0.3); border-radius:16px; padding:1.25rem 1.5rem;">
+        <div style="text-align:center; font-family:var(--font-display); font-size:0.85rem; font-weight:800; color:var(--primary-teal); letter-spacing:1.5px; text-transform:uppercase; margin-bottom:1rem;">
+            🎹 <span id="voicingTitle">Scale Chords</span>
+        </div>
+        <div id="voicingGrid" style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center;"></div>
+    </div>
+
+    <!-- TWO-COLUMN CONTROLS PANEL -->
+    <div class="info-panel">
+        
 
         <div class="note-list" id="noteList" aria-live="polite"></div>
 
@@ -2429,6 +2454,7 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                 ⏺ Record captures note events for MIDI · 🎧 WAV captures the actual audio output
             </div>
             <div id="recordingStatus" style="text-align:center; min-height:1.25rem; font-size:0.82rem;" aria-live="polite"></div>
+            <svg id="recTimelineSVG" viewBox="0 0 320 100" preserveAspectRatio="xMidYMid meet" aria-hidden="true" style="display:none; width:100%; max-width:520px; margin:0.75rem auto 0; background:rgba(255,255,255,0.97); border-radius:8px;"></svg>
         </div>
 
         <!-- KEYBOARD SHORTCUTS -->
@@ -2607,6 +2633,10 @@ window.addEventListener('unhandledrejection', function(event) {
             harmonizedMajor7ths:  { get: () => harmonizedMajor7ths,  configurable: true },
             harmonizedMinorTriads:{ get: () => harmonizedMinorTriads,configurable: true },
             harmonizedMinor7ths:  { get: () => harmonizedMinor7ths,  configurable: true },
+            currentTriadSelection:    { get: () => currentTriadSelection,    configurable: true },
+            currentExtendedSelection: { get: () => currentExtendedSelection, configurable: true },
+            audioReady:               { get: () => audioReady,               configurable: true },
+            recordedNotes:            { get: () => recordedNotes,            configurable: true },
         });
 
         // ── Init ──────────────────────────────────────────────────
@@ -4526,9 +4556,9 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         //    The Stencil wheel / chromatic circle above is untouched. ──
         let activeStaffTab = 'staff';
         function switchStaffTab(tab) {
-            if (tab !== 'staff' && tab !== 'fretboard' && tab !== 'keyboard') return;
+            if (tab !== 'staff' && tab !== 'fretboard' && tab !== 'keyboard' && tab !== 'timeline') return;
             activeStaffTab = tab;
-            const svgIds = { staff: 'staffSVG', fretboard: 'fretboardMiniSVG', keyboard: 'keyboardMiniSVG' };
+            const svgIds = { staff: 'staffSVG', fretboard: 'fretboardMiniSVG', keyboard: 'keyboardMiniSVG', timeline: 'timelineSVG' };
             Object.keys(svgIds).forEach(t => {
                 const el = document.getElementById(svgIds[t]);
                 if (el) el.style.display = (t === tab) ? '' : 'none';
@@ -4536,6 +4566,22 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
             document.querySelectorAll('.staff-tab-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.getAttribute('data-stafftab') === tab);
             });
+            // KCM TIMELINE TEST — additive hook, no effect on staff/fretboard/keyboard tabs
+            if (tab === 'timeline' && typeof window._kcmTimelineOnTabShown === 'function') window._kcmTimelineOnTabShown();
+            // KCM TIMELINE TEST — the classic ▲▼ PLAY / ■ STOP column (to the
+            // right of the staff SVG) is redundant with Timeline's own
+            // PLAY/STOP row and, at typical panel widths, doesn't fit next to
+            // Timeline's wider controls — it was overflowing outside the
+            // panel's border/background. Hide it only on the Timeline tab so
+            // every visible button stays inside the same #staffNotation
+            // backdrop; restore it (default display) on staff/fretboard/keyboard.
+            (function() {
+                const tlSvgEl = document.getElementById('timelineSVG');
+                if (!tlSvgEl) return;
+                let sib = tlSvgEl.nextElementSibling;
+                if (sib && sib.id === 'tlControls') sib = sib.nextElementSibling;
+                if (sib) sib.style.display = (tab === 'timeline') ? 'none' : '';
+            })();
         }
         window.switchStaffTab = switchStaffTab;
 
@@ -9637,5 +9683,783 @@ async function kcmAIAsk(type) {
 
 </script>
 
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     KCM TIMELINE TEST MODULE — additive only.
+     Adds a 4th "TIMELINE" tab next to STAFF / FRETBOARD / KEYBOARD.
+     Reads live app state via the window getters already exposed above
+     (rootNote, currentLevel, currentTriadSelection, currentExtendedSelection,
+     selectedNotes, currentBPM) and plays real audio via window.playNote —
+     it does not modify, wrap, or replace any existing function.
+     Scope: Triads, 7th Chords, Intervals (matches sandbox prototype).
+     ═══════════════════════════════════════════════════════════════════════ -->
+<script>
+(function(){
+  'use strict';
+  const KCM_COLORS = ['#FFFF00','#FFC400','#FF8000','#FF4000','#FF0000','#C4007F','#8000FF','#4000FF','#0000FF','#007FFF','#00FF80','#80FF00'];
+  const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+  const TRIADS   = { major:[0,4,7], minor:[0,3,7], diminished:[0,3,6], augmented:[0,4,8] };
+  const EXTENDED = { major7:[0,4,7,11], dominant7:[0,4,7,10], minor7:[0,3,7,10], diminished7:[0,3,6,9], augmented7:[0,4,8,10], halfDiminished7:[0,3,6,10], minorMajor7:[0,3,7,11], augmentedMajor7:[0,4,8,11] };
+  const diatonicStep = {0:0,1:0,2:1,3:1,4:2,5:3,6:3,7:4,8:4,9:5,10:5,11:6};
+  const KEY_SIGNATURES = {
+    0:{sharps:0,flats:0}, 1:{sharps:0,flats:5}, 2:{sharps:2,flats:0}, 3:{sharps:0,flats:3},
+    4:{sharps:4,flats:0}, 5:{sharps:0,flats:1}, 6:{sharps:6,flats:0}, 7:{sharps:1,flats:0},
+    8:{sharps:0,flats:4}, 9:{sharps:3,flats:0}, 10:{sharps:0,flats:2}, 11:{sharps:5,flats:0}
+  };
+  // Same sharps/flats-per-key data and staff-line Y positions the real
+  // STAFF tab's own drawStaff() uses (keySignatures / sharpPos / flatPos),
+  // just scaled down for this smaller mini-staff. Drawn right after the
+  // clef, same as every real staff notation convention.
+  function drawKeySig(svg, rootPc) {
+    const sig = KEY_SIGNATURES[rootPc] || KEY_SIGNATURES[0];
+    let x = 26;
+    if (sig.sharps > 0) {
+      const sharpPos = [20,35,15,50,25,60,40];
+      for (let i = 0; i < sig.sharps; i++) {
+        const s = document.createElementNS('http://www.w3.org/2000/svg','text');
+        s.setAttribute('x', x); s.setAttribute('y', sharpPos[i]); s.setAttribute('font-size','16');
+        s.setAttribute('font-weight','bold'); s.setAttribute('font-family','serif');
+        s.textContent = '♯'; s.setAttribute('fill','#000'); svg.appendChild(s);
+        x += 7;
+      }
+    } else if (sig.flats > 0) {
+      const flatPos = [40,55,45,50,30,35,25];
+      for (let i = 0; i < sig.flats; i++) {
+        const f = document.createElementNS('http://www.w3.org/2000/svg','text');
+        f.setAttribute('x', x); f.setAttribute('y', flatPos[i]); f.setAttribute('font-size','16');
+        f.setAttribute('font-weight','bold'); f.setAttribute('font-family','serif');
+        f.textContent = '♭'; f.setAttribute('fill','#000'); svg.appendChild(f);
+        x += 7;
+      }
+    }
+    return x;
+  }
+
+  let tlMode = 'sequential'; // 'sequential' | 'simultaneous'
+  let tlTimers = [];
+  let tlRAF = null;
+  let tlInjected = false;
+
+  const SCALES = {
+    major:[0,2,4,5,7,9,11], naturalMinor:[0,2,3,5,7,8,10],
+    harmonicMinor:[0,2,3,5,7,8,11], melodicMinor:[0,2,3,5,7,9,11],
+    majorPentatonic:[0,2,4,7,9], minorPentatonic:[0,3,5,7,10],
+    wholeTone:[0,2,4,6,8,10]
+  };
+  const MODES = {
+    ionian:[0,2,4,5,7,9,11], dorian:[0,2,3,5,7,9,10], phrygian:[0,1,3,5,7,8,10],
+    lydian:[0,2,4,6,7,9,11], mixolydian:[0,2,4,5,7,9,10], aeolian:[0,2,3,5,7,8,10], locrian:[0,1,3,5,6,8,10]
+  };
+  // Every level button explicitly covered — no reliance on a catch-all guess.
+  function resolveCurrentPattern() {
+    const level = window.currentLevel;
+    if (level === '1') return { intervals: [0], label: 'Single Note' };
+    if (level === '2') {
+      const sel = Array.from(window.selectedNotes || []);
+      const root = window.rootNote;
+      if (sel.length >= 2) {
+        const other = sel.find(n => n !== root);
+        return { intervals: [0, ((other - root + 12) % 12)], label: 'Interval' };
+      }
+      return { intervals: [0], label: 'Interval (pick a 2nd note on STAFF/CIRCLE first)' };
+    }
+    if (level === '3') {
+      const q = window.currentTriadSelection || 'major';
+      return { intervals: TRIADS[q] || TRIADS.major, label: 'Triad (' + q + ')' };
+    }
+    if (level === '4') {
+      const q = window.currentExtendedSelection || 'major7';
+      return { intervals: EXTENDED[q] || EXTENDED.major7, label: '7th Chord (' + q + ')' };
+    }
+    if (level === '5') {
+      const isMinor = window.currentScaleType === 'minorPentatonic';
+      return { intervals: isMinor ? SCALES.minorPentatonic : SCALES.majorPentatonic, label: (isMinor ? 'Minor' : 'Major') + ' Pentatonic' };
+    }
+    if (level === '6') return { intervals: SCALES.wholeTone, label: 'Whole Tone Scale' };
+    if (level === 'scales') {
+      const t = window.currentScaleType || 'major';
+      const names = { major:'Major', naturalMinor:'Natural Minor', harmonicMinor:'Harmonic Minor', melodicMinor:'Melodic Minor' };
+      return { intervals: SCALES[t] || SCALES.major, label: (names[t] || t) + ' Scale' };
+    }
+    if (level === 'modes') {
+      const m = window.currentModeSelection || 'ionian';
+      return { intervals: MODES[m] || MODES.ionian, label: m.charAt(0).toUpperCase() + m.slice(1) + ' Mode' };
+    }
+    if (level === 'harmMajor' || level === 'harmMinor') {
+      const use7th = window.currentHarmChordType === '7th';
+      const deg = window.currentHarmDegree || 0;
+      const table = level === 'harmMajor'
+        ? (use7th ? window.harmonizedMajor7ths : window.harmonizedMajorTriads)
+        : (use7th ? window.harmonizedMinor7ths : window.harmonizedMinorTriads);
+      const cd = table && table[deg];
+      if (cd) return { intervals: cd.intervals, label: cd.name + ' (' + cd.quality + ')' };
+    }
+    // Free Play, and safety net for anything unrecognized — read straight
+    // from whatever's actually selected right now.
+    const sel = Array.from(window.selectedNotes || [window.rootNote]);
+    const root = window.rootNote;
+    const rel = Array.from(new Set(sel.map(n => ((n - root + 12) % 12)))).sort((a,b)=>a-b);
+    return { intervals: rel.length ? rel : [0], label: level === 'freeplay' ? 'Free Play Selection' : 'Current Selection' };
+  }
+
+  function buildNoteEvents(rootPc, intervals, mode) {
+    const events = [];
+    let oct = 4, prevMidi = -1;
+    intervals.forEach((iv, i) => {
+      const pc = (rootPc + iv) % 12;
+      let midi = (oct + 1) * 12 + pc;
+      while (midi <= prevMidi) { oct++; midi = (oct + 1) * 12 + pc; }
+      prevMidi = midi;
+      const beatStart = mode === 'simultaneous' ? 0 : i;
+      const beatDur    = mode === 'simultaneous' ? 2  : 0.9;
+      events.push({ pc, oct, beatStart, beatDur, seq: i });
+    });
+    return events;
+  }
+  function timelineLengthBeats(events, mode) {
+    if (mode === 'simultaneous') return 2;
+    const last = events[events.length - 1];
+    return last.beatStart + 1;
+  }
+  function noteY(pc, oct) {
+    const steps = diatonicStep[pc] + (oct - 4) * 7;
+    return 70 - steps * 5;
+  }
+
+  function drawTimelineStaff(events, mode, playheadBeat, revealUpToBeat) {
+    const svg = document.getElementById('timelineSVG');
+    if (!svg) return;
+    svg.innerHTML = '';
+    const H = 100;
+    // The canvas width used to be a fixed 220 units, which only fit short
+    // patterns (a 3-note triad, a single note). Anything longer — a 7-note
+    // scale, and especially the "Full Scale" up-then-down direction (up to
+    // 14 events) — would extend past x=220 and simply not be visible, since
+    // SVG content outside its viewBox doesn't render. Width now grows with
+    // the actual content length instead of silently clipping it; the SVG's
+    // own preserveAspectRatio="xMidYMid meet" (set in the HTML) handles
+    // scaling it back down to fit the panel, same as a piano roll zooming
+    // out to show more material rather than cutting it off.
+    const sig = KEY_SIGNATURES[window.rootNote || 0] || KEY_SIGNATURES[0];
+    const sigAccidentals = Math.max(sig.sharps, sig.flats);
+    const marginX = 32 + sigAccidentals * 7, pxPerBeat = 22;
+    const rawBeats = timelineLengthBeats(events, mode);
+    const totalBeats = Math.max(4, Math.ceil(rawBeats / 4) * 4);
+    const W = Math.max(220, marginX + totalBeats * pxPerBeat + 20);
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    for (let i = 0; i < 5; i++) {
+      const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+      line.setAttribute('x1','30'); line.setAttribute('y1', 20+i*10);
+      line.setAttribute('x2', W-6); line.setAttribute('y2', 20+i*10);
+      line.setAttribute('stroke','#000'); line.setAttribute('stroke-width','1');
+      svg.appendChild(line);
+    }
+    const clef = document.createElementNS('http://www.w3.org/2000/svg','text');
+    clef.setAttribute('x','2'); clef.setAttribute('y','48'); clef.setAttribute('font-size','30');
+    clef.setAttribute('font-family','serif'); clef.textContent = '𝄞'; clef.setAttribute('fill','#000');
+    svg.appendChild(clef);
+    drawKeySig(svg, window.rootNote || 0);
+    // Reveal mode: during playback, only draw notes the playhead has
+    // actually reached — this is the left-to-right "notes appear as time
+    // passes" behavior. Without revealUpToBeat (idle/static display) the
+    // full pattern is shown at once, same as the classic STAFF tab does
+    // at rest.
+    const visibleEvents = (typeof revealUpToBeat === 'number')
+      ? events.filter(ev => ev.beatStart <= revealUpToBeat + 0.001)
+      : events;
+    for (let b = 0; b <= totalBeats; b += 4) {
+      const x = marginX + b * pxPerBeat;
+      const bl = document.createElementNS('http://www.w3.org/2000/svg','line');
+      bl.setAttribute('x1',x); bl.setAttribute('y1','18'); bl.setAttribute('x2',x); bl.setAttribute('y2','62');
+      bl.setAttribute('stroke','#666'); bl.setAttribute('stroke-width', b===0?'1.5':'0.75');
+      svg.appendChild(bl);
+    }
+    visibleEvents.forEach(ev => {
+      const x = marginX + ev.beatStart * pxPerBeat + 8;
+      const y = noteY(ev.pc, ev.oct);
+      if (y >= 70) for (let ly = 70; ly <= y; ly += 10) {
+        const led = document.createElementNS('http://www.w3.org/2000/svg','line');
+        led.setAttribute('x1',x-5); led.setAttribute('y1',ly); led.setAttribute('x2',x+5); led.setAttribute('y2',ly);
+        led.setAttribute('stroke','#000'); led.setAttribute('stroke-width','1'); svg.appendChild(led);
+      }
+      if (y <= 10) for (let ly = 10; ly >= y; ly -= 10) {
+        const led = document.createElementNS('http://www.w3.org/2000/svg','line');
+        led.setAttribute('x1',x-5); led.setAttribute('y1',ly); led.setAttribute('x2',x+5); led.setAttribute('y2',ly);
+        led.setAttribute('stroke','#000'); led.setAttribute('stroke-width','1'); svg.appendChild(led);
+      }
+      const nh = document.createElementNS('http://www.w3.org/2000/svg','ellipse');
+      nh.setAttribute('cx',x); nh.setAttribute('cy',y); nh.setAttribute('rx','4.5'); nh.setAttribute('ry','3.8');
+      nh.setAttribute('fill', KCM_COLORS[ev.pc]); nh.setAttribute('stroke','#000'); nh.setAttribute('stroke-width','0.8');
+      nh.dataset.seq = ev.seq;
+      nh.dataset.pc = ev.pc;
+      nh.classList.add('tl-note-head');
+      svg.appendChild(nh);
+    });
+    _tlSyncSphereHighlights();
+    if (typeof playheadBeat === 'number') {
+      const px = marginX + playheadBeat * pxPerBeat;
+      const ph = document.createElementNS('http://www.w3.org/2000/svg','line');
+      ph.setAttribute('x1',px); ph.setAttribute('y1','12'); ph.setAttribute('x2',px); ph.setAttribute('y2','70');
+      ph.setAttribute('stroke','#e74c3c'); ph.setAttribute('stroke-width','1.5'); ph.setAttribute('opacity','0.85');
+      svg.appendChild(ph);
+    }
+  }
+
+  function tlStopAll() {
+    tlTimers.forEach(t => clearTimeout(t));
+    tlTimers = [];
+    if (tlRAF) cancelAnimationFrame(tlRAF);
+    tlRAF = null;
+    const stopBtn = document.getElementById('globalStopBtn');
+    if (stopBtn) stopBtn.click();
+    tlRenderStatic();
+  }
+
+  function tlRenderStatic() {
+    const rootPc = window.rootNote || 0;
+    const pattern = resolveCurrentPattern();
+    const events = buildNoteEvents(rootPc, pattern.intervals, tlMode);
+    drawTimelineStaff(events, tlMode, null);
+    const statusEl = document.getElementById('tlStatus');
+    if (statusEl) {
+      statusEl.textContent = `${NOTE_NAMES[rootPc]} ${pattern.label} — ${tlMode === 'simultaneous' ? 'Simultaneous (stacked)' : 'Sequential (arpeggio)'}`;
+    }
+  }
+
+  function tlPlay() {
+    try {
+    if (!window.audioReady) { alert('Click START AUDIO ENGINE first!'); return; }
+    if (typeof window.playSelection !== 'function') { _tlShowError('playSelection() not found on this build'); return; }
+    tlStopAll();
+    const rootPc = window.rootNote || 0;
+    const pattern = resolveCurrentPattern();
+    const events = buildNoteEvents(rootPc, pattern.intervals, tlMode);
+    const bpm = window.currentBPM || 100;
+    const beatSec = 60 / bpm;
+    const totalBeats = timelineLengthBeats(events, tlMode);
+    const startMs = performance.now();
+
+    // Real sound + real sphere/guitar/piano highlighting — the same engine
+    // every other PLAY button in the app uses. 'chord' = all notes at once
+    // (Simultaneous), 'up' = ascending one at a time (Sequential). This is
+    // what makes the sphere highlight sync actually light up: pulseSphere()/
+    // settleSphere() inside playSelection() toggle .sphere.playing, which
+    // our MutationObserver is already watching.
+    window.playSelection(tlMode === 'simultaneous' ? 'chord' : 'up');
+
+    // Timeline's own visual playhead + progressive reveal run in parallel,
+    // on the same BPM clock playSelection() just used, but touch no audio
+    // and no sphere state themselves — purely the moving red line + notes
+    // appearing left-to-right on the mini-staff.
+    function animate() {
+      const elapsedSec = (performance.now() - startMs) / 1000;
+      const beatPos = elapsedSec / beatSec;
+      if (beatPos >= totalBeats) {
+        drawTimelineStaff(events, tlMode, totalBeats);
+        tlRAF = null;
+        setTimeout(tlRenderStatic, 300);
+        return;
+      }
+      drawTimelineStaff(events, tlMode, beatPos, beatPos);
+      tlRAF = requestAnimationFrame(animate);
+    }
+    tlRAF = requestAnimationFrame(animate);
+    } catch(e) { console.error('[KCM Timeline] tlPlay failed:', e); _tlShowError('play: ' + e.message); }
+  }
+
+  // Pulled directly from the app's own design tokens rather than invented
+  // colors: mode pills now match .level-btn's real shape (20px pill,
+  // Montserrat body font, 0.3px letter-spacing) with the same active/
+  // inactive contrast logic .level-btn uses (solid fill vs. translucent
+  // outline), just recolored for this panel's white background instead of
+  // the dark page background .level-btn normally sits on. PLAY/STOP match
+  // #staffPlayBtn and its paired stop button EXACTLY — same Cinzel
+  // sizing, same green/red gradients, same hover lift — since that's the
+  // literal sibling control this replaces in the same layout slot.
+  const TL_ACTIVE   = "font-family:'Montserrat',sans-serif;font-size:0.68rem;font-weight:700;letter-spacing:0.3px;text-transform:uppercase;padding:8px 4px;border-radius:20px;border:2px solid #008080;background:linear-gradient(135deg,#008080,#006666);color:#fff;cursor:pointer;transition:all 0.2s;box-shadow:0 3px 10px rgba(0,0,0,0.15);";
+  const TL_INACTIVE = "font-family:'Montserrat',sans-serif;font-size:0.68rem;font-weight:700;letter-spacing:0.3px;text-transform:uppercase;padding:8px 4px;border-radius:20px;border:2px solid rgba(0,128,128,0.3);background:rgba(0,128,128,0.06);color:#008080;cursor:pointer;transition:all 0.2s;";
+
+  function injectControls() {
+    if (tlInjected) return;
+    const svg = document.getElementById('timelineSVG');
+    if (!svg) return;
+    tlInjected = true;
+    const wrap = document.createElement('div');
+    wrap.id = 'tlControls';
+    wrap.style.cssText = 'flex:1;display:flex;flex-direction:column;gap:8px;padding:0 12px;justify-content:center;';
+    wrap.innerHTML = `
+      <div style="display:flex;gap:6px;">
+        <button type="button" id="tlModeSeq" style="flex:1;${TL_ACTIVE}">Sequential</button>
+        <button type="button" id="tlModeSim" style="flex:1;${TL_INACTIVE}">Simultaneous</button>
+      </div>
+      <div style="display:flex;gap:6px;">
+        <button type="button" id="tlPlayBtn"
+          style="flex:2;padding:10px 0;background:linear-gradient(135deg,#27ae60,#1e8449);color:#fff;border:2px solid #27ae60;border-radius:8px;font-family:'Cinzel',serif;font-size:0.8rem;font-weight:800;letter-spacing:1.5px;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 12px rgba(39,174,96,0.3);"
+          onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 20px rgba(39,174,96,0.5)'"
+          onmouseout="this.style.transform='';this.style.boxShadow='0 4px 12px rgba(39,174,96,0.3)'">▶ PLAY</button>
+        <button type="button" id="tlStopBtn"
+          style="flex:1;padding:10px 0;background:linear-gradient(135deg,#e74c3c,#c0392b);color:#fff;border:2px solid #e74c3c;border-radius:8px;font-family:'Cinzel',serif;font-size:0.8rem;font-weight:800;letter-spacing:1.5px;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 12px rgba(231,76,60,0.3);"
+          onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 20px rgba(231,76,60,0.5)'"
+          onmouseout="this.style.transform='';this.style.boxShadow='0 4px 12px rgba(231,76,60,0.3)'">■ STOP</button>
+      </div>
+      <div id="tlStatus" style="font-family:'Montserrat',sans-serif;font-size:0.65rem;color:#555;line-height:1.5;min-height:2.4em;font-weight:600;letter-spacing:0.2px;"></div>
+    `;
+    svg.insertAdjacentElement('afterend', wrap);
+    document.getElementById('tlModeSeq').onclick = function() {
+      tlStopAll();
+      tlMode = 'sequential';
+      this.setAttribute('style', 'flex:1;' + TL_ACTIVE);
+      document.getElementById('tlModeSim').setAttribute('style', 'flex:1;' + TL_INACTIVE);
+      tlRenderStatic();
+    };
+    document.getElementById('tlModeSim').onclick = function() {
+      tlStopAll();
+      tlMode = 'simultaneous';
+      this.setAttribute('style', 'flex:1;' + TL_ACTIVE);
+      document.getElementById('tlModeSeq').setAttribute('style', 'flex:1;' + TL_INACTIVE);
+      tlRenderStatic();
+    };
+    document.getElementById('tlPlayBtn').onclick = tlPlay;
+    document.getElementById('tlStopBtn').onclick = tlStopAll;
+  }
+
+  function _tlShowError(msg) {
+    let el = document.getElementById('tlErrorBanner');
+    const svg = document.getElementById('timelineSVG');
+    if (!el && svg) {
+      el = document.createElement('div');
+      el.id = 'tlErrorBanner';
+      el.style.cssText = 'font-size:0.55rem;color:#e74c3c;font-weight:800;padding:2px 4px;';
+      svg.insertAdjacentElement('afterend', el);
+    }
+    if (el) el.textContent = msg ? ('⚠ Timeline error: ' + msg) : '';
+  }
+  // ── Real-time playback sync ─────────────────────────────────────────
+  // The app's own playback engine (classic Play button, guitar/piano
+  // clicks, harmonized progressions, Stencil playback, Sing mode — every
+  // path, confirmed by grepping the source) all funnel through one
+  // universal, closure-independent signal: toggling the 'playing' class
+  // on the chromatic circle's .sphere[data-note] elements. Watching that
+  // via MutationObserver — instead of trying to intercept internal
+  // function calls, which doesn't work (see the earlier fix notes above) —
+  // means Timeline highlights in sync with real playback no matter which
+  // of the many paths triggered it.
+  function _tlSyncSphereHighlights() {
+    try {
+      const spheres = document.querySelectorAll('.sphere[data-note]');
+      const playingPcs = new Set();
+      spheres.forEach(sp => {
+        if (sp.classList.contains('playing')) {
+          const pc = parseInt(sp.dataset.note, 10);
+          if (!isNaN(pc)) playingPcs.add(pc);
+        }
+      });
+      document.querySelectorAll('.tl-note-head').forEach(nh => {
+        const pc = parseInt(nh.dataset.pc, 10);
+        if (playingPcs.has(pc)) {
+          nh.setAttribute('stroke', '#fff');
+          nh.setAttribute('stroke-width', '2.4');
+        } else {
+          nh.setAttribute('stroke', '#000');
+          nh.setAttribute('stroke-width', '0.8');
+        }
+      });
+    } catch(e) { console.error('[KCM Timeline] sphere sync failed:', e); }
+  }
+  let _tlObserverStarted = false;
+  function _tlInitSyncObserver() {
+    if (_tlObserverStarted) return;
+    // Watching the whole page body (not just the circle) so this catches a
+    // selection change no matter which panel it came from — circle, piano,
+    // guitar, dock, degree buttons, keyboard shortcuts — all of them toggle
+    // some element's class when state changes. On every such mutation this
+    // does two things immediately (not on the next 200ms poll tick): syncs
+    // the playing-note highlight, AND re-renders the pattern itself if the
+    // underlying selection actually changed. That second part is what was
+    // missing — STAFF/FRETBOARD/KEYBOARD/CIRCLE all react the instant you
+    // click something; Timeline was only catching up on the next poll,
+    // which reads as "disconnected" even though it does eventually update.
+    const observer = new MutationObserver(() => {
+      const svg = document.getElementById('timelineSVG');
+      if (!svg || svg.style.display === 'none') return;
+      _tlSyncSphereHighlights();
+      _tlHandleLiveOnsets();
+      const snap = _tlSnapshotState();
+      if (snap !== null && snap !== _tlLastSnapshot) {
+        _tlLastSnapshot = snap;
+        if (liveSessionStartMs === null) tlRenderStatic();
+      }
+    });
+    observer.observe(document.body, { attributes: true, attributeFilter: ['class'], subtree: true });
+    _tlObserverStarted = true;
+  }
+  _tlInitSyncObserver();
+
+  // ── Universal live playback observer ────────────────────────────────
+  // The app has dozens of separate play-triggering controls scattered
+  // across STAFF buttons, the KCM Control Dock, scale-degree buttons,
+  // Stencil/Song playback, Harmonized chord buttons — hooking each one
+  // by ID (the previous approach) means missing new ones forever. Every
+  // single path, without exception, funnels through one shared,
+  // closure-independent signal: toggling the 'playing' class on the
+  // chromatic circle's .sphere[data-note] elements (confirmed by grepping
+  // every call site in the source). Instead of enumerating triggers, this
+  // watches that one signal directly and reconstructs the actual
+  // left-to-right sequence from real note-on events as they happen — so
+  // ANY play trigger, anywhere in the app, present or future, drives
+  // Timeline's motion automatically, with no button list to maintain.
+  let liveSeq = [];
+  let liveSessionStartMs = null;
+  let liveKnownPlaying = new Set();
+  let liveIdleTimer = null;
+
+  function _tlHandleLiveOnsets() {
+    const spheres = document.querySelectorAll('.sphere[data-note]');
+    const nowPlaying = new Set();
+    spheres.forEach(sp => {
+      if (sp.classList.contains('playing')) {
+        const pc = parseInt(sp.dataset.note, 10);
+        if (!isNaN(pc)) nowPlaying.add(pc);
+      }
+    });
+    const newOnsets = [];
+    nowPlaying.forEach(pc => { if (!liveKnownPlaying.has(pc)) newOnsets.push(pc); });
+    const stillPlaying = nowPlaying.size > 0;
+    liveKnownPlaying = nowPlaying;
+    if (newOnsets.length === 0) {
+      if (!stillPlaying) _tlScheduleIdleReturn();
+      return;
+    }
+    if (liveIdleTimer) { clearTimeout(liveIdleTimer); liveIdleTimer = null; }
+    const nowMs = performance.now();
+    // A gap of more than 6s of silence means this is a fresh sequence, not
+    // a continuation of an old one — covers everything from a single
+    // chord stab to a full scale run without needing to know which.
+    if (liveSessionStartMs === null || (nowMs - liveSessionStartMs) > 6000) {
+      liveSeq = [];
+      liveSessionStartMs = nowMs;
+    }
+    newOnsets.forEach(pc => {
+      const prev = liveSeq[liveSeq.length - 1];
+      let oct = 4, prevMidi = prev ? (prev.oct + 1) * 12 + prev.pc : -1;
+      let midi = (oct + 1) * 12 + pc;
+      while (midi <= prevMidi) { oct++; midi = (oct + 1) * 12 + pc; }
+      liveSeq.push({ pc, oct, tMs: nowMs - liveSessionStartMs });
+    });
+    _tlRenderLiveSeq();
+  }
+
+  function _tlRenderLiveSeq() {
+    if (liveSeq.length === 0) return;
+    const msPerBeat = 220; // proportional spacing — close enough to the app's own typical note pacing for a readable display
+    const events = liveSeq.map((n, i) => ({ pc: n.pc, oct: n.oct, beatStart: n.tMs / msPerBeat, beatDur: 0.9, seq: i }));
+    const playheadBeat = events[events.length - 1].beatStart;
+    drawTimelineStaff(events, 'sequential', playheadBeat, playheadBeat);
+    const statusEl = document.getElementById('tlStatus');
+    if (statusEl) statusEl.textContent = `Live playback — ${events.length} note${events.length === 1 ? '' : 's'} so far`;
+  }
+
+  function _tlScheduleIdleReturn() {
+    if (liveIdleTimer || liveSessionStartMs === null) return;
+    liveIdleTimer = setTimeout(() => {
+      liveIdleTimer = null;
+      liveSessionStartMs = null;
+      liveSeq = [];
+      tlRenderStatic();
+    }, 700);
+  }
+
+  window._kcmTimelineOnTabShown = function() {
+    // Each step gets its own try/catch — a failure in one can no longer
+    // silently prevent the other from running (this was the actual bug:
+    // if injectControls() threw, tlRenderStatic() never got a chance to
+    // draw anything at all, and it failed with zero visible signal).
+    try { injectControls(); } catch(e) { console.error('[KCM Timeline] injectControls failed:', e); _tlShowError('controls: ' + e.message); }
+    try { tlRenderStatic(); } catch(e) { console.error('[KCM Timeline] tlRenderStatic failed:', e); _tlShowError('render: ' + e.message); }
+  };
+
+  // ── Live-sync fix (v2) ───────────────────────────────────────────────
+  // The first attempt wrapped window.updateStaffNotation, assuming the
+  // app's internal code called it through the window object. It doesn't —
+  // every internal caller invokes the closure-local function directly, so
+  // reassigning window.updateStaffNotation from outside was never actually
+  // reached. That's not fixable by wrapping; the real fix is to stop trying
+  // to intercept a call we can't see, and instead watch the state itself.
+  //
+  // rootNote / currentLevel / currentTriadSelection / currentExtendedSelection /
+  // selectedNotes are all real getters on window (confirmed reachable — see
+  // the Object.defineProperties block near the top of the file). Polling
+  // them is closure-independent: it doesn't matter whether the change came
+  // from a level button, the dock, a keyboard shortcut, or a direct click
+  // on the guitar/piano/circle — if the state changed, this sees it.
+  let _tlLastSnapshot = null;
+  function _tlSnapshotState() {
+    try {
+      const sel = Array.from(window.selectedNotes || []).sort((a,b)=>a-b);
+      return JSON.stringify([
+        window.rootNote, window.currentLevel,
+        window.currentTriadSelection, window.currentExtendedSelection,
+        window.currentModeSelection, window.currentScaleType,
+        window.currentHarmDegree, window.currentHarmChordType, sel
+      ]);
+    } catch(e) { return null; }
+  }
+  setInterval(() => {
+    try {
+      const svg = document.getElementById('timelineSVG');
+      if (!svg || svg.style.display === 'none') return; // only redraw while the tab is actually visible
+      const snap = _tlSnapshotState();
+      if (snap !== null && snap !== _tlLastSnapshot) {
+        _tlLastSnapshot = snap;
+        tlRenderStatic();
+      }
+    } catch(e) { console.error('[KCM Timeline] poll loop failed:', e); }
+  }, 200);
+})();
+
+// ═══════════════════════════════════════════════════════════════════════
+// KCM PROGRESSION TIMELINE — additive only, separate small module.
+// Adds a horizontal chord track under the existing Chord Progressions
+// panel (Harmonized Major/Minor). The progression buttons and "Play All
+// Scale Chords" call the app's real playProgression()/playAllScaleChords()
+// directly as closure-local calls — same reason wrapping window.X doesn't
+// intercept them (see the Timeline module's notes above). Instead of
+// intercepting, this listens for the same clicks via event delegation
+// (an ADDITIONAL listener alongside the existing onclick handlers — both
+// fire, neither is replaced) and independently drives a purely visual
+// horizontal track using the exact same timing formula playProgression()
+// itself uses (chordDur = 60000 / currentBPM). It touches no audio and no
+// sphere/highlight state — those already work correctly today.
+(function(){
+  'use strict';
+  const PROG_LABELS_MAJOR = ['I','ii','iii','IV','V','vi','vii°'];
+  const PROG_LABELS_MINOR = ['i','ii°','III','iv','v','VI','VII'];
+  // Mirrors updateProgressionButtons()'s hardcoded lists exactly, in the
+  // same fixed render order, so a click's DOM index maps to the right degrees.
+  const PROGRESSIONS_MAJOR = [
+    {degrees:[0,3,4,0]}, {degrees:[0,4,5,3]}, {degrees:[0,5,3,4]},
+    {degrees:[1,4,0]},   {degrees:[5,3,0,4]}, {degrees:[0,3,5,4]}
+  ];
+  const PROGRESSIONS_MINOR = [
+    {degrees:[0,3,4]},   {degrees:[0,5,6]},   {degrees:[0,3,6]},
+    {degrees:[0,2,5,6]}, {degrees:[0,5,2,6]}, {degrees:[0,4,5,3]}
+  ];
+
+  let progRAF = null;
+
+  function buildProgTrack(degrees) {
+    const wrap = document.getElementById('progTimeline');
+    const track = document.getElementById('progTimelineTrack');
+    if (!wrap || !track) return;
+    const isMajor = window.currentLevel === 'harmMajor';
+    const labels = isMajor ? PROG_LABELS_MAJOR : PROG_LABELS_MINOR;
+    track.innerHTML = '';
+    degrees.forEach((deg, i) => {
+      const box = document.createElement('div');
+      box.dataset.idx = i;
+      box.textContent = labels[deg] || '?';
+      box.style.cssText = "flex:1;max-width:80px;padding:10px 4px;text-align:center;font-family:'Cinzel',serif;font-weight:800;font-size:0.85rem;border-radius:8px;border:2px solid rgba(0,128,128,0.35);background:rgba(0,128,128,0.08);color:#ccc;transition:all 0.15s;";
+      track.appendChild(box);
+    });
+    wrap.style.display = '';
+  }
+
+  function highlightProgBox(idx) {
+    document.querySelectorAll('#progTimelineTrack > div').forEach(box => {
+      const active = parseInt(box.dataset.idx, 10) === idx;
+      box.style.background = active ? 'linear-gradient(135deg,#008080,#006666)' : 'rgba(0,128,128,0.08)';
+      box.style.color = active ? '#fff' : '#ccc';
+      box.style.borderColor = active ? '#00b3b3' : 'rgba(0,128,128,0.35)';
+      box.style.transform = active ? 'translateY(-3px) scale(1.06)' : '';
+    });
+  }
+
+  function runProgTimeline(degrees) {
+    try {
+      if (progRAF) cancelAnimationFrame(progRAF);
+      buildProgTrack(degrees);
+      const bpm = window.currentBPM || 100;
+      const chordDur = 60000 / bpm; // ms — matches playProgression()'s own timing exactly
+      const totalMs = degrees.length * chordDur;
+      const startMs = performance.now();
+      const statusEl = document.getElementById('progTimelineStatus');
+      function animate() {
+        const elapsed = performance.now() - startMs;
+        if (elapsed >= totalMs) {
+          highlightProgBox(-1);
+          if (statusEl) statusEl.textContent = '';
+          progRAF = null;
+          return;
+        }
+        const idx = Math.floor(elapsed / chordDur);
+        highlightProgBox(idx);
+        if (statusEl) statusEl.textContent = `Chord ${idx + 1} of ${degrees.length}`;
+        progRAF = requestAnimationFrame(animate);
+      }
+      progRAF = requestAnimationFrame(animate);
+    } catch(e) { console.error('[KCM Progression Timeline] failed:', e); }
+  }
+
+  function initProgButtonListener() {
+    const container = document.getElementById('progressionButtons');
+    if (container && !container.dataset.tlHooked) {
+      container.dataset.tlHooked = '1';
+      container.addEventListener('click', (e) => {
+        const btn = e.target.closest('.level-btn');
+        if (!btn || !container.contains(btn)) return;
+        const idx = Array.from(container.children).indexOf(btn);
+        const isMajor = window.currentLevel === 'harmMajor';
+        const list = isMajor ? PROGRESSIONS_MAJOR : PROGRESSIONS_MINOR;
+        const prog = list[idx];
+        if (prog) runProgTimeline(prog.degrees);
+      });
+    }
+    const allBtn = document.getElementById('playAllChordsBtn');
+    if (allBtn && !allBtn.dataset.tlHooked) {
+      allBtn.dataset.tlHooked = '1';
+      allBtn.addEventListener('click', () => runProgTimeline([0,1,2,3,4,5,6]));
+    }
+  }
+  initProgButtonListener();
+})();
+
+// ═══════════════════════════════════════════════════════════════════════
+// KCM RECORDING TIMELINE — additive only, separate small module.
+// The Recording Studio's "Playback" button already calls the real
+// playbackRecording() (closure-local, unreachable by wrapping window.X for
+// the same reason documented above), so this attaches an ADDITIONAL click
+// listener on the same #playRecBtn — both fire, neither is replaced — and
+// independently renders a left-to-right mini-staff of the actual recorded
+// notes (window.recordedNotes, newly exposed via getter above), each note
+// positioned by its real timestamp rather than a fixed beat grid, since a
+// user recording has no fixed tempo. No audio or highlight logic here —
+// playbackRecording() already handles real sound correctly on its own.
+(function(){
+  'use strict';
+  const diatonicStep = {0:0,1:0,2:1,3:1,4:2,5:3,6:3,7:4,8:4,9:5,10:5,11:6};
+  const KEY_SIGNATURES = {
+    0:{sharps:0,flats:0}, 1:{sharps:0,flats:5}, 2:{sharps:2,flats:0}, 3:{sharps:0,flats:3},
+    4:{sharps:4,flats:0}, 5:{sharps:0,flats:1}, 6:{sharps:6,flats:0}, 7:{sharps:1,flats:0},
+    8:{sharps:0,flats:4}, 9:{sharps:3,flats:0}, 10:{sharps:0,flats:2}, 11:{sharps:5,flats:0}
+  };
+  // Same sharps/flats-per-key data and staff-line Y positions the real
+  // STAFF tab's own drawStaff() uses (keySignatures / sharpPos / flatPos),
+  // just scaled down for this smaller mini-staff. Drawn right after the
+  // clef, same as every real staff notation convention.
+  function drawKeySig(svg, rootPc) {
+    const sig = KEY_SIGNATURES[rootPc] || KEY_SIGNATURES[0];
+    let x = 26;
+    if (sig.sharps > 0) {
+      const sharpPos = [20,35,15,50,25,60,40];
+      for (let i = 0; i < sig.sharps; i++) {
+        const s = document.createElementNS('http://www.w3.org/2000/svg','text');
+        s.setAttribute('x', x); s.setAttribute('y', sharpPos[i]); s.setAttribute('font-size','16');
+        s.setAttribute('font-weight','bold'); s.setAttribute('font-family','serif');
+        s.textContent = '♯'; s.setAttribute('fill','#000'); svg.appendChild(s);
+        x += 7;
+      }
+    } else if (sig.flats > 0) {
+      const flatPos = [40,55,45,50,30,35,25];
+      for (let i = 0; i < sig.flats; i++) {
+        const f = document.createElementNS('http://www.w3.org/2000/svg','text');
+        f.setAttribute('x', x); f.setAttribute('y', flatPos[i]); f.setAttribute('font-size','16');
+        f.setAttribute('font-weight','bold'); f.setAttribute('font-family','serif');
+        f.textContent = '♭'; f.setAttribute('fill','#000'); svg.appendChild(f);
+        x += 7;
+      }
+    }
+    return x;
+  }
+  function noteY(pc, oct) {
+    const steps = diatonicStep[pc] + (oct - 4) * 7;
+    return 70 - steps * 5;
+  }
+  let recRAF = null;
+
+  function drawRecStaff(notes, totalMs, revealUpToMs) {
+    const svg = document.getElementById('recTimelineSVG');
+    if (!svg) return;
+    svg.innerHTML = '';
+    const sig = KEY_SIGNATURES[window.rootNote || 0] || KEY_SIGNATURES[0];
+    const marginX = 34 + Math.max(sig.sharps, sig.flats) * 7;
+    const W = 320, H = 100, trackW = W - marginX - 10;
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    for (let i = 0; i < 5; i++) {
+      const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+      line.setAttribute('x1', marginX - 4); line.setAttribute('y1', 20 + i * 10);
+      line.setAttribute('x2', W - 6);       line.setAttribute('y2', 20 + i * 10);
+      line.setAttribute('stroke', '#000');  line.setAttribute('stroke-width', '1');
+      svg.appendChild(line);
+    }
+    const clef = document.createElementNS('http://www.w3.org/2000/svg','text');
+    clef.setAttribute('x', '2'); clef.setAttribute('y', '48'); clef.setAttribute('font-size', '30');
+    clef.setAttribute('font-family', 'serif'); clef.textContent = '𝄞'; clef.setAttribute('fill', '#000');
+    svg.appendChild(clef);
+    drawKeySig(svg, window.rootNote || 0);
+    const visible = (typeof revealUpToMs === 'number')
+      ? notes.filter(n => n.timestamp <= revealUpToMs + 1)
+      : notes;
+    visible.forEach(n => {
+      const x = marginX + (totalMs > 0 ? (n.timestamp / totalMs) * trackW : 0);
+      const y = noteY(n.note, n.octave);
+      if (y >= 70) for (let ly = 70; ly <= y; ly += 10) {
+        const led = document.createElementNS('http://www.w3.org/2000/svg','line');
+        led.setAttribute('x1', x-5); led.setAttribute('y1', ly); led.setAttribute('x2', x+5); led.setAttribute('y2', ly);
+        led.setAttribute('stroke', '#000'); led.setAttribute('stroke-width', '1'); svg.appendChild(led);
+      }
+      if (y <= 10) for (let ly = 10; ly >= y; ly -= 10) {
+        const led = document.createElementNS('http://www.w3.org/2000/svg','line');
+        led.setAttribute('x1', x-5); led.setAttribute('y1', ly); led.setAttribute('x2', x+5); led.setAttribute('y2', ly);
+        led.setAttribute('stroke', '#000'); led.setAttribute('stroke-width', '1'); svg.appendChild(led);
+      }
+      const nh = document.createElementNS('http://www.w3.org/2000/svg','ellipse');
+      nh.setAttribute('cx', x); nh.setAttribute('cy', y); nh.setAttribute('rx', '4'); nh.setAttribute('ry', '3.4');
+      nh.setAttribute('fill', '#008080'); nh.setAttribute('stroke', '#000'); nh.setAttribute('stroke-width', '0.8');
+      svg.appendChild(nh);
+    });
+    if (typeof revealUpToMs === 'number' && totalMs > 0) {
+      const px = marginX + Math.min(revealUpToMs / totalMs, 1) * trackW;
+      const ph = document.createElementNS('http://www.w3.org/2000/svg','line');
+      ph.setAttribute('x1', px); ph.setAttribute('y1', '12'); ph.setAttribute('x2', px); ph.setAttribute('y2', '70');
+      ph.setAttribute('stroke', '#e74c3c'); ph.setAttribute('stroke-width', '1.5'); ph.setAttribute('opacity', '0.85');
+      svg.appendChild(ph);
+    }
+  }
+
+  function runRecTimeline() {
+    try {
+      const notes = Array.from(window.recordedNotes || []);
+      const svg = document.getElementById('recTimelineSVG');
+      if (!svg || notes.length === 0) return;
+      if (recRAF) cancelAnimationFrame(recRAF);
+      svg.style.display = '';
+      const last = notes[notes.length - 1];
+      const totalMs = last.timestamp + (last.duration * 1000 || 400);
+      const startMs = performance.now();
+      function animate() {
+        const elapsed = performance.now() - startMs;
+        if (elapsed >= totalMs) {
+          drawRecStaff(notes, totalMs, totalMs);
+          recRAF = null;
+          return;
+        }
+        drawRecStaff(notes, totalMs, elapsed);
+        recRAF = requestAnimationFrame(animate);
+      }
+      recRAF = requestAnimationFrame(animate);
+    } catch(e) { console.error('[KCM Recording Timeline] failed:', e); }
+  }
+
+  function initRecButtonListener() {
+    const btn = document.getElementById('playRecBtn');
+    if (btn && !btn.dataset.tlHooked) {
+      btn.dataset.tlHooked = '1';
+      btn.addEventListener('click', runRecTimeline);
+    }
+  }
+  initRecButtonListener();
+})();
+
+</script>
 </body>
 </html>
