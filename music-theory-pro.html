@@ -9651,7 +9651,14 @@ async function kcmAIAsk(type) {
     function buildKeyRing() {
         const ring = document.getElementById('kcmKeyRing');
         if (!ring) return;
-        const names = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+        // Same enharmonic spelling as the main Key button / dock / Harmonized
+        // panel (syncKeyPickerLabel()'s displayNames, _KEY_DEFS) -- this ring
+        // was previously hardcoded to always-sharp names (C#, D#, F#, G#, A#),
+        // so it could show a different spelling for the same key than every
+        // other "current key" indicator in the app (e.g. D# here vs Eb on the
+        // main Key button). Keeping this list identical to those elsewhere is
+        // what keeps every key display in sync.
+        const names = ['C','D♭','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
         ring.innerHTML = names.map((n,i) => `
             <button class="kcm-key-pill${i===currentStencilRoot?' active':''}" data-pc="${i}">${n}</button>
         `).join('');
