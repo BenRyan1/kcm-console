@@ -6438,7 +6438,10 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 const progressions = isMajor ? [
                     {name:'I-IV-V-I',degrees:[0,3,4,0],desc:'Classic Rock'},{name:'I-V-vi-IV',degrees:[0,4,5,3],desc:'Pop Anthem'},
                     {name:'I-vi-IV-V',degrees:[0,5,3,4],desc:'50s Doo-Wop'},{name:'ii-V-I',degrees:[1,4,0],desc:'Jazz Cadence'},
-                    {name:'vi-IV-I-V',degrees:[5,3,0,4],desc:'Emotional'},{name:'I-IV-vi-V',degrees:[0,3,5,4],desc:'Sensitive'}
+                    {name:'vi-IV-I-V',degrees:[5,3,0,4],desc:'Emotional'},{name:'I-IV-vi-V',degrees:[0,3,5,4],desc:'Sensitive'},
+                    // Full diatonic run through every triad in the key, back
+                    // to the tonic — e.g. in C: C Dm Em F G Am B° C.
+                    {name:'I-ii-iii-IV-V-vi-vii°-I',degrees:[0,1,2,3,4,5,6,0],desc:'Harmonized Major Scale'}
                 ] : [
                     {name:'i-iv-v',degrees:[0,3,4],desc:'Minor Blues'},{name:'i-VI-VII',degrees:[0,5,6],desc:'Natural Minor'},
                     {name:'i-iv-VII',degrees:[0,3,6],desc:'Dorian Feel'},{name:'i-III-VI-VII',degrees:[0,2,5,6],desc:'Dark Journey'},
