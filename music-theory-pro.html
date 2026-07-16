@@ -1608,6 +1608,56 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
     .kcm-stencil-circle-bg { width: 220px; height: 220px; }
     #kcmStencilPanel { max-width: 100%; }
 }
+
+/* -- Stencil Overlay Mode --------------------------------------
+   A layer, not a tab: the Stencil wheel occupies the SAME space as
+   whichever main view (Circle/Guitar/Piano) is active, shrunk into a
+   corner and stripped of its chooser/grid/tabs, so picking a chord in
+   the Harmonized progression panel is visible on the main view AND
+   the wheel at once -- no switching the view toggle back and forth. */
+.kcm-stencil-overlay {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    z-index: 30;
+    width: 200px;
+    background: rgba(8,8,20,0.95);
+    border: 2px solid var(--primary-teal);
+    border-radius: 14px;
+    padding: 8px 8px 10px;
+    box-shadow: 0 10px 36px rgba(0,0,0,0.55);
+    pointer-events: none;
+}
+.kcm-stencil-overlay h3,
+.kcm-stencil-overlay .kcm-stencil-tabs,
+.kcm-stencil-overlay .kcm-stencil-grid,
+.kcm-stencil-overlay .kcm-key-ring,
+.kcm-stencil-overlay .kcm-song-timeline,
+.kcm-stencil-overlay .kcm-stencil-play-row,
+.kcm-stencil-overlay #kcmStencilSpeedRow {
+    display: none !important;
+}
+.kcm-stencil-overlay .kcm-stencil-wrap-frame {
+    width: 184px;
+    height: 184px;
+    overflow: hidden;
+    position: relative;
+    margin: 0 auto;
+}
+.kcm-stencil-overlay .kcm-stencil-wrap {
+    transform: scale(0.368);
+    transform-origin: top left;
+}
+.kcm-stencil-overlay #kcmStencilLabel {
+    transform: scale(0.82);
+    transform-origin: top center;
+    margin-top: 4px;
+}
+@media (max-width: 700px) {
+    /* Corner overlay gets cramped once the two-column layout stacks --
+       hide it rather than let it cover the main view on small screens. */
+    .kcm-stencil-overlay { display: none !important; }
+}
 /* Category tabs */
 .kcm-stencil-tabs {
     display: flex;
@@ -1928,6 +1978,7 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                 <button class="view-btn" data-view="guitar">🎸 Guitar</button>
                 <button class="view-btn" data-view="keyboard">🎹 Piano</button>
                 <button class="view-btn" data-view="stencil">✦ Stencil</button>
+                <button class="view-btn" id="stencilOverlayBtn" onclick="toggleStencilOverlay()" title="Keep a mini Stencil wheel visible over any view, synced live with the Harmonized progression panel" aria-pressed="false">🗗 Stencil Overlay</button>
                 <button class="view-btn" data-view="ear">👂 Ear</button>
                 <button class="view-btn" data-view="sing">🎤 Sing</button>
                 <button class="view-btn" data-view="circleType">⭕ Type-to-Play</button>
@@ -1967,7 +2018,7 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
             </div><!-- end kcm-left-col -->
             <div class="kcm-center-col" style="flex:2 1 480px; max-width:560px; min-width:320px;">
             <!-- ══ PANEL SWAP ZONE — only one panel visible at a time ══ -->
-            <div id="panelSwapZone" style="width:100%;">
+            <div id="panelSwapZone" style="width:100%; position:relative;">
 
                 <!-- PANEL 1: CHROMATIC CIRCLE -->
                 <div id="chromaticCircle" style="margin:0 auto; display:block; left:0; right:0; position:relative;" role="region" aria-label="Chromatic circle">
@@ -2099,12 +2150,14 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
 
                     <!-- Circle + SVG Overlay — visual panel moved above the
                          stencil chooser (grid/key ring) per request. -->
+                    <div class="kcm-stencil-wrap-frame" id="kcmStencilWrapFrame">
                     <div class="kcm-stencil-wrap" id="kcmStencilWrap">
                         <!-- The 12 spheres are cloned here by JS — circle only, no interaction -->
                         <div id="kcmStencilCircle" style="position:absolute;top:0;left:0;width:500px;height:500px;"></div>
                         <!-- SVG stencil overlay -->
                         <svg id="kcmStencilSVG" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg"></svg>
                     </div>
+                    </div><!-- end kcmStencilWrapFrame -->
 
                     <!-- Shape Grid -->
                     <div class="kcm-stencil-grid" id="kcmStencilGrid"></div>
@@ -2631,6 +2684,11 @@ window.addEventListener('unhandledrejection', function(event) {
     try {
         // ── Global state ──────────────────────────────────────────
         let audioContext, audioReady = false, currentLevel = '1', currentView = 'circle';
+        // Stencil Overlay: a layering toggle -- when on, the Stencil wheel
+        // renders as a shrunk corner panel on top of whichever main view is
+        // active (Circle/Guitar/Piano), instead of requiring the view toggle
+        // to switch away from it. See updateView()/toggleStencilOverlay().
+        let stencilOverlayOn = false;
         const _noteOffTimers = {};
         const _playTimers = [];  // all active sequence/progression setTimeout IDs
         function _schedPlay(fn, ms) { const id = setTimeout(fn, ms); _playTimers.push(id); return id; }
@@ -5952,8 +6010,22 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 const sing = el('singPanel');
                 if (sing)    sing.style.display    = currentView === 'sing'     ? 'block' : 'none';
                 // ── KCM STENCIL PANEL ──
+                // Three states: full main panel (view === 'stencil'), a
+                // shrunk corner overlay layered on top of whatever else is
+                // showing (stencilOverlayOn, any other view), or hidden.
                 const stencil = el('kcmStencilPanel');
-                if (stencil) stencil.style.display = currentView === 'stencil' ? 'block' : 'none';
+                if (stencil) {
+                    if (currentView === 'stencil') {
+                        stencil.classList.remove('kcm-stencil-overlay');
+                        stencil.style.display = 'block';
+                    } else if (stencilOverlayOn) {
+                        stencil.classList.add('kcm-stencil-overlay');
+                        stencil.style.display = 'block';
+                    } else {
+                        stencil.classList.remove('kcm-stencil-overlay');
+                        stencil.style.display = 'none';
+                    }
+                }
                 // Stop pitch detection when leaving sing view
                 if (currentView !== 'sing' && typeof stopSingMode === 'function') stopSingMode();
                 if (staff)   staff.style.display   = 'block'; // always visible
@@ -5966,6 +6038,18 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 } else { if (pc) pc.style.display='none'; }
             } catch(e) { console.error('Update view error:', e); }
         }
+
+        // ── Stencil Overlay toggle ──────────────────────────────
+        function toggleStencilOverlay() {
+            stencilOverlayOn = !stencilOverlayOn;
+            const btn = document.getElementById('stencilOverlayBtn');
+            if (btn) {
+                btn.classList.toggle('active', stencilOverlayOn);
+                btn.setAttribute('aria-pressed', stencilOverlayOn ? 'true' : 'false');
+            }
+            updateView();
+        }
+        window.toggleStencilOverlay = toggleStencilOverlay;
 
         // ── Update ear training docked panel ───────────────────────
         function updateEarOverlay() {
@@ -6096,11 +6180,13 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                         const pitchClasses = chord.intervals.map(iv=>(rootNote+iv)%12);
                         selectedNotes = new Set(pitchClasses);
                         updateSphereDisplay(); updateNoteList(); updateStaffNotation(pitchClasses);
-                        // If the Stencil wheel is the visible panel, mirror
-                        // this progression chord onto it too — otherwise the
-                        // Stencil view sits frozen on whatever was selected
-                        // last while the rest of the app plays through.
-                        if (currentView === 'stencil' && typeof window._stencilShowChord === 'function') {
+                        // If the Stencil wheel is the visible panel — OR the
+                        // Stencil Overlay layer is switched on over whatever
+                        // else is showing — mirror this progression chord
+                        // onto it too, so the wheel never sits frozen on
+                        // whatever was selected last while the rest of the
+                        // app plays through.
+                        if ((currentView === 'stencil' || stencilOverlayOn) && typeof window._stencilShowChord === 'function') {
                             window._stencilShowChord(rootNote, chord.intervals, chord.name);
                         }
                         const statusEl = document.getElementById('status');
