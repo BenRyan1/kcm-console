@@ -5882,6 +5882,67 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
             _initOctaveTempoBtnSync();
         }
 
+        // ── Hover Peek — layers as navigation ─────────────────────
+        // Hovering a picker button (mouse only) reveals its panel as a
+        // quick peek layer, no click needed; moving away closes it again.
+        // A real click still pins the panel open exactly as before — the
+        // existing toggleXPicker() functions and their outside-click-close
+        // listeners are untouched, this only adds an additive hover path
+        // on top. Scale Type / Mode are intentionally excluded: their
+        // panels are tied to a stateful level-switch click (currentLevel),
+        // not a plain UI toggle, so peeking them on hover would risk
+        // implying a mode change that hasn't actually happened.
+        function _wireHoverPeek(btnId, panelId) {
+            const btn = document.getElementById(btnId);
+            const panel = document.getElementById(panelId);
+            if (!btn || !panel) return;
+            let closeTimer = null;
+            const cancelClose = () => { if (closeTimer) { clearTimeout(closeTimer); closeTimer = null; } };
+            const openPeek = () => {
+                cancelClose();
+                if (panel.style.display === 'none' || !panel.style.display) {
+                    panel.style.display = 'block';
+                    panel.dataset.peek = '1'; // hover-only, not click-pinned
+                    btn.classList.add('open');
+                    btn.setAttribute('aria-expanded', 'true');
+                }
+            };
+            const scheduleClose = () => {
+                cancelClose();
+                // Short grace period bridges the visual gap between button
+                // and panel so moving the mouse from one to the other
+                // doesn't flicker-close it.
+                closeTimer = setTimeout(() => {
+                    if (panel.dataset.peek === '1') {
+                        panel.style.display = 'none';
+                        delete panel.dataset.peek;
+                        btn.classList.remove('open');
+                        btn.setAttribute('aria-expanded', 'false');
+                    }
+                }, 250);
+            };
+            btn.addEventListener('mouseenter', openPeek);
+            panel.addEventListener('mouseenter', cancelClose);
+            btn.addEventListener('mouseleave', scheduleClose);
+            panel.addEventListener('mouseleave', scheduleClose);
+            // A real click pins it open — clear the peek flag so a
+            // subsequent mouseleave won't auto-close what the user
+            // deliberately opened; toggleXPicker()'s own click-to-close /
+            // outside-click-close logic owns it from here.
+            btn.addEventListener('click', () => { delete panel.dataset.peek; });
+        }
+        function _initHoverPeeks() {
+            _wireHoverPeek('keyPickerBtn', 'keyPickerPanel');
+            _wireHoverPeek('instrumentBtn', 'instrumentPanel');
+            _wireHoverPeek('octaveBtn', 'octavePickerPanel');
+            _wireHoverPeek('tempoBtn', 'tempoPickerPanel');
+        }
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', _initHoverPeeks);
+        } else {
+            _initHoverPeeks();
+        }
+
         const INSTRUMENT_LABELS = { synth: 'Synth', piano: 'Piano', guitar: 'Guitar', marimba: 'Marimba', strings: 'Strings' };
         function initInstrumentPicker() {
             const ws = document.getElementById('waveformSelect');
