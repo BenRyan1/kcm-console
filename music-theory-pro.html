@@ -4172,6 +4172,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                     const sp = document.querySelector(`.sphere[data-note="${pc}"]`);
                     if (sp) { sp.classList.remove('excluded','included','active'); sp.classList.add('playing'); }
                     pulseBadge(pc);
+                    pulseStencilDot(pc);
                 }
                 function settleSphere(pc) {
                     const sp = document.querySelector(`.sphere[data-note="${pc}"]`);
@@ -4182,6 +4183,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                         sp.style.border=''; sp.style.boxShadow=''; sp.style.opacity=''; sp.style.filter=''; sp.style.transform='';
                     }
                     settleBadge(pc);
+                    settleStencilDot(pc);
                 }
                 // Mirrors the note-list badges (#noteList) to the same
                 // playing/settled pulse as the Circle spheres, in the same
@@ -4194,6 +4196,32 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 }
                 function settleBadge(pc) {
                     document.querySelectorAll(`#noteList .note-badge[data-note="${pc}"]`).forEach(b => b.classList.remove('note-badge-playing'));
+                }
+                // Mirrors onto the Stencil wheel's own note dots too — same
+                // glow treatment stencilPlay() already uses for its own
+                // Ascend/Descend buttons, applied here so the Stencil
+                // Overlay's points also progress left-to-right in sync
+                // whenever ANY playback path plays a note (Ascending,
+                // Descending, Full Scale, Play Chord), not just the
+                // Stencil's own transport buttons. Root gets the gold
+                // glow at rest (matching stencilPlay()'s own settle look);
+                // every other dot gets the plain teal/white ring.
+                function pulseStencilDot(pc) {
+                    document.querySelectorAll(`.stencil-note-dot[data-pc="${pc}"]`).forEach(d => {
+                        d.setAttribute('filter', 'url(#rootGlow)');
+                        d.setAttribute('stroke', '#ffffff');
+                        d.setAttribute('stroke-width', '4');
+                        d.setAttribute('opacity', '1');
+                    });
+                }
+                function settleStencilDot(pc) {
+                    document.querySelectorAll(`.stencil-note-dot[data-pc="${pc}"]`).forEach(d => {
+                        const isRoot = pc === rootNote;
+                        d.setAttribute('filter', isRoot ? 'url(#rootGlow)' : '');
+                        d.setAttribute('stroke', isRoot ? '#F4D03F' : 'rgba(255,255,255,0.6)');
+                        d.setAttribute('stroke-width', isRoot ? '3.5' : '2');
+                        d.setAttribute('opacity', '1');
+                    });
                 }
 
                 // ── Core scheduler ────────────────────────────────────────
