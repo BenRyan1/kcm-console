@@ -6419,21 +6419,45 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         // feedback loop.
         if (typeof ResizeObserver !== 'undefined') {
             const _kcmFitObserver = new ResizeObserver(() => kcmFitLayout());
+            // Watching the WRAPPER (#kcmFitWrap), not just the row. Once the
+            // row has fallen into wrapped/stacked mode, its own bounding box
+            // no longer tracks the container's true available width (wrapped
+            // flex children just report their own natural sizes) -- so a
+            // stack caused by an early bad measurement (e.g. inside a
+            // lazy-loaded iframe, before the panel has settled to its real
+            // width) could never self-correct even after real space became
+            // available. The wrapper is a plain block element whose size
+            // always reflects the true container width, wrapped or not.
+            const observeBoth = () => {
+                const wrap = document.getElementById('kcmFitWrap');
+                const row  = document.getElementById('kcmTwoColRow');
+                if (wrap) _kcmFitObserver.observe(wrap);
+                if (row)  _kcmFitObserver.observe(row);
+            };
             if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', () => {
-                    const row = document.getElementById('kcmTwoColRow');
-                    if (row) _kcmFitObserver.observe(row);
-                });
+                document.addEventListener('DOMContentLoaded', observeBoth);
             } else {
-                const row = document.getElementById('kcmTwoColRow');
-                if (row) _kcmFitObserver.observe(row);
+                observeBoth();
             }
         }
 
+        // Retried initial calls, not just one. Embedded inside a
+        // loading="lazy" iframe (see the KCM Console shell), this document's
+        // own DOMContentLoaded can fire before the outer page has finished
+        // settling the panel/iframe's real CSS width (web fonts, sibling
+        // panels, etc.), so a single measurement at +100ms can lock in a
+        // too-narrow "naturalW/availW" reading -- and once flex-wrap:wrap
+        // is set as the fallback, nothing else was guaranteed to re-trigger
+        // a re-measure. Re-checking a few times over the following seconds
+        // costs nothing (kcmFitLayout is cheap and idempotent) and fixes
+        // that permanently-wrong-first-measurement failure mode.
+        function _kcmFitRetrySchedule() {
+            [100, 350, 800, 1500, 3000].forEach(ms => setTimeout(kcmFitLayout, ms));
+        }
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => setTimeout(kcmFitLayout, 100));
+            document.addEventListener('DOMContentLoaded', _kcmFitRetrySchedule);
         } else {
-            setTimeout(kcmFitLayout, 100);
+            _kcmFitRetrySchedule();
         }
 
         // ── Select Mode sub-dropdown (under the Modes level button) —
