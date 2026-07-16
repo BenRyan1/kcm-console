@@ -1305,6 +1305,12 @@ select option { background: #1a1a2e; color: white; }
     border: 2px solid rgba(244,208,63,0.3);
     box-shadow: 0 6px 25px rgba(0,0,0,0.4);
 }
+@keyframes kcmPanelActivate {
+    0%   { opacity: 0; transform: translateY(-10px); box-shadow: 0 6px 25px rgba(0,0,0,0.4), 0 0 0 rgba(244,208,63,0); }
+    40%  { opacity: 1; transform: translateY(0); box-shadow: 0 6px 25px rgba(0,0,0,0.4), 0 0 28px rgba(244,208,63,0.55); }
+    100% { opacity: 1; transform: translateY(0); box-shadow: 0 6px 25px rgba(0,0,0,0.4), 0 0 0 rgba(244,208,63,0); }
+}
+.kcm-just-activated { animation: kcmPanelActivate 0.6s ease-out; }
 .progression-controls h4 {
     margin: 0 0 1rem 0;
     text-align: center;
@@ -2806,6 +2812,12 @@ window.addEventListener('unhandledrejection', function(event) {
                         const progressionControls = document.getElementById('progressionControls');
                         if ((currentLevel === 'harmMajor' || currentLevel === 'harmMinor') && currentView !== 'ear') {
                             progressionControls.style.display = 'block';
+                            progressionControls.classList.remove('kcm-just-activated');
+                            void progressionControls.offsetWidth; // restart animation
+                            progressionControls.classList.add('kcm-just-activated');
+                            if (typeof progressionControls.scrollIntoView === 'function') {
+                                progressionControls.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                            }
                             updateProgressionButtons();
                             const keySpan = document.getElementById('progressionKey');
                             const typeSpan = document.getElementById('progressionChordType');
