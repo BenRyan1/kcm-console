@@ -439,6 +439,23 @@ nav a.active { color: var(--primary-teal); }
     background: var(--primary-teal);
     border-color: var(--primary-teal);
 }
+.scale-type-btn {
+    padding: 7px 10px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    font-family: var(--font-display);
+    border-radius: 10px;
+    border: 2px solid rgba(0,128,128,0.4);
+    background: rgba(0,128,128,0.1);
+    color: #fff;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+}
+.scale-type-btn.active {
+    background: var(--primary-teal);
+    border-color: var(--primary-teal);
+}
 .key-pill {
     padding: 6px 10px;
     font-size: 0.72rem;
@@ -2080,6 +2097,15 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                         <button class="kcm-stencil-tab" data-cat="songs">🎵 Songs</button>
                     </div>
 
+                    <!-- Circle + SVG Overlay — visual panel moved above the
+                         stencil chooser (grid/key ring) per request. -->
+                    <div class="kcm-stencil-wrap" id="kcmStencilWrap">
+                        <!-- The 12 spheres are cloned here by JS — circle only, no interaction -->
+                        <div id="kcmStencilCircle" style="position:absolute;top:0;left:0;width:500px;height:500px;"></div>
+                        <!-- SVG stencil overlay -->
+                        <svg id="kcmStencilSVG" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg"></svg>
+                    </div>
+
                     <!-- Shape Grid -->
                     <div class="kcm-stencil-grid" id="kcmStencilGrid"></div>
 
@@ -2090,14 +2116,6 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                          Chord symbols only (like any lead-sheet chord chart) —
                          no melody transcription, no lyrics. ── -->
                     <div class="kcm-song-timeline" id="kcmSongTimeline" style="display:none;"></div>
-
-                    <!-- Circle + SVG Overlay -->
-                    <div class="kcm-stencil-wrap" id="kcmStencilWrap">
-                        <!-- The 12 spheres are cloned here by JS — circle only, no interaction -->
-                        <div id="kcmStencilCircle" style="position:absolute;top:0;left:0;width:500px;height:500px;"></div>
-                        <!-- SVG stencil overlay -->
-                        <svg id="kcmStencilSVG" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg"></svg>
-                    </div>
 
                     <!-- Label Block -->
                     <div id="kcmStencilLabel">
@@ -2275,7 +2293,22 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                 <button class="level-btn"         data-level="5"         title="5 Notes">Pentatonic</button>
                 <button class="level-btn"         data-level="6"         title="6 Notes">Whole Tone</button>
                 <button class="level-btn"         data-level="scales"    title="7 Notes">Scales</button>
+                <div id="scaleTypeSubPanel" style="display:none; width:100%; box-sizing:border-box; background:rgba(10,10,25,0.97); border:2px solid var(--primary-teal); border-radius:14px; padding:0.6rem 0.75rem; margin:2px 0;">
+                    <div style="font-size:0.6rem; font-weight:700; letter-spacing:1px; color:var(--primary-teal); text-align:center; margin-bottom:0.5rem; font-family:var(--font-display);">SCALE TYPE</div>
+                    <div style="display:flex; flex-direction:column; gap:5px;" id="scaleTypeSubBtns">
+                        <button class="scale-type-btn" data-scale-type="major">Major (Ionian)</button>
+                        <button class="scale-type-btn" data-scale-type="naturalMinor">Natural Minor (Aeolian)</button>
+                        <button class="scale-type-btn" data-scale-type="harmonicMinor">Harmonic Minor</button>
+                        <button class="scale-type-btn" data-scale-type="melodicMinor">Melodic Minor</button>
+                    </div>
+                </div>
                 <button class="level-btn"         data-level="modes"     title="7 Notes · Modes">Modes</button>
+                <div id="modeSubPanel" style="display:none; width:100%; box-sizing:border-box; background:rgba(10,10,25,0.97); border:2px solid var(--primary-purple); border-radius:14px; padding:0.6rem 0.75rem; margin:2px 0;">
+                    <div style="font-size:0.6rem; font-weight:700; letter-spacing:1px; color:var(--primary-purple); text-align:center; margin-bottom:0.5rem; font-family:var(--font-display);">SELECT MODE</div>
+                    <div style="display:flex; flex-wrap:wrap; gap:6px;" id="modeSubBtnGroup"></div>
+                    <div id="modeSubFeel" style="text-align:center; margin-top:0.5rem; font-size:0.7rem; font-style:italic; color:var(--primary-gold); min-height:1.1em; font-weight:600;"></div>
+                    <div style="display:flex; flex-wrap:wrap; gap:5px; margin-top:0.5rem; justify-content:center;" id="modeSubPlayGroup"></div>
+                </div>
                 <button class="level-btn"         data-level="harm"      title="Harmonized">Harmonized</button>
                 <button class="level-btn"         data-level="freeplay"  title="Free Play">Free Play</button>
             </div>
@@ -2810,6 +2843,13 @@ window.addEventListener('unhandledrejection', function(event) {
                         document.querySelector('.level-btn.active')?.classList.remove('active');
                         this.classList.add('active');
                         currentLevel = this.dataset.level;
+                        // Scale Type / Select Mode are now static sub-dropdowns
+                        // attached under their trigger buttons — show only the
+                        // one matching the level just clicked, hide the other.
+                        const scaleTypeSub = document.getElementById('scaleTypeSubPanel');
+                        const modeSub = document.getElementById('modeSubPanel');
+                        if (scaleTypeSub) scaleTypeSub.style.display = (this.dataset.level === 'scales') ? 'block' : 'none';
+                        if (modeSub) modeSub.style.display = (this.dataset.level === 'modes') ? 'block' : 'none';
                         // Resolve unified 'harm' button to actual harmMajor/harmMinor immediately
                         if (currentLevel === 'harm') {
                             if (!window.currentHarmKey) window.currentHarmKey = 'harmMajor';
@@ -5582,101 +5622,14 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                         Used by Debussy, Ravel, and jazz composers for a floating, dreamlike sound.</div>`;
                     c.appendChild(g);
                 }
-                if (currentLevel === 'scales') {
-                    if (!window.currentScaleType) window.currentScaleType = 'major';
-                    const g = document.createElement('div'); g.className = 'control-group';
-                    g.innerHTML = `<label>Scale Type:</label><select id="scaleTypeSelect">
-                        <option value="major">Major (Ionian)</option>
-                        <option value="naturalMinor">Natural Minor (Aeolian)</option>
-                        <option value="harmonicMinor">Harmonic Minor</option>
-                        <option value="melodicMinor">Melodic Minor</option>
-                    </select>`;
-                    c.appendChild(g);
-                    setTimeout(() => {
-                        const ss = document.getElementById('scaleTypeSelect');
-                        if (ss) {
-                            ss.value = window.currentScaleType || 'major';
-                            ss.onchange = function() {
-                                window.currentScaleType = this.value;
-                                updateDisplay();
-                                setTimeout(() => playSelection('up'), 200);
-                            };
-                        }
-                    }, 0);
-                }
-                if (currentLevel === 'modes') {
-                    const modeDefs = [
-                        {key:'ionian',     roman:'I',    name:'Ionian',      aka:'Major',         feel:'Happy, bright'},
-                        {key:'dorian',     roman:'ii',   name:'Dorian',      aka:'Minor+6',       feel:'Funky, jazzy'},
-                        {key:'phrygian',   roman:'iii',  name:'Phrygian',    aka:'Spanish minor',  feel:'Dark, exotic'},
-                        {key:'lydian',     roman:'IV',   name:'Lydian',      aka:'Raised 4th',    feel:'Dreamy, floaty'},
-                        {key:'mixolydian', roman:'V',    name:'Mixolydian',  aka:'Dominant',      feel:'Bluesy, rock'},
-                        {key:'aeolian',    roman:'vi',   name:'Aeolian',     aka:'Natural Minor', feel:'Sad, emotional'},
-                        {key:'locrian',    roman:'vii°', name:'Locrian',     aka:'Half-dim',      feel:'Tense, unstable'},
-                    ];
-                    const g = document.createElement('div'); g.className = 'control-group';
-                    g.innerHTML = `<label>Select Mode:</label>
-                        <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:0.5rem;" id="modeBtnGroup">
-                            ${modeDefs.map(m => `<button class="mode-pill-btn${m.key===currentModeSelection?' active':''}" data-mode="${m.key}"
-                                style="flex:1; min-width:90px; max-width:100%; padding:7px 5px; font-size:0.7rem; font-weight:700;
-                                font-family:var(--font-display); border-radius:10px; border:2px solid rgba(139,107,163,0.4);
-                                background:${m.key===currentModeSelection?'var(--primary-purple)':'rgba(139,107,163,0.1)'};
-                                color:white; cursor:pointer; text-align:center; line-height:1.3; transition:all 0.2s; overflow:hidden; box-sizing:border-box;">
-                                <span style="display:block; font-size:0.62rem; opacity:0.7;">${m.roman}</span>
-                                <span style="display:block; font-size:0.82rem;">${m.name}</span>
-                                <span style="display:block; font-size:0.55rem; opacity:0.65; white-space:normal; overflow-wrap:break-word; word-break:break-word;">${m.aka}</span>
-                            </button>`).join('')}
-                        </div>
-                        <div id="modeFeel" style="text-align:center; margin-top:0.6rem; font-size:0.75rem; font-style:italic; color:var(--primary-gold); min-height:1.1em; font-weight:600;"></div>
-                        <div style="display:flex; flex-wrap:wrap; gap:5px; margin-top:0.6rem; justify-content:center;">
-                            ${modeDefs.map(m => `<button class="mode-play-btn" data-play-mode="${m.key}"
-                                style="padding:5px 8px; font-size:0.62rem; font-weight:800; font-family:var(--font-display);
-                                border-radius:8px; border:2px solid rgba(139,107,163,0.5);
-                                background:rgba(139,107,163,0.15); color:white; cursor:pointer; transition:all 0.2s;
-                                ${m.key===currentModeSelection?'border-color:var(--primary-purple);background:rgba(139,107,163,0.35);':''}">
-                                ▶ ${m.name}
-                            </button>`).join('')}
-                        </div>`;
-                    c.appendChild(g);
-                    setTimeout(() => {
-                        const feel = document.getElementById('modeFeel');
-                        const feelMap = {ionian:'Happy, bright',dorian:'Funky, jazzy',phrygian:'Dark, exotic',lydian:'Dreamy, floaty',mixolydian:'Bluesy, rock',aeolian:'Sad, emotional',locrian:'Tense, unstable'};
-                        if (feel) feel.textContent = '✦ ' + (feelMap[currentModeSelection]||'');
-                        document.querySelectorAll('.mode-pill-btn').forEach(btn => {
-                            btn.onclick = function() {
-                                currentModeSelection = this.dataset.mode;
-                                document.querySelectorAll('.mode-pill-btn').forEach(b => {
-                                    b.style.background = 'rgba(139,107,163,0.1)';
-                                    b.style.borderColor = 'rgba(139,107,163,0.4)';
-                                    b.classList.remove('active');
-                                });
-                                this.style.background = 'var(--primary-purple)';
-                                this.style.borderColor = 'var(--primary-purple)';
-                                this.classList.add('active');
-                                if (feel) feel.textContent = '✦ ' + (feelMap[currentModeSelection]||'');
-                                // Sync deck mode pills
-                                document.querySelectorAll('.dock-mode-btn').forEach(b => b.classList.toggle('active', b.dataset.dockMode === currentModeSelection));
-                                // Sync mode play buttons
-                                document.querySelectorAll('.mode-play-btn').forEach(b => {
-                                    const isActive = b.dataset.playMode === currentModeSelection;
-                                    b.style.borderColor = isActive ? 'var(--primary-purple)' : 'rgba(139,107,163,0.5)';
-                                    b.style.background = isActive ? 'rgba(139,107,163,0.35)' : 'rgba(139,107,163,0.15)';
-                                });
-                                updateDisplay();
-                                setTimeout(() => playSelection('up'), 200);
-                            };
-                        });
-                        // Wire mode PLAY buttons — each one selects & immediately plays that mode
-                        document.querySelectorAll('.mode-play-btn').forEach(btn => {
-                            btn.onclick = function() {
-                                const mode = this.dataset.playMode;
-                                // Select the mode pill
-                                const pill = document.querySelector(`.mode-pill-btn[data-mode="${mode}"]`);
-                                if (pill) pill.click(); // reuse pill click logic
-                            };
-                        });
-                    }, 0);
-                }
+                // Scale Type is now a static sub-dropdown under the Scales
+                // button (scaleTypeSubPanel / initScaleTypePicker()) instead
+                // of being rebuilt here every render.
+                if (currentLevel === 'scales') { /* handled by scaleTypeSubPanel */ }
+                // Select Mode is now a static sub-dropdown under the Modes
+                // button (modeSubPanel / initModePicker()) instead of being
+                // rebuilt here every render.
+                if (currentLevel === 'modes') { /* handled by modeSubPanel */ }
                 if (currentLevel === 'harmMajor' || currentLevel === 'harmMinor') {
                     // Add Major/Minor switcher at the top
                     const gSwitch = document.createElement('div'); gSwitch.className = 'control-group';
@@ -5811,6 +5764,98 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
             document.addEventListener('DOMContentLoaded', initInstrumentPicker);
         } else {
             initInstrumentPicker();
+        }
+
+        // ── Scale Type sub-dropdown (under the Scales level button) —
+        //    static, wired once, same pattern as the Instrument picker.
+        function initScaleTypePicker() {
+            if (!window.currentScaleType) window.currentScaleType = 'major';
+            document.querySelectorAll('.scale-type-btn').forEach(btn => {
+                if (btn.dataset.scaleType === window.currentScaleType) btn.classList.add('active');
+                btn.onclick = function() {
+                    window.currentScaleType = this.dataset.scaleType;
+                    document.querySelectorAll('.scale-type-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    updateDisplay();
+                    setTimeout(() => playSelection('up'), 200);
+                };
+            });
+        }
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initScaleTypePicker);
+        } else {
+            initScaleTypePicker();
+        }
+
+        // ── Select Mode sub-dropdown (under the Modes level button) —
+        //    static, wired once. Builds the 7 mode pills + play buttons
+        //    into modeSubBtnGroup/modeSubPlayGroup a single time instead of
+        //    regenerating them (and re-attaching listeners) on every
+        //    updateControls() render.
+        const MODE_DEFS = [
+            {key:'ionian',     roman:'I',    name:'Ionian',      aka:'Major',          feel:'Happy, bright'},
+            {key:'dorian',     roman:'ii',   name:'Dorian',      aka:'Minor+6',        feel:'Funky, jazzy'},
+            {key:'phrygian',   roman:'iii',  name:'Phrygian',    aka:'Spanish minor',  feel:'Dark, exotic'},
+            {key:'lydian',     roman:'IV',   name:'Lydian',      aka:'Raised 4th',     feel:'Dreamy, floaty'},
+            {key:'mixolydian', roman:'V',    name:'Mixolydian',  aka:'Dominant',       feel:'Bluesy, rock'},
+            {key:'aeolian',    roman:'vi',   name:'Aeolian',     aka:'Natural Minor',  feel:'Sad, emotional'},
+            {key:'locrian',    roman:'vii°', name:'Locrian',     aka:'Half-dim',       feel:'Tense, unstable'},
+        ];
+        function _modeSubSyncActive() {
+            document.querySelectorAll('.mode-pill-btn').forEach(b => {
+                const active = b.dataset.mode === currentModeSelection;
+                b.classList.toggle('active', active);
+                b.style.background = active ? 'var(--primary-purple)' : 'rgba(139,107,163,0.1)';
+                b.style.borderColor = active ? 'var(--primary-purple)' : 'rgba(139,107,163,0.4)';
+            });
+            document.querySelectorAll('.mode-play-btn').forEach(b => {
+                const active = b.dataset.playMode === currentModeSelection;
+                b.style.borderColor = active ? 'var(--primary-purple)' : 'rgba(139,107,163,0.5)';
+                b.style.background = active ? 'rgba(139,107,163,0.35)' : 'rgba(139,107,163,0.15)';
+            });
+            const feel = document.getElementById('modeSubFeel');
+            const feelMap = {ionian:'Happy, bright',dorian:'Funky, jazzy',phrygian:'Dark, exotic',lydian:'Dreamy, floaty',mixolydian:'Bluesy, rock',aeolian:'Sad, emotional',locrian:'Tense, unstable'};
+            if (feel) feel.textContent = '✦ ' + (feelMap[currentModeSelection] || '');
+            document.querySelectorAll('.dock-mode-btn').forEach(b => b.classList.toggle('active', b.dataset.dockMode === currentModeSelection));
+        }
+        function initModePicker() {
+            const pillGroup = document.getElementById('modeSubBtnGroup');
+            const playGroup = document.getElementById('modeSubPlayGroup');
+            if (!pillGroup || !playGroup) return;
+            pillGroup.innerHTML = MODE_DEFS.map(m => `<button class="mode-pill-btn" data-mode="${m.key}"
+                style="flex:1; min-width:90px; max-width:100%; padding:7px 5px; font-size:0.7rem; font-weight:700;
+                font-family:var(--font-display); border-radius:10px; border:2px solid rgba(139,107,163,0.4);
+                background:rgba(139,107,163,0.1); color:white; cursor:pointer; text-align:center; line-height:1.3;
+                transition:all 0.2s; overflow:hidden; box-sizing:border-box;">
+                <span style="display:block; font-size:0.62rem; opacity:0.7;">${m.roman}</span>
+                <span style="display:block; font-size:0.82rem;">${m.name}</span>
+                <span style="display:block; font-size:0.55rem; opacity:0.65; white-space:normal; overflow-wrap:break-word; word-break:break-word;">${m.aka}</span>
+            </button>`).join('');
+            playGroup.innerHTML = MODE_DEFS.map(m => `<button class="mode-play-btn" data-play-mode="${m.key}"
+                style="padding:5px 8px; font-size:0.62rem; font-weight:800; font-family:var(--font-display);
+                border-radius:8px; border:2px solid rgba(139,107,163,0.5); background:rgba(139,107,163,0.15);
+                color:white; cursor:pointer; transition:all 0.2s;">▶ ${m.name}</button>`).join('');
+
+            pillGroup.querySelectorAll('.mode-pill-btn').forEach(btn => {
+                btn.onclick = function() {
+                    currentModeSelection = this.dataset.mode;
+                    _modeSubSyncActive();
+                    updateDisplay();
+                    setTimeout(() => playSelection('up'), 200);
+                };
+            });
+            playGroup.querySelectorAll('.mode-play-btn').forEach(btn => {
+                btn.onclick = function() {
+                    const pill = pillGroup.querySelector(`.mode-pill-btn[data-mode="${this.dataset.playMode}"]`);
+                    if (pill) pill.click();
+                };
+            });
+            _modeSubSyncActive();
+        }
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initModePicker);
+        } else {
+            initModePicker();
         }
 
         // ── Chromatic Circle rotation — steps the whole wheel 30°
@@ -7342,11 +7387,14 @@ function dockSetScale(el, scaleType) {
     const dockBtn = document.querySelector(`.dock-level-btn[data-dock-level="${targetLevel}"]`);
     if (dockBtn) dockBtn.classList.add('active');
 
-    // For 'scales' level, also sync the scaleTypeSelect dropdown
+    // For 'scales' level, also sync the scaleTypeSubPanel pills
     if (targetLevel === 'scales') {
         setTimeout(() => {
-            const ss = document.getElementById('scaleTypeSelect');
-            if (ss) ss.value = scaleType;
+            const sub = document.getElementById('scaleTypeSubPanel');
+            if (sub) sub.style.display = 'block';
+            document.querySelectorAll('.scale-type-btn').forEach(b => {
+                b.classList.toggle('active', b.dataset.scaleType === scaleType);
+            });
         }, 30);
     }
 
@@ -7517,7 +7565,7 @@ function dockSetMode(el, mode) {
     });
     // Update feel label if visible
     const feelMap = {ionian:'Happy, bright',dorian:'Funky, jazzy',phrygian:'Dark, exotic',lydian:'Dreamy, floaty',mixolydian:'Bluesy, rock',aeolian:'Sad, emotional',locrian:'Tense, unstable'};
-    const feel = document.getElementById('modeFeel');
+    const feel = document.getElementById('modeSubFeel');
     if (feel) feel.textContent = '✦ ' + (feelMap[mode]||'');
     // Trigger the matching main-panel pill button click to update state
     const mainPill = document.querySelector(`.mode-pill-btn[data-mode="${mode}"]`);
