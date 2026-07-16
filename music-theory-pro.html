@@ -3014,8 +3014,44 @@ window.addEventListener('unhandledrejection', function(event) {
 
                 document.querySelectorAll('.level-btn[data-level]').forEach(btn => {
                     btn.onclick = function() {
+                        // Press once to activate; press the SAME already-active
+                        // button again to end/deactivate it — only one level
+                        // button is ever lit at a time, and a second press turns
+                        // it fully off instead of cycling to a default level.
+                        if (this.classList.contains('active')) {
+                            if (typeof _cancelAllPlay === 'function') _cancelAllPlay();
+                            if (typeof window._stencilCancelAll === 'function') window._stencilCancelAll();
+                            this.classList.remove('active');
+                            clearAllHighlights();
+                            selectedNotes = new Set();
+                            revealedNotes = new Set();
+                            window.currentPatternIntervals = [];
+                            // currentLevel deliberately set to a value that
+                            // matches no switch-case in updatePattern(), so
+                            // the next updateDisplay() call computes an empty
+                            // pattern instead of silently refilling
+                            // selectedNotes from whatever level was active —
+                            // that's what makes this a real "off", not just a
+                            // visual one.
+                            currentLevel = '';
+                            const scaleTypeSub = document.getElementById('scaleTypeSubPanel');
+                            const modeSub = document.getElementById('modeSubPanel');
+                            const harmSub = document.getElementById('harmSubPanel');
+                            const scaleLib = document.getElementById('scaleLibraryPanel');
+                            const freeplayHint = document.getElementById('freeplayHint');
+                            const progressionControls = document.getElementById('progressionControls');
+                            if (scaleTypeSub) scaleTypeSub.style.display = 'none';
+                            if (modeSub) modeSub.style.display = 'none';
+                            if (harmSub) harmSub.style.display = 'none';
+                            if (scaleLib) scaleLib.style.display = 'none';
+                            if (freeplayHint) freeplayHint.style.display = 'none';
+                            if (progressionControls) progressionControls.style.display = 'none';
+                            updateDisplay(); updateView();
+                            try { trackEvent('level_deactivate', {}); } catch(e) {}
+                            return;
+                        }
                         clearAllHighlights();
-                        document.querySelector('.level-btn.active')?.classList.remove('active');
+                        document.querySelector('.level-btn[data-level].active')?.classList.remove('active');
                         this.classList.add('active');
                         currentLevel = this.dataset.level;
                         // Scale Type / Select Mode are now static sub-dropdowns
@@ -3110,6 +3146,20 @@ window.addEventListener('unhandledrejection', function(event) {
                             prevMidi = midi;
                         }
 
+                        // This button schedules its own oscillators directly
+                        // rather than going through updatePattern(), so it
+                        // never triggered the generic Stencil-sync hook every
+                        // other level/pattern in the app uses — the wheel
+                        // would just sit there showing whatever was last
+                        // loaded while all 12 notes played. Show the full
+                        // chromatic set on the wheel up front, then pulse
+                        // each dot in the same left-to-right order as the
+                        // Circle/Piano/Guitar, so Circle and Stencil stay
+                        // wired together for this button too.
+                        if (typeof window._stencilShowChord === 'function') {
+                            window._stencilShowChord(rootNote, [0,1,2,3,4,5,6,7,8,9,10,11], `${getRootName()} Chromatic Scale`);
+                        }
+
                         seq.forEach(({ pc, oct }, i) => {
                             const startSec = audioContext.currentTime + (i * beatMs / 1000);
                             const freq = freqs[pc] * Math.pow(2, oct - 4);
@@ -3122,8 +3172,8 @@ window.addEventListener('unhandledrejection', function(event) {
                             gain.gain.exponentialRampToValueAtTime(0.01, startSec + noteDur);
                             osc.start(startSec); osc.stop(startSec + noteDur);
 
-                            _schedPlay(() => { highlightNote(pc, true); updateStaffNotation([{ pc, oct }]); }, i * beatMs);
-                            _schedPlay(() => { highlightNote(pc, false); }, i * beatMs + offDelay);
+                            _schedPlay(() => { highlightNote(pc, true); updateStaffNotation([{ pc, oct }]); pulseStencilDot(pc); }, i * beatMs);
+                            _schedPlay(() => { highlightNote(pc, false); settleStencilDot(pc); }, i * beatMs + offDelay);
                         });
 
                         _schedPlay(() => {
@@ -4206,6 +4256,33 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         }
 
         // ── playSelection: sequencer ───────────────────────────────
+        // Mirrors onto the Stencil wheel's own note dots — same glow
+        // treatment stencilPlay() already uses for its own Ascend/Descend
+        // buttons — applied by every playback path in the app (Ascending,
+        // Descending, Full Scale, Play Chord, Chromatic Scale) so the
+        // Stencil Overlay's points always progress left-to-right in sync
+        // with whatever is actually sounding, not just the Stencil's own
+        // transport buttons. Root gets the gold glow at rest (matching
+        // stencilPlay()'s own settle look); every other dot gets the
+        // plain teal/white ring.
+        function pulseStencilDot(pc) {
+            document.querySelectorAll(`.stencil-note-dot[data-pc="${pc}"]`).forEach(d => {
+                d.setAttribute('filter', 'url(#rootGlow)');
+                d.setAttribute('stroke', '#ffffff');
+                d.setAttribute('stroke-width', '4');
+                d.setAttribute('opacity', '1');
+            });
+        }
+        function settleStencilDot(pc) {
+            document.querySelectorAll(`.stencil-note-dot[data-pc="${pc}"]`).forEach(d => {
+                const isRoot = pc === rootNote;
+                d.setAttribute('filter', isRoot ? 'url(#rootGlow)' : '');
+                d.setAttribute('stroke', isRoot ? '#F4D03F' : 'rgba(255,255,255,0.6)');
+                d.setAttribute('stroke-width', isRoot ? '3.5' : '2');
+                d.setAttribute('opacity', '1');
+            });
+        }
+
         function playSelection(mode, noCancel) {
             try {
                 if (!audioReady) { alert('Click START AUDIO ENGINE first!'); return; }
@@ -4277,33 +4354,6 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 function settleBadge(pc) {
                     document.querySelectorAll(`#noteList .note-badge[data-note="${pc}"]`).forEach(b => b.classList.remove('note-badge-playing'));
                 }
-                // Mirrors onto the Stencil wheel's own note dots too — same
-                // glow treatment stencilPlay() already uses for its own
-                // Ascend/Descend buttons, applied here so the Stencil
-                // Overlay's points also progress left-to-right in sync
-                // whenever ANY playback path plays a note (Ascending,
-                // Descending, Full Scale, Play Chord), not just the
-                // Stencil's own transport buttons. Root gets the gold
-                // glow at rest (matching stencilPlay()'s own settle look);
-                // every other dot gets the plain teal/white ring.
-                function pulseStencilDot(pc) {
-                    document.querySelectorAll(`.stencil-note-dot[data-pc="${pc}"]`).forEach(d => {
-                        d.setAttribute('filter', 'url(#rootGlow)');
-                        d.setAttribute('stroke', '#ffffff');
-                        d.setAttribute('stroke-width', '4');
-                        d.setAttribute('opacity', '1');
-                    });
-                }
-                function settleStencilDot(pc) {
-                    document.querySelectorAll(`.stencil-note-dot[data-pc="${pc}"]`).forEach(d => {
-                        const isRoot = pc === rootNote;
-                        d.setAttribute('filter', isRoot ? 'url(#rootGlow)' : '');
-                        d.setAttribute('stroke', isRoot ? '#F4D03F' : 'rgba(255,255,255,0.6)');
-                        d.setAttribute('stroke-width', isRoot ? '3.5' : '2');
-                        d.setAttribute('opacity', '1');
-                    });
-                }
-
                 // ── Core scheduler ────────────────────────────────────────
                 function schedSeq(seq, startMs, accumulate) {
                     seq.forEach(({ pc, oct }, i) => {
@@ -7883,7 +7933,7 @@ function dockSetScale(el, scaleType) {
     currentLevel = targetLevel;
 
     // Sync the main level-btn highlight
-    document.querySelectorAll('.level-btn.active').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.level-btn[data-level].active').forEach(b => b.classList.remove('active'));
     const mainBtn = document.querySelector(`.level-btn[data-level="${targetLevel}"]`);
     if (mainBtn) mainBtn.classList.add('active');
 
