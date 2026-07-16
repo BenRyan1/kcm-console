@@ -6,15 +6,7 @@ set -e
 cd "$(dirname "$0")"
 
 MSG="${1:-update}"
-MASTER="music-theory-pro-MASTER.html"
 TARGET="music-theory-pro.html"
-
-if [ ! -f "$MASTER" ]; then
-  echo "❌ $MASTER not found in repo folder"
-  exit 1
-fi
-
-cp "$MASTER" "$TARGET"
 
 LINES=$(wc -l < "$TARGET")
 SINGLOOP=$(grep -c "_singLoop" "$TARGET" 2>/dev/null || echo 0)
