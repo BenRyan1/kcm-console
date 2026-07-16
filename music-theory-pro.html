@@ -407,20 +407,37 @@ nav a.active { color: var(--primary-teal); }
 }
 .view-action-btn:hover { transform: translateY(-2px); filter: brightness(1.12); }
 .key-selector-btn {
-    background: linear-gradient(135deg, rgba(244,208,63,0.15) 0%, rgba(244,208,63,0.05) 100%) !important;
-    border-color: rgba(244,208,63,0.5) !important;
-    color: var(--primary-gold) !important;
+    background: linear-gradient(135deg, var(--primary-gold) 0%, #e6c62f 100%) !important;
+    border-color: var(--primary-gold) !important;
+    color: #1a1a2e !important;
     font-weight: 800;
     min-width: 90px;
     text-align: center;
     justify-content: center;
     display: inline-flex;
     align-items: center;
+    box-shadow: var(--gold-glow);
 }
 .key-selector-btn.open {
-    background: linear-gradient(135deg, rgba(244,208,63,0.3) 0%, rgba(244,208,63,0.1) 100%) !important;
+    background: linear-gradient(135deg, #f7dd66 0%, var(--primary-gold) 100%) !important;
     border-color: var(--primary-gold) !important;
     box-shadow: 0 0 16px rgba(244,208,63,0.4) !important;
+}
+.inst-btn {
+    padding: 5px 10px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    font-family: var(--font-display);
+    border-radius: 8px;
+    border: 2px solid rgba(0,128,128,0.4);
+    background: rgba(0,128,128,0.1);
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.inst-btn.active {
+    background: var(--primary-teal);
+    border-color: var(--primary-teal);
 }
 .key-pill {
     padding: 6px 10px;
@@ -1891,8 +1908,37 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                 <button class="view-btn" data-view="ear">👂 Ear</button>
                 <button class="view-btn" data-view="sing">🎤 Sing</button>
                 <button class="view-btn" data-view="circleType">⭕ Circle · Type-to-Play</button>
+                <button class="view-btn" id="instrumentBtn" onclick="toggleInstrumentPicker()" aria-haspopup="true" aria-expanded="false">🎸 Instrument: <span id="instrumentBtnLabel">Synth</span></button>
                 <button id="globalPlayBtn" class="view-action-btn" style="background:linear-gradient(135deg, var(--primary-teal) 0%, #006666 100%); border-color:var(--primary-teal); color:#fff; font-weight:800;">▶ Play</button>
                 <button id="globalStopBtn" class="view-action-btn" style="background:linear-gradient(135deg, var(--primary-coral) 0%, #a8583a 100%); border-color:var(--primary-coral); color:#fff; font-weight:800;">■ Stop</button>
+            </div>
+
+            <!-- ── INSTRUMENT PICKER PANEL — collapsed to a single button
+                 above (consistent width with the rest of the left column);
+                 opens this dropdown, same show/hide pattern as the Key
+                 picker. Same ids (instrumentStatus, waveformSelect) as the
+                 old inline version, so _updateInstrumentStatus() and the
+                 waveform logic keep working unmodified. ── -->
+            <div id="instrumentPanel" style="display:none; margin:0.5rem 0 0; width:100%; box-sizing:border-box;
+                 background:rgba(10,10,25,0.97); border:2px solid var(--primary-teal);
+                 border-radius:14px; padding:0.75rem 1rem; box-shadow:0 8px 32px rgba(0,128,128,0.35);">
+                <div style="font-size:0.65rem; font-weight:700; letter-spacing:1px; color:var(--primary-teal);
+                     text-align:center; margin-bottom:0.6rem; font-family:var(--font-display);">SELECT INSTRUMENT</div>
+                <div style="display:flex; flex-wrap:wrap; gap:5px; justify-content:center;">
+                    <button class="inst-btn" data-inst="synth">🎛 Synth</button>
+                    <button class="inst-btn" data-inst="piano">🎹 Piano</button>
+                    <button class="inst-btn" data-inst="guitar">🎸 Guitar</button>
+                    <button class="inst-btn" data-inst="marimba">🪘 Marimba</button>
+                    <button class="inst-btn" data-inst="strings">🎻 Strings</button>
+                </div>
+                <div id="instrumentStatus" style="font-size:0.65rem; margin-top:8px; color:#b0b0cc; text-align:center;">🎛 Synth ready</div>
+                <label style="margin-top:0.6rem; display:block; font-size:0.65rem; color:var(--text-dim,#a0a0c0); text-align:center;">Synth Waveform (when Synth selected):</label>
+                <select id="waveformSelect" style="margin-top:0.3rem; width:100%;">
+                    <option value="sine">Sine (Pure)</option>
+                    <option value="square">Square (Hollow)</option>
+                    <option value="sawtooth">Sawtooth (Bright)</option>
+                    <option value="triangle">Triangle (Soft)</option>
+                </select>
             </div>
 
             </div><!-- end kcm-left-col -->
@@ -2191,7 +2237,7 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
             <div class="kcm-right-col" style="flex:0 0 260px; min-width:220px; max-width:280px;">
 
             <div style="display:flex; justify-content:center; margin-bottom:0.5rem;">
-                <button class="level-btn" id="playChromaticBtn" style="background:linear-gradient(135deg, var(--primary-teal) 0%, #006666 100%); border-color:var(--primary-teal); color:#fff; min-width:220px; font-size:0.85rem; letter-spacing:1px; box-shadow:var(--teal-glow);">🎹 CHROMATIC SCALE</button>
+                <button class="level-btn" id="playChromaticBtn" style="background:linear-gradient(135deg, var(--primary-teal) 0%, #006666 100%); border-color:var(--primary-teal); color:#fff; width:100%; font-size:0.85rem; letter-spacing:1px; box-shadow:var(--teal-glow);">🎹 CHROMATIC SCALE</button>
             </div>
 
             <!-- ── KEY PICKER — moved here: below Chromatic Scale, above
@@ -5676,39 +5722,63 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                         if (hts) { hts.value = currentHarmChordType; hts.onchange = function() { currentHarmChordType = this.value; updateDisplay(); setTimeout(() => playHarmChordAscending(), 200); }; }
                     }, 0);
                 }
-                const wg = document.createElement('div'); wg.className = 'control-group';
-                wg.innerHTML = `
-                    <label>🎸 Instrument:</label>
-                    <div style="display:flex; flex-wrap:wrap; gap:5px; margin-top:0.3rem;">
-                        <button class="inst-btn ${currentInstrument==='synth'?'active':''}"   data-inst="synth"   style="${currentInstrument==='synth'?'background:var(--primary-teal);border-color:var(--primary-teal);':''}">🎛 Synth</button>
-                        <button class="inst-btn ${currentInstrument==='piano'?'active':''}"   data-inst="piano"   style="${currentInstrument==='piano'?'background:var(--primary-teal);border-color:var(--primary-teal);':''}">🎹 Piano</button>
-                        <button class="inst-btn ${currentInstrument==='guitar'?'active':''}"  data-inst="guitar"  style="${currentInstrument==='guitar'?'background:var(--primary-teal);border-color:var(--primary-teal);':''}">🎸 Guitar</button>
-                        <button class="inst-btn ${currentInstrument==='marimba'?'active':''}" data-inst="marimba" style="${currentInstrument==='marimba'?'background:var(--primary-teal);border-color:var(--primary-teal);':''}">🪘 Marimba</button>
-                        <button class="inst-btn ${currentInstrument==='strings'?'active':''}" data-inst="strings" style="${currentInstrument==='strings'?'background:var(--primary-teal);border-color:var(--primary-teal);':''}">🎻 Strings</button>
-                    </div>
-                    <div id="instrumentStatus" style="font-size:0.65rem; margin-top:4px; color:#b0b0cc;">🎛 Synth ready</div>
-                    <label style="margin-top:0.5rem; display:block;">Synth Waveform (when Synth selected):</label>
-                    <select id="waveformSelect" style="margin-top:0.2rem;"><option value="sine">Sine (Pure)</option><option value="square">Square (Hollow)</option><option value="sawtooth">Sawtooth (Bright)</option><option value="triangle">Triangle (Soft)</option></select>`;
-                c.appendChild(wg);
-                setTimeout(() => {
-                    const ws = document.getElementById('waveformSelect');
-                    if (ws) { ws.value = currentWaveform; ws.onchange = e => currentWaveform = e.target.value; }
-                    document.querySelectorAll('.inst-btn').forEach(btn => {
-                        btn.style.cssText += 'padding:5px 10px; font-size:0.68rem; font-weight:700; font-family:var(--font-display); border-radius:8px; border:2px solid rgba(0,128,128,0.4); background:rgba(0,128,128,0.1); color:#fff; cursor:pointer; transition:all 0.2s;';
-                        if (btn.dataset.inst === currentInstrument) { btn.style.background = 'var(--primary-teal)'; btn.style.borderColor = 'var(--primary-teal)'; }
-                        btn.onclick = function() {
-                            currentInstrument = this.dataset.inst;
-                            document.querySelectorAll('.inst-btn').forEach(b => { b.style.background = 'rgba(0,128,128,0.1)'; b.style.borderColor = 'rgba(0,128,128,0.4)'; b.classList.remove('active'); });
-                            this.style.background = 'var(--primary-teal)'; this.style.borderColor = 'var(--primary-teal)'; this.classList.add('active');
-                            if (audioReady && currentInstrument !== 'synth') {
-                                _loadSoundFont(currentInstrument);
-                            } else {
-                                _updateInstrumentStatus('🎛 Synth ready', '#27ae60');
-                            }
-                        };
-                    });
-                }, 0);
+                // Instrument picker moved out of this re-rendered panel — it's
+                // now a static control in the left column (see
+                // #instrumentPanel / initInstrumentPicker()), so it isn't
+                // rebuilt (and its dropdown-open state isn't lost) every
+                // time updateControls() runs.
             } catch(e) { console.error('Update controls error:', e); }
+        }
+
+        // ── Instrument picker — static, wired once ──────────────────
+        function toggleInstrumentPicker() {
+            const panel = document.getElementById('instrumentPanel');
+            const btn   = document.getElementById('instrumentBtn');
+            if (!panel) return;
+            const isOpen = panel.style.display !== 'none';
+            if (isOpen) {
+                panel.style.display = 'none';
+                if (btn) { btn.classList.remove('open'); btn.setAttribute('aria-expanded','false'); }
+                return;
+            }
+            panel.style.display = 'block';
+            if (btn) { btn.classList.add('open'); btn.setAttribute('aria-expanded','true'); }
+            const closeHandler = (e) => {
+                if (panel.contains(e.target) || (btn && btn.contains(e.target))) return;
+                panel.style.display = 'none';
+                if (btn) { btn.classList.remove('open'); btn.setAttribute('aria-expanded','false'); }
+                document.removeEventListener('click', closeHandler);
+            };
+            setTimeout(() => document.addEventListener('click', closeHandler), 200);
+        }
+        window.toggleInstrumentPicker = toggleInstrumentPicker;
+
+        const INSTRUMENT_LABELS = { synth: 'Synth', piano: 'Piano', guitar: 'Guitar', marimba: 'Marimba', strings: 'Strings' };
+        function initInstrumentPicker() {
+            const ws = document.getElementById('waveformSelect');
+            if (ws) { ws.value = currentWaveform; ws.onchange = e => currentWaveform = e.target.value; }
+            document.querySelectorAll('.inst-btn').forEach(btn => {
+                if (btn.dataset.inst === currentInstrument) btn.classList.add('active');
+                btn.onclick = function() {
+                    currentInstrument = this.dataset.inst;
+                    document.querySelectorAll('.inst-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    const lbl = document.getElementById('instrumentBtnLabel');
+                    if (lbl) lbl.textContent = INSTRUMENT_LABELS[currentInstrument] || currentInstrument;
+                    if (audioReady && currentInstrument !== 'synth') {
+                        _loadSoundFont(currentInstrument);
+                    } else {
+                        _updateInstrumentStatus('🎛 Synth ready', '#27ae60');
+                    }
+                };
+            });
+            const lbl = document.getElementById('instrumentBtnLabel');
+            if (lbl) lbl.textContent = INSTRUMENT_LABELS[currentInstrument] || currentInstrument;
+        }
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initInstrumentPicker);
+        } else {
+            initInstrumentPicker();
         }
 
         // ── Update note list ──────────────────────────────────────
