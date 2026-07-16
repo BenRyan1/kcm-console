@@ -6350,11 +6350,21 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                     const naturalH = row.scrollHeight;
                     if (naturalW === 0 || naturalH === 0) return; // not laid out yet
 
-                    const topOffset   = wrap.getBoundingClientRect().top;
-                    const availH      = window.innerHeight - topOffset - 16; // small bottom margin
                     const availW      = wrap.clientWidth;
 
-                    let scale = Math.min(1, availW / naturalW, availH / naturalH);
+                    // Width-only fit. Height used to be a second, equally
+                    // weighted constraint (Math.min against availH/naturalH
+                    // too) -- but the visible viewport height inside an
+                    // embedded, lazily-loaded iframe panel is an unreliable,
+                    // often-small number that has nothing to do with how
+                    // wide the row actually needs to be. That was forcing
+                    // far more shrinkage than necessary just to also fit
+                    // vertically. The three columns sitting side-by-side is
+                    // what actually matters; if the result runs a little
+                    // tall, the page/panel can simply scroll -- that's a
+                    // normal, acceptable outcome, unlike columns stacking
+                    // or being shrunk down to near-illegible size.
+                    let scale = Math.min(1, availW / naturalW);
                     if (!isFinite(scale) || scale <= 0) scale = 1;
 
                     if (scale < KCM_FIT_MIN_SCALE) {
