@@ -949,7 +949,12 @@ select option { background: #1a1a2e; color: white; }
     padding: 12px 15px 10px;
     box-shadow: 0 6px 25px rgba(0,0,0,0.6);
     border: 3px solid var(--primary-teal);
-    margin: 0.35rem auto 0;
+    /* Bumped from 0.35rem -- once the whole row gets scaled down by
+       kcmFitLayout's fit-to-screen transform, a small unscaled gap here
+       shrinks along with everything else and can end up reading as the
+       circle and this panel nearly touching. A bigger unscaled gap still
+       holds up visually after scaling. */
+    margin: 1.5rem auto 0;
     display: block;
 }
 #staffNotation svg {
