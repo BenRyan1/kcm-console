@@ -934,6 +934,14 @@ select option { background: #1a1a2e; color: white; }
     border: 4px solid rgba(0,128,128,0.4);
     box-shadow: 0 0 40px rgba(0,128,128,0.2), inset 0 0 40px rgba(0,0,0,0.5);
     margin: 1rem auto;
+    /* Visual-only shrink (transform doesn't change the 500x500 layout box,
+       so it can't perturb kcmFitLayout's scrollWidth-based fit math) --
+       gives the rightmost spheres real clearance from the neighboring
+       right column instead of touching flex/min-width/gap, which is what
+       previously tripped the fit-to-screen fallback into full stacking
+       on narrower containers. */
+    transform: scale(0.9);
+    transform-origin: center top;
 }
 
 /* ============================================================
@@ -2044,7 +2052,7 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                  screen without scrolling, on any screen where they'd
                  otherwise fit side-by-side but not fully in view. -->
             <div id="kcmFitWrap" style="overflow:hidden;">
-            <div class="kcm-two-col-row" id="kcmTwoColRow" style="display:flex; gap:3.25rem; align-items:flex-start; flex-wrap:wrap; justify-content:center;">
+            <div class="kcm-two-col-row" id="kcmTwoColRow" style="display:flex; gap:1.75rem; align-items:flex-start; flex-wrap:wrap; justify-content:center;">
                         <div class="kcm-left-col" style="flex:0 0 220px; min-width:180px; max-width:240px; display:flex; flex-direction:column; gap:0.75rem;">
 
 
@@ -2093,7 +2101,7 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
             </div>
 
             </div><!-- end kcm-left-col -->
-            <div class="kcm-center-col" style="flex:2 1 480px; max-width:560px; min-width:520px;">
+            <div class="kcm-center-col" style="flex:2 1 480px; max-width:560px; min-width:320px;">
             <!-- ══ PANEL SWAP ZONE — only one panel visible at a time ══ -->
             <div id="panelSwapZone" style="width:100%; position:relative;">
 
