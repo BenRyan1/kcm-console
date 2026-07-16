@@ -6096,6 +6096,13 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                         const pitchClasses = chord.intervals.map(iv=>(rootNote+iv)%12);
                         selectedNotes = new Set(pitchClasses);
                         updateSphereDisplay(); updateNoteList(); updateStaffNotation(pitchClasses);
+                        // If the Stencil wheel is the visible panel, mirror
+                        // this progression chord onto it too — otherwise the
+                        // Stencil view sits frozen on whatever was selected
+                        // last while the rest of the app plays through.
+                        if (currentView === 'stencil' && typeof window._stencilShowChord === 'function') {
+                            window._stencilShowChord(rootNote, chord.intervals, chord.name);
+                        }
                         const statusEl = document.getElementById('status');
                         if (statusEl) statusEl.textContent = `🎵 Playing: ${chord.name} (${chord.quality}) — Chord ${index+1}/${degrees.length}`;
                         // Sync dock degree buttons
@@ -9073,7 +9080,28 @@ async function kcmAIAsk(type) {
         currentStencil = Object.assign({}, base, { name: chordDef.quality === 'minor' ? 'Minor' : 'Major' });
         window.currentStencil = currentStencil;
         currentStencilRoot = chordDef.root;
+        // Keep the global key (Key button, Harmonized panel, Staff/Timeline
+        // key display) in sync with whatever chord the song is actually on —
+        // this was previously only set via the key ring / drag rotate, so a
+        // song's key silently diverged from the rest of the app.
+        if (typeof window._setKeyGlobal === 'function') window._setKeyGlobal(chordDef.root);
     }
+
+    // Mirrors a Harmonized-panel chord (or any external chord) onto the
+    // Stencil wheel while it plays, WITHOUT touching the global key —
+    // playProgression() plays chords built on scale degrees within the
+    // current key, so unlike loadChordAsStencil() (which is anchored to a
+    // song's actual key), this must leave rootNote/_setKeyGlobal alone or
+    // every passing chord would incorrectly relabel the app's key.
+    function _stencilShowChord(rootPc, intervals, label) {
+        currentStencil = { id: '_extChord', name: label || 'Chord', intervals: intervals,
+            degrees: intervals.map((_, i) => String(i + 1)).join(' '), color: '#00c0c0' };
+        window.currentStencil = currentStencil;
+        currentStencilRoot = ((rootPc % 12) + 12) % 12;
+        drawStencil();
+        updateLabelBlock();
+    }
+    window._stencilShowChord = _stencilShowChord;
 
     function renderSongTimeline() {
         const el = document.getElementById('kcmSongTimeline');
@@ -9095,6 +9123,7 @@ async function kcmAIAsk(type) {
         loadChordAsStencil(song.progression[0]);
         drawStencil();
         updateLabelBlock();
+        _stencilSyncPanels();
     }
 
     function playSongProgression() {
@@ -9245,6 +9274,7 @@ async function kcmAIAsk(type) {
                 stencilRotateDeg = currentStencilRoot * 30;
                 drawStencil();
                 updateLabelBlock();
+                _stencilSyncPanels();
             });
         });
     }
@@ -9471,6 +9501,7 @@ async function kcmAIAsk(type) {
                 if (typeof window._setKeyGlobal === 'function') window._setKeyGlobal(currentStencilRoot);
                 drawStencil();
                 updateLabelBlock();
+                _stencilSyncPanels();
             }
         }
         function onEnd() {
@@ -9484,6 +9515,20 @@ async function kcmAIAsk(type) {
         window.addEventListener('touchmove',  onMove, { passive: false });
         window.addEventListener('mouseup',    onEnd);
         window.addEventListener('touchend',   onEnd);
+    }
+
+    // Recomputes the currently-selected stencil's pitch classes at the
+    // current root and pushes them out to Circle/Piano/Guitar/Staff — the
+    // single sync point called from every place that changes *which*
+    // stencil or *which* root is selected (shape pick, key ring, drag
+    // rotate, song select/step), not just from the Play buttons.
+    function _stencilSyncPanels() {
+        if (!currentStencil) return;
+        const pcs = currentStencil.intervals.map(iv => (currentStencilRoot + iv) % 12);
+        highlightMTPNotes(pcs);
+        if (typeof window.updateStaffNotation === 'function') {
+            window.updateStaffNotation(pcs.map(pc => ({ pc, oct: 4 })));
+        }
     }
 
     // ── Highlight notes on MTP circle + piano + guitar ───────
@@ -9624,6 +9669,7 @@ async function kcmAIAsk(type) {
         renderGrid();
         drawStencil();
         updateLabelBlock();
+        _stencilSyncPanels();
     }
 
     // ── Playback — self-contained sequencer using window.playNote ────
