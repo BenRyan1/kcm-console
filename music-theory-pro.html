@@ -2927,7 +2927,18 @@ window.addEventListener('unhandledrejection', function(event) {
                 };
                 if (el('globalPlayBtn')) el('globalPlayBtn').onclick = () => {
                     if (!audioReady) { alert('Click START AUDIO ENGINE first!'); return; }
-                    playSelection('up');
+                    if (typeof window._stencilPlayUp === 'function' && window.currentStencil) {
+                        // Stencil shape active — mirror staffPlayBtn: play the
+                        // actual selected stencil (ascend then descend),
+                        // not the unrelated classic selectedNotes state.
+                        const bpm    = typeof currentBPM !== 'undefined' ? currentBPM : 100;
+                        const beatMs = 60000 / bpm;
+                        const len    = window.currentStencil.intervals.length;
+                        window._stencilPlayUp();
+                        setTimeout(() => window._stencilPlayDownNoCancel(), len * beatMs + 300);
+                    } else {
+                        playSelection('up');
+                    }
                 };
                 if (el('staffPlayBtn')) el('staffPlayBtn').onclick = () => {
                     if (!audioReady) { alert('Click START AUDIO ENGINE first!'); return; }
@@ -2947,6 +2958,7 @@ window.addEventListener('unhandledrejection', function(event) {
                 if (el('globalStopBtn')) el('globalStopBtn').onclick = () => {
                     try {
                         _cancelAllPlay();
+                        if (typeof window._stencilCancelAll === 'function') window._stencilCancelAll();
                         if (window._noteOffTimers) Object.keys(_noteOffTimers).forEach(k => { clearTimeout(_noteOffTimers[k]); delete _noteOffTimers[k]; });
                         clearAllHighlights();
                         updateSphereDisplay();
@@ -9783,8 +9795,9 @@ async function kcmAIAsk(type) {
         if (stopBtn)  stopBtn.addEventListener('click',  () => _stencilCancelAll());
         toggleSongUI(false);
         // Expose for staff play button
-        window._stencilPlayUp   = () => stencilPlay('up');
-        window._stencilPlayDown = () => stencilPlay('down');
+        window._stencilPlayUp     = () => stencilPlay('up');
+        window._stencilPlayDown   = () => stencilPlay('down');
+        window._stencilCancelAll  = () => _stencilCancelAll();
         window._stencilPlayDownNoCancel = () => stencilPlay('down', true);
 
         // Speed slider — manual control so people can slow the synced
