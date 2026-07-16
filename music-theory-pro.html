@@ -5313,8 +5313,43 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                     // The playSelection() animation temporarily hides then reveals them — 
                     // but at rest, the full pattern should always be visible.
                     revealedNotes = new Set(pattern);
+                    // Mirror onto the Stencil layer — single hook point that
+                    // covers every configuration (Single Note, Triads, 7th
+                    // Chords, Pentatonic, Whole Tone, Scales, Modes,
+                    // Harmonized) instead of wiring each picker separately,
+                    // so the wheel always reflects whatever's selected
+                    // anywhere in the app, always visible/interactive via
+                    // the Stencil Overlay layer or the full Stencil view.
+                    if (typeof window._stencilShowChord === 'function') {
+                        window._stencilShowChord(rootNote, currentIntervals, `${getRootName()} ${_patternLevelLabel()}`.trim());
+                    }
                 }
             } catch(e) { console.error('Update pattern error:', e); }
+        }
+
+        // Short descriptive label for whatever pattern is currently active
+        // — used only for the Stencil layer's name display, so it doesn't
+        // need to be exhaustive, just readable.
+        function _patternLevelLabel() {
+            switch (currentLevel) {
+                case '1': return 'Note';
+                case '3': return (currentTriadSelection || 'Major').replace(/^\w/, c => c.toUpperCase()) + ' Triad';
+                case '4': return (currentExtendedSelection || '7th Chord');
+                case '5': return (window.currentScaleType === 'minorPentatonic') ? 'Minor Pentatonic' : 'Major Pentatonic';
+                case '6': return 'Whole Tone';
+                case '7': return 'Major Scale';
+                case 'minor': return (currentMinorType || 'Minor');
+                case 'scales': return (typeof SCALE_TYPE_LABELS !== 'undefined' && SCALE_TYPE_LABELS[window.currentScaleType]) || 'Scale';
+                case 'modes': {
+                    if (typeof MODE_DEFS !== 'undefined') {
+                        const d = MODE_DEFS.find(m => m.key === currentModeSelection);
+                        if (d) return d.name;
+                    }
+                    return 'Mode';
+                }
+                case 'harmMajor': case 'harmMinor': return 'Chord';
+                default: return '';
+            }
         }
 
         // ── Update sphere display ─────────────────────────────────
@@ -6013,13 +6048,9 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                     window.currentScaleType = this.dataset.scaleType;
                     document.querySelectorAll('.scale-type-btn').forEach(b => b.classList.remove('active'));
                     this.classList.add('active');
+                    // updateDisplay() -> updatePattern() already mirrors
+                    // onto the Stencil layer for every level/configuration.
                     updateDisplay();
-                    // Mirror onto the Stencil layer too — same helper used
-                    // for Harmonized progression chords, so picking a Scale
-                    // Type shows/plays on the wheel, not just the Circle.
-                    if (typeof window._stencilShowChord === 'function' && window.currentPatternIntervals) {
-                        window._stencilShowChord(rootNote, window.currentPatternIntervals, `${getRootName()} ${SCALE_TYPE_LABELS[window.currentScaleType] || window.currentScaleType}`);
-                    }
                     setTimeout(() => playSelection('up'), 200);
                 };
             });
@@ -6083,14 +6114,9 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 btn.onclick = function() {
                     currentModeSelection = this.dataset.mode;
                     _modeSubSyncActive();
+                    // updateDisplay() -> updatePattern() already mirrors
+                    // onto the Stencil layer for every level/configuration.
                     updateDisplay();
-                    // Mirror onto the Stencil layer too — same helper used
-                    // for Harmonized progression chords / Scale Type, so
-                    // picking a Mode shows/plays on the wheel too.
-                    if (typeof window._stencilShowChord === 'function' && window.currentPatternIntervals) {
-                        const _modeDef = MODE_DEFS.find(m => m.key === currentModeSelection);
-                        window._stencilShowChord(rootNote, window.currentPatternIntervals, `${getRootName()} ${_modeDef ? _modeDef.name : currentModeSelection}`);
-                    }
                     setTimeout(() => playSelection('up'), 200);
                 };
             });
