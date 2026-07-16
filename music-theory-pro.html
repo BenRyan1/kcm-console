@@ -2122,7 +2122,18 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                 </div>
                 <p id="quizScore" style="margin-top:1.25rem; font-family:var(--font-display); font-size:1.2rem; font-weight:700; color:var(--primary-gold);" aria-live="polite">Score: 0/0</p>
             </div>
-            
+
+            <!-- TRANSPORT ROW — Ascend/Descend/Full Scale/Play Chord/Stop,
+                 unified into one connected row directly above the Recording
+                 Studio. Same ids/onclick wiring as before — layout only. -->
+            <div style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:1.5rem;">
+                <button class="play-btn" id="playUpBtn" style="flex:1 1 100px;">↑ Ascending</button>
+                <button class="play-btn" id="playDownBtn" style="flex:1 1 100px;">↓ Descending</button>
+                <button class="play-btn" id="playScaleBtn" style="flex:1 1 100px;">♫ Full Scale</button>
+                <button class="play-btn" id="playChordBtn" style="flex:1 1 100px;">♪ Play Chord</button>
+                <button class="play-btn" id="stopPlayBtn" style="flex:1 1 100px; background:linear-gradient(135deg, var(--primary-coral) 0%, #a8583a 100%); border-color:var(--primary-coral);">⏹ Stop</button>
+            </div>
+
             <!-- RECORDING STUDIO -->
         <div style="background:rgba(0,0,0,0.4); padding:1.5rem; border-radius:12px; margin-top:1.5rem; border:2px solid rgba(0,128,128,0.2);">
             <h4 style="margin:0 0 1rem 0; text-align:center; font-family:var(--font-display); font-size:1rem; font-weight:700; color:var(--primary-gold); text-transform:uppercase; letter-spacing:1px;">🎙️ Recording Studio</h4>
@@ -2200,14 +2211,6 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                 <button class="level-btn"         data-level="freeplay"  title="Free Play">Free Play</button>
             </div>
 
-            <div style="display:flex; flex-direction:column; gap:8px;">
-                <button class="play-btn" id="playUpBtn">↑ Ascending</button>
-                <button class="play-btn" id="playDownBtn">↓ Descending</button>
-                <button class="play-btn" id="playScaleBtn">♫ Full Scale</button>
-                <button class="play-btn" id="playChordBtn">♪ Play Chord</button>
-                <button class="play-btn" id="stopPlayBtn" style="background:linear-gradient(135deg, var(--primary-coral) 0%, #a8583a 100%); border-color:var(--primary-coral);">⏹ Stop</button>
-            </div>
-            
             <div style="margin-top:1.25rem; width:100%; max-width:100%;">
 
             </div>
