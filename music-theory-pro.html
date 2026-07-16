@@ -3345,6 +3345,14 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                         document.querySelectorAll(`.white-key[data-note="${m.pc}"][data-octave="${oct}"], .black-key[data-note="${m.pc}"][data-octave="${oct}"]`).forEach(k => {
                             k.classList.remove('playing'); k.style.boxShadow = '';
                         });
+                        // Un-highlight the circle sphere too -- keydown lights
+                        // it via highlightNote(m.pc, true), but this was
+                        // missing the matching off-call, so on Type-to-Play
+                        // (which only shows the circle, no piano keyboard)
+                        // every typed note stayed permanently lit instead of
+                        // flashing on press and releasing on key-up like it
+                        // does everywhere else in the app.
+                        highlightNote(m.pc, false);
                     }
                 }
             });
