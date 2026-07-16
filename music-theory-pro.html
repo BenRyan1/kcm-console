@@ -1308,6 +1308,16 @@ select option { background: #1a1a2e; color: white; }
     letter-spacing: 0.5px;
     font-family: var(--font-body);
 }
+/* Pulses left-to-right, in step with the actual notes sounding, whenever
+   a scale/mode/chord is played (Ascending/Full Scale/etc, or auto-play
+   after picking a Scale Type or Mode) — makes the "left to right" note
+   sequence visible in text, not just on the Circle spheres. */
+.note-badge.note-badge-playing {
+    transform: scale(1.16);
+    border-color: var(--primary-gold);
+    box-shadow: 0 0 16px var(--primary-gold), 0 0 30px rgba(244,208,63,0.5);
+    z-index: 2;
+}
 
 /* ============================================================
    PROGRESSION CONTROLS
@@ -4131,14 +4141,29 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 function pulseSphere(pc) {
                     const sp = document.querySelector(`.sphere[data-note="${pc}"]`);
                     if (sp) { sp.classList.remove('excluded','included','active'); sp.classList.add('playing'); }
+                    pulseBadge(pc);
                 }
                 function settleSphere(pc) {
                     const sp = document.querySelector(`.sphere[data-note="${pc}"]`);
-                    if (!sp) return;
-                    sp.classList.remove('playing');
-                    sp.classList.add(revealedNotes.has(pc) ? 'included' : 'excluded');
-                    if (pc === rootNote && currentLevel !== '2') sp.classList.add('active');
-                    sp.style.border=''; sp.style.boxShadow=''; sp.style.opacity=''; sp.style.filter=''; sp.style.transform='';
+                    if (sp) {
+                        sp.classList.remove('playing');
+                        sp.classList.add(revealedNotes.has(pc) ? 'included' : 'excluded');
+                        if (pc === rootNote && currentLevel !== '2') sp.classList.add('active');
+                        sp.style.border=''; sp.style.boxShadow=''; sp.style.opacity=''; sp.style.filter=''; sp.style.transform='';
+                    }
+                    settleBadge(pc);
+                }
+                // Mirrors the note-list badges (#noteList) to the same
+                // playing/settled pulse as the Circle spheres, in the same
+                // root-first left-to-right order the badges are already
+                // laid out in — so Scale Type and Mode selections visibly
+                // "play out" left to right as you hear them, not just on
+                // the Circle.
+                function pulseBadge(pc) {
+                    document.querySelectorAll(`#noteList .note-badge[data-note="${pc}"]`).forEach(b => b.classList.add('note-badge-playing'));
+                }
+                function settleBadge(pc) {
+                    document.querySelectorAll(`#noteList .note-badge[data-note="${pc}"]`).forEach(b => b.classList.remove('note-badge-playing'));
                 }
 
                 // ── Core scheduler ────────────────────────────────────────
@@ -6119,9 +6144,14 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                     list.innerHTML = '<span class="note-badge">Click notes to select!</span>';
                 } else if (notes.length === 2 && currentLevel === '2') {
                     const int = (notes[1]-notes[0]+12)%12;
-                    list.innerHTML = `<span class="note-badge" style="background:${colors[notes[0]]};color:${textColors[notes[0]]};">${getNoteName(notes[0])}</span><span class="note-badge" style="background:rgba(0,128,128,0.3);font-size:0.95rem;padding:0.55rem 1.1rem;">→ ${intervalNames[int]} →</span><span class="note-badge" style="background:${colors[notes[1]]};color:${textColors[notes[1]]};">${getNoteName(notes[1])}</span>`;
+                    list.innerHTML = `<span class="note-badge" data-note="${notes[0]}" style="background:${colors[notes[0]]};color:${textColors[notes[0]]};">${getNoteName(notes[0])}</span><span class="note-badge" style="background:rgba(0,128,128,0.3);font-size:0.95rem;padding:0.55rem 1.1rem;">→ ${intervalNames[int]} →</span><span class="note-badge" data-note="${notes[1]}" style="background:${colors[notes[1]]};color:${textColors[notes[1]]};">${getNoteName(notes[1])}</span>`;
                 } else {
-                    list.innerHTML = notes.map(n=>`<span class="note-badge" style="background:${colors[n]};color:${textColors[n]};">${getNoteName(n)}${n===rootNote&&currentLevel!=='freeplay'&&currentLevel!=='2'?' (Root)':''}</span>`).join('');
+                    // notes[] is already root-first, ascending (left to right) —
+                    // data-note lets playSelection() light each badge up in that
+                    // same reading order as the scale/mode actually plays, so
+                    // Scale Type and Mode picks visibly "connect" to what's
+                    // sounding, not just to the Circle.
+                    list.innerHTML = notes.map(n=>`<span class="note-badge" data-note="${n}" style="background:${colors[n]};color:${textColors[n]};">${getNoteName(n)}${n===rootNote&&currentLevel!=='freeplay'&&currentLevel!=='2'?' (Root)':''}</span>`).join('');
                 }
             } catch(e) { console.error('Note list error:', e); }
         }
