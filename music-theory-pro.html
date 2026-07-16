@@ -1878,7 +1878,34 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                  divs -- every element inside keeps its existing id, classes,
                  and onclick handlers untouched. -->
             <div class="kcm-two-col-row" style="display:flex; gap:1.75rem; align-items:flex-start; flex-wrap:wrap; justify-content:center;">
-            <div class="kcm-left-col" style="flex:1 1 480px; max-width:520px; min-width:300px;">
+                        <div class="kcm-left-col" style="flex:0 0 220px; min-width:180px; max-width:240px; display:flex; flex-direction:column; gap:0.75rem;">
+
+
+            <!-- ── CONTROLS (always visible below panels) ── -->
+
+            <div class="view-toggle" role="group" aria-label="View selector" style="flex-direction:column; align-items:stretch;">
+                <button class="view-btn active" data-view="circle">⭕ Circle</button>
+                <button class="view-btn" data-view="guitar">🎸 Guitar</button>
+                <button class="view-btn" data-view="keyboard">🎹 Piano</button>
+                <button class="view-btn" data-view="stencil">✦ Stencil</button>
+                <button class="view-btn" data-view="ear">👂 Ear</button>
+                <button class="view-btn" data-view="sing">🎤 Sing</button>
+                <button class="view-btn" data-view="circleType">⭕ Circle · Type-to-Play</button>
+                <button class="view-btn key-selector-btn" id="keyPickerBtn" onclick="toggleKeyPicker()" aria-haspopup="true" aria-expanded="false">🎵 Key: <span id="keyPickerLabel">C</span></button>
+                <button id="globalPlayBtn" class="view-action-btn" style="background:linear-gradient(135deg, var(--primary-teal) 0%, #006666 100%); border-color:var(--primary-teal); color:#fff; font-weight:800;">▶ Play</button>
+                <button id="globalStopBtn" class="view-action-btn" style="background:linear-gradient(135deg, var(--primary-coral) 0%, #a8583a 100%); border-color:var(--primary-coral); color:#fff; font-weight:800;">■ Stop</button>
+            </div>
+
+            <!-- ── KEY PICKER PANEL ─────────────────────────────── -->
+            <div id="keyPickerPanel" style="display:none; margin:0.5rem auto 0; max-width:520px;
+                 background:rgba(10,10,25,0.97); border:2px solid var(--primary-teal);
+                 border-radius:14px; padding:0.75rem 1rem; box-shadow:0 8px 32px rgba(0,128,128,0.35);">
+                <div style="font-size:0.65rem; font-weight:700; letter-spacing:1px; color:var(--primary-teal);
+                     text-align:center; margin-bottom:0.6rem; font-family:var(--font-display);">SELECT KEY</div>
+                <div style="display:flex; flex-wrap:wrap; gap:5px; justify-content:center;" id="keyPickerBtns"></div>
+            </div>
+            </div><!-- end kcm-left-col -->
+            <div class="kcm-center-col" style="flex:2 1 480px; max-width:560px; min-width:320px;">
             <!-- ══ PANEL SWAP ZONE — only one panel visible at a time ══ -->
             <div id="panelSwapZone" style="width:100%;">
 
@@ -2112,40 +2139,15 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
             <div id="recordingStatus" style="text-align:center; min-height:1.25rem; font-size:0.82rem;" aria-live="polite"></div>
             <svg id="recTimelineSVG" viewBox="0 0 320 100" preserveAspectRatio="xMidYMid meet" aria-hidden="true" style="display:none; width:100%; max-width:520px; margin:0.75rem auto 0; background:rgba(255,255,255,0.97); border-radius:8px;"></svg>
         </div>
-            </div><!-- end kcm-left-col -->
+            </div><!-- end kcm-center-col -->
 
-            <div class="kcm-right-col" style="flex:1 1 420px; min-width:300px;">
-
-
-            <!-- ── CONTROLS (always visible below panels) ── -->
-
-            <div class="view-toggle" role="group" aria-label="View selector">
-                <button class="view-btn active" data-view="circle">⭕ Circle</button>
-                <button class="view-btn" data-view="guitar">🎸 Guitar</button>
-                <button class="view-btn" data-view="keyboard">🎹 Piano</button>
-                <button class="view-btn" data-view="stencil">✦ Stencil</button>
-                <button class="view-btn" data-view="ear">👂 Ear</button>
-                <button class="view-btn" data-view="sing">🎤 Sing</button>
-                <button class="view-btn" data-view="circleType">⭕ Circle · Type-to-Play</button>
-                <button class="view-btn key-selector-btn" id="keyPickerBtn" onclick="toggleKeyPicker()" aria-haspopup="true" aria-expanded="false">🎵 Key: <span id="keyPickerLabel">C</span></button>
-                <button id="globalPlayBtn" class="view-action-btn" style="background:linear-gradient(135deg, var(--primary-teal) 0%, #006666 100%); border-color:var(--primary-teal); color:#fff; font-weight:800;">▶ Play</button>
-                <button id="globalStopBtn" class="view-action-btn" style="background:linear-gradient(135deg, var(--primary-coral) 0%, #a8583a 100%); border-color:var(--primary-coral); color:#fff; font-weight:800;">■ Stop</button>
-            </div>
-
-            <!-- ── KEY PICKER PANEL ─────────────────────────────── -->
-            <div id="keyPickerPanel" style="display:none; margin:0.5rem auto 0; max-width:520px;
-                 background:rgba(10,10,25,0.97); border:2px solid var(--primary-teal);
-                 border-radius:14px; padding:0.75rem 1rem; box-shadow:0 8px 32px rgba(0,128,128,0.35);">
-                <div style="font-size:0.65rem; font-weight:700; letter-spacing:1px; color:var(--primary-teal);
-                     text-align:center; margin-bottom:0.6rem; font-family:var(--font-display);">SELECT KEY</div>
-                <div style="display:flex; flex-wrap:wrap; gap:5px; justify-content:center;" id="keyPickerBtns"></div>
-            </div>
+            <div class="kcm-right-col" style="flex:0 0 260px; min-width:220px; max-width:280px;">
 
             <div style="display:flex; justify-content:center; margin-bottom:0.5rem;">
                 <button class="level-btn" id="playChromaticBtn" style="background:linear-gradient(135deg, var(--primary-teal) 0%, #006666 100%); border-color:var(--primary-teal); color:#fff; min-width:220px; font-size:0.85rem; letter-spacing:1px; box-shadow:var(--teal-glow);">🎹 CHROMATIC SCALE</button>
             </div>
 
-            <div class="level-selector" role="group" aria-label="Learning mode selector">
+            <div class="level-selector" role="group" aria-label="Learning mode selector" style="flex-direction:column; align-items:stretch; max-width:none;">
                 <button class="level-btn active" data-level="1"         title="1 Note">Single Note</button>
                 <button class="level-btn"         data-level="2"         title="2 Notes">Intervals</button>
                 <button class="level-btn"         data-level="3"         title="3 Notes">Triads</button>
@@ -2158,7 +2160,7 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                 <button class="level-btn"         data-level="freeplay"  title="Free Play">Free Play</button>
             </div>
 
-            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(100px, 1fr)); gap:10px;">
+            <div style="display:flex; flex-direction:column; gap:8px;">
                 <button class="play-btn" id="playUpBtn">↑ Ascending</button>
                 <button class="play-btn" id="playDownBtn">↓ Descending</button>
                 <button class="play-btn" id="playScaleBtn">♫ Full Scale</button>
