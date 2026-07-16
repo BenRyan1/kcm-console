@@ -393,34 +393,36 @@ nav a.active { color: var(--primary-teal); }
     box-shadow: var(--teal-glow);
     transform: scale(1.04);
 }
-/* -- Hover-collapse nav rail --------------------------------------
+/* -- Hover-subdue nav ----------------------------------------------
    Desktop-with-a-real-mouse only (hover:hover + pointer:fine skips
    touchscreens and coarse pointers entirely -- those devices get the
-   nav exactly as before, always fully visible, no hidden-until-hover
-   trap with no way to reveal it). Collapses the view-toggle group to
-   a narrow icon rail; hovering (or tabbing into it with a keyboard)
-   expands it back to full labeled buttons. justify-content:flex-start
-   in the collapsed state keeps each button's leading icon glyph
-   visible while the trailing label clips out of view, entirely via
-   CSS -- no button markup changes needed. */
+   nav exactly as before, always fully visible/legible, nothing dimmed
+   out with no way to reveal it). Buttons sit at low opacity until you
+   hover (or keyboard-focus into) the group, then brighten to full
+   visibility -- same idea as a collapsed icon rail, but every button
+   keeps its full size/label/position the whole time, so nothing about
+   the layout shifts and nothing (like the Scale Type/Mode sub-panels
+   nested inside .level-selector) risks getting clipped. Whatever's
+   currently active/selected stays fully visible even when not
+   hovering, so you can always see your current pick at a glance. */
 @media (hover: hover) and (pointer: fine) {
-    .kcm-hover-nav {
-        width: 64px;
-        overflow: hidden;
-        flex-wrap: nowrap;
-        transition: width 0.28s ease;
-    }
-    .kcm-hover-nav:hover,
-    .kcm-hover-nav:focus-within {
-        width: 232px;
-    }
     .kcm-hover-nav .view-btn,
-    .kcm-hover-nav .view-action-btn {
-        width: 100%;
-        box-sizing: border-box;
-        justify-content: flex-start;
-        white-space: nowrap;
-        overflow: hidden;
+    .kcm-hover-nav .view-action-btn,
+    .kcm-hover-nav .level-btn {
+        opacity: 0.32;
+        transition: opacity 0.25s ease;
+    }
+    .kcm-hover-nav:hover .view-btn,
+    .kcm-hover-nav:hover .view-action-btn,
+    .kcm-hover-nav:hover .level-btn,
+    .kcm-hover-nav:focus-within .view-btn,
+    .kcm-hover-nav:focus-within .view-action-btn,
+    .kcm-hover-nav:focus-within .level-btn {
+        opacity: 1;
+    }
+    .kcm-hover-nav .view-btn.active,
+    .kcm-hover-nav .level-btn.active {
+        opacity: 1;
     }
 }
 /* Action buttons in view row — same style as view-btn but excluded from view switching */
@@ -2393,7 +2395,7 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                 <div style="display:flex; flex-wrap:wrap; gap:5px; justify-content:center;" id="keyPickerBtns"></div>
             </div>
 
-            <div class="level-selector" role="group" aria-label="Learning mode selector" style="flex-direction:column; align-items:stretch; max-width:none;">
+            <div class="level-selector kcm-hover-nav" role="group" aria-label="Learning mode selector" style="flex-direction:column; align-items:stretch; max-width:none;">
                 <button class="level-btn active" data-level="1"         title="1 Note">Single Note</button>
                 <button class="level-btn"         data-level="2"         title="2 Notes">Intervals</button>
                 <button class="level-btn"         data-level="3"         title="3 Notes">Triads</button>
