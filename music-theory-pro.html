@@ -2245,8 +2245,11 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
             </div>
 
             <!-- TRANSPORT ROW — Ascend/Descend/Full Scale/Play Chord as one
-                 row, Stop on its own line below with a clear gap between
-                 them, directly above the Recording Studio. Same
+                 row, Octave/Speed condensed to two toggle buttons on a new
+                 line beneath (relocated here from the old Register & Tempo
+                 column, same show/hide sub-panel pattern as Key/Instrument/
+                 Scale Type), Stop on its own line below that with a clear
+                 gap — directly above the Recording Studio. Same
                  ids/onclick wiring as before — layout only. -->
             <div style="margin-top:1.5rem;">
                 <div style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center;">
@@ -2255,6 +2258,33 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                     <button class="play-btn" id="playScaleBtn" style="flex:1 1 100px;">♫ Full Scale</button>
                     <button class="play-btn" id="playChordBtn" style="flex:1 1 100px;">♪ Play Chord</button>
                 </div>
+
+                <div style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:10px;">
+                    <button class="level-btn" id="octaveBtn" onclick="toggleOctavePicker()" style="flex:1 1 140px;" aria-haspopup="true" aria-expanded="false">🎚 Octave: <span id="octaveBtnLabel">4</span></button>
+                    <button class="level-btn" id="tempoBtn" onclick="toggleTempoPicker()" style="flex:1 1 140px;" aria-haspopup="true" aria-expanded="false">⏱ Speed: <span id="tempoBtnLabel">120</span> BPM</button>
+                </div>
+                <div id="octavePickerPanel" style="display:none; width:100%; box-sizing:border-box;
+                     background:rgba(10,10,25,0.97); border:2px solid var(--primary-teal);
+                     border-radius:14px; padding:0.75rem 1rem; margin-top:8px; box-shadow:0 8px 32px rgba(0,128,128,0.35);">
+                    <label style="display:block; text-align:center; font-size:0.65rem; font-weight:700; letter-spacing:1px; color:var(--primary-teal); font-family:var(--font-display); text-transform:uppercase; margin-bottom:0.5rem;">Octave / Register</label>
+                    <div style="display:flex; gap:8px; align-items:center; justify-content:center;">
+                        <button class="octave-btn" id="octaveDown" aria-label="Lower octave" style="flex:1; padding:0.5rem; font-size:0.8rem;">◀ Lower</button>
+                        <div id="octaveLabel" style="font-size:0.88rem; color:var(--primary-gold); font-weight:700; text-align:center; min-width:100px;">Octave 4 (Middle C)</div>
+                        <button class="octave-btn" id="octaveUp" aria-label="Raise octave" style="flex:1; padding:0.5rem; font-size:0.8rem;">Higher ▶</button>
+                    </div>
+                </div>
+                <div id="tempoPickerPanel" style="display:none; width:100%; box-sizing:border-box;
+                     background:rgba(10,10,25,0.97); border:2px solid var(--primary-teal);
+                     border-radius:14px; padding:0.75rem 1rem; margin-top:8px; box-shadow:0 8px 32px rgba(0,128,128,0.35);">
+                    <label style="display:block; text-align:center; font-size:0.65rem; font-weight:700; letter-spacing:1px; color:var(--primary-teal); font-family:var(--font-display); text-transform:uppercase; margin-bottom:0.5rem;">⏱ Playback Speed</label>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="font-size:0.68rem; font-weight:700; min-width:32px;">SLOW</span>
+                        <input type="range" id="tempoSlider" min="40" max="240" value="120" step="10" style="flex:1;" aria-label="Tempo in BPM">
+                        <span style="font-size:0.68rem; font-weight:700; min-width:32px; text-align:right;">FAST</span>
+                    </div>
+                    <div style="text-align:center; margin-top:6px; font-size:1.1rem; font-weight:800; color:var(--primary-gold);"><span id="bpmDisplay">120</span> BPM</div>
+                </div>
+
                 <div style="margin-top:14px;">
                     <button class="play-btn" id="stopPlayBtn" style="width:100%; background:linear-gradient(135deg, var(--primary-coral) 0%, #C4341C 100%); border-color:var(--primary-coral);">⏹ Stop</button>
                 </div>
@@ -2292,32 +2322,6 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                 <div class="two-col-controls" style="flex:1 1 200px; min-width:190px; display:flex; flex-direction:column; margin-top:0; box-sizing:border-box;">
                     <div class="col-header">🎵 Note &amp; Scale Controls</div>
                     <div id="controls"></div>
-                </div>
-
-                <!-- Octave + Speed -->
-                <div style="flex:1 1 200px; min-width:190px; display:flex; flex-direction:column; box-sizing:border-box;">
-                    <div class="col-header">🎚 Register &amp; Tempo</div>
-
-                    <!-- OCTAVE -->
-                    <div class="control-group">
-                        <label>Octave / Register</label>
-                        <div style="display:flex; gap:8px; align-items:center; justify-content:center; margin-top:0.25rem;">
-                            <button class="octave-btn" id="octaveDown" aria-label="Lower octave" style="flex:1; padding:0.5rem; font-size:0.8rem;">◀ Lower</button>
-                            <div id="octaveLabel" style="font-size:0.88rem; color:var(--primary-gold); font-weight:700; text-align:center; min-width:100px;">Octave 4 (Middle C)</div>
-                            <button class="octave-btn" id="octaveUp" aria-label="Raise octave" style="flex:1; padding:0.5rem; font-size:0.8rem;">Higher ▶</button>
-                        </div>
-                    </div>
-
-                    <!-- TEMPO -->
-                    <div class="control-group">
-                        <label>⏱ Playback Speed</label>
-                        <div style="display:flex; align-items:center; gap:8px; margin-top:0.25rem;">
-                            <span style="font-size:0.68rem; font-weight:700; min-width:32px;">SLOW</span>
-                            <input type="range" id="tempoSlider" min="40" max="240" value="120" step="10" style="flex:1;" aria-label="Tempo in BPM">
-                            <span style="font-size:0.68rem; font-weight:700; min-width:32px; text-align:right;">FAST</span>
-                        </div>
-                        <div style="text-align:center; margin-top:6px; font-size:1.1rem; font-weight:800; color:var(--primary-gold);"><span id="bpmDisplay">120</span> BPM</div>
-                    </div>
                 </div>
 
             </div><!-- end controls row -->
@@ -5800,6 +5804,83 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
             setTimeout(() => document.addEventListener('click', closeHandler), 200);
         }
         window.toggleInstrumentPicker = toggleInstrumentPicker;
+
+        // ── Octave / Tempo pickers — same toggle-panel pattern as
+        // Instrument/Key/Scale Type: a trigger button + a sibling panel,
+        // shown/hidden with outside-click-to-close. ──
+        function toggleOctavePicker() {
+            const panel = document.getElementById('octavePickerPanel');
+            const btn   = document.getElementById('octaveBtn');
+            if (!panel) return;
+            const isOpen = panel.style.display !== 'none';
+            if (isOpen) {
+                panel.style.display = 'none';
+                if (btn) { btn.classList.remove('open'); btn.setAttribute('aria-expanded','false'); }
+                return;
+            }
+            panel.style.display = 'block';
+            if (btn) { btn.classList.add('open'); btn.setAttribute('aria-expanded','true'); }
+            const closeHandler = (e) => {
+                if (panel.contains(e.target) || (btn && btn.contains(e.target))) return;
+                panel.style.display = 'none';
+                if (btn) { btn.classList.remove('open'); btn.setAttribute('aria-expanded','false'); }
+                document.removeEventListener('click', closeHandler);
+            };
+            setTimeout(() => document.addEventListener('click', closeHandler), 200);
+        }
+        window.toggleOctavePicker = toggleOctavePicker;
+
+        function toggleTempoPicker() {
+            const panel = document.getElementById('tempoPickerPanel');
+            const btn   = document.getElementById('tempoBtn');
+            if (!panel) return;
+            const isOpen = panel.style.display !== 'none';
+            if (isOpen) {
+                panel.style.display = 'none';
+                if (btn) { btn.classList.remove('open'); btn.setAttribute('aria-expanded','false'); }
+                return;
+            }
+            panel.style.display = 'block';
+            if (btn) { btn.classList.add('open'); btn.setAttribute('aria-expanded','true'); }
+            const closeHandler = (e) => {
+                if (panel.contains(e.target) || (btn && btn.contains(e.target))) return;
+                panel.style.display = 'none';
+                if (btn) { btn.classList.remove('open'); btn.setAttribute('aria-expanded','false'); }
+                document.removeEventListener('click', closeHandler);
+            };
+            setTimeout(() => document.addEventListener('click', closeHandler), 200);
+        }
+        window.toggleTempoPicker = toggleTempoPicker;
+
+        // Keep the two trigger buttons' labels mirrored to the real
+        // controls inside their panels, no matter which code path changes
+        // them (main slider, dock's BPM +/- buttons, keyboard arrows,
+        // etc.) — same MutationObserver approach the dock already uses to
+        // mirror octaveLabel, applied here for the new trigger buttons.
+        function _initOctaveTempoBtnSync() {
+            const octLabel = document.getElementById('octaveLabel');
+            const octBtnLabel = document.getElementById('octaveBtnLabel');
+            if (octLabel && octBtnLabel) {
+                const syncOct = () => {
+                    const m = octLabel.textContent.match(/Octave\s+(\d+)/);
+                    if (m) octBtnLabel.textContent = m[1];
+                };
+                syncOct();
+                new MutationObserver(syncOct).observe(octLabel, { childList: true, characterData: true, subtree: true });
+            }
+            const bpmDisplay = document.getElementById('bpmDisplay');
+            const tempoBtnLabel = document.getElementById('tempoBtnLabel');
+            if (bpmDisplay && tempoBtnLabel) {
+                const syncBpm = () => { tempoBtnLabel.textContent = bpmDisplay.textContent; };
+                syncBpm();
+                new MutationObserver(syncBpm).observe(bpmDisplay, { childList: true, characterData: true, subtree: true });
+            }
+        }
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', _initOctaveTempoBtnSync);
+        } else {
+            _initOctaveTempoBtnSync();
+        }
 
         const INSTRUMENT_LABELS = { synth: 'Synth', piano: 'Piano', guitar: 'Guitar', marimba: 'Marimba', strings: 'Strings' };
         function initInstrumentPicker() {
