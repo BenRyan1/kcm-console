@@ -6004,6 +6004,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
 
         // ── Scale Type sub-dropdown (under the Scales level button) —
         //    static, wired once, same pattern as the Instrument picker.
+        const SCALE_TYPE_LABELS = { major:'Major (Ionian)', naturalMinor:'Natural Minor (Aeolian)', harmonicMinor:'Harmonic Minor', melodicMinor:'Melodic Minor' };
         function initScaleTypePicker() {
             if (!window.currentScaleType) window.currentScaleType = 'major';
             document.querySelectorAll('.scale-type-btn').forEach(btn => {
@@ -6013,6 +6014,12 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                     document.querySelectorAll('.scale-type-btn').forEach(b => b.classList.remove('active'));
                     this.classList.add('active');
                     updateDisplay();
+                    // Mirror onto the Stencil layer too — same helper used
+                    // for Harmonized progression chords, so picking a Scale
+                    // Type shows/plays on the wheel, not just the Circle.
+                    if (typeof window._stencilShowChord === 'function' && window.currentPatternIntervals) {
+                        window._stencilShowChord(rootNote, window.currentPatternIntervals, `${getRootName()} ${SCALE_TYPE_LABELS[window.currentScaleType] || window.currentScaleType}`);
+                    }
                     setTimeout(() => playSelection('up'), 200);
                 };
             });
@@ -6077,6 +6084,13 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                     currentModeSelection = this.dataset.mode;
                     _modeSubSyncActive();
                     updateDisplay();
+                    // Mirror onto the Stencil layer too — same helper used
+                    // for Harmonized progression chords / Scale Type, so
+                    // picking a Mode shows/plays on the wheel too.
+                    if (typeof window._stencilShowChord === 'function' && window.currentPatternIntervals) {
+                        const _modeDef = MODE_DEFS.find(m => m.key === currentModeSelection);
+                        window._stencilShowChord(rootNote, window.currentPatternIntervals, `${getRootName()} ${_modeDef ? _modeDef.name : currentModeSelection}`);
+                    }
                     setTimeout(() => playSelection('up'), 200);
                 };
             });
