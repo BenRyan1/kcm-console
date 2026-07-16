@@ -3191,8 +3191,21 @@ window.addEventListener('unhandledrejection', function(event) {
 
                         _schedPlay(() => {
                             seq.forEach(({ pc }) => highlightNote(pc, false));
+                            // Leave all 12 spheres lit at rest once the run
+                            // finishes, instead of reverting to whichever
+                            // level was active before Chromatic Scale was
+                            // clicked (highlightNote's off-path restores
+                            // each sphere's PRE-pulse excluded/included
+                            // state, which was never chromatic-aware).
+                            // revealedNotes is what updateSphereDisplay()
+                            // actually reads for the "included" vs
+                            // "excluded" rest state, same mechanism every
+                            // other pattern in the app uses.
+                            revealedNotes = new Set([0,1,2,3,4,5,6,7,8,9,10,11]);
+                            window.currentPatternIntervals = [0,1,2,3,4,5,6,7,8,9,10,11];
+                            updateSphereDisplay();
                             clearStaffHighlights();
-                            updateStaffNotation(Array.from(selectedNotes));
+                            updateStaffNotation(seq);
                         }, seq.length * beatMs + 300);
 
                     } catch(e) { console.error('Chromatic scale error:', e); }
