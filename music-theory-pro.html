@@ -2191,15 +2191,20 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                 <p id="quizScore" style="margin-top:1.25rem; font-family:var(--font-display); font-size:1.2rem; font-weight:700; color:var(--primary-gold);" aria-live="polite">Score: 0/0</p>
             </div>
 
-            <!-- TRANSPORT ROW — Ascend/Descend/Full Scale/Play Chord/Stop,
-                 unified into one connected row directly above the Recording
-                 Studio. Same ids/onclick wiring as before — layout only. -->
-            <div style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:1.5rem;">
-                <button class="play-btn" id="playUpBtn" style="flex:1 1 100px;">↑ Ascending</button>
-                <button class="play-btn" id="playDownBtn" style="flex:1 1 100px;">↓ Descending</button>
-                <button class="play-btn" id="playScaleBtn" style="flex:1 1 100px;">♫ Full Scale</button>
-                <button class="play-btn" id="playChordBtn" style="flex:1 1 100px;">♪ Play Chord</button>
-                <button class="play-btn" id="stopPlayBtn" style="flex:1 1 100px; background:linear-gradient(135deg, var(--primary-coral) 0%, #C4341C 100%); border-color:var(--primary-coral);">⏹ Stop</button>
+            <!-- TRANSPORT ROW — Ascend/Descend/Full Scale/Play Chord as one
+                 row, Stop on its own line below with a clear gap between
+                 them, directly above the Recording Studio. Same
+                 ids/onclick wiring as before — layout only. -->
+            <div style="margin-top:1.5rem;">
+                <div style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center;">
+                    <button class="play-btn" id="playUpBtn" style="flex:1 1 100px;">↑ Ascending</button>
+                    <button class="play-btn" id="playDownBtn" style="flex:1 1 100px;">↓ Descending</button>
+                    <button class="play-btn" id="playScaleBtn" style="flex:1 1 100px;">♫ Full Scale</button>
+                    <button class="play-btn" id="playChordBtn" style="flex:1 1 100px;">♪ Play Chord</button>
+                </div>
+                <div style="margin-top:14px;">
+                    <button class="play-btn" id="stopPlayBtn" style="width:100%; background:linear-gradient(135deg, var(--primary-coral) 0%, #C4341C 100%); border-color:var(--primary-coral);">⏹ Stop</button>
+                </div>
             </div>
 
             <!-- RECORDING STUDIO — condensed to a single line, now sitting
