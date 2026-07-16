@@ -547,8 +547,8 @@ nav a.active { color: var(--primary-teal); }
    ============================================================ */
 .play-btn {
     background: linear-gradient(135deg, var(--primary-teal) 0%, #006666 100%);
-    padding: 0.7rem 1.2rem;
-    font-size: 0.78rem;
+    padding: 0.65rem 0.85rem;
+    font-size: 0.72rem;
     border: 2px solid rgba(255,255,255,0.2);
     border-radius: 10px;
     color: white;
@@ -558,12 +558,13 @@ nav a.active { color: var(--primary-teal); }
     transition: all 0.3s;
     box-shadow: 0 4px 15px rgba(0,0,0,0.3);
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    min-height: 42px;
+    letter-spacing: 0.3px;
+    min-height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
     touch-action: manipulation;
+    white-space: nowrap;
 }
 .play-btn:hover {
     background: linear-gradient(135deg, #00a0a0 0%, var(--primary-teal) 100%);
@@ -2157,12 +2158,12 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                 <button class="level-btn"         data-level="freeplay"  title="Free Play">Free Play</button>
             </div>
 
-            <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
-                <button class="play-btn" id="playUpBtn" style="flex:1; max-width:160px;">↑ Ascending</button>
-                <button class="play-btn" id="playDownBtn" style="flex:1; max-width:160px;">↓ Descending</button>
-                <button class="play-btn" id="playScaleBtn" style="flex:1; max-width:160px;">♫ Full Scale</button>
-                <button class="play-btn" id="playChordBtn" style="flex:1; max-width:160px;">♪ Play Chord</button>
-                <button class="play-btn" id="stopPlayBtn" style="flex:1; max-width:130px; background:linear-gradient(135deg, var(--primary-coral) 0%, #a8583a 100%); border-color:var(--primary-coral);">⏹ Stop</button>
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(100px, 1fr)); gap:10px;">
+                <button class="play-btn" id="playUpBtn">↑ Ascending</button>
+                <button class="play-btn" id="playDownBtn">↓ Descending</button>
+                <button class="play-btn" id="playScaleBtn">♫ Full Scale</button>
+                <button class="play-btn" id="playChordBtn">♪ Play Chord</button>
+                <button class="play-btn" id="stopPlayBtn" style="background:linear-gradient(135deg, var(--primary-coral) 0%, #a8583a 100%); border-color:var(--primary-coral);">⏹ Stop</button>
             </div>
             
             <div style="margin-top:1.25rem; width:100%; max-width:100%;">
