@@ -2407,6 +2407,37 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                  spot (right above the remaining controls), per swap. -->
             <h3 id="status" role="status" aria-live="polite" style="margin-top:1rem;">Click START AUDIO ENGINE to begin!</h3>
 
+            <!-- CHORD PROGRESSIONS -- moved here from the right column.
+                 At the right column's ~164px width the progression pills
+                 (e.g. "I-IV-V-I  CLASSIC ROCK") and the Play All Scale
+                 Chords button had no room and wrapped/overflowed badly.
+                 The center column is much wider, so this now has the
+                 space it actually needs. -->
+            <div style="margin-top:1.25rem;">
+<!-- PROGRESSION CONTROLS — shown only for Harmonized Major/Minor -->
+    <div class="progression-controls" id="progressionControls" aria-live="polite" style="display:none;">
+        <h4>🎼 Chord Progressions in Key of <span id="progressionKey">C</span></h4>
+        <div style="text-align:center; font-size:0.75rem; opacity:0.8; margin-bottom:0.85rem; font-weight:600;">
+            Using <span id="progressionChordType">Triads</span> · Scale: <span id="progressionScaleType">Major</span>
+        </div>
+        <div style="text-align:center; margin-bottom:0.85rem;">
+            <button class="play-btn" id="playAllChordsBtn" style="margin:0 auto; display:inline-flex;">🎹 Play All Scale Chords</button>
+        </div>
+        <div class="progression-buttons" id="progressionButtons"></div>
+        <div id="progTimeline" style="display:none; margin-top:1rem;">
+            <div id="progTimelineTrack" style="display:flex; gap:6px; justify-content:center; flex-wrap:nowrap;"></div>
+            <div id="progTimelineStatus" style="text-align:center; font-size:0.68rem; color:rgba(255,255,255,0.75); font-weight:600; margin-top:0.5rem; min-height:1.4em;"></div>
+        </div>
+    </div>
+
+    <!-- CHORD VOICING DISPLAY PANEL — shown below progressions in Harmonized mode -->
+    <div id="chordVoicingPanel" style="display:none; margin:1rem auto; max-width:860px; background:rgba(0,0,0,0.35); border:2px solid rgba(0,128,128,0.3); border-radius:16px; padding:1.25rem 1.5rem;">
+        <div style="text-align:center; font-family:var(--font-display); font-size:0.85rem; font-weight:800; color:var(--primary-teal); letter-spacing:1.5px; text-transform:uppercase; margin-bottom:1rem;">
+            🎹 <span id="voicingTitle">Scale Chords</span>
+        </div>
+        <div id="voicingGrid" style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center;"></div>
+    </div>
+
             </div><!-- end kcm-center-col -->
 
             <div class="kcm-right-col" style="flex:0 0 164px; min-width:150px; max-width:184px;">
@@ -2489,30 +2520,6 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
             <div style="margin-top:1.25rem; width:100%; max-width:100%;">
 
             </div>
-                        <div style="margin-top:1.25rem;">
-<!-- PROGRESSION CONTROLS — shown only for Harmonized Major/Minor -->
-    <div class="progression-controls" id="progressionControls" aria-live="polite" style="display:none;">
-        <h4>🎼 Chord Progressions in Key of <span id="progressionKey">C</span></h4>
-        <div style="text-align:center; font-size:0.75rem; opacity:0.8; margin-bottom:0.85rem; font-weight:600;">
-            Using <span id="progressionChordType">Triads</span> · Scale: <span id="progressionScaleType">Major</span>
-        </div>
-        <div style="text-align:center; margin-bottom:0.85rem;">
-            <button class="play-btn" id="playAllChordsBtn" style="margin:0 auto; display:inline-flex;">🎹 Play All Scale Chords</button>
-        </div>
-        <div class="progression-buttons" id="progressionButtons"></div>
-        <div id="progTimeline" style="display:none; margin-top:1rem;">
-            <div id="progTimelineTrack" style="display:flex; gap:6px; justify-content:center; flex-wrap:nowrap;"></div>
-            <div id="progTimelineStatus" style="text-align:center; font-size:0.68rem; color:rgba(255,255,255,0.75); font-weight:600; margin-top:0.5rem; min-height:1.4em;"></div>
-        </div>
-    </div>
-
-    <!-- CHORD VOICING DISPLAY PANEL — shown below progressions in Harmonized mode -->
-    <div id="chordVoicingPanel" style="display:none; margin:1rem auto; max-width:860px; background:rgba(0,0,0,0.35); border:2px solid rgba(0,128,128,0.3); border-radius:16px; padding:1.25rem 1.5rem;">
-        <div style="text-align:center; font-family:var(--font-display); font-size:0.85rem; font-weight:800; color:var(--primary-teal); letter-spacing:1.5px; text-transform:uppercase; margin-bottom:1rem;">
-            🎹 <span id="voicingTitle">Scale Chords</span>
-        </div>
-        <div id="voicingGrid" style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center;"></div>
-    </div>
             </div>
             </div><!-- end kcm-right-col -->
             </div><!-- end kcm-two-col-row -->
