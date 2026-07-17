@@ -1545,6 +1545,21 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 /* ============================================================
+   KCM THREE-COLUMN GRID (Left nav / Center circle / Right controls)
+   Same fixed-side-column, fluid-center CSS Grid pattern already proven
+   in circle-of-fifths.html -- replaces the old JS-driven scale-to-fit
+   (kcmFitLayout/transform:scale) approach, which kept mis-measuring
+   the row in the embedded panel context and falling back to stacking
+   even when there was room for three columns. Left/right columns are
+   fixed width, center is fluid -- the browser's own layout engine
+   keeps all three side-by-side with no JS measurement involved.
+   Three columns are ALWAYS kept side-by-side (never stacked to a
+   single column) per explicit request -- #kcmFitWrap scrolls
+   horizontally as the fallback on screens too narrow to show the row
+   at full width, instead of ever falling back to vertical stacking.
+   ============================================================ */
+
+/* ============================================================
    RESPONSIVE
    ============================================================ */
 @media (max-width: 767px) {
@@ -2060,9 +2075,9 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                  CSS transform so Left/Center/Right all stay visible on one
                  screen without scrolling, on any screen where they'd
                  otherwise fit side-by-side but not fully in view. -->
-            <div id="kcmFitWrap" style="overflow:hidden;">
-            <div class="kcm-two-col-row" id="kcmTwoColRow" style="display:flex; gap:1.75rem; align-items:flex-start; flex-wrap:wrap; justify-content:center;">
-                        <div class="kcm-left-col" style="flex:0 0 220px; min-width:180px; max-width:240px; display:flex; flex-direction:column; gap:0.75rem;">
+            <div id="kcmFitWrap" style="overflow-x:auto; overflow-y:visible;">
+            <div class="kcm-two-col-row" id="kcmTwoColRow" style="display:grid; grid-template-columns:220px 1fr 174px; gap:1.75rem; align-items:start;">
+                        <div class="kcm-left-col" style="min-width:0; display:flex; flex-direction:column; gap:0.75rem;">
 
 
             <!-- ── CONTROLS (always visible below panels) ── -->
@@ -2110,7 +2125,7 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
             </div>
 
             </div><!-- end kcm-left-col -->
-            <div class="kcm-center-col" style="flex:2 1 480px; max-width:560px; min-width:320px;">
+            <div class="kcm-center-col" style="min-width:0;">
             <!-- ══ PANEL SWAP ZONE — only one panel visible at a time ══ -->
             <div id="panelSwapZone" style="width:100%; position:relative;">
 
@@ -2448,7 +2463,7 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
 
             </div><!-- end kcm-center-col -->
 
-            <div class="kcm-right-col" style="flex:0 0 164px; min-width:150px; max-width:184px;">
+            <div class="kcm-right-col" style="min-width:0;">
 
             <!-- Root Note, Scale Degree, Chord Type, Waveform -- moved here
                  (title + controls together) so this panel sits as its own
@@ -6363,110 +6378,21 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         }
         window.toggleScaleLibraryPanel = toggleScaleLibraryPanel;
 
-        // ── Scale-to-fit: keep Left / Center / Right all visible on one
-        //    screen ─────────────────────────────────────────────────────
-        //    The 3-column row (view nav / Circle+Stencil panel / level
-        //    selector) has `flex-wrap: wrap` in its base CSS, meant for
-        //    genuinely narrow (phone-width) fallback. But that same wrap
-        //    also kicks in any time the row's *unscaled* natural width
-        //    exceeds whatever container it's sitting in — including
-        //    inside a narrower embedded panel (e.g. the KCM Console shell
-        //    iframe) — which stacks all three columns full-width instead
-        //    of shrinking them to fit side-by-side. That's the bug: it
-        //    was measuring and scaling an already-vertically-stacked
-        //    layout instead of preventing the stack in the first place.
-        //
-        //    Fix: force nowrap while measuring/fitting, so the three
-        //    columns always attempt to sit side-by-side first; only fall
-        //    back to the original wrap/stack behavior if even the floor
-        //    scale can't make that fit (genuinely phone-narrow).
-        const KCM_FIT_MIN_SCALE = 0.15;
-        let _kcmFitRAF = null;
-        function kcmFitLayout() {
-            if (_kcmFitRAF) cancelAnimationFrame(_kcmFitRAF);
-            _kcmFitRAF = requestAnimationFrame(() => {
-                try {
-                    const wrap = document.getElementById('kcmFitWrap');
-                    const row  = document.getElementById('kcmTwoColRow');
-                    if (!wrap || !row) return;
-
-                    // Measure the TRUE natural side-by-side size. Two things
-                    // have to be reset first: any previous transform (or it
-                    // corrupts the reading), and — importantly —
-                    // justify-content:center swapped to flex-start. Centered
-                    // overflow is a known browser quirk: scrollWidth only
-                    // reliably measures RIGHTWARD overflow, so with content
-                    // centered and overflowing on both sides, it silently
-                    // undercounts the true width, which was producing a
-                    // wrong (too-aggressive) scale. flex-start keeps all
-                    // overflow on the right, where scrollWidth measures it
-                    // correctly.
-                    row.style.transform      = 'none';
-                    row.style.marginLeft     = '0';
-                    row.style.flexWrap       = 'nowrap';
-                    row.style.justifyContent = 'flex-start';
-                    wrap.style.height        = 'auto';
-                    const naturalW = row.scrollWidth;
-                    const naturalH = row.scrollHeight;
-                    if (naturalW === 0 || naturalH === 0) return; // not laid out yet
-
-                    const availW      = wrap.clientWidth;
-
-                    // Width-only fit. Height used to be a second, equally
-                    // weighted constraint (Math.min against availH/naturalH
-                    // too) -- but the visible viewport height inside an
-                    // embedded, lazily-loaded iframe panel is an unreliable,
-                    // often-small number that has nothing to do with how
-                    // wide the row actually needs to be. That was forcing
-                    // far more shrinkage than necessary just to also fit
-                    // vertically. The three columns sitting side-by-side is
-                    // what actually matters; if the result runs a little
-                    // tall, the page/panel can simply scroll -- that's a
-                    // normal, acceptable outcome, unlike columns stacking
-                    // or being shrunk down to near-illegible size.
-                    let scale = Math.min(1, availW / naturalW);
-                    if (!isFinite(scale) || scale <= 0) scale = 1;
-
-                    if (scale < KCM_FIT_MIN_SCALE) {
-                        // Floor lowered to 0.15 -- three columns
-                        // side-by-side (even scaled small) is what's
-                        // wanted, not a stack. This branch now only
-                        // catches genuinely degenerate cases (near-zero
-                        // width containers), not normal narrow viewports.
-                        row.style.flexWrap       = 'wrap';
-                        row.style.justifyContent = 'center';
-                        row.style.transform      = 'none';
-                        row.style.marginLeft     = '0';
-                        wrap.style.height        = 'auto';
-                        return;
-                    }
-
-                    // Anchor scaling at the top-left so the math is exact
-                    // and predictable (no interaction with justify-content
-                    // or overflow direction), then re-center the *scaled*
-                    // result explicitly via margin — simple, reliable,
-                    // works the same regardless of how much room is spare.
-                    row.style.transformOrigin = 'top left';
-                    const scaledW = naturalW * scale;
-                    const offsetX = Math.max(0, (availW - scaledW) / 2);
-                    row.style.marginLeft = offsetX + 'px';
-
-                    if (scale >= 0.999) {
-                        // Fits already at full size — keep nowrap (so the
-                        // three columns stay side-by-side) but no scaling.
-                        row.style.transform = 'none';
-                        wrap.style.height   = naturalH + 'px';
-                        return;
-                    }
-
-                    row.style.transform = `scale(${scale})`;
-                    // transform doesn't affect layout size, so the wrapper
-                    // would otherwise still reserve the full unscaled
-                    // height below it — pin it to the scaled height.
-                    wrap.style.height = (naturalH * scale) + 'px';
-                } catch (e) { console.error('kcmFitLayout error:', e); }
-            });
-        }
+        // ── Left / Center / Right column fit ─────────────────────────
+        //    Previously handled by a JS-driven measure-and-transform:scale
+        //    routine (kcmFitLayout) that kept mis-measuring the row inside
+        //    the embedded KCM Console iframe panel and falling back to
+        //    vertical stacking even when there was room for all three
+        //    columns. Replaced with a plain CSS Grid on #kcmTwoColRow
+        //    (fixed-width left/right columns, fluid center) -- the same
+        //    pattern already proven working in circle-of-fifths.html.
+        //    The browser's own layout engine now keeps all three columns
+        //    side-by-side with no JS measurement or timing involved, and
+        //    #kcmFitWrap scrolls horizontally as the fallback on screens
+        //    too narrow to show the row at full width, instead of ever
+        //    stacking. kcmFitLayout is kept as a harmless no-op in case
+        //    anything else still calls it.
+        function kcmFitLayout() {}
         window.kcmFitLayout = kcmFitLayout;
 
         // Sphere positions (left/top/width) are computed once by
@@ -6480,12 +6406,13 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         // width was measured back when they were last built. Visually that
         // reads as "spheres clustered in a small ring off in one corner"
         // while the boundary circle around them is the correct final size.
-        // Re-running createSpheres() alongside kcmFitLayout() on every
-        // trigger that could mean the circle's size just changed keeps
-        // them in sync with it, the same way kcmFitLayout re-measures
-        // itself on those same triggers.
+        // Re-running createSpheres() on every trigger that could mean
+        // the circle's size just changed keeps them in sync with it.
+        // (kcmFitLayout() is no longer called here -- CSS Grid handles
+        // column fit natively now -- but the name is kept as-is since
+        // it's referenced by the same resize/orientationchange/
+        // ResizeObserver/retry-schedule/fonts.ready wiring below.)
         function _kcmFitAndResphere() {
-            kcmFitLayout();
             if (typeof createSpheres === 'function') createSpheres();
         }
         window.addEventListener('resize', _kcmFitAndResphere);
