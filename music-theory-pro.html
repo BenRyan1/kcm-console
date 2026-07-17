@@ -2475,6 +2475,11 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
         <div id="voicingGrid" style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center;"></div>
     </div>
 
+            </div><!-- end chord-progressions wrapper (opened above, was
+                       missing its closing tag -- this was swallowing the
+                       entire kcm-right-col as a child of kcm-center-col
+                       instead of a sibling, which is why the third column
+                       never appeared no matter what the CSS said) -->
             </div><!-- end kcm-center-col -->
 
             <div class="kcm-right-col" style="min-width:0;">
@@ -2555,9 +2560,10 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
             </div>
 
             <div style="margin-top:1.25rem; width:100%; max-width:100%;">
-
-            </div>
-            </div>
+            </div><!-- this empty wrapper previously had a stray extra
+                       closing div right after it, which was closing
+                       kcm-right-col one level too early and cascading
+                       into every ancestor close below -->
             </div><!-- end kcm-right-col -->
             </div><!-- end kcm-two-col-row -->
             </div><!-- end kcmFitWrap -->
