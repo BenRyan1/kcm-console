@@ -6468,8 +6468,27 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         }
         window.kcmFitLayout = kcmFitLayout;
 
-        window.addEventListener('resize', kcmFitLayout);
-        window.addEventListener('orientationchange', kcmFitLayout);
+        // Sphere positions (left/top/width) are computed once by
+        // createSpheres() from the circle's rendered width at that moment
+        // -- they're plain pixel values, not re-derived automatically like
+        // CSS. If the circle's actual size later changes for any reason
+        // (a responsive breakpoint crossing 767px/540px, a window resize,
+        // orientation change), the circle's own CSS width updates
+        // immediately, but the spheres stay frozen at their old positions
+        // -- correctly shaped as a ring, just sized/centered for whatever
+        // width was measured back when they were last built. Visually that
+        // reads as "spheres clustered in a small ring off in one corner"
+        // while the boundary circle around them is the correct final size.
+        // Re-running createSpheres() alongside kcmFitLayout() on every
+        // trigger that could mean the circle's size just changed keeps
+        // them in sync with it, the same way kcmFitLayout re-measures
+        // itself on those same triggers.
+        function _kcmFitAndResphere() {
+            kcmFitLayout();
+            if (typeof createSpheres === 'function') createSpheres();
+        }
+        window.addEventListener('resize', _kcmFitAndResphere);
+        window.addEventListener('orientationchange', _kcmFitAndResphere);
 
         // Content-driven size changes (opening a Scale Type/Mode/Harmonized
         // dropdown, switching views, switching level, etc.) all change the
@@ -6514,7 +6533,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         // costs nothing (kcmFitLayout is cheap and idempotent) and fixes
         // that permanently-wrong-first-measurement failure mode.
         function _kcmFitRetrySchedule() {
-            [100, 350, 800, 1500, 3000].forEach(ms => setTimeout(kcmFitLayout, ms));
+            [100, 350, 800, 1500, 3000].forEach(ms => setTimeout(_kcmFitAndResphere, ms));
         }
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', _kcmFitRetrySchedule);
@@ -6536,7 +6555,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         // is what actually fixes the "starts right, then visibly shrinks"
         // symptom at its real cause.
         if (window.document && document.fonts && document.fonts.ready && typeof document.fonts.ready.then === 'function') {
-            document.fonts.ready.then(() => kcmFitLayout()).catch(() => {});
+            document.fonts.ready.then(() => _kcmFitAndResphere()).catch(() => {});
         }
 
         // ── Select Mode sub-dropdown (under the Modes level button) —
