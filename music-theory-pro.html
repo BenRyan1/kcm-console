@@ -1562,7 +1562,7 @@ input[type="range"]::-webkit-slider-thumb {
 /* ============================================================
    RESPONSIVE
    ============================================================ */
-@media (max-width: 767px) {
+@media (max-width: 1024px) {
     .site-header { padding: 1rem; }
     .site-header-inner { flex-direction: column; text-align: center; gap: 0.6rem; }
     nav ul { gap: 1rem; justify-content: center; }
@@ -1585,6 +1585,16 @@ input[type="range"]::-webkit-slider-thumb {
     #sbGenerateBtn { font-size: 0.8rem; padding: 0.75rem; }
     /* Guide bar mobile */
     #kcmGuideBar { padding: 0.45rem 0.75rem; }
+    /* Shrink the 3-column grid to match the smaller circle at this tier --
+       220px minmax(320px,560px) 174px only makes sense when the circle is
+       still 500px (i.e. above 1024px); at 340px the grid needs to shrink
+       in lockstep or the fixed-size circle overflows its own column and
+       visually overlaps the right column. !important beats the row's
+       inline style (see #kcmTwoColRow in the HTML). */
+    #kcmTwoColRow {
+        grid-template-columns: 200px 350px 160px !important;
+        gap: 0.75rem !important;
+    }
 }
 @media (max-width: 479px) {
     .logo-text h1 { font-size: 1rem; }
@@ -2006,6 +2016,10 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
         margin: 1rem auto !important;
     }
     .sphere { width: 36px !important; height: 36px !important; font-size: 9px !important; }
+    #kcmTwoColRow {
+        grid-template-columns: 150px 236px 120px !important;
+        gap: 0.5rem !important;
+    }
 }
 </style>
 </head>
