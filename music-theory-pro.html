@@ -2076,7 +2076,7 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                  screen without scrolling, on any screen where they'd
                  otherwise fit side-by-side but not fully in view. -->
             <div id="kcmFitWrap" style="overflow-x:auto; overflow-y:visible;">
-            <div class="kcm-two-col-row" id="kcmTwoColRow" style="display:grid; grid-template-columns:220px 1fr 174px; gap:1.75rem; align-items:start;">
+            <div class="kcm-two-col-row" id="kcmTwoColRow" style="display:grid; grid-template-columns:220px minmax(320px,560px) 174px; gap:1.75rem; align-items:start;">
                         <div class="kcm-left-col" style="min-width:0; display:flex; flex-direction:column; gap:0.75rem;">
 
 
@@ -2125,7 +2125,7 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
             </div>
 
             </div><!-- end kcm-left-col -->
-            <div class="kcm-center-col" style="min-width:0;">
+            <div class="kcm-center-col" style="min-width:0; max-width:560px;">
             <!-- ══ PANEL SWAP ZONE — only one panel visible at a time ══ -->
             <div id="panelSwapZone" style="width:100%; position:relative;">
 
