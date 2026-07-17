@@ -925,8 +925,8 @@ select option { background: #1a1a2e; color: white; }
    ============================================================ */
 #chromaticCircle {
     position: relative;
-    width: 500px;
-    height: 500px;
+    width: 420px;
+    height: 420px;
     margin-left: auto;
     margin-right: auto;
     background: radial-gradient(circle, #12121f 0%, #0a0a15 100%);
@@ -1569,7 +1569,7 @@ input[type="range"]::-webkit-slider-thumb {
     nav a { font-size: 0.82rem; }
     .app-title-banner h2 { font-size: 1.5rem; }
     .app-container { padding: 1rem 0.5rem 2rem; }
-    #chromaticCircle { width: 340px; height: 340px; }
+    #chromaticCircle { width: 300px; height: 300px; }
     #startAudio { width: 92%; padding: 1rem 1rem; font-size: 1rem; }
     #staffNotation { width: min(340px, 90%); }
     .sphere { width: 50px; height: 50px; font-size: 11px; }
@@ -1592,7 +1592,7 @@ input[type="range"]::-webkit-slider-thumb {
        visually overlaps the right column. !important beats the row's
        inline style (see #kcmTwoColRow in the HTML). */
     #kcmTwoColRow {
-        grid-template-columns: 200px 350px 160px !important;
+        grid-template-columns: 190px 320px 150px !important;
         gap: 0.75rem !important;
     }
 }
@@ -2010,14 +2010,14 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
 /* ── KCM MOBILE FIX — true responsive circle ── */
 @media (max-width: 540px) {
     #chromaticCircle {
-        width: 220px !important;
-        height: 220px !important;
+        width: 200px !important;
+        height: 200px !important;
         transform: none !important;
         margin: 1rem auto !important;
     }
     .sphere { width: 36px !important; height: 36px !important; font-size: 9px !important; }
     #kcmTwoColRow {
-        grid-template-columns: 150px 236px 120px !important;
+        grid-template-columns: 140px 216px 110px !important;
         gap: 0.5rem !important;
     }
 }
@@ -2090,7 +2090,7 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                  screen without scrolling, on any screen where they'd
                  otherwise fit side-by-side but not fully in view. -->
             <div id="kcmFitWrap" style="overflow-x:auto; overflow-y:visible;">
-            <div class="kcm-two-col-row" id="kcmTwoColRow" style="display:grid; grid-template-columns:220px minmax(320px,560px) 174px; gap:1.75rem; align-items:start;">
+            <div class="kcm-two-col-row" id="kcmTwoColRow" style="display:grid; grid-template-columns:220px 440px 174px; gap:1.75rem; align-items:start;">
                         <div class="kcm-left-col" style="min-width:0; display:flex; flex-direction:column; gap:0.75rem;">
 
 
@@ -2139,7 +2139,7 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
             </div>
 
             </div><!-- end kcm-left-col -->
-            <div class="kcm-center-col" style="min-width:0; max-width:560px;">
+            <div class="kcm-center-col" style="min-width:0;">
             <!-- ══ PANEL SWAP ZONE — only one panel visible at a time ══ -->
             <div id="panelSwapZone" style="width:100%; position:relative;">
 
