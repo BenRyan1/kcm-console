@@ -6499,7 +6499,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         // NOT re-fire because of kcmFitLayout's own scale() calls — no
         // feedback loop.
         if (typeof ResizeObserver !== 'undefined') {
-            const _kcmFitObserver = new ResizeObserver(() => kcmFitLayout());
+            const _kcmFitObserver = new ResizeObserver(() => _kcmFitAndResphere());
             // Watching the WRAPPER (#kcmFitWrap), not just the row. Once the
             // row has fallen into wrapped/stacked mode, its own bounding box
             // no longer tracks the container's true available width (wrapped
