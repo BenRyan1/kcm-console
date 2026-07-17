@@ -1365,7 +1365,15 @@ select option { background: #1a1a2e; color: white; }
     padding: 1.5rem 1.75rem;
     border-radius: 16px;
     margin: 1rem auto;
-    max-width: 1000px;
+    /* Was max-width:1000px -- fine when this lived in a wide standalone
+       row, but now that it's inside .kcm-center-col (capped 560px), a
+       wider max-width here doesn't shrink the panel, it just lets it
+       overflow that column and inflate kcmFitLayout's measured row
+       width, which was tripping the fit-to-screen fallback back into
+       full stacking. box-sizing so padding is included in that cap
+       instead of adding to it. */
+    max-width: 100%;
+    box-sizing: border-box;
     border: 2px solid rgba(244,208,63,0.3);
     box-shadow: 0 6px 25px rgba(0,0,0,0.4);
 }
@@ -2431,7 +2439,7 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
     </div>
 
     <!-- CHORD VOICING DISPLAY PANEL — shown below progressions in Harmonized mode -->
-    <div id="chordVoicingPanel" style="display:none; margin:1rem auto; max-width:860px; background:rgba(0,0,0,0.35); border:2px solid rgba(0,128,128,0.3); border-radius:16px; padding:1.25rem 1.5rem;">
+    <div id="chordVoicingPanel" style="display:none; margin:1rem auto; max-width:100%; box-sizing:border-box; background:rgba(0,0,0,0.35); border:2px solid rgba(0,128,128,0.3); border-radius:16px; padding:1.25rem 1.5rem;">
         <div style="text-align:center; font-family:var(--font-display); font-size:0.85rem; font-weight:800; color:var(--primary-teal); letter-spacing:1.5px; text-transform:uppercase; margin-bottom:1rem;">
             🎹 <span id="voicingTitle">Scale Chords</span>
         </div>
