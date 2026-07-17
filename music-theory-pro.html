@@ -2138,6 +2138,34 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                 </select>
             </div>
 
+            <!-- HARMONIZED CHORD PROGRESSIONS -- moved here from the
+                 center column, restyled/repadded to match the Select
+                 Instrument panel above it (same column width, same card
+                 treatment). Still toggled by the same JS
+                 (progressionControls.style.display), only its DOM
+                 location and inline spacing changed. -->
+            <div class="progression-controls" id="progressionControls" aria-live="polite" style="display:none; margin:0.5rem 0 0; padding:0.75rem 1rem; max-width:100%; box-sizing:border-box;">
+                <h4>🎼 Chord Progressions in Key of <span id="progressionKey">C</span></h4>
+                <div style="text-align:center; font-size:0.75rem; opacity:0.8; margin-bottom:0.85rem; font-weight:600;">
+                    Using <span id="progressionChordType">Triads</span> · Scale: <span id="progressionScaleType">Major</span>
+                </div>
+                <div style="text-align:center; margin-bottom:0.85rem;">
+                    <button class="play-btn" id="playAllChordsBtn" style="margin:0 auto; display:inline-flex;">🎹 Play All Scale Chords</button>
+                </div>
+                <div class="progression-buttons" id="progressionButtons"></div>
+                <div id="progTimeline" style="display:none; margin-top:1rem;">
+                    <div id="progTimelineTrack" style="display:flex; gap:6px; justify-content:center; flex-wrap:nowrap;"></div>
+                    <div id="progTimelineStatus" style="text-align:center; font-size:0.68rem; color:rgba(255,255,255,0.75); font-weight:600; margin-top:0.5rem; min-height:1.4em;"></div>
+                </div>
+            </div>
+
+            <div id="chordVoicingPanel" style="display:none; margin:0.5rem 0 0; max-width:100%; box-sizing:border-box; background:rgba(0,0,0,0.35); border:2px solid rgba(0,128,128,0.3); border-radius:16px; padding:0.75rem 1rem;">
+                <div style="text-align:center; font-family:var(--font-display); font-size:0.85rem; font-weight:800; color:var(--primary-teal); letter-spacing:1.5px; text-transform:uppercase; margin-bottom:1rem;">
+                    🎹 <span id="voicingTitle">Scale Chords</span>
+                </div>
+                <div id="voicingGrid" style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center;"></div>
+            </div>
+
             </div><!-- end kcm-left-col -->
             <div class="kcm-center-col" style="min-width:0;">
             <!-- ══ PANEL SWAP ZONE — only one panel visible at a time ══ -->
@@ -2444,42 +2472,9 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                  spot (right above the remaining controls), per swap. -->
             <h3 id="status" role="status" aria-live="polite" style="margin-top:1rem;">Click START AUDIO ENGINE to begin!</h3>
 
-            <!-- CHORD PROGRESSIONS -- moved here from the right column.
-                 At the right column's ~164px width the progression pills
-                 (e.g. "I-IV-V-I  CLASSIC ROCK") and the Play All Scale
-                 Chords button had no room and wrapped/overflowed badly.
-                 The center column is much wider, so this now has the
-                 space it actually needs. -->
-            <div style="margin-top:1.25rem;">
-<!-- PROGRESSION CONTROLS — shown only for Harmonized Major/Minor -->
-    <div class="progression-controls" id="progressionControls" aria-live="polite" style="display:none;">
-        <h4>🎼 Chord Progressions in Key of <span id="progressionKey">C</span></h4>
-        <div style="text-align:center; font-size:0.75rem; opacity:0.8; margin-bottom:0.85rem; font-weight:600;">
-            Using <span id="progressionChordType">Triads</span> · Scale: <span id="progressionScaleType">Major</span>
-        </div>
-        <div style="text-align:center; margin-bottom:0.85rem;">
-            <button class="play-btn" id="playAllChordsBtn" style="margin:0 auto; display:inline-flex;">🎹 Play All Scale Chords</button>
-        </div>
-        <div class="progression-buttons" id="progressionButtons"></div>
-        <div id="progTimeline" style="display:none; margin-top:1rem;">
-            <div id="progTimelineTrack" style="display:flex; gap:6px; justify-content:center; flex-wrap:nowrap;"></div>
-            <div id="progTimelineStatus" style="text-align:center; font-size:0.68rem; color:rgba(255,255,255,0.75); font-weight:600; margin-top:0.5rem; min-height:1.4em;"></div>
-        </div>
-    </div>
-
-    <!-- CHORD VOICING DISPLAY PANEL — shown below progressions in Harmonized mode -->
-    <div id="chordVoicingPanel" style="display:none; margin:1rem auto; max-width:100%; box-sizing:border-box; background:rgba(0,0,0,0.35); border:2px solid rgba(0,128,128,0.3); border-radius:16px; padding:1.25rem 1.5rem;">
-        <div style="text-align:center; font-family:var(--font-display); font-size:0.85rem; font-weight:800; color:var(--primary-teal); letter-spacing:1.5px; text-transform:uppercase; margin-bottom:1rem;">
-            🎹 <span id="voicingTitle">Scale Chords</span>
-        </div>
-        <div id="voicingGrid" style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center;"></div>
-    </div>
-
-            </div><!-- end chord-progressions wrapper (opened above, was
-                       missing its closing tag -- this was swallowing the
-                       entire kcm-right-col as a child of kcm-center-col
-                       instead of a sibling, which is why the third column
-                       never appeared no matter what the CSS said) -->
+            <!-- CHORD PROGRESSIONS -- moved to the left column, below
+                 Select Instrument (see #progressionControls /
+                 #chordVoicingPanel in .kcm-left-col). -->
             </div><!-- end kcm-center-col -->
 
             <div class="kcm-right-col" style="min-width:0;">
@@ -2489,7 +2484,6 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                  titled group above the rest of the right column, instead
                  of tucked at the bottom of the center column. -->
             <div class="two-col-controls" style="width:100%; display:flex; flex-direction:column; margin:0 0 0.75rem; box-sizing:border-box;">
-                <div class="col-header">🎵 Note &amp; Scale Controls</div>
                 <div id="controls"></div>
             </div>
 
