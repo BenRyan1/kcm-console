@@ -6380,7 +6380,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         //    columns always attempt to sit side-by-side first; only fall
         //    back to the original wrap/stack behavior if even the floor
         //    scale can't make that fit (genuinely phone-narrow).
-        const KCM_FIT_MIN_SCALE = 0.4;
+        const KCM_FIT_MIN_SCALE = 0.15;
         let _kcmFitRAF = null;
         function kcmFitLayout() {
             if (_kcmFitRAF) cancelAnimationFrame(_kcmFitRAF);
@@ -6428,10 +6428,11 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                     if (!isFinite(scale) || scale <= 0) scale = 1;
 
                     if (scale < KCM_FIT_MIN_SCALE) {
-                        // Too tight to fit side-by-side even at the floor
-                        // scale (genuinely phone-narrow) — fall back to the
-                        // original responsive stacking instead of forcing
-                        // illegibly small text.
+                        // Floor lowered to 0.15 -- three columns
+                        // side-by-side (even scaled small) is what's
+                        // wanted, not a stack. This branch now only
+                        // catches genuinely degenerate cases (near-zero
+                        // width containers), not normal narrow viewports.
                         row.style.flexWrap       = 'wrap';
                         row.style.justifyContent = 'center';
                         row.style.transform      = 'none';
