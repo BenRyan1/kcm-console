@@ -1707,11 +1707,15 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
     transform: scale(0.48);
     transform-origin: top left;
 }
-@media (max-width: 700px) {
-    /* Floating overlay gets cramped once the two-column layout stacks --
-       hide it rather than let it cover the main view on small screens. */
-    .kcm-stencil-overlay { display: none !important; }
-}
+/* Previously hidden below 700px viewport width -- back when the
+   two-column layout unconditionally stacked on small screens, the
+   floating overlay had no scaled-down circle to sit on top of and just
+   cramped/covered the stacked content instead. Now that kcmFitLayout
+   scales the whole Left/Center/Right row down as a single unit to keep
+   it side-by-side (falling back to stacking only when it genuinely
+   can't fit even at its floor scale), the overlay scales down right
+   along with the circle underneath it in the normal case, so it no
+   longer needs to be force-hidden on phones. */
 /* Category tabs */
 .kcm-stencil-tabs {
     display: flex;
