@@ -3465,10 +3465,27 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
             const circle = document.getElementById('chromaticCircle');
             if (!circle) return;
 
-            // Reliable size detection — try multiple methods
-            var _w = circle.getBoundingClientRect().width;
-            if (!_w || _w < 10) _w = circle.offsetWidth;
+            // Reliable size detection — offsetWidth FIRST, not
+            // getBoundingClientRect(). getBoundingClientRect() reports the
+            // final, on-screen PAINTED size -- which includes any
+            // transform:scale() kcmFitLayout has applied to an ancestor
+            // row to fit everything on one screen. offsetWidth reports the
+            // element's own untransformed LAYOUT box, unaffected by an
+            // ancestor's scale. The sphere positions computed here get
+            // written as plain left/top pixel offsets INSIDE that same
+            // untransformed layout box, which then gets the row's scale
+            // applied to it as a whole, same as everything else -- so this
+            // math has to be done in that same untransformed reference
+            // frame, or the spheres end up positioned for a circle size
+            // that doesn't match the box they're actually placed in
+            // (drifting off-center / clustering away from the ring),
+            // every time this runs while the page is scaled down --
+            // dragging the wheel-rotation slider, a window resize, or the
+            // very first render if the fit-to-screen scale already kicked
+            // in before this first call.
+            var _w = circle.offsetWidth;
             if (!_w || _w < 10) _w = parseInt(getComputedStyle(circle).width) || 0;
+            if (!_w || _w < 10) _w = circle.getBoundingClientRect().width;
             if (_w < 10) { setTimeout(createSpheres, 80); return; }
 
             const enharmonicLabels = ['C','C♯\nD♭','D','D♯\nE♭','E','F','F♯\nG♭','G','G♯\nA♭','A','A♯\nB♭','B'];
