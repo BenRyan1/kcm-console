@@ -2057,6 +2057,27 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
         grid-template-columns: 140px 216px 110px !important;
         gap: 0.5rem !important;
     }
+    /* Interval popup (showIntervalInfo()) is built entirely with an inline
+       style="position:fixed; bottom:100px; right:20px; max-width:320px; ..."
+       -- fine on a MacBook Pro's wide viewport, but with no left-edge
+       constraint or centering, a 320px box pinned to right:20px needs
+       340px of viewport width just to avoid running off the left edge.
+       Most iPhones (320-430px wide in portrait) are narrower than that,
+       so the popup either got clipped or sat asymmetrically off-center.
+       These !important overrides beat the inline style at this
+       breakpoint (inline styles only out-rank stylesheet rules that
+       aren't !important) to center it and cap its width to the
+       viewport instead. */
+    #intervalPopup {
+        left: 50% !important;
+        right: auto !important;
+        bottom: 90px !important;
+        transform: translateX(-50%) !important;
+        width: min(88vw, 320px) !important;
+        max-width: 88vw !important;
+        box-sizing: border-box !important;
+        padding: 1.1rem 1.25rem !important;
+    }
 }
 </style>
 </head>
