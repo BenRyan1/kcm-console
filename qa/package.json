@@ -1,0 +1,9 @@
+{
+  "name": "kcm-console-qa",
+  "private": true,
+  "description": "Regression test scripts for music-theory-pro.html. Run 'npm install' in this folder once, then 'node run-all.js' from inside qa/ before shipping any change.",
+  "devDependencies": {
+    "jsdom": "^24.0.0",
+    "css-tree": "^2.3.1"
+  }
+}
