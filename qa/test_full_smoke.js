@@ -63,13 +63,12 @@ setTimeout(() => {
 
       setTimeout(() => {
         const pc = doc.getElementById('progressionControls');
-        const leftCol = doc.querySelector('.kcm-left-col');
         const rightCol = doc.querySelector('.kcm-right-col');
         const twoColRow = doc.getElementById('kcmTwoColRow');
 
         const problems = [];
         if (errors.length) problems.push('JS errors thrown: ' + JSON.stringify(errors));
-        if (!leftCol.contains(pc)) problems.push('progressionControls no longer in kcm-left-col');
+        if (!rightCol.contains(pc)) problems.push('progressionControls no longer in kcm-right-col');
         if (pc.style.display === 'none' || pc.style.display === '') problems.push('progressionControls not visible after selecting Harmonized Major');
         if (!twoColRow || Array.from(twoColRow.children).map(c=>c.className).join(',') !== 'kcm-left-col,kcm-center-col,kcm-right-col') {
           problems.push('kcmTwoColRow direct children order/composition unexpected: ' + (twoColRow ? Array.from(twoColRow.children).map(c=>c.className).join(',') : 'MISSING ROW'));

@@ -1,8 +1,11 @@
 // Verifies #progressionControls/#chordVoicingPanel still show correctly
-// after being relocated into the left column (below Select Instrument,
-// same card treatment) -- the JS that toggles their visibility
+// after being relocated to the TOP of the right column (this panel has
+// moved twice now -- center column, then left column, now right column
+// top -- so this test asserts wherever the current explicit request put
+// it, not a hardcoded assumption). The JS that toggles visibility
 // (updateView()) only does getElementById lookups, so location
-// shouldn't matter, but confirming.
+// shouldn't matter functionally, but confirming both the DOM location
+// and the functional show/hide behavior together.
 const { JSDOM } = require('jsdom');
 const fs = require('fs');
 const path = require('path');
@@ -34,16 +37,20 @@ setTimeout(() => {
   try {
     doc.getElementById('startAudio').click();
     setTimeout(() => {
-      // Confirm both elements exist inside kcm-left-col, not center/right.
+      // Confirm both elements exist inside kcm-right-col (current
+      // expected home), not left/center, and that progressionControls
+      // sits at the very TOP of the column (first element child) per
+      // the explicit 'upper right corner' request.
       const leftCol = doc.querySelector('.kcm-left-col');
       const centerCol = doc.querySelector('.kcm-center-col');
       const rightCol = doc.querySelector('.kcm-right-col');
       const pc = doc.getElementById('progressionControls');
       const cvp = doc.getElementById('chordVoicingPanel');
-      if (!leftCol.contains(pc)) { console.log('FAIL: progressionControls not inside kcm-left-col'); process.exit(1); }
-      if (!leftCol.contains(cvp)) { console.log('FAIL: chordVoicingPanel not inside kcm-left-col'); process.exit(1); }
+      if (!rightCol.contains(pc)) { console.log('FAIL: progressionControls not inside kcm-right-col'); process.exit(1); }
+      if (!rightCol.contains(cvp)) { console.log('FAIL: chordVoicingPanel not inside kcm-right-col'); process.exit(1); }
+      if (leftCol.contains(pc) || leftCol.contains(cvp)) { console.log('FAIL: still (also) inside kcm-left-col'); process.exit(1); }
       if (centerCol.contains(pc) || centerCol.contains(cvp)) { console.log('FAIL: still (also) inside kcm-center-col'); process.exit(1); }
-      if (rightCol.contains(pc) || rightCol.contains(cvp)) { console.log('FAIL: still (also) inside kcm-right-col'); process.exit(1); }
+      if (rightCol.firstElementChild !== pc) { console.log('FAIL: progressionControls is not the first child of kcm-right-col (not at the top)'); process.exit(1); }
 
       // Click Harmonized level button and confirm the panel becomes visible.
       const harmBtn = doc.querySelector('.level-btn[data-level="harm"]');
@@ -57,7 +64,7 @@ setTimeout(() => {
           console.log('FAIL: progressionControls still hidden after switching to Harmonized Major, display=' + display);
           process.exit(1);
         }
-        console.log('PASS — panels relocated to left column (matching Select Instrument styling) and still correctly show/hide via updateView() when Harmonized is selected.');
+        console.log('PASS \u2014 panels relocated to the top of the right column and still correctly show/hide via updateView() when Harmonized is selected.');
         process.exit(0);
       }, 300);
     }, 150);
