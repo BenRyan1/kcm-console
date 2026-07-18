@@ -1740,15 +1740,52 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
     transform: scale(0.48);
     transform-origin: top left;
 }
-/* Previously hidden below 700px viewport width -- back when the
-   two-column layout unconditionally stacked on small screens, the
-   floating overlay had no scaled-down circle to sit on top of and just
-   cramped/covered the stacked content instead. Now that kcmFitLayout
-   scales the whole Left/Center/Right row down as a single unit to keep
-   it side-by-side (falling back to stacking only when it genuinely
-   can't fit even at its floor scale), the overlay scales down right
-   along with the circle underneath it in the normal case, so it no
-   longer needs to be force-hidden on phones. */
+/* Overlay sizing is calibrated against #chromaticCircle's BASE size
+   (420px): 240px frame = 420 * (240/420 ratio), 0.48 wrap scale =
+   240px frame / 500px natural wrap width. kcmFitLayout used to scale
+   the whole row (circle + overlay) down together via one JS transform,
+   so the overlay tracked the circle automatically -- that system was
+   replaced with fixed-pixel CSS Grid + breakpoint-based circle sizing,
+   and nobody taught the overlay the new breakpoints, so on narrower
+   screens the circle shrinks (300px at <=1024px, 200px at <=540px)
+   while the overlay stayed a fixed 240px -- ending up bigger than the
+   circle it's supposed to sit on, worst on phones. Below, the overlay
+   frame/scale are resized at each tier to keep the same ~0.571
+   overlay:circle ratio the base size already has. Also re-asserts the
+   wrap's natural 500x500 size at <=540px, because the unrelated
+   standalone-Stencil-tab mobile rule above forces .kcm-stencil-wrap to
+   220x220 there, which would otherwise stack with this scale and
+   shrink the overlay content to a barely-visible speck. */
+@media (max-width: 1024px) {
+    .kcm-stencil-overlay {
+        width: 171px !important;
+        max-width: 171px !important;
+    }
+    .kcm-stencil-overlay .kcm-stencil-wrap-frame {
+        width: 171px !important;
+        height: 171px !important;
+    }
+    .kcm-stencil-overlay .kcm-stencil-wrap {
+        width: 500px !important;
+        height: 500px !important;
+        transform: scale(0.342) !important;
+    }
+}
+@media (max-width: 540px) {
+    .kcm-stencil-overlay {
+        width: 114px !important;
+        max-width: 114px !important;
+    }
+    .kcm-stencil-overlay .kcm-stencil-wrap-frame {
+        width: 114px !important;
+        height: 114px !important;
+    }
+    .kcm-stencil-overlay .kcm-stencil-wrap {
+        width: 500px !important;
+        height: 500px !important;
+        transform: scale(0.228) !important;
+    }
+}
 /* Category tabs */
 .kcm-stencil-tabs {
     display: flex;
