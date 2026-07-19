@@ -1653,20 +1653,36 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
 }
 #kcmStencilPanel.active { display: block; }
 
-/* Stencil outer wrapper — circle + SVG overlay stacked */
+/* Stencil outer wrapper — circle + SVG overlay stacked.
+   Base size was calibrated to 500px back when the standalone Stencil
+   tab lived in a wide, single-column layout with #kcmStencilPanel's
+   own max-width:900px actually meaning something. Since the 3-column
+   CSS Grid redesign, this panel always renders inside .kcm-center-col,
+   which is capped at a fixed 440px at the base tier (and narrower at
+   each breakpoint below that) -- so a fixed 500px box no longer fits
+   at ANY screen size, not just mobile. #kcmStencilSVG's viewBox
+   ("0 0 500 500") means its internal coordinate math (CX/CY/R_OUTER in
+   drawStencil()) never needs to change -- the browser rescales the
+   whole drawing to whatever CSS width/height is set here, same trick
+   the Stencil Overlay breakpoints already use. */
 .kcm-stencil-wrap {
     position: relative;
-    width: 500px;
-    height: 500px;
+    width: 400px;
+    height: 400px;
     margin: 0 auto;
 }
 #kcmStencilSVG {
     position: absolute;
     top: 0; left: 0;
-    width: 500px; height: 500px;
+    width: 400px; height: 400px;
     pointer-events: none;
     z-index: 10;
     overflow: visible;
+}
+@media (max-width: 1024px) {
+    .kcm-stencil-wrap { width: 280px; height: 280px; margin: 0 auto; }
+    #kcmStencilSVG { width: 280px; height: 280px; }
+    .kcm-stencil-circle-bg { width: 280px; height: 280px; }
 }
 @media (max-width: 540px) {
     .kcm-stencil-wrap { width: 220px !important; height: 220px !important; overflow: hidden; margin: 0 auto; }
@@ -1678,7 +1694,7 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
 .kcm-stencil-circle-bg {
     position: absolute;
     top: 0; left: 0;
-    width: 500px; height: 500px;
+    width: 400px; height: 400px;
     border-radius: 50%;
     pointer-events: none;
 }
