@@ -6774,8 +6774,42 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         // column fit natively now -- but the name is kept as-is since
         // it's referenced by the same resize/orientationchange/
         // ResizeObserver/retry-schedule/fonts.ready wiring below.)
+        // ── _positionStencilOverlay: keep the floating Stencil Overlay
+        // centered on the actual Chromatic Circle graphic, not on
+        // #panelSwapZone as a whole. Both live as siblings inside
+        // #panelSwapZone (position:relative), and the overlay's CSS
+        // (.kcm-stencil-overlay) centers itself with top:50%/left:50%
+        // against THAT shared ancestor by default -- which is only the
+        // same thing as "centered on the circle" when the circle is the
+        // only visible content in the zone. On Sing (a circle-family view,
+        // so the overlay is offered there too), the full Sing panel -- its
+        // header, live readout row, mic controls -- renders in normal flow
+        // right below the circle in that same zone, making the zone taller
+        // than the circle alone; a static 50% then lands the overlay
+        // somewhere between the circle and the Sing controls instead of on
+        // the wheel. Computing the circle's own center in pixels and
+        // overriding top/left with an inline !important (which beats the
+        // stylesheet's !important because inline author declarations rank
+        // higher within the same "important" cascade tier) fixes this on
+        // every circle-family view at once, present or future, without
+        // depending on what else happens to share the swap zone.
+        function _positionStencilOverlay() {
+            try {
+                const stencil = document.getElementById('kcmStencilPanel');
+                const circle  = document.getElementById('chromaticCircle');
+                if (!stencil || !circle) return;
+                if (!stencil.classList.contains('kcm-stencil-overlay')) return; // only when actively floating
+                const top  = circle.offsetTop  + circle.offsetHeight / 2;
+                const left = circle.offsetLeft + circle.offsetWidth  / 2;
+                stencil.style.setProperty('top',  top  + 'px', 'important');
+                stencil.style.setProperty('left', left + 'px', 'important');
+            } catch (e) { /* non-critical positioning nicety */ }
+        }
+        window._positionStencilOverlay = _positionStencilOverlay;
+
         function _kcmFitAndResphere() {
             if (typeof createSpheres === 'function') createSpheres();
+            if (typeof _positionStencilOverlay === 'function') _positionStencilOverlay();
         }
         window.addEventListener('resize', _kcmFitAndResphere);
         window.addEventListener('orientationchange', _kcmFitAndResphere);
@@ -7028,6 +7062,13 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                     } else if (stencilOverlayOn && _isCircleFamilyView()) {
                         stencil.classList.add('kcm-stencil-overlay');
                         stencil.style.display = 'block';
+                        // Position immediately (handles the common case)
+                        // and again next tick (handles the rare case where
+                        // this view switch itself just changed the
+                        // circle's own layout, e.g. Sing's extra controls
+                        // still settling), so it's correct either way.
+                        if (typeof _positionStencilOverlay === 'function') _positionStencilOverlay();
+                        setTimeout(() => { if (typeof _positionStencilOverlay === 'function') _positionStencilOverlay(); }, 0);
                     } else {
                         stencil.classList.remove('kcm-stencil-overlay');
                         stencil.style.display = 'none';
