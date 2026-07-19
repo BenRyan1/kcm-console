@@ -1670,6 +1670,14 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
     width: 400px;
     height: 400px;
     margin: 0 auto;
+    /* Safety net: if anything inside this box is ever mis-sized again
+       (as the now-removed #kcmStencilCircle placeholder was), clip it
+       here instead of letting it silently overhang into the shape-grid
+       buttons rendered right below in the document and steal their
+       clicks -- exactly what caused "pick one stencil, then nothing
+       else responds" after the wrap shrank from 500px without every
+       child being resized in lockstep. */
+    overflow: hidden;
 }
 #kcmStencilSVG {
     position: absolute;
@@ -2373,8 +2381,6 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                          stencil chooser (grid/key ring) per request. -->
                     <div class="kcm-stencil-wrap-frame" id="kcmStencilWrapFrame">
                     <div class="kcm-stencil-wrap" id="kcmStencilWrap">
-                        <!-- The 12 spheres are cloned here by JS — circle only, no interaction -->
-                        <div id="kcmStencilCircle" style="position:absolute;top:0;left:0;width:500px;height:500px;"></div>
                         <!-- SVG stencil overlay -->
                         <svg id="kcmStencilSVG" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg"></svg>
                     </div>
