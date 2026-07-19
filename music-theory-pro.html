@@ -2164,6 +2164,7 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                 <button class="view-btn" data-view="sing">🎤 Sing</button>
                 <button class="view-btn" data-view="circleType">⭕ Type-to-Play</button>
                 <button class="view-btn" id="instrumentBtn" onclick="toggleInstrumentPicker()" aria-haspopup="true" aria-expanded="false">🎸 Instrument: <span id="instrumentBtnLabel">Synth</span></button>
+                <button class="view-btn" id="midiStatusBtn" onclick="toggleMidiStatusPanel()" aria-haspopup="true" aria-expanded="false" title="Live MIDI input — connect a guitar-to-MIDI controller (e.g. Fishman TriplePlay) or a MIDI keyboard">🎹 MIDI: <span id="midiStatusLabel">Not Connected</span></button>
                 <button id="globalPlayBtn" class="view-action-btn" style="background:linear-gradient(135deg, var(--primary-teal) 0%, #006666 100%); border-color:var(--primary-teal); color:#fff; font-weight:800;">▶ Play</button>
                 <button id="globalStopBtn" class="view-action-btn" style="background:linear-gradient(135deg, var(--primary-coral) 0%, #C4341C 100%); border-color:var(--primary-coral); color:#fff; font-weight:800;">■ Stop</button>
             </div>
@@ -2194,6 +2195,29 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                     <option value="sawtooth">Sawtooth (Bright)</option>
                     <option value="triangle">Triangle (Soft)</option>
                 </select>
+            </div>
+
+            <!-- ── LIVE MIDI PANEL — same show/hide dropdown pattern as
+                 Instrument/Key/Octave/Tempo. Shows connected device(s) and,
+                 while notes are held, either a single note name or a
+                 recognized chord symbol built from whatever's currently
+                 held on the MIDI input (e.g. a Fishman TriplePlay guitar
+                 controller). Driven entirely by handleMidiMessage() /
+                 evaluateMidiChord() below. ── -->
+            <div id="midiStatusPanel" style="display:none; margin:0.5rem 0 0; width:100%; box-sizing:border-box;
+                 background:rgba(10,10,25,0.97); border:2px solid var(--primary-teal);
+                 border-radius:14px; padding:0.75rem 1rem; box-shadow:0 8px 32px rgba(0,128,128,0.35);">
+                <div style="font-size:0.65rem; font-weight:700; letter-spacing:1px; color:var(--primary-teal);
+                     text-align:center; margin-bottom:0.6rem; font-family:var(--font-display);">LIVE MIDI INPUT</div>
+                <div style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:0.55rem;">
+                    <div id="midiStatusDot" style="width:8px;height:8px;border-radius:50%;background:#7f8c8d;flex-shrink:0;"></div>
+                    <span id="midiDeviceName" style="font-size:0.68rem; color:#b0b0cc; text-align:center;">No device connected</span>
+                </div>
+                <div id="midiNowPlaying" style="text-align:center; font-size:1.15rem; font-weight:800; font-family:var(--font-display); color:var(--primary-gold); min-height:1.4em;">—</div>
+                <div style="display:flex; justify-content:center; gap:14px; margin-top:0.5rem; font-size:0.6rem; color:#b0b0cc;">
+                    <span><span style="color:var(--primary-teal);">●</span> in scale/chord</span>
+                    <span><span style="color:#ff5555;">●</span> outside</span>
+                </div>
             </div>
 
             </div><!-- end kcm-left-col -->
@@ -3578,21 +3602,209 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
             } catch(e) { console.error('Audio init error:', e); }
         }
 
-        // ── MIDI init (graceful — security policy may block) ──────
+        // ── Live MIDI: state ────────────────────────────────────────
+        // midiHeldNotes: every currently-held MIDI note, keyed by raw MIDI
+        // note number (0-127) so simultaneous notes at different octaves
+        // never collide. Populated/drained purely by note-on/note-off —
+        // this is a live snapshot of "what's physically being held right
+        // now" on a guitar-to-MIDI controller (e.g. Fishman TriplePlay) or
+        // any MIDI keyboard, independent of the app's own lesson state
+        // (selectedNotes/revealedNotes), which it never touches.
+        let midiHeldNotes = new Map();
+        let midiChordTimer = null;
+        let midiConnectedNames = [];
+
+        // Chord-quality templates for recognition — reuses the exact same
+        // interval data already driving Triads/Ext. Chords playback, so a
+        // strummed chord is identified in the same vocabulary the rest of
+        // the app already speaks (Cmaj7, Cm, C°7, etc.), not a separate
+        // naming scheme.
+        const MIDI_CHORD_TEMPLATES = [
+            { intervals: [0,7],           sym: '5',      full: 'Power Chord (5th)' },
+            { intervals: triads.major,        sym: '',       full: 'Major' },
+            { intervals: triads.minor,        sym: 'm',      full: 'Minor' },
+            { intervals: triads.diminished,   sym: '°',      full: 'Diminished' },
+            { intervals: triads.augmented,    sym: '+',      full: 'Augmented' },
+            { intervals: extended.major7,          sym: 'maj7',  full: 'Major 7th' },
+            { intervals: extended.dominant7,       sym: '7',     full: 'Dominant 7th' },
+            { intervals: extended.minor7,          sym: 'm7',    full: 'Minor 7th' },
+            { intervals: extended.diminished7,     sym: '°7',    full: 'Diminished 7th' },
+            { intervals: extended.augmented7,      sym: '+7',    full: 'Augmented 7th' },
+            { intervals: extended.halfDiminished7, sym: 'ø7',    full: 'Half-Diminished 7th' },
+            { intervals: extended.minorMajor7,     sym: 'mMaj7', full: 'Minor Major 7th' },
+            { intervals: extended.augmentedMajor7, sym: '+Maj7', full: 'Augmented Major 7th' },
+        ];
+
+        // ── midiSingleNoteFeedback: after the existing highlightNote()
+        // call lights a note up, layer on whether it belongs to whatever
+        // scale/chord/mode is currently active (window.currentPatternIntervals
+        // + rootNote, the same state every picker in the app already
+        // maintains). In-scale notes keep highlightNote()'s normal glow;
+        // out-of-scale notes get an inline red ring instead — a live,
+        // non-destructive overlay that highlightNote(n,false) already
+        // clears on note-off (it resets .style.border/.boxShadow), so
+        // nothing extra needs to be undone here. ──
+        function midiSingleNoteFeedback(pc) {
+            try {
+                const pattern = window.currentPatternIntervals;
+                if (!pattern || !pattern.length || typeof rootNote !== 'number') return;
+                const inScale = pattern.some(i => ((rootNote + i) % 12 + 12) % 12 === pc);
+                if (!inScale) {
+                    const sphere = document.querySelector(`.sphere[data-note="${pc}"]`);
+                    if (sphere) {
+                        sphere.style.border = '5px solid #ff5555';
+                        sphere.style.boxShadow = '0 0 40px #ff5555, 0 0 70px #ff5555';
+                    }
+                }
+            } catch(e) { /* non-critical live overlay — never break playback */ }
+        }
+
+        // ── midiChordSymbol: best-effort root+quality guess from a set of
+        // held MIDI note numbers. Guitar chords are voiced with plenty of
+        // octave-doubled/omitted tones, so this is deliberately a simple,
+        // explainable heuristic rather than a full voice-leading analyzer:
+        // reduce to unique pitch classes, prefer the physically lowest
+        // note played as the root (true for the overwhelming majority of
+        // real root-position guitar chords), and match that root's
+        // interval set exactly against the known templates above. Falls
+        // back to trying every other root if the bass-as-root guess
+        // doesn't produce an exact match, and finally to a plain
+        // note-name list if nothing matches (an unusual/extended voicing
+        // — better to show the truth than a wrong label). ──
+        function midiChordSymbol(midiNoteNumbers) {
+            const uniquePcs = Array.from(new Set(midiNoteNumbers.map(n => n % 12)));
+            const bassNote = Math.min(...midiNoteNumbers);
+            const bassPc = bassNote % 12;
+
+            function tryRoot(root) {
+                const rel = new Set(uniquePcs.map(pc => ((pc - root) % 12 + 12) % 12));
+                for (const t of MIDI_CHORD_TEMPLATES) {
+                    const tSet = new Set(t.intervals);
+                    if (tSet.size === rel.size && [...tSet].every(x => rel.has(x))) return t;
+                }
+                return null;
+            }
+
+            let match = tryRoot(bassPc);
+            let root = bassPc;
+            if (!match) {
+                for (let r = 0; r < 12; r++) {
+                    if (r === bassPc) continue;
+                    const t = tryRoot(r);
+                    if (t) { match = t; root = r; break; }
+                }
+            }
+            if (match) {
+                return { root, intervals: match.intervals, sym: match.sym, full: match.full,
+                         label: getNoteName(root) + match.sym };
+            }
+            return { root: bassPc, intervals: uniquePcs.map(pc => ((pc - bassPc) % 12 + 12) % 12).sort((a,b)=>a-b),
+                     sym: '', full: 'Notes', label: uniquePcs.map(pc => getNoteName(pc)).join('-') };
+        }
+
+        // ── evaluateMidiChord: debounced snapshot of everything currently
+        // held. Guitar strums fire several note-on messages a few
+        // milliseconds apart, not simultaneously — waiting a short beat
+        // after the most recent change before reading the chord avoids
+        // reporting a half-strummed chord as its own (wrong) result. ──
+        function evaluateMidiChord() {
+            clearTimeout(midiChordTimer);
+            midiChordTimer = setTimeout(() => {
+                const readout = document.getElementById('midiNowPlaying');
+                const held = Array.from(midiHeldNotes.keys());
+                if (!readout) return;
+                if (held.length === 0) { readout.textContent = '—'; return; }
+                if (held.length === 1) {
+                    const note = held[0];
+                    readout.textContent = getNoteName(note % 12) + (Math.floor(note / 12) - 1);
+                    return;
+                }
+                const chord = midiChordSymbol(held);
+                readout.textContent = chord.label;
+                if (typeof window._stencilShowChord === 'function') {
+                    window._stencilShowChord(chord.root, chord.intervals, chord.label + ' (live MIDI)');
+                }
+            }, 70);
+        }
+
+        // ── handleMidiMessage: single shared handler for every connected
+        // MIDI input (a guitar controller and a MIDI keyboard could both
+        // be plugged in at once — every input feeds the same state). ──
+        function handleMidiMessage(e) {
+            try {
+                const [status, note, vel] = e.data;
+                const cmd = status >> 4;
+                const pc = note % 12, oct = Math.floor(note / 12) - 1;
+                if (cmd === 9 && vel > 0) {
+                    midiHeldNotes.set(note, { pc, oct });
+                    playNote(pc, oct, 0.5);
+                    highlightNote(pc, true);
+                    midiSingleNoteFeedback(pc);
+                    evaluateMidiChord();
+                } else if (cmd === 8 || (cmd === 9 && vel === 0)) {
+                    midiHeldNotes.delete(note);
+                    highlightNote(pc, false);
+                    evaluateMidiChord();
+                }
+            } catch(e2) { /* ignore malformed messages */ }
+        }
+        window.handleMidiMessage = handleMidiMessage;
+
+        // ── updateMidiDeviceUI: reflect connected-device state on the
+        // trigger button + panel (dot color, device name(s) or count). ──
+        function updateMidiDeviceUI() {
+            const dot   = document.getElementById('midiStatusDot');
+            const name  = document.getElementById('midiDeviceName');
+            const label = document.getElementById('midiStatusLabel');
+            const connected = midiConnectedNames.length > 0;
+            if (dot)  dot.style.background = connected ? '#27ae60' : '#7f8c8d';
+            if (name) name.textContent = connected ? midiConnectedNames.join(', ') : 'No device connected';
+            if (label) label.textContent = connected ? (midiConnectedNames.length + ' Connected') : 'Not Connected';
+        }
+        window.updateMidiDeviceUI = updateMidiDeviceUI;
+
+        // ── toggleMidiStatusPanel: identical open/close-on-outside-click
+        // pattern as toggleInstrumentPicker(), reused verbatim for
+        // consistency with every other dropdown in the left column. ──
+        function toggleMidiStatusPanel() {
+            const panel = document.getElementById('midiStatusPanel');
+            const btn   = document.getElementById('midiStatusBtn');
+            if (!panel) return;
+            const isOpen = panel.style.display !== 'none';
+            if (isOpen) {
+                panel.style.display = 'none';
+                if (btn) { btn.classList.remove('open'); btn.setAttribute('aria-expanded','false'); }
+                return;
+            }
+            panel.style.display = 'block';
+            if (btn) { btn.classList.add('open'); btn.setAttribute('aria-expanded','true'); }
+            const closeHandler = (e) => {
+                if (panel.contains(e.target) || (btn && btn.contains(e.target))) return;
+                panel.style.display = 'none';
+                if (btn) { btn.classList.remove('open'); btn.setAttribute('aria-expanded','false'); }
+                document.removeEventListener('click', closeHandler);
+            };
+            setTimeout(() => document.addEventListener('click', closeHandler), 200);
+        }
+        window.toggleMidiStatusPanel = toggleMidiStatusPanel;
+
+        // ── MIDI init (graceful — security policy may block, e.g. Safari
+        // without Web MIDI support) ──────────────────────────────────
         function initMIDI() {
             try {
                 if (!navigator.requestMIDIAccess) return; // not supported
                 navigator.requestMIDIAccess().then(access => {
-                    for (let input of access.inputs.values()) {
-                        input.onmidimessage = e => {
-                            try {
-                                const [status, note, vel] = e.data;
-                                const cmd = status >> 4;
-                                if (cmd === 9 && vel > 0) { const n = note % 12, oct = Math.floor(note / 12) - 1; playNote(n, oct, 0.5); highlightNote(n, true); }
-                                else if (cmd === 8 || (cmd === 9 && vel === 0)) { highlightNote(note % 12, false); }
-                            } catch(e2) { /* ignore */ }
-                        };
-                    }
+                    const wireInputs = () => {
+                        midiConnectedNames = Array.from(access.inputs.values()).map(i => i.name || 'MIDI device');
+                        for (let input of access.inputs.values()) input.onmidimessage = handleMidiMessage;
+                        updateMidiDeviceUI();
+                    };
+                    wireInputs();
+                    // Fishman TriplePlay's wireless receiver (and any USB
+                    // MIDI device) can connect/disconnect after the page
+                    // has already loaded — re-wire live instead of only
+                    // catching whatever was present at initMIDI() time.
+                    access.onstatechange = wireInputs;
                 }).catch(() => { /* MIDI blocked by security policy — silent */ });
             } catch(e) { /* MIDI not available — silent */ }
         }
@@ -6445,6 +6657,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
             _wireHoverPeek('instrumentBtn', 'instrumentPanel');
             _wireHoverPeek('octaveBtn', 'octavePickerPanel');
             _wireHoverPeek('tempoBtn', 'tempoPickerPanel');
+            _wireHoverPeek('midiStatusBtn', 'midiStatusPanel');
         }
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', _initHoverPeeks);
