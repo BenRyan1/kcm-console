@@ -1761,8 +1761,34 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
     margin: 0 auto;
 }
 .kcm-stencil-overlay .kcm-stencil-wrap {
-    transform: scale(0.48);
+    /* Explicit width/height here, not inherited from the bare
+       .kcm-stencil-wrap rule above (which drives the STANDALONE
+       Stencil tab and now sizes itself to fit .kcm-center-col --
+       400px base, 280px at <=1024px -- entirely unrelated to this
+       overlay's own math). This used to rely on inheriting that
+       rule's width to compute its 0.48 scale-down (500 * 0.48 =
+       240px), and when that shared rule was resized down to 400px to
+       fix the standalone tab, this silently broke too: 400 * 0.48 =
+       192px of content rendering inside a 240px frame, undersized and
+       offset -- the "two circles, offset" bug. Pinning an explicit
+       500px here, matching what the <=1024px and <=540px tiers below
+       already correctly do, decouples this permanently so a future
+       change to the standalone tab's sizing can never silently break
+       the overlay's math again. */
+    width: 500px !important;
+    height: 500px !important;
+    transform: scale(0.48) !important;
     transform-origin: top left;
+}
+/* #kcmStencilSVG is independently sized (position:absolute, doesn't
+   auto-match its parent), so it needs the same explicit-500px
+   treatment as .kcm-stencil-wrap just above it, for the same reason:
+   its bare base rule now reads 400px (sized for the standalone tab),
+   which would leave the SVG smaller than the 500px wrap it's meant to
+   exactly fill before the shared 0.48 scale is applied. */
+.kcm-stencil-overlay #kcmStencilSVG {
+    width: 500px !important;
+    height: 500px !important;
 }
 /* Overlay sizing is calibrated against #chromaticCircle's BASE size
    (420px): 240px frame = 420 * (240/420 ratio), 0.48 wrap scale =
@@ -1832,7 +1858,11 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
     transition: all 0.2s;
     text-transform: uppercase;
 }
-.kcm-stencil-tab:hover,
+.kcm-stencil-tab:hover {
+    background: rgba(0,128,128,0.22);
+    border-color: var(--primary-teal);
+    color: #e8fafa;
+}
 .kcm-stencil-tab.active {
     background: var(--primary-teal);
     border-color: var(--primary-teal);
@@ -1978,7 +2008,11 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
     min-width: 34px;
     text-align: center;
 }
-.kcm-key-pill:hover,
+.kcm-key-pill:hover {
+    background: rgba(244,208,63,0.28);
+    border-color: var(--primary-gold);
+    color: #fff;
+}
 .kcm-key-pill.active {
     background: var(--primary-gold);
     border-color: var(--primary-gold);
@@ -2988,13 +3022,13 @@ window.addEventListener('unhandledrejection', function(event) {
         let guitarFretCount = 4;
 
         // ── Musical data ──────────────────────────────────────────
-        const noteNames      = ['C','C#/Db','D','D#/Eb','E','F','F#/Gb','G','G#/Ab','A','A#/Bb','B'];
+        const noteNames      = ['C','C#/D♭','D','D#/E♭','E','F','F#/G♭','G','G#/A♭','A','A#/B♭','B'];
         const noteNamesShort = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
-        const enharmonicNames= ['C','C#\nDb','D','D#\nEb','E','F','F#\nGb','G','G#\nAb','A','A#\nBb','B'];
+        const enharmonicNames= ['C','C#\nD♭','D','D#\nE♭','E','F','F#\nG♭','G','G#\nA♭','A','A#\nB♭','B'];
 
         // Enharmonic-correct spellings
         const noteNamesSharp = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
-        const noteNamesFlat  = ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
+        const noteNamesFlat  = ['C','D♭','D','E♭','E','F','G♭','G','A♭','A','B♭','B'];
 
         // Returns correct enharmonic spelling based on current key signature
         function getNoteName(noteIndex) {
@@ -3080,12 +3114,12 @@ window.addEventListener('unhandledrejection', function(event) {
             11:'Dissonant, leading tone — Major 7th · Inverts to Minor 2nd'
         };
         const keySignatures = {
-            0:{sharps:0,flats:0,name:'C major'},1:{sharps:0,flats:5,name:'Db major'},
-            2:{sharps:2,flats:0,name:'D major'},3:{sharps:0,flats:3,name:'Eb major'},
+            0:{sharps:0,flats:0,name:'C major'},1:{sharps:0,flats:5,name:'D♭ major'},
+            2:{sharps:2,flats:0,name:'D major'},3:{sharps:0,flats:3,name:'E♭ major'},
             4:{sharps:4,flats:0,name:'E major'},5:{sharps:0,flats:1,name:'F major'},
             6:{sharps:6,flats:0,name:'F# major'},7:{sharps:1,flats:0,name:'G major'},
-            8:{sharps:0,flats:4,name:'Ab major'},9:{sharps:3,flats:0,name:'A major'},
-            10:{sharps:0,flats:2,name:'Bb major'},11:{sharps:5,flats:0,name:'B major'}
+            8:{sharps:0,flats:4,name:'A♭ major'},9:{sharps:3,flats:0,name:'A major'},
+            10:{sharps:0,flats:2,name:'B♭ major'},11:{sharps:5,flats:0,name:'B major'}
         };
 
         window.playSelection = playSelection;
@@ -3940,8 +3974,8 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
             const WHITE_W = 32; // px per white key — 2 octaves = 448px, fits most screens
             const whiteOrder = [0,2,4,5,7,9,11]; // C D E F G A B
             const blackDefs  = [{n:1,after:0},{n:3,after:1},{n:6,after:3},{n:8,after:4},{n:10,after:5}];
-            // Labels: use flat names for Bb, sharp for others
-            const keyLabel = ['C','C#','D','Eb','E','F','F#','G','Ab','A','Bb','B'];
+            // Labels: use flat names for B♭, sharp for others
+            const keyLabel = ['C','C#','D','E♭','E','F','F#','G','A♭','A','B♭','B'];
 
             // Build 2 octaves: oct 4 then oct 5
             [currentOctave, currentOctave+1].forEach((oct, octIdx) => {
@@ -10088,7 +10122,7 @@ async function kcmAIAsk(type) {
     const KCM_COLORS = ['#FFFF00','#FFC400','#FF8000','#FF4000','#FF0000','#C4007F','#8000FF','#4000FF','#0000FF','#007FFF','#00FF80','#80FF00'];
     const KCM_TEXT   = ['#000','#000','#000','#fff','#fff','#fff','#fff','#fff','#fff','#fff','#000','#000'];
     const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
-    const NOTE_FLAT  = ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
+    const NOTE_FLAT  = ['C','D♭','D','E♭','E','F','G♭','G','A♭','A','B♭','B'];
     const FLAT_KEYS  = [1,3,5,8,10]; // keys that prefer flats
 
     function noteName(pc, rootPc) {
@@ -10608,7 +10642,7 @@ async function kcmAIAsk(type) {
         // panel (syncKeyPickerLabel()'s displayNames, _KEY_DEFS) -- this ring
         // was previously hardcoded to always-sharp names (C#, D#, F#, G#, A#),
         // so it could show a different spelling for the same key than every
-        // other "current key" indicator in the app (e.g. D# here vs Eb on the
+        // other "current key" indicator in the app (e.g. D# here vs E♭ on the
         // main Key button). Keeping this list identical to those elsewhere is
         // what keeps every key display in sync.
         const names = ['C','D♭','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
