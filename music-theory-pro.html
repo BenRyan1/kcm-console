@@ -471,7 +471,7 @@ nav a.active { color: var(--primary-teal); }
     background: var(--primary-teal);
     border-color: var(--primary-teal);
 }
-.scale-type-btn, .harm-key-btn {
+.scale-type-btn, .harm-key-btn, .ext-degree-btn {
     padding: 7px 10px;
     font-size: 0.72rem;
     font-weight: 700;
@@ -484,7 +484,7 @@ nav a.active { color: var(--primary-teal); }
     text-align: center;
     transition: all 0.2s;
 }
-.scale-type-btn.active, .harm-key-btn.active {
+.scale-type-btn.active, .harm-key-btn.active, .ext-degree-btn.active {
     background: var(--primary-teal);
     border-color: var(--primary-teal);
 }
@@ -2566,7 +2566,16 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                 <button class="level-btn active" data-level="1"         title="1 Note">Single Note</button>
                 <button class="level-btn"         data-level="2"         title="2 Notes">Intervals</button>
                 <button class="level-btn"         data-level="3"         title="3 Notes">Triads</button>
-                <button class="level-btn"         data-level="4"         title="4 Notes">7th Chords</button>
+                <button class="level-btn"         data-level="4"         title="Extended Chords: 7 / 9 / 11 / 13">Ext. Chords</button>
+                <div id="extDegreeSubPanel" style="display:none; width:100%; box-sizing:border-box; background:rgba(10,10,25,0.97); border:2px solid var(--primary-teal); border-radius:14px; padding:0.6rem 0.75rem; margin:2px 0;">
+                    <div style="font-size:0.6rem; font-weight:700; letter-spacing:1px; color:var(--primary-teal); text-align:center; margin-bottom:0.5rem; font-family:var(--font-display);">CHORD EXTENSION</div>
+                    <div style="display:flex; gap:5px;" id="extDegreeSubBtns">
+                        <button class="ext-degree-btn active" data-ext-degree="7" onclick="switchExtDegree('7')" style="flex:1;">7th</button>
+                        <button class="ext-degree-btn" data-ext-degree="9" onclick="switchExtDegree('9')" style="flex:1;">9th</button>
+                        <button class="ext-degree-btn" data-ext-degree="11" onclick="switchExtDegree('11')" style="flex:1;">11th</button>
+                        <button class="ext-degree-btn" data-ext-degree="13" onclick="switchExtDegree('13')" style="flex:1;">13th</button>
+                    </div>
+                </div>
                 <button class="level-btn"         data-level="5"         title="5 Notes">Pentatonic</button>
                 <button class="level-btn"         data-level="6"         title="6 Notes">Whole Tone</button>
                 <button class="level-btn"         data-level="scales"    title="7 Notes">Scales</button>
@@ -2926,7 +2935,7 @@ window.addEventListener('unhandledrejection', function(event) {
         // Starts as {rootNote}, grows note-by-note as playback proceeds, resets to full selectedNotes when done.
         let revealedNotes = new Set([0]);
         let currentWaveform = 'sine', currentBPM = 120, currentModeSelection = 'ionian';
-        let currentTriadSelection = 'major', currentExtendedSelection = 'major7';
+        let currentTriadSelection = 'major', currentExtendedSelection = 'major7', currentExtDegree = '7';
         let currentMinorType = 'naturalMinor', currentHarmDegree = 0, currentHarmChordType = 'triad';
         let quizCorrect = 0, quizTotal = 0, currentQuiz = null, earTrainingOpen = false;
         let isRecording = false, recordedNotes = [], recordingStartTime = 0;
@@ -2957,6 +2966,16 @@ window.addEventListener('unhandledrejection', function(event) {
             diminished7:[0,3,6,9], augmented7:[0,4,8,10], halfDiminished7:[0,3,6,10],
             minorMajor7:[0,3,7,11], augmentedMajor7:[0,4,8,11]
         };
+        // Additional tension-tone semitone offsets stacked on top of a base
+        // 7th-chord quality to build 9th / 11th / 13th chords. Cumulative —
+        // an 11th chord includes the 9th's tone too, a 13th includes both.
+        const extensionAdd = { '7':[], '9':[14], '11':[14,17], '13':[14,17,21] };
+        function getExtChordIntervals() {
+            const base = extended[currentExtendedSelection] || extended.major7;
+            const add  = extensionAdd[currentExtDegree] || [];
+            return base.concat(add);
+        }
+        window.getExtChordIntervals = getExtChordIntervals;
         const scales = {
             majorPentatonic:[0,2,4,7,9], minorPentatonic:[0,3,5,7,10],
             wholeTone:[0,2,4,6,8,10],
@@ -3042,6 +3061,7 @@ window.addEventListener('unhandledrejection', function(event) {
             harmonizedMinor7ths:  { get: () => harmonizedMinor7ths,  configurable: true },
             currentTriadSelection:    { get: () => currentTriadSelection,    configurable: true },
             currentExtendedSelection: { get: () => currentExtendedSelection, configurable: true },
+            currentExtDegree:         { get: () => currentExtDegree,         configurable: true },
             audioReady:               { get: () => audioReady,               configurable: true },
             recordedNotes:            { get: () => recordedNotes,            configurable: true },
         });
@@ -3153,12 +3173,14 @@ window.addEventListener('unhandledrejection', function(event) {
                             const scaleTypeSub = document.getElementById('scaleTypeSubPanel');
                             const modeSub = document.getElementById('modeSubPanel');
                             const harmSub = document.getElementById('harmSubPanel');
+                            const extSub = document.getElementById('extDegreeSubPanel');
                             const scaleLib = document.getElementById('scaleLibraryPanel');
                             const freeplayHint = document.getElementById('freeplayHint');
                             const progressionControls = document.getElementById('progressionControls');
                             if (scaleTypeSub) scaleTypeSub.style.display = 'none';
                             if (modeSub) modeSub.style.display = 'none';
                             if (harmSub) harmSub.style.display = 'none';
+                            if (extSub) extSub.style.display = 'none';
                             if (scaleLib) scaleLib.style.display = 'none';
                             if (freeplayHint) freeplayHint.style.display = 'none';
                             if (progressionControls) progressionControls.style.display = 'none';
@@ -3176,9 +3198,19 @@ window.addEventListener('unhandledrejection', function(event) {
                         const scaleTypeSub = document.getElementById('scaleTypeSubPanel');
                         const modeSub = document.getElementById('modeSubPanel');
                         const harmSub = document.getElementById('harmSubPanel');
+                        const extSub = document.getElementById('extDegreeSubPanel');
                         if (scaleTypeSub) scaleTypeSub.style.display = (this.dataset.level === 'scales') ? 'block' : 'none';
                         if (modeSub) modeSub.style.display = (this.dataset.level === 'modes') ? 'block' : 'none';
                         if (harmSub) harmSub.style.display = (this.dataset.level === 'harm') ? 'block' : 'none';
+                        if (extSub) extSub.style.display = (this.dataset.level === '4') ? 'block' : 'none';
+                        // Keep the ext-degree-btn pills in sync with whichever
+                        // degree (7th/9th/11th/13th) was last active, in case
+                        // the user switches away from level 4 and back.
+                        if (this.dataset.level === '4') {
+                            document.querySelectorAll('.ext-degree-btn').forEach(b => {
+                                b.classList.toggle('active', b.dataset.extDegree === currentExtDegree);
+                            });
+                        }
                         // Also close the "more scales" repository panel whenever
                         // a different level is chosen, so it doesn't stay open
                         // showing stale content behind the newly selected level.
@@ -4070,7 +4102,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                     updatePattern();
                     revealedNotes = new Set(selectedNotes);
                     updateControls(); updateNoteList(); updateSphereDisplay();
-                    const intervals = extended[currentExtendedSelection];   // e.g. [0,4,7,11]
+                    const intervals = getExtChordIntervals();   // e.g. [0,4,7,11,14] for a 9th chord
                     const beat = 60000 / currentBPM;
                     let prevMidi = -1, oct = currentOctave;
                     intervals.forEach((semis, i) => {
@@ -5630,7 +5662,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 switch(currentLevel) {
                     case '1': pattern = [rootNote]; currentIntervals = [0]; break;
                     case '3': currentIntervals = triads[currentTriadSelection]; pattern = currentIntervals.map(i=>(rootNote+i)%12); break;
-                    case '4': currentIntervals = extended[currentExtendedSelection]; pattern = currentIntervals.map(i=>(rootNote+i)%12); break;
+                    case '4': currentIntervals = getExtChordIntervals(); pattern = currentIntervals.map(i=>(rootNote+i)%12); break;
                     case '5': {
                         // Use currentScaleType to pick major vs minor pentatonic
                         const _pType = window.currentScaleType;
@@ -5690,7 +5722,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
             switch (currentLevel) {
                 case '1': return 'Note';
                 case '3': return (currentTriadSelection || 'Major').replace(/^\w/, c => c.toUpperCase()) + ' Triad';
-                case '4': return (currentExtendedSelection || '7th Chord');
+                case '4': return (currentExtendedSelection || '7th Chord') + (currentExtDegree && currentExtDegree !== '7' ? ' (' + currentExtDegree + 'th)' : '');
                 case '5': return (window.currentScaleType === 'minorPentatonic') ? 'Minor Pentatonic' : 'Major Pentatonic';
                 case '6': return 'Whole Tone';
                 case '7': return 'Major Scale';
@@ -6092,6 +6124,52 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
             setTimeout(() => { if (typeof updateControls === 'function') updateControls(); }, 50);
         }
         window.switchHarm = switchHarm;
+
+        // ── playExtChordAscending: arpeggiate the current root as a
+        //    1-3-5-7(-9-11-13) chord using whichever 7th-chord quality and
+        //    extension degree are currently selected. Shared by the click-
+        //    to-play note handler (level '4') and switchExtDegree() below,
+        //    so choosing 9th/11th/13th from the dropdown plays immediately
+        //    without requiring a separate note click first.
+        function playExtChordAscending() {
+            updatePattern();
+            revealedNotes = new Set(selectedNotes);
+            updateControls(); updateNoteList(); updateSphereDisplay();
+            const intervals = getExtChordIntervals();
+            const beat = 60000 / currentBPM;
+            let prevMidi = -1, oct = currentOctave;
+            intervals.forEach((semis, i) => {
+                const pc   = (rootNote + semis) % 12;
+                let midi   = oct * 12 + pc;
+                while (midi <= prevMidi) { oct++; midi = oct * 12 + pc; }
+                prevMidi   = midi;
+                const _o   = oct;
+                setTimeout(() => {
+                    playNote(pc, _o, 0.7);
+                    updateStaffNotation([{ pc, oct: _o }]);
+                }, i * beat);
+            });
+            updateStaffNotation(Array.from(selectedNotes));
+        }
+        window.playExtChordAscending = playExtChordAscending;
+
+        // ── switchExtDegree: single source of truth for choosing 7th / 9th /
+        //    11th / 13th under the "Ext. Chords" level button. Mirrors
+        //    switchHarm()'s pattern — set state, sync the pill row, redraw,
+        //    then play so pressing a degree button immediately hears it.
+        function switchExtDegree(deg) {
+            currentExtDegree = deg;
+            currentLevel = '4';
+            document.querySelectorAll('.level-btn[data-level]').forEach(b => {
+                b.classList.toggle('active', b.dataset.level === '4');
+            });
+            document.querySelectorAll('.ext-degree-btn').forEach(b => {
+                b.classList.toggle('active', b.dataset.extDegree === deg);
+            });
+            updateDisplay();
+            setTimeout(() => playExtChordAscending(), 200);
+        }
+        window.switchExtDegree = switchExtDegree;
 
         // ── Update controls ───────────────────────────────────────
         function updateControls() {
@@ -6823,8 +6901,12 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                         diminished7:'°7', augmented7:'+7',
                         halfDiminished7:'ø7', minorMajor7:'mMaj7', augmentedMajor7:'+Maj7'
                     };
-                    const sym  = _extSym[currentExtendedSelection]  || currentExtendedSelection;
-                    const full = _extFull[currentExtendedSelection] || currentExtendedSelection;
+                    let sym  = _extSym[currentExtendedSelection]  || currentExtendedSelection;
+                    let full = _extFull[currentExtendedSelection] || currentExtendedSelection;
+                    if (currentExtDegree && currentExtDegree !== '7') {
+                        sym  = sym.replace('7', currentExtDegree);
+                        full = full.replace('7th', currentExtDegree + 'th');
+                    }
                     status.textContent = `🎵 ${getRootName()}${sym} — ${full} · Click note to change root`;
                 } else if (currentLevel === '5') {
                     const _pName = (window.currentScaleType === 'minorPentatonic') ? 'Minor' : 'Major';
