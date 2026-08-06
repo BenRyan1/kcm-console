@@ -2477,7 +2477,7 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                 </div>
                 <div style="display:flex;align-items:center;gap:0;">
                     <svg id="staffSVG" viewBox="0 0 220 100" preserveAspectRatio="xMidYMid meet" aria-hidden="true" style="flex-shrink:0;width:55%;"></svg>
-                    <svg id="fretboardMiniSVG" viewBox="0 0 220 100" preserveAspectRatio="xMidYMid meet" aria-hidden="true" style="flex-shrink:0;width:55%;display:none;"></svg>
+                    <svg id="fretboardMiniSVG" viewBox="0 0 220 100" preserveAspectRatio="xMidYMid meet" aria-hidden="true" style="flex-shrink:0;width:calc(55% - 48px);display:none;"></svg>
                     <svg id="keyboardMiniSVG" viewBox="0 0 220 100" preserveAspectRatio="xMidYMid meet" aria-hidden="true" style="flex-shrink:0;width:55%;display:none;"></svg>
                     <svg id="timelineSVG" viewBox="0 0 220 100" preserveAspectRatio="xMidYMid meet" aria-hidden="true" style="flex-shrink:0;width:100%;display:none;"></svg>
                     <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:0 12px;">
@@ -2553,8 +2553,9 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                     <div style="text-align:center; margin-top:6px; font-size:1.1rem; font-weight:800; color:var(--primary-gold);"><span id="bpmDisplay">120</span> BPM</div>
                 </div>
 
-                <div style="margin-top:14px;">
-                    <button class="play-btn" id="stopPlayBtn" style="width:100%; background:linear-gradient(135deg, var(--primary-coral) 0%, #C4341C 100%); border-color:var(--primary-coral);">⏹ Stop</button>
+                <div style="margin-top:14px; display:flex; gap:8px;">
+                    <button class="play-btn" id="transportPlayBtn" onclick="document.getElementById('globalPlayBtn').click()" style="flex:1; background:linear-gradient(135deg, #27ae60 0%, #1e8449 100%); border-color:#27ae60;">▶ Play</button>
+                    <button class="play-btn" id="stopPlayBtn" style="flex:1; background:linear-gradient(135deg, var(--primary-coral) 0%, #C4341C 100%); border-color:var(--primary-coral);">⏹ Stop</button>
                 </div>
             </div>
 
