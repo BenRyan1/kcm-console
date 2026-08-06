@@ -7131,7 +7131,11 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                     }
                 }
                 // Stop pitch detection when leaving sing view
-                if (currentView !== 'sing' && typeof stopSingMode === 'function') stopSingMode();
+                // NOTE: only tear down if Sing was actually running — stopSingMode()
+                // unconditionally wipes fretboard/piano/circle highlights via
+                // _singClearDisplays(), which was firing on EVERY level/view change
+                // (Triads, Ext. Chords, etc.) and erasing the freshly-drawn chord.
+                if (currentView !== 'sing' && typeof _singActive !== 'undefined' && _singActive && typeof stopSingMode === 'function') stopSingMode();
                 if (staff)   staff.style.display   = 'block'; // always visible
                 // Always redraw staff with current selection when switching views
                 const staffNotes = Array.from(selectedNotes);
