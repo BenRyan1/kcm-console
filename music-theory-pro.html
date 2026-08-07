@@ -3004,15 +3004,21 @@ window.addEventListener('unhandledrejection', function(event) {
         // active (Circle/Guitar/Piano), instead of requiring the view toggle
         // to switch away from it. See updateView()/toggleStencilOverlay().
         let stencilOverlayOn = false;
-        // The overlay only makes visual sense floating over the actual
-        // Chromatic Circle graphic (it's centered/sized to sit on top of
-        // the spheres) -- not the Guitar fretboard, Piano keyboard, or any
-        // other panel, where it would just be a random shape with nothing
-        // underneath it to relate to. Matches the exact view set where the
-        // circle graphic itself is shown (see updateView()'s `circle`
-        // display logic just below).
+        // Name kept as-is (lots of call sites), but this now covers the
+        // full set of views the Stencil Overlay is offered on: Circle
+        // (+ Circle Type-to-Play + Sing), Guitar Fretboard, and Piano
+        // Keyboard. It used to be Circle-only because the floating wheel
+        // graphic was only positioned/sized to sit on top of the circle's
+        // spheres -- see _positionStencilOverlay(), which now also
+        // centers over #guitarFretboard/#pianoKeyboard depending on which
+        // is showing. updateGuitarDisplay()/updatePianoDisplay()/
+        // updateSphereDisplay() also check stencilOverlayOn directly (not
+        // through this helper) so the REAL fretboard cells/piano keys/
+        // circle spheres light up with the stencil's actual notes, not
+        // just the small floating replica wheel.
         function _isCircleFamilyView() {
-            return currentView === 'circle' || currentView === 'circleType' || currentView === 'sing';
+            return currentView === 'circle' || currentView === 'circleType' || currentView === 'sing'
+                || currentView === 'guitar' || currentView === 'keyboard';
         }
         const _noteOffTimers = {};
         const _playTimers = [];  // all active sequence/progression setTimeout IDs
@@ -6055,6 +6061,29 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         // ── Update sphere display ─────────────────────────────────
         function updateSphereDisplay() {
             try {
+                // Stencil Overlay: while a stencil is active and the overlay
+                // (or the dedicated Stencil tab) is on, the Circle's real
+                // spheres show the STENCIL's notes instead of the regular
+                // selectedNotes-based pattern -- otherwise the next call to
+                // this function from anywhere else (there are dozens) would
+                // immediately wipe it back. See _isCircleFamilyView() and
+                // the matching guards in updatePianoDisplay()/
+                // updateGuitarDisplay() just below.
+                if (window.currentStencil && (stencilOverlayOn || currentView === 'stencil')) {
+                    const _stPcs = window.currentStencil.intervals.map(iv => ((window.currentStencilRoot || 0) + iv) % 12);
+                    const _stSet = new Set(_stPcs);
+                    document.querySelectorAll('.sphere').forEach(s => {
+                        const n = parseInt(s.dataset.note);
+                        s.classList.remove('active','included','excluded','freeplay-inactive','playing');
+                        s.style.opacity = ''; s.style.filter = ''; s.style.transform = '';
+                        s.style.border = ''; s.style.boxShadow = '';
+                        if (n === _stPcs[0]) s.classList.add('active');
+                        else if (_stSet.has(n)) s.classList.add('included');
+                        else s.classList.add('excluded');
+                    });
+                    updatePianoDisplay(); updateGuitarDisplay();
+                    return;
+                }
                 document.querySelectorAll('.sphere').forEach(s => {
                     const n = parseInt(s.dataset.note);
                     s.classList.remove('active','included','excluded','freeplay-inactive','playing');
@@ -6087,6 +6116,29 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         }
 
         function updatePianoDisplay() {
+            // Stencil Overlay: same short-circuit as updateSphereDisplay()
+            // above -- light the real piano keys with the stencil's actual
+            // notes so it stays visible on the Keyboard view, not just this
+            // module's own small floating wheel graphic.
+            if (window.currentStencil && (stencilOverlayOn || currentView === 'stencil')) {
+                const _stPcs = window.currentStencil.intervals.map(iv => ((window.currentStencilRoot || 0) + iv) % 12);
+                const _stSet = new Set(_stPcs);
+                document.querySelectorAll('.white-key,.black-key').forEach(key => {
+                    const n       = parseInt(key.dataset.note);
+                    const isWhite = key.classList.contains('white-key');
+                    key.style.background = ''; key.style.borderColor = ''; key.style.borderWidth = '';
+                    key.style.boxShadow = ''; key.style.opacity = '1'; key.style.transform = '';
+                    if (_stSet.has(n)) {
+                        const isRoot = n === _stPcs[0];
+                        const col = colors[n];
+                        key.style.background  = isWhite ? `rgba(${_hexToRgb(col)},0.75)` : col;
+                        key.style.borderColor = col;
+                        key.style.borderWidth = isRoot ? '3px' : '2.5px';
+                        key.style.boxShadow   = isRoot ? `0 0 18px ${col}, 0 0 36px ${col}88` : `0 0 12px ${col}cc`;
+                    }
+                });
+                return;
+            }
             document.querySelectorAll('.white-key,.black-key').forEach(key => {
                 const n       = parseInt(key.dataset.note);
                 const isWhite = key.classList.contains('white-key');
@@ -6145,9 +6197,46 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
 
         function updateGuitarDisplay() {
             const tuningPc  = [4, 9,  2,  7, 11, 4];   // E A D G B e open pitch classes
+            const maxFret   = guitarFretCount;           // respect current fret setting (4/5/12)
+            // Stencil Overlay: same short-circuit as updateSphereDisplay()/
+            // updatePianoDisplay() above -- light the real fretboard cells
+            // with the stencil's actual notes so it stays visible on the
+            // Fretboard view, not just this module's own small floating
+            // wheel graphic. Every cell whose note is in the stencil lights
+            // up (independent of any particular string/fret voicing), same
+            // "show every matching dot" rule the SCALE MODE branch below
+            // already uses for litNotes.
+            if (window.currentStencil && (stencilOverlayOn || currentView === 'stencil')) {
+                const _stPcs = window.currentStencil.intervals.map(iv => ((window.currentStencilRoot || 0) + iv) % 12);
+                const _stSet = new Set(_stPcs);
+                document.querySelectorAll('.fb-cell').forEach(cell => {
+                    const n = parseInt(cell.dataset.note);
+                    const f = parseInt(cell.dataset.fret);
+                    const on = _stSet.has(n) && f <= maxFret;
+                    cell.classList.toggle('fb-on',  on);
+                    cell.classList.toggle('fb-off', !on);
+                });
+                document.querySelectorAll('.fb-str-label-cell').forEach(lbl => {
+                    const s  = parseInt(lbl.dataset.stringIdx);
+                    const pc = tuningPc[s];
+                    let anyLit = false;
+                    for (let f = 0; f <= maxFret; f++) {
+                        if (_stSet.has((pc + f) % 12)) { anyLit = true; break; }
+                    }
+                    if (anyLit) {
+                        lbl.classList.add('fb-lit');
+                        lbl.style.color = colors[tuningPc[s]];
+                        lbl.style.textShadow = `0 0 12px ${colors[tuningPc[s]]}`;
+                    } else {
+                        lbl.classList.remove('fb-lit');
+                        lbl.style.color = '';
+                        lbl.style.textShadow = '';
+                    }
+                });
+                return;
+            }
             const tuningOct = [2, 2,  3,  3,  3, 4];   // E2 A2 D3 G3 B3 e4
             const litNotes  = revealedNotes;             // what's currently revealed
-            const maxFret   = guitarFretCount;           // respect current fret setting (4/5/12)
 
             // ── SCALE MODE: light every fret cell whose note is in litNotes ──
             // Simple rule: if the note at this fret is revealed, dot is ON.
@@ -6910,11 +6999,20 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         function _positionStencilOverlay() {
             try {
                 const stencil = document.getElementById('kcmStencilPanel');
-                const circle  = document.getElementById('chromaticCircle');
-                if (!stencil || !circle) return;
+                if (!stencil) return;
                 if (!stencil.classList.contains('kcm-stencil-overlay')) return; // only when actively floating
-                const top  = circle.offsetTop  + circle.offsetHeight / 2;
-                const left = circle.offsetLeft + circle.offsetWidth  / 2;
+                // Center over whichever main graphic is actually visible right
+                // now -- Guitar Fretboard and Piano Keyboard each get the same
+                // treatment as the Chromatic Circle used to get exclusively,
+                // so the floating wheel lands on top of real content on every
+                // view the overlay is offered on (see _isCircleFamilyView()).
+                const targetId = currentView === 'guitar'   ? 'guitarFretboard'
+                               : currentView === 'keyboard'  ? 'pianoKeyboard'
+                               : 'chromaticCircle';
+                const target = document.getElementById(targetId) || document.getElementById('chromaticCircle');
+                if (!target) return;
+                const top  = target.offsetTop  + target.offsetHeight / 2;
+                const left = target.offsetLeft + target.offsetWidth  / 2;
                 stencil.style.setProperty('top',  top  + 'px', 'important');
                 stencil.style.setProperty('left', left + 'px', 'important');
             } catch (e) { /* non-critical positioning nicety */ }
@@ -10273,6 +10371,13 @@ async function kcmAIAsk(type) {
     let currentStencil   = null;
     window.currentStencil = null;
     let currentStencilRoot = 0;   // 0 = C
+    // Bridged to window (same manual-sync pattern as window.currentStencil
+    // just above) so the main MTP closure's updateGuitarDisplay/
+    // updatePianoDisplay/updateSphereDisplay can read the stencil's actual
+    // root from outside this module — needed to light up the real
+    // fretboard/keyboard/circle with the stencil, not just this module's
+    // own little wheel graphic.
+    window.currentStencilRoot = 0;
     let stencilRotateDeg = 0;     // current rotation in degrees (0=C at top)
     let isDragging       = false;
     let dragStartAngle   = 0;
@@ -10369,6 +10474,7 @@ async function kcmAIAsk(type) {
     // with zero duplicated rendering code.
     function loadChordAsStencil(chordDef) {
         currentStencilRoot = chordDef.root;
+        window.currentStencilRoot = currentStencilRoot;
         // Keep the global key (Key button, Harmonized panel, Staff/Timeline
         // key display) in sync with whatever chord the song is actually on —
         // this was previously only set via the key ring / drag rotate, so a
@@ -10396,6 +10502,7 @@ async function kcmAIAsk(type) {
             degrees: intervals.map((_, i) => String(i + 1)).join(' '), color: '#00c0c0' };
         window.currentStencil = currentStencil;
         currentStencilRoot = ((rootPc % 12) + 12) % 12;
+        window.currentStencilRoot = currentStencilRoot;
         // The Mode/Scale/Chord pickers are the source of truth here — the
         // wheel just visualizes whatever they say. Since '_extChord' never
         // matches a real STENCIL_LIBRARY id, clear any stale 'active' highlight
@@ -10714,6 +10821,7 @@ async function kcmAIAsk(type) {
         ring.querySelectorAll('.kcm-key-pill').forEach(btn => {
             btn.addEventListener('click', function() {
                 currentStencilRoot = parseInt(this.dataset.pc);
+                window.currentStencilRoot = currentStencilRoot;
                 ring.querySelectorAll('.kcm-key-pill').forEach(b => b.classList.remove('active'));
                 this.classList.add('active');
                 // Sync MTP root note
@@ -10940,6 +11048,7 @@ async function kcmAIAsk(type) {
             const newRoot = ((Math.round(snapped / 30) % 12) + 12) % 12;
             if (newRoot !== currentStencilRoot) {
                 currentStencilRoot = newRoot;
+                window.currentStencilRoot = currentStencilRoot;
                 stencilRotateDeg   = newRoot * 30;
                 // Sync key ring
                 document.querySelectorAll('.kcm-key-pill').forEach(b => {
