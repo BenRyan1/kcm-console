@@ -4349,6 +4349,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 // ── TRIADS (level 3) ─────────────────────────────────────────
                 // Click sets root → play 1-3-5 arpeggio ascending, then show chord voicing.
                 if (currentLevel === '3') {
+                    _cancelAllPlay();   // stop any in-flight arpeggio from a previous root-note click first
                     rootNote = noteIndex;
                     updatePattern();   // sets selectedNotes + revealedNotes = full chord (instant)
                     revealedNotes = new Set(selectedNotes);
@@ -4363,18 +4364,25 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                         while (midi <= prevMidi) { oct++; midi = oct * 12 + pc; }
                         prevMidi   = midi;
                         const _o   = oct;
-                        setTimeout(() => {
+                        _schedPlay(() => {
                             playNote(pc, _o, 0.7);
                             updateStaffNotation([{ pc, oct: _o }]);
                         }, i * beat);
                     });
                     updateStaffNotation(Array.from(selectedNotes));
+                    // Restore + re-highlight the full chord everywhere once the arpeggio ends.
+                    _schedPlay(() => {
+                        revealedNotes = new Set(selectedNotes);
+                        updateGuitarDisplay(); updatePianoDisplay(); updateSphereDisplay();
+                        clearStaffHighlights();
+                    }, intervals.length * beat + 200);
                     return;
                 }
 
                 // ── 7TH CHORDS (level 4) ────────────────────────────────────
                 // Click sets root → play 1-3-5-7 arpeggio ascending with correct register logic.
                 if (currentLevel === '4') {
+                    _cancelAllPlay();   // stop any in-flight arpeggio from a previous root-note click first
                     rootNote = noteIndex;
                     updatePattern();
                     revealedNotes = new Set(selectedNotes);
@@ -4388,12 +4396,18 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                         while (midi <= prevMidi) { oct++; midi = oct * 12 + pc; }
                         prevMidi   = midi;
                         const _o   = oct;
-                        setTimeout(() => {
+                        _schedPlay(() => {
                             playNote(pc, _o, 0.7);
                             updateStaffNotation([{ pc, oct: _o }]);
                         }, i * beat);
                     });
                     updateStaffNotation(Array.from(selectedNotes));
+                    // Restore + re-highlight the full chord everywhere once the arpeggio ends.
+                    _schedPlay(() => {
+                        revealedNotes = new Set(selectedNotes);
+                        updateGuitarDisplay(); updatePianoDisplay(); updateSphereDisplay();
+                        clearStaffHighlights();
+                    }, intervals.length * beat + 200);
                     return;
                 }
 
@@ -4760,17 +4774,13 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 const noteDur = beatSec * 0.78;   // note fills 78% of beat — clean gap between notes
                 const now     = audioContext.currentTime;
 
-                // ── CHORD ─────────────────────────────────────────────────
-                if (mode === 'chord') {
-                    revealedNotes = new Set(selectedNotes);
-                    updateGuitarDisplay(); updatePianoDisplay(); updateSphereDisplay();
-                    playChordNotes(Array.from(selectedNotes).sort((a,b)=>a-b), 1.5);
-                    return;
-                }
-
                 // ── Build ascending sequence from root ────────────────────
                 // MIDI convention: C4 = 60 = (4+1)*12, so midi = (oct+1)*12 + pc
                 // Start at oct 4 (middle C register) — root note anchors there.
+                // Moved above the CHORD branch (used to sit after it, with an
+                // early return skipping it entirely for chords) so every mode,
+                // chord included, has upSeq/downSeq available for the Timeline
+                // broadcast below.
                 const allPcs = Array.from(selectedNotes).sort((a,b)=>a-b);
                 const rIdx   = allPcs.indexOf(rootNote);
                 const ordered = rIdx >= 0
@@ -4786,6 +4796,31 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                     prevMidi = midi;
                 });
                 const downSeq = [...upSeq].reverse();
+
+                // ── Notify the Timeline widget (and any other listener) of the
+                // EXACT sequence about to play, in real order + real octave.
+                // Fixes: the Control Dock's/sidebar's "Desc" button playing the
+                // notes high-to-low while the Timeline tab kept drawing its own
+                // separately-recomputed, hardcoded-ascending layout — sound
+                // went down, dots stayed going up. The Timeline now mirrors
+                // whatever actually plays instead of guessing its own order.
+                try {
+                    let phases;
+                    if (mode === 'down')       phases = [{ seq: downSeq, startBeat: 0, simultaneous: false }];
+                    else if (mode === 'chord') phases = [{ seq: upSeq,   startBeat: 0, simultaneous: true  }];
+                    else if (mode === 'scale') phases = [{ seq: upSeq,   startBeat: 0, simultaneous: false },
+                                                          { seq: downSeq, startBeat: upSeq.length, simultaneous: false }];
+                    else                        phases = [{ seq: upSeq,   startBeat: 0, simultaneous: false }]; // 'up' + default
+                    window.dispatchEvent(new CustomEvent('kcm:playNotes', { detail: { mode, beatMs, phases } }));
+                } catch(e) { /* non-critical — Timeline sync only */ }
+
+                // ── CHORD ─────────────────────────────────────────────────
+                if (mode === 'chord') {
+                    revealedNotes = new Set(selectedNotes);
+                    updateGuitarDisplay(); updatePianoDisplay(); updateSphereDisplay();
+                    playChordNotes(Array.from(selectedNotes).sort((a,b)=>a-b), 1.5);
+                    return;
+                }
 
                 // ── Sphere helpers ────────────────────────────────────────
                 function pulseSphere(pc) {
@@ -6409,6 +6444,12 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         //    so choosing 9th/11th/13th from the dropdown plays immediately
         //    without requiring a separate note click first.
         function playExtChordAscending() {
+            // Cancel any still-running arpeggio from a previous degree/quality
+            // click first — these were scheduled with plain setTimeout before,
+            // which meant switching 7th -> 9th -> 13th quickly left old,
+            // uncancelable single-note callbacks firing after the new chord's
+            // display was drawn, stomping it back to a stale note.
+            _cancelAllPlay();
             updatePattern();
             revealedNotes = new Set(selectedNotes);
             updateControls(); updateNoteList(); updateSphereDisplay();
@@ -6421,12 +6462,20 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 while (midi <= prevMidi) { oct++; midi = oct * 12 + pc; }
                 prevMidi   = midi;
                 const _o   = oct;
-                setTimeout(() => {
+                _schedPlay(() => {
                     playNote(pc, _o, 0.7);
                     updateStaffNotation([{ pc, oct: _o }]);
                 }, i * beat);
             });
             updateStaffNotation(Array.from(selectedNotes));
+            // Once the arpeggio finishes, restore + re-highlight the FULL
+            // chord across every panel instead of leaving it stuck on
+            // whichever single note played last.
+            _schedPlay(() => {
+                revealedNotes = new Set(selectedNotes);
+                updateGuitarDisplay(); updatePianoDisplay(); updateSphereDisplay();
+                clearStaffHighlights();
+            }, intervals.length * beat + 200);
         }
         window.playExtChordAscending = playExtChordAscending;
 
@@ -11391,6 +11440,12 @@ async function kcmAIAsk(type) {
   let tlTimers = [];
   let tlRAF = null;
   let tlInjected = false;
+  // Timestamp (performance.now()) until which the heuristic-based "universal
+  // live observer" below should stay quiet because a precise, exact-sequence
+  // render (see kcm:playNotes listener near the bottom of this module) is
+  // already driving the display for the currently-playing sequence. Without
+  // this, both systems would fight over the same SVG at once.
+  let _tlPreciseUntilMs = 0;
 
   const SCALES = {
     major:[0,2,4,5,7,9,11], naturalMinor:[0,2,3,5,7,8,10],
@@ -11745,6 +11800,10 @@ async function kcmAIAsk(type) {
       const svg = document.getElementById('timelineSVG');
       if (!svg || svg.style.display === 'none') return;
       _tlSyncSphereHighlights();
+      // A precise, real-sequence render (kcm:playNotes) is already driving
+      // the SVG for whatever's currently playing — don't let this guess-
+      // based fallback stomp it mid-animation.
+      if (performance.now() < _tlPreciseUntilMs) return;
       _tlHandleLiveOnsets();
       const snap = _tlSnapshotState();
       if (snap !== null && snap !== _tlLastSnapshot) {
@@ -11803,9 +11862,25 @@ async function kcmAIAsk(type) {
     }
     newOnsets.forEach(pc => {
       const prev = liveSeq[liveSeq.length - 1];
-      let oct = 4, prevMidi = prev ? (prev.oct + 1) * 12 + prev.pc : -1;
-      let midi = (oct + 1) * 12 + pc;
-      while (midi <= prevMidi) { oct++; midi = (oct + 1) * 12 + pc; }
+      // Nearest-neighbor octave (closest MIDI distance to the previous note)
+      // instead of always forcing the pitch upward. The old always-ascend
+      // logic made a genuinely DESCENDING run (e.g. a play path this
+      // fallback doesn't have precise data for) draw as a staircase
+      // climbing higher and higher even though the audio was going down —
+      // this is only a guess (the real octave that actually sounded isn't
+      // observable from here), but nearest-neighbor at least tracks the
+      // true up/down contour instead of contradicting it outright.
+      let oct = 4;
+      if (prev) {
+        const prevMidi = (prev.oct + 1) * 12 + prev.pc;
+        let bestOct = prev.oct, bestDist = Infinity;
+        for (let o = prev.oct - 1; o <= prev.oct + 1; o++) {
+          const midi = (o + 1) * 12 + pc;
+          const dist = Math.abs(midi - prevMidi);
+          if (dist < bestDist) { bestDist = dist; bestOct = o; }
+        }
+        oct = bestOct;
+      }
       liveSeq.push({ pc, oct, tMs: nowMs - liveSessionStartMs });
     });
     _tlRenderLiveSeq();
@@ -11870,6 +11945,7 @@ async function kcmAIAsk(type) {
     try {
       const svg = document.getElementById('timelineSVG');
       if (!svg || svg.style.display === 'none') return; // only redraw while the tab is actually visible
+      if (performance.now() < _tlPreciseUntilMs) return; // a precise render is in progress — don't stomp it
       const snap = _tlSnapshotState();
       if (snap !== null && snap !== _tlLastSnapshot) {
         _tlLastSnapshot = snap;
@@ -11877,6 +11953,64 @@ async function kcmAIAsk(type) {
       }
     } catch(e) { console.error('[KCM Timeline] poll loop failed:', e); }
   }, 200);
+
+  // ── Precise playback mirror ───────────────────────────────────────────
+  // playSelection() (the shared engine behind the KCM Control Dock's Asc/
+  // Desc/Chord buttons, the sidebar's Ascending/Descending/Full Scale/Play
+  // Chord row, staffPlayBtn, and globalPlayBtn) now broadcasts the EXACT
+  // sequence it's about to play — real pc/octave pairs, real order — via a
+  // 'kcm:playNotes' event. Previously Timeline had no way to know which
+  // direction was actually triggered elsewhere, so it always redrew its own
+  // separately-recomputed, hardcoded-ascending layout regardless of what
+  // played: pressing Desc on the Dock made the audio descend while the
+  // Timeline's dots stayed drawn going up. This listener replaces that
+  // guesswork with the real data whenever it's available; the heuristic-
+  // based "universal live observer" above stays as a fallback only for
+  // playback paths that don't go through playSelection (Stencil, Sing, etc).
+  window.addEventListener('kcm:playNotes', (e) => {
+    try {
+      const svg = document.getElementById('timelineSVG');
+      if (!svg || svg.style.display === 'none') return; // only mirror while the Timeline tab is actually visible
+      const detail = e.detail || {};
+      const beatMs = detail.beatMs || (60000 / (window.currentBPM || 100));
+      const phases = detail.phases || [];
+      tlRenderPreciseSequence(phases, beatMs);
+    } catch(err) { console.error('[KCM Timeline] precise play sync failed:', err); }
+  });
+
+  function tlRenderPreciseSequence(phases, beatMs) {
+    if (tlRAF) { cancelAnimationFrame(tlRAF); tlRAF = null; }
+    const beatSec = beatMs / 1000;
+    const events = [];
+    let idx = 0;
+    let maxBeatEnd = 0;
+    phases.forEach(ph => {
+      const seq = ph.seq || [];
+      seq.forEach((n, i) => {
+        const beatStart = ph.simultaneous ? ph.startBeat : ph.startBeat + i;
+        const beatDur    = ph.simultaneous ? 2 : 0.9;
+        events.push({ pc: n.pc, oct: n.oct, beatStart, beatDur, seq: idx++ });
+        maxBeatEnd = Math.max(maxBeatEnd, beatStart + (ph.simultaneous ? 2 : 1));
+      });
+    });
+    if (events.length === 0) return;
+    const totalBeats = Math.max(1, maxBeatEnd);
+    const startMs = performance.now();
+    _tlPreciseUntilMs = startMs + totalBeats * beatSec * 1000 + 500;
+    function animate() {
+      const elapsedSec = (performance.now() - startMs) / 1000;
+      const beatPos = elapsedSec / beatSec;
+      if (beatPos >= totalBeats) {
+        drawTimelineStaff(events, 'sequential', totalBeats);
+        tlRAF = null;
+        setTimeout(tlRenderStatic, 300);
+        return;
+      }
+      drawTimelineStaff(events, 'sequential', beatPos, beatPos);
+      tlRAF = requestAnimationFrame(animate);
+    }
+    tlRAF = requestAnimationFrame(animate);
+  }
 })();
 
 // ═══════════════════════════════════════════════════════════════════════
