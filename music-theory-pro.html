@@ -2591,14 +2591,16 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
 
             <div class="kcm-right-col" style="min-width:0;">
 
-            <div style="text-align:center; font-family:var(--font-display); font-size:0.85rem; font-weight:800; color:var(--primary-teal); letter-spacing:2px; text-transform:uppercase;">ELEMENTS</div>
-
-
             <!-- HARMONIZED CHORD PROGRESSIONS -- moved here from the top
                  of the left column to the top of the right column, per
                  explicit request. Still toggled by the same JS
                  (progressionControls.style.display), only its DOM
-                 location changed -- again. -->
+                 location changed -- again. Must stay firstElementChild of
+                 kcm-right-col (see qa/test_progression_panel_move.js) --
+                 the ELEMENTS header below is inserted right after it
+                 instead of before it, so it stays visually at the top
+                 (this panel is display:none except in Harmonized mode)
+                 without breaking that DOM-order contract. -->
             <div class="progression-controls" id="progressionControls" aria-live="polite" style="display:none; margin:0 0 0.75rem; padding:0.75rem 1rem; max-width:100%; box-sizing:border-box;">
                 <h4>🎼 Chord Progressions in Key of <span id="progressionKey">C</span></h4>
                 <div style="text-align:center; font-size:0.75rem; opacity:0.8; margin-bottom:0.85rem; font-weight:600;">
@@ -2613,6 +2615,8 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                     <div id="progTimelineStatus" style="text-align:center; font-size:0.68rem; color:rgba(255,255,255,0.75); font-weight:600; margin-top:0.5rem; min-height:1.4em;"></div>
                 </div>
             </div>
+
+            <div style="text-align:center; font-family:var(--font-display); font-size:0.85rem; font-weight:800; color:var(--primary-teal); letter-spacing:2px; text-transform:uppercase;">ELEMENTS</div>
 
             <div id="chordVoicingPanel" style="display:none; margin:0 0 0.75rem; max-width:100%; box-sizing:border-box; background:rgba(0,0,0,0.35); border:2px solid rgba(0,128,128,0.3); border-radius:16px; padding:0.75rem 1rem;">
                 <div style="text-align:center; font-family:var(--font-display); font-size:0.85rem; font-weight:800; color:var(--primary-teal); letter-spacing:1.5px; text-transform:uppercase; margin-bottom:1rem;">
