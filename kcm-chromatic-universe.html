@@ -1944,6 +1944,29 @@ let sphereWideMode = false;    // when true, Auto-Play sweeps every scale note a
 let sphereAutoS = 0, sphereAutoR = 0;  // traversal cursor for whole-sphere Auto-Play
 let pendingPlaybackTimers = [];        // setTimeout ids from chained playback, so Stop can cancel them
 
+// Detente: after a drag ends, snap rotationAngle to the nearest of the 12
+// spoke positions so the wedge always settles centered on a segment instead
+// of stopping at an arbitrary angle. Animated with a quick ease-out so it
+// feels like a mechanical click into place.
+function snapRotationToNearestSpoke() {
+  const aPerSpoke = (Math.PI * 2) / SPOKES;
+  const target = Math.round(rotationAngle / aPerSpoke) * aPerSpoke;
+  const start = rotationAngle;
+  const delta = target - start;
+  if (Math.abs(delta) < 0.0001) { rotationAngle = target; drawClock(); return; }
+  const duration = 160;
+  const t0 = performance.now();
+  function step(now) {
+    const p = Math.min(1, (now - t0) / duration);
+    const eased = 1 - Math.pow(1 - p, 3);
+    rotationAngle = start + delta * eased;
+    drawClock();
+    if (p < 1) requestAnimationFrame(step);
+    else rotationAngle = target;
+  }
+  requestAnimationFrame(step);
+}
+
 function getCanvasPoint(clientX, clientY) {
   const rect = canvas.getBoundingClientRect();
   return {
@@ -2163,8 +2186,8 @@ canvas.addEventListener('mousedown', e => {
   }
 });
 
-canvas.addEventListener('mouseup', () => { if(isDragging){isDragging=false; canvas.style.cursor='default';} });
-canvas.addEventListener('mouseleave', () => { if(isDragging){isDragging=false;} });
+canvas.addEventListener('mouseup', () => { if(isDragging){isDragging=false; canvas.style.cursor='default'; snapRotationToNearestSpoke();} });
+canvas.addEventListener('mouseleave', () => { if(isDragging){isDragging=false; snapRotationToNearestSpoke();} });
 
 canvas.addEventListener('click', e => {
   const {x:mx,y:my} = getCanvasPoint(e.clientX,e.clientY);
@@ -2200,7 +2223,9 @@ canvas.addEventListener('touchmove', e => {
 },{passive:false});
 
 canvas.addEventListener('touchend', e => {
+  const wasDragging = touchDragging;
   touchDragging=false;
+  if (wasDragging) snapRotationToNearestSpoke();
   if (e.changedTouches.length===1) {
     const {x,y} = getCanvasPoint(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
     for (const n of notePositions) {
