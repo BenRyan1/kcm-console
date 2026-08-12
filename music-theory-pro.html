@@ -10884,19 +10884,23 @@ async function kcmAIAsk(type) {
                 window.currentStencilRoot = currentStencilRoot;
                 ring.querySelectorAll('.kcm-key-pill').forEach(b => b.classList.remove('active'));
                 this.classList.add('active');
+                // Re-pin (if a stencil is showing) BEFORE calling
+                // _setKeyGlobal() below. _setKeyGlobal() synchronously runs
+                // updateDisplay() -> updatePattern(), which reads the pin
+                // snapshot immediately -- pinning *after* that call is too
+                // late, since updatePattern() will have already run against
+                // the stale (pre-rotation) snapshot, seen a mismatch, and
+                // stomped currentStencil back to the app's current level
+                // pattern before we ever get back here. Snapshot against
+                // currentStencilRoot directly (not window.rootNote, which
+                // _setKeyGlobal hasn't set yet at this point).
+                if (currentStencil) {
+                    window._stencilManuallyPinned = true;
+                    window._stencilPinSnapshot = (window.currentLevel || '') + '|' + currentStencilRoot;
+                }
                 // Sync MTP root note
                 if (typeof window._setKeyGlobal === 'function') window._setKeyGlobal(currentStencilRoot);
                 stencilRotateDeg = currentStencilRoot * 30;
-                // Re-pin (if a stencil is showing) against the NEW root —
-                // _setKeyGlobal() above just changed window.rootNote, which
-                // would otherwise make updatePattern()'s pin-snapshot check
-                // see a mismatch and wrongly treat this root change as an
-                // unrelated app interaction, un-pinning the very stencil
-                // whose root the user just changed.
-                if (currentStencil) {
-                    window._stencilManuallyPinned = true;
-                    window._stencilPinSnapshot = (window.currentLevel || '') + '|' + (window.rootNote || 0);
-                }
                 drawStencil();
                 updateLabelBlock();
                 _stencilSyncPanels();
@@ -11124,13 +11128,16 @@ async function kcmAIAsk(type) {
                 document.querySelectorAll('.kcm-key-pill').forEach(b => {
                     b.classList.toggle('active', parseInt(b.dataset.pc) === currentStencilRoot);
                 });
-                if (typeof window._setKeyGlobal === 'function') window._setKeyGlobal(currentStencilRoot);
-                // Re-pin against the new root — see the matching comment in
-                // the key-ring click handler above.
+                // Re-pin against the new root BEFORE calling _setKeyGlobal()
+                // — see the matching comment in the key-ring click handler
+                // above. Must happen first: _setKeyGlobal() synchronously
+                // triggers updatePattern(), which reads this snapshot right
+                // away.
                 if (currentStencil) {
                     window._stencilManuallyPinned = true;
-                    window._stencilPinSnapshot = (window.currentLevel || '') + '|' + (window.rootNote || 0);
+                    window._stencilPinSnapshot = (window.currentLevel || '') + '|' + currentStencilRoot;
                 }
+                if (typeof window._setKeyGlobal === 'function') window._setKeyGlobal(currentStencilRoot);
                 drawStencil();
                 updateLabelBlock();
                 _stencilSyncPanels();
