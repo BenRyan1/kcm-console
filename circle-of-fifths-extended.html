@@ -1,0 +1,1802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Note: this Extended build intentionally omits the /js/kcm-app-gate.js
+     paywall snippet used on the live site's app pages — that script hides
+     the whole page until it loads, which only succeeds when served from
+     the real keyscodesandmodes.com domain. Left in, this file would open
+     to a permanently blank screen anywhere else (locally, as a download,
+     via file://). Add the two gate lines back in once this is deployed
+     alongside the other /apps/*.html pages, if it should be tier-gated
+     like them. -->
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Circle of Fifths Extended | Keys, Codes & Modes™</title>
+<meta name="description" content="Circle of Fifths Extended — the classic wheel plus interior rings for 7th, 9th, 11th and 13th chord extensions off each relative minor. Toggle tones, compare intervals, and hear best-sound presets. By Benjamin Ryan.">
+<meta name="author" content="Benjamin Ryan">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://keyscodesandmodes.com/circle-of-fifths-extended.html">
+<meta property="og:title" content="Circle of Fifths Extended | Keys, Codes & Modes™">
+<meta property="og:description" content="The Circle of Fifths, extended inward with 7th/9th/11th/13th rings off each relative minor — click to toggle tones and hear how extensions sound together.">
+<meta property="og:url" content="https://keyscodesandmodes.com/circle-of-fifths-extended.html">
+<meta property="og:image" content="https://keyscodesandmodes.com/images/kcm-social-share.jpg">
+<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<!-- NO external JS dependencies — fully self-contained, works from file:// -->
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#0a0a15; --bg2:#1a1a2e;
+  --teal:#008080; --teal2:#00c0c0;
+  --gold:#F4D03F; --purple:#8B6BA3; --coral:#CF7A5A;
+  --text:#e8e8f8; --muted:rgba(232,232,248,0.6); --muted2:rgba(232,232,248,0.35);
+  --spectrum:linear-gradient(90deg,#FFFF00,#FFC400,#FF8000,#FF4000,#FF0000,#C4007F,#8000FF,#4000FF,#0000FF,#007FFF,#00FF80,#80FF00,#FFFF00);
+  --font-d:'Georgia',serif; --font-b:'Arial',sans-serif;
+}
+body{font-family:var(--font-b);background:radial-gradient(ellipse at 30% 20%,#1e1e38 0%,#0f0f20 45%,#0a0a15 100%);color:var(--text);min-height:100vh;}
+.skip-nav{position:absolute;top:-100px;left:0;z-index:10001;background:var(--gold);color:var(--bg);padding:10px 20px;font-weight:800;text-decoration:none;border-radius:0 0 8px 0;transition:top .2s;}
+.skip-nav:focus{top:0;}
+.spectrum-bar{height:4px;background:var(--spectrum);}
+.site-header{background:linear-gradient(135deg,rgba(8,8,18,0.97),rgba(14,14,28,0.97));border-bottom:3px solid var(--teal);position:sticky;top:0;z-index:1000;box-shadow:0 4px 32px rgba(0,0,0,0.7);}
+.header-inner{max-width:1400px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;padding:0.65rem 1.5rem;gap:1rem;}
+.header-brand{display:flex;align-items:center;gap:10px;text-decoration:none;}
+.header-logo{width:38px;height:38px;border-radius:50%;border:2px solid rgba(0,128,128,0.5);}
+.header-wordmark{font-family:var(--font-d);font-size:1.1rem;font-weight:900;letter-spacing:2px;background:linear-gradient(135deg,#F4D03F,#00c0c0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.header-tagline{font-size:0.58rem;font-weight:600;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;display:block;}
+.site-nav{display:flex;gap:.5rem;flex-wrap:wrap;}
+.site-nav a{color:var(--muted);text-decoration:none;font-size:.8rem;font-weight:600;padding:.4rem .8rem;border-radius:20px;transition:all .25s;}
+.site-nav a:hover{color:var(--gold);background:rgba(0,128,128,.15);}
+:focus-visible{outline:3px solid var(--gold)!important;outline-offset:3px!important;}
+@media(prefers-reduced-motion:reduce){*{transition-duration:.01ms!important;animation-duration:.01ms!important;}}
+.site-footer{background:linear-gradient(135deg,rgba(6,6,14,.98),rgba(10,10,21,.98));border-top:3px solid var(--teal);padding:2rem 1.5rem;margin-top:2rem;text-align:center;color:var(--muted);font-size:.82rem;line-height:1.9;}
+.site-footer strong{color:var(--gold);}
+.site-footer a{color:var(--muted2);text-decoration:none;margin:0 .75rem;}
+.site-footer a:hover{color:var(--gold);}
+
+/* ── App layout ──────────────────────────────────── */
+#app{max-width:1240px;margin:0 auto;padding:.75rem .75rem 1.5rem;}
+.page-hero{text-align:center;padding:.75rem 0 .5rem;}
+.page-hero h1{font-family:var(--font-d);font-size:clamp(1.5rem,4vw,2.4rem);font-weight:900;background:linear-gradient(135deg,#F4D03F,#00c0c0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:2px;margin-bottom:.25rem;}
+.page-hero p{color:var(--muted);font-size:.82rem;letter-spacing:.5px;}
+.three-col{display:grid;grid-template-columns:270px 1fr 270px;gap:.9rem;align-items:start;margin-top:.75rem;}
+
+/* ── Panels ──────────────────────────────────────── */
+.panel{border-radius:16px;padding:.9rem .75rem;display:flex;flex-direction:column;gap:7px;}
+.panel-maj{background:linear-gradient(145deg,rgba(0,128,128,.18),rgba(0,80,80,.1) 50%,rgba(10,10,21,.7));border:2px solid rgba(0,192,192,.45);}
+.panel-min{background:linear-gradient(145deg,rgba(139,107,163,.18),rgba(90,58,120,.1) 50%,rgba(10,10,21,.7));border:2px solid rgba(139,107,163,.5);}
+.panel h2{font-family:var(--font-d);font-size:.78rem;font-weight:800;text-align:center;letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;}
+.panel-maj h2{color:#F4D03F;} .panel-min h2{color:#c8a8e8;}
+.key-row{display:flex;align-items:center;gap:4px;}
+.key-row select{flex:1;padding:7px 4px;font-size:14px;border-radius:10px;font-weight:700;cursor:pointer;text-align:center;background:#030e0e;color:#F4D03F;border:1.5px solid rgba(0,192,192,.45);}
+.panel-min .key-row select{background:#0d0818;color:#c8a8e8;border-color:rgba(139,107,163,.5);}
+.nav-btn{background:rgba(0,128,128,.2);border:1.5px solid rgba(0,192,192,.45);color:#F4D03F;border-radius:10px;padding:7px 10px;font-size:1rem;cursor:pointer;font-weight:bold;flex-shrink:0;}
+.panel-min .nav-btn{background:rgba(139,107,163,.2);border-color:rgba(139,107,163,.5);color:#c8a8e8;}
+.btn-row{display:flex;gap:4px;}
+.pbtn{flex:1;border-radius:10px;padding:8px 5px;font-size:.7rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:3px;transition:opacity .2s;border:1.5px solid;}
+.pbtn:disabled{opacity:.4;cursor:not-allowed;}
+.tonic-btn{font-family:var(--font-d);font-size:.85rem;font-weight:900;flex:1;}
+.stop-btn{width:100%;padding:7px;border-radius:10px;font-size:.75rem;font-weight:800;cursor:pointer;letter-spacing:2px;margin-top:2px;}
+.prog-sep{border-top:1px solid;padding-top:7px;margin-top:2px;}
+.prog-sep.maj{border-color:rgba(0,192,192,.15);}
+.prog-sep.min{border-color:rgba(139,107,163,.2);}
+.prog-lbl{font-size:.6rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;font-family:var(--font-d);margin-bottom:6px;text-align:center;}
+.prog-lbl.maj{color:#a0e8e8;} .prog-lbl.min{color:#c8a8e8;}
+.prog-list{display:flex;flex-direction:column;gap:4px;}
+.prog-btn{width:100%;text-align:left;cursor:pointer;border-radius:9px;padding:6px 8px;transition:all .15s;border:1.5px solid;}
+.prog-btn.maj{border-color:rgba(0,192,192,.3);background:linear-gradient(135deg,rgba(0,128,128,.1),rgba(10,10,21,.3));color:rgba(232,232,248,.85);}
+.prog-btn.min{border-color:rgba(139,107,163,.35);background:linear-gradient(135deg,rgba(139,107,163,.1),rgba(10,10,21,.3));color:rgba(232,232,248,.85);}
+.prog-btn.maj.active{border-color:#a0e8e8;background:linear-gradient(135deg,rgba(0,128,128,.45),rgba(0,60,60,.8));box-shadow:0 0 10px rgba(0,192,192,.3);}
+.prog-btn.min.active{border-color:#c8a8e8;background:linear-gradient(135deg,rgba(139,107,163,.45),rgba(70,30,100,.8));box-shadow:0 0 10px rgba(139,107,163,.4);}
+.prog-btn:disabled{opacity:.45;cursor:not-allowed;}
+.prog-name{font-family:var(--font-d);font-size:.65rem;font-weight:800;letter-spacing:.3px;margin-bottom:1px;}
+.prog-meta{font-size:.58rem;color:rgba(232,232,248,.5);font-weight:600;display:flex;justify-content:space-between;}
+.chord-pills{display:flex;flex-wrap:wrap;gap:3px;margin-top:6px;padding:5px 4px;background:rgba(0,0,0,.4);border-radius:8px;border:1px solid rgba(0,128,128,.12);min-height:10px;}
+.cpill{font-size:.62rem;font-weight:800;font-family:var(--font-d);padding:3px 6px;border-radius:6px;border:1.5px solid;transition:all .12s;opacity:.5;}
+.cpill.lit{opacity:1;transform:scale(1.08);}
+
+/* ── Center column ───────────────────────────────── */
+.center-col{display:flex;flex-direction:column;align-items:center;gap:.7rem;}
+.circle-wrap{width:100%;background:linear-gradient(145deg,rgba(0,128,128,.12),rgba(0,64,64,.06) 50%,rgba(139,107,163,.08));border:2px solid rgba(0,128,128,.35);border-radius:22px;padding:.85rem;box-shadow:0 8px 40px rgba(0,0,0,.5);}
+.circle-svg{width:100%;height:auto;display:block;border-radius:50%;box-shadow:0 0 0 5px rgba(0,128,128,.5),0 12px 50px rgba(0,0,0,.7);}
+
+/* ── Loop + Stop block ───────────────────────────── */
+.loop-block{width:100%;background:linear-gradient(135deg,rgba(244,208,63,.07),rgba(0,128,128,.05));border:1.5px solid rgba(0,128,128,.2);border-radius:14px;padding:10px 12px;transition:border-color .25s;}
+.loop-block.on{border-color:rgba(244,208,63,.45);}
+.loop-title{color:#F4D03F;font-weight:800;font-family:var(--font-d);font-size:.65rem;letter-spacing:1.5px;text-align:center;text-transform:uppercase;margin-bottom:6px;}
+.loop-steps{font-size:.62rem;color:rgba(232,232,248,.65);line-height:1.8;text-align:center;margin-bottom:8px;}
+.loop-steps strong{color:#F4D03F;}
+.loop-steps .cw{color:#a0e8e8;}
+.loop-steps .stp{color:#ff9999;}
+.loop-toggle{display:flex;align-items:center;justify-content:center;gap:8px;padding:8px 12px;cursor:pointer;border-radius:10px;border:2px solid rgba(0,128,128,.3);background:linear-gradient(135deg,rgba(0,128,128,.12),rgba(0,64,64,.06));margin-bottom:6px;transition:all .2s;user-select:none;}
+.loop-toggle.on{border-color:rgba(244,208,63,.6);background:linear-gradient(135deg,rgba(244,208,63,.18),rgba(180,140,10,.1));box-shadow:0 0 14px rgba(244,208,63,.2);}
+.loop-toggle-label{font-family:var(--font-d);font-size:.75rem;font-weight:800;letter-spacing:.5px;}
+.loop-toggle-sub{font-size:.58rem;color:rgba(232,232,248,.4);}
+.center-stop{width:100%;padding:8px;border-radius:10px;font-size:.75rem;font-weight:800;cursor:pointer;letter-spacing:2px;background:linear-gradient(135deg,rgba(42,5,5,.95),rgba(21,0,0,.98));border:1.5px solid rgba(255,80,80,.5);color:#ff9999;}
+.loop-dir-btn{flex:1;padding:5px 3px;font-size:.6rem;font-weight:800;border-radius:8px;cursor:pointer;border:1.5px solid rgba(0,192,192,.25);background:rgba(0,128,128,.08);color:rgba(232,232,248,.6);transition:all .2s;text-align:center;letter-spacing:.3px;}
+.loop-dir-btn.active{border-color:rgba(0,192,192,.7);background:rgba(0,128,128,.3);color:#e0ffff;}
+.loop-dir-btn:hover{border-color:rgba(0,192,192,.5);color:#c0f0f0;}
+
+/* ── Extended Tones block ─────────────────────────── */
+.ext-block{width:100%;background:linear-gradient(135deg,rgba(139,107,163,.09),rgba(0,128,128,.06));border:1.5px solid rgba(244,208,63,.28);border-radius:14px;padding:12px 14px;margin:8px 0;}
+.ext-title{color:#F4D03F;font-weight:800;font-family:var(--font-d);font-size:.78rem;letter-spacing:1px;text-align:center;text-transform:uppercase;margin-bottom:6px;}
+.ext-steps{font-size:.68rem;color:rgba(232,232,248,.65);line-height:1.7;text-align:center;margin-bottom:10px;}
+.ext-steps strong{color:#F4D03F;}
+.ext-row{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:8px;}
+.ext-mode-btn,.ext-preset-btn{font-family:var(--font-b);font-size:.68rem;font-weight:700;color:rgba(232,232,248,.75);background:rgba(0,40,40,.35);border:1.5px solid rgba(0,192,192,.3);border-radius:9px;padding:6px 10px;cursor:pointer;transition:all .18s;}
+.ext-mode-btn:hover,.ext-preset-btn:hover{border-color:rgba(0,192,192,.6);color:#e0ffff;}
+.ext-mode-btn.on{background:linear-gradient(135deg,#5a3a80,#2a1a48);border-color:#c8a8e8;color:#ecd8ff;box-shadow:0 0 10px rgba(139,107,163,.35);}
+.ext-preset-btn{display:flex;flex-direction:column;align-items:flex-start;gap:1px;min-width:118px;text-align:left;}
+.ext-preset-btn .ext-badge{font-size:.6rem;color:#F4D03F;font-weight:800;}
+.ext-chordbox{min-height:20px;font-size:.78rem;color:#a0f0f0;text-align:center;padding:8px 10px;background:rgba(0,0,0,.35);border:1px solid rgba(0,128,128,.2);border-radius:9px;margin-bottom:8px;line-height:1.6;}
+.ext-chordbox .ext-empty{color:rgba(232,232,248,.4);font-style:italic;}
+.ext-play-btn{flex:1;min-width:120px;padding:9px 10px;border-radius:10px;font-size:.75rem;font-weight:800;cursor:pointer;letter-spacing:.5px;background:linear-gradient(135deg,#006060,#003838);border:2px solid rgba(0,192,192,.55);color:#e0ffff;transition:all .2s;}
+.ext-play-btn:hover{filter:brightness(1.12);}
+.ext-play-btn:disabled{opacity:.35;cursor:not-allowed;filter:none;}
+.ext-clear-btn{padding:9px 14px;border-radius:10px;font-size:.75rem;font-weight:800;cursor:pointer;letter-spacing:.5px;background:linear-gradient(135deg,#3a1a00,#1a0a00);border:1.5px solid rgba(255,150,80,.4);color:#ffb380;}
+.ext-note{font-size:.68rem;color:rgba(232,232,248,.6);line-height:1.65;margin-top:2px;}
+.ext-note strong{color:var(--text);}
+.extdot{cursor:pointer;}
+.extdot:hover{filter:brightness(1.25);}
+
+/* ── Info cards ──────────────────────────────────── */
+.info-cards{width:100%;display:flex;flex-direction:column;gap:6px;}
+.info-card{background:linear-gradient(135deg,rgba(0,128,128,.1),rgba(10,10,21,.5));border:1.5px solid rgba(0,128,128,.22);border-radius:12px;padding:.8rem .9rem;}
+.info-card-title{font-family:var(--font-d);font-size:.68rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-bottom:.45rem;}
+.info-card-title.gold{color:var(--gold);} .info-card-title.teal{color:var(--teal2);}
+.info-card-title.purple{color:var(--purple);} .info-card-title.coral{color:var(--coral);}
+.info-card p{font-size:.7rem;line-height:1.6;color:var(--muted);}
+.info-card p strong{color:var(--text);font-weight:700;}
+.key-pills{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;}
+.kpill{font-size:.62rem;font-weight:700;font-family:var(--font-d);padding:2px 7px;border-radius:20px;transition:all .15s;}
+
+/* ── Responsive ──────────────────────────────────── */
+@media(max-width:900px){
+  .three-col{grid-template-columns:1fr;gap:.6rem;}
+  .center-col{order:0;} .panel-min-wrap{order:1;}
+}
+
+/* ── RECORD BAR ── */
+.record-bar{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;
+  padding:10px 16px;margin:8px auto 0;max-width:860px;
+  background:rgba(6,6,14,0.85);border:1.5px solid rgba(0,192,192,0.2);
+  border-radius:14px;}
+.rec-btn{padding:7px 16px;border-radius:8px;font-size:0.72rem;font-weight:800;
+  cursor:pointer;letter-spacing:0.5px;border:1.5px solid;transition:all 0.2s;
+  font-family:var(--font-d);}
+.rec-btn:disabled{opacity:0.35;cursor:not-allowed;}
+#cofRecordBtn{background:linear-gradient(135deg,#8b0000,#600000);border-color:#c82333;color:#fff;}
+#cofRecordBtn.recording{animation:recPulse 1.2s ease-in-out infinite;}
+@keyframes recPulse{0%,100%{opacity:1;}50%{opacity:0.45;}}
+#cofWavBtn{background:linear-gradient(135deg,#1a6b5a,#0d4a3a);border-color:#1abc9c;color:#fff;}
+#cofMidiBtn{background:linear-gradient(135deg,#4a0d80,#2d0050);border-color:#9b30ff;color:#fff;}
+#cofRecStatus{font-size:0.68rem;color:#888;font-style:italic;}
+#cofNoteCount{background:rgba(200,35,51,0.85);color:#fff;border-radius:12px;
+  padding:2px 8px;font-size:0.65rem;font-weight:800;display:none;}
+</style>
+</head>
+<body>
+<a href="#main-content" class="skip-nav">Skip to main content</a>
+<div class="spectrum-bar" aria-hidden="true"></div>
+<header class="site-header" role="banner">
+  <div class="header-inner">
+    <a href="/index.html" class="header-brand" aria-label="Keys, Codes & Modes — Home">
+      <svg viewBox="0 0 200 200" class="header-logo" aria-hidden="true">
+        <circle cx="100" cy="100" r="98" fill="#4A7BA7" stroke="#2a4d6f" stroke-width="1"/>
+        <polygon points="100,15 185,185 15,185" fill="#F4D03F" opacity="0.85"/>
+        <polygon points="100,15 15,185 15,55" fill="#8B6BA3" opacity="0.75"/>
+        <polygon points="100,15 185,55 185,185" fill="#6FA5A5" opacity="0.75"/>
+        <polygon points="15,55 100,100 15,185" fill="#CF7A5A" opacity="0.65"/>
+        <polygon points="185,55 100,100 185,185" fill="#9AAF7A" opacity="0.65"/>
+        <circle cx="100" cy="100" r="50" fill="none" stroke="#2a4d6f" stroke-width="2.5"/>
+        <circle cx="100" cy="100" r="7" fill="#2a4d6f"/>
+      </svg>
+      <div>
+        <span class="header-wordmark">KEYS, CODES & MODES</span>
+        <span class="header-tagline">Visual Music Theory™</span>
+      </div>
+    </a>
+    <nav class="site-nav" role="navigation" aria-label="Main navigation">
+      <a href="/index.html">Home</a><a href="/insights.html">All Apps</a>
+      <a href="/about.html">About</a><a href="/contact.html">Contact</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main-content" role="main">
+<div id="app">
+  <div class="page-hero">
+    <h1>Circle of Fifths — Extended</h1>
+    <p>⬤ Major keys &nbsp;·&nbsp; ◉ Relative Minor &nbsp;·&nbsp; then four new interior rings — <strong style="color:#F4D03F;">7th · 9th · 11th · 13th</strong> — built from each minor. Toggle rings on/off below the wheel to hear extensions alone or stacked together.</p>
+  </div>
+
+  <div class="three-col">
+    <!-- LEFT — Major panel -->
+    <div class="panel panel-maj" id="panelMaj">
+      <h2>⬤ Major Keys</h2>
+      <div class="key-row">
+        <button class="nav-btn" id="majPrev" aria-label="Previous major key">◀</button>
+        <select id="majSelect" aria-label="Select major key"></select>
+        <button class="nav-btn" id="majNext" aria-label="Next major key">▶</button>
+      </div>
+      <div class="btn-row">
+        <button class="pbtn" id="majArpUp" style="background:linear-gradient(135deg,#006060,#003838);border-color:rgba(0,192,192,.45);color:#a0ffff;">▲ Arp</button>
+        <button class="pbtn" id="majArpDn" style="background:linear-gradient(135deg,#003838,#001818);border-color:rgba(0,192,192,.45);color:#a0ffff;">▼ Arp</button>
+      </div>
+      <div class="btn-row">
+        <button class="pbtn" id="majSubDom" style="background:linear-gradient(135deg,#002020,#001010);border-color:rgba(0,192,192,.35);color:#F4D03F;font-size:.63rem;">← Sub</button>
+        <button class="pbtn tonic-btn" id="majTonic" style="background:linear-gradient(135deg,#001520,#000a15);border-color:rgba(244,208,63,.5);color:#F4D03F;">C</button>
+        <button class="pbtn" id="majDom" style="background:linear-gradient(135deg,#002020,#001010);border-color:rgba(0,192,192,.35);color:#F4D03F;font-size:.63rem;">Dom →</button>
+      </div>
+      <div class="btn-row">
+        <button class="pbtn" id="majCW" style="background:linear-gradient(135deg,#001818,#000c0c);border-color:rgba(0,192,192,.35);color:#F4D03F;font-size:.65rem;">CW ↻ Maj</button>
+        <button class="pbtn" id="majCCW" style="background:linear-gradient(135deg,#001818,#000c0c);border-color:rgba(0,192,192,.35);color:#F4D03F;font-size:.65rem;">↺ CCW Maj</button>
+      </div>
+      <button class="stop-btn" id="majStop" style="background:linear-gradient(135deg,rgba(42,5,5,.95),rgba(21,0,0,.98));border:1.5px solid rgba(255,80,80,.5);color:#ff9999;">■  STOP</button>
+      <div class="prog-sep maj">
+        <div class="prog-lbl maj" id="majProgLbl">Major Progressions — C</div>
+        <div class="prog-list" id="majProgList"></div>
+        <div class="chord-pills" id="majPills"></div>
+      </div>
+    </div>
+
+    <!-- CENTER — Circle + loop -->
+    <div class="center-col">
+      <div class="circle-wrap">
+        <svg id="circleSvg" viewBox="0 0 700 700" class="circle-svg" role="img" aria-label="Interactive Circle of Fifths Extended — C at 12 o'clock, clockwise ascending, with 7th/9th/11th/13th rings toward the center">
+          <!-- drawn by JS -->
+        </svg>
+      </div>
+
+      <!-- ── Extended Tones: 7th/9th/11th/13th rings off the relative minor ── -->
+      <div class="ext-block" id="extBlock">
+        <div class="ext-title">🎹 Extended Tones — 7ths, 9ths, 11ths &amp; 13ths</div>
+        <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:8px;font-size:.62rem;font-weight:700;color:rgba(232,232,248,.7);">
+          <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#AEDFF7;margin-right:4px;vertical-align:middle;"></span>7th</span>
+          <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#C9F2C7;margin-right:4px;vertical-align:middle;"></span>9th</span>
+          <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#E3C9F2;margin-right:4px;vertical-align:middle;"></span>11th</span>
+          <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#F7D9C4;margin-right:4px;vertical-align:middle;"></span>13th</span>
+        </div>
+        <div class="ext-steps">
+          Rings apply to <strong id="extKeyLabel">A minor</strong> (relative minor of the Major panel's key).
+          Click a ring dot to toggle it in or out and hear it &mdash; each ring toward the center stacks one more tone on top of the last. Then <strong>▶ Play Chord</strong> (all at once), <strong>♪ Arpeggio</strong> (one at a time, low to high), or <strong>⇄ Compare</strong> exactly two.
+        </div>
+
+        <div class="ext-row" id="extModeRow">
+          <button class="ext-mode-btn" data-mode="natural">Natural Minor</button>
+          <button class="ext-mode-btn" data-mode="dorian">Dorian (Jazz)</button>
+          <button class="ext-mode-btn" data-mode="harmonic">Harmonic Minor</button>
+          <button class="ext-mode-btn" data-mode="dominant">Dominant V7&ndash;13</button>
+        </div>
+
+        <div class="ext-row" id="extPresetRow"></div>
+
+        <div class="ext-chordbox" id="extChordBox"><span class="ext-empty">No extension tones selected yet — click a ring on the wheel, or try a preset above</span></div>
+
+        <div class="ext-row">
+          <button class="ext-play-btn" id="extPlayBtn">▶ Play Chord</button>
+          <button class="ext-play-btn" id="extArpeggioBtn">♪ Arpeggio</button>
+          <button class="ext-play-btn" id="extCompareBtn" disabled>⇄ Compare (pick exactly 2)</button>
+          <button class="ext-clear-btn" id="extClearBtn">Clear rings</button>
+        </div>
+
+        <p class="ext-note">
+          <strong>Minor 9</strong> is the safest "instant color" move — a 9th above a m7 chord clashes with nothing, so it always sounds smooth.
+          <strong>Dominant 9</strong> (built on this key's own dominant) gives the strongest pull back to the tonic.
+          For <strong>11ths and 13ths</strong>, switch to <strong>Dorian</strong>: natural minor's ♭13 sits a half-step above the 5th and clashes — Dorian's natural 13 removes that clash, so 11/13 voicings sound clean instead of muddy.
+        </p>
+      </div>
+
+      <!-- ── Explorer: see the current key/chord on Keyboard, Fretboard, Staff, Chromatic Circle ── -->
+      <div class="explorer-section" id="explorerSection" style="margin:14px 0 0;">
+        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-bottom:10px;">
+          <h2 style="margin:0; font-size:1.1rem; color:#F4D03F;">🎼 See It On...</h2>
+          <div id="explorerTabs" style="display:flex; gap:6px; flex-wrap:wrap;">
+            <button class="explorer-tab" data-panel="keyboard" style="padding:6px 12px; border-radius:8px; font-size:0.72rem; font-weight:700; cursor:pointer; border:1.5px solid rgba(200,220,255,0.3); background:rgba(20,28,45,0.5); color:#a8bcdc;">⌨ Keyboard</button>
+            <button class="explorer-tab" data-panel="fretboard" style="padding:6px 12px; border-radius:8px; font-size:0.72rem; font-weight:700; cursor:pointer; border:1.5px solid rgba(244,208,63,0.3); background:rgba(40,32,10,0.5); color:#c8ac60;">🎸 Fretboard</button>
+            <button class="explorer-tab" data-panel="staff" style="padding:6px 12px; border-radius:8px; font-size:0.72rem; font-weight:700; cursor:pointer; border:1.5px solid rgba(139,107,163,0.35); background:rgba(28,20,38,0.5); color:#b89cd0;">🎼 Staff</button>
+            <button class="explorer-tab" data-panel="circle" style="padding:6px 12px; border-radius:8px; font-size:0.72rem; font-weight:700; cursor:pointer; border:1.5px solid rgba(207,122,90,0.35); background:rgba(40,22,15,0.5); color:#d89878;">⭕ Chromatic Circle</button>
+          </div>
+        </div>
+        <div id="explorerReadout" style="text-align:center; font-size:0.85rem; color:#a0f0f0; margin-bottom:8px; min-height:1.2em;">Click any key or chord on the wheel above</div>
+        <div style="background:rgba(10,14,26,0.55); border:1.5px solid rgba(0,192,192,0.28); border-radius:14px; padding:16px; overflow-x:auto;">
+          <div class="explorer-panel" data-panel="keyboard"><svg id="explKeyboardSvg" viewBox="0 0 700 180" width="700" height="180" preserveAspectRatio="xMidYMid meet" style="width:100%; max-width:700px; height:auto; display:block; margin:0 auto;"></svg></div>
+          <div class="explorer-panel" data-panel="fretboard" style="display:none;">
+            <div style="display:flex; gap:6px; justify-content:center; margin-bottom:8px;">
+              <button class="expl-fret-btn" data-frets="4" style="padding:5px 12px; border-radius:8px; font-size:0.68rem; font-weight:700; cursor:pointer; border:1.5px solid rgba(0,192,192,0.35); background:rgba(0,40,40,0.4); color:#8fb0b0;">4 Frets</button>
+              <button class="expl-fret-btn" data-frets="5" style="padding:5px 12px; border-radius:8px; font-size:0.68rem; font-weight:700; cursor:pointer; border:1.5px solid rgba(0,192,192,0.35); background:rgba(0,40,40,0.4); color:#8fb0b0;">5 Frets</button>
+              <button class="expl-fret-btn" data-frets="12" style="padding:5px 12px; border-radius:8px; font-size:0.68rem; font-weight:700; cursor:pointer; border:1.5px solid rgba(0,192,192,0.35); background:rgba(0,40,40,0.4); color:#8fb0b0;">12 Frets (Full)</button>
+            </div>
+            <svg id="explFretboardSvg" viewBox="0 0 340 260" width="340" height="260" preserveAspectRatio="xMidYMid meet" style="width:100%; max-width:340px; height:auto; display:block; margin:0 auto;"></svg>
+          </div>
+          <div class="explorer-panel" data-panel="staff" style="display:none;"><svg id="explStaffSvg" viewBox="0 0 700 150" width="700" height="150" preserveAspectRatio="xMidYMid meet" style="width:100%; max-width:700px; height:auto; display:block; margin:0 auto;"></svg></div>
+          <div class="explorer-panel" data-panel="circle" style="display:none;"><svg id="explCircleSvg" viewBox="0 0 300 300" width="300" height="300" preserveAspectRatio="xMidYMid meet" style="width:100%; max-width:320px; height:auto; display:block; margin:0 auto;"></svg></div>
+        </div>
+      </div>
+
+      <!-- Loop block -->
+      <div class="record-bar" style="margin:8px 0;">
+        <button class="rec-btn" id="cofRecordBtn">🔴 RECORD</button>
+        <span id="cofNoteCount">0 notes</span>
+        <button class="rec-btn" id="cofWavBtn" disabled>⬇ WAV</button>
+        <button class="rec-btn" id="cofMidiBtn" disabled>⬇ MIDI</button>
+        <button class="rec-btn" id="cofClearBtn" disabled style="background:linear-gradient(135deg,#3a1a00,#1a0a00);border-color:#c0601a;color:#ffaa66;">🗑 Clear</button>
+        <span id="cofRecStatus">Press RECORD then play chords</span>
+      </div>
+
+      <div class="loop-block" id="loopBlock">
+        <div class="loop-title">↻ Loop Player</div>
+        <div class="loop-steps">
+          <strong>1</strong> Pick <span class="cw">Maj</span> or <span class="cw">Min</span> loop direction below &nbsp;
+          <strong>2</strong> Hit <strong>▶ PLAY LOOP</strong> — it runs continuously<br>
+          <strong>3</strong> Play chords, dots, arpeggios <em>on top</em> while it loops<br>
+          <strong>4</strong> Hit <span class="stp">■ STOP LOOP</span> to end
+        </div>
+
+        <!-- Loop direction selector -->
+        <div style="display:flex;gap:5px;margin-bottom:6px;" id="loopDirRow">
+          <button class="loop-dir-btn active" id="loopMajCW"  data-dir="majCW">Maj CW ↻</button>
+          <button class="loop-dir-btn"        id="loopMajCCW" data-dir="majCCW">Maj ↺ CCW</button>
+          <button class="loop-dir-btn"        id="loopMinCW"  data-dir="minCW">Min CW ↻</button>
+          <button class="loop-dir-btn"        id="loopMinCCW" data-dir="minCCW">Min ↺ CCW</button>
+        </div>
+
+        <!-- Play Loop button -->
+        <button id="loopPlayBtn" style="
+          width:100%;padding:10px;border-radius:10px;font-size:.85rem;font-weight:800;
+          cursor:pointer;letter-spacing:1px;margin-bottom:6px;
+          background:linear-gradient(135deg,#006060,#003838);
+          border:2px solid rgba(0,192,192,.6);color:#e0ffff;
+          box-shadow:0 0 12px rgba(0,192,192,.15);transition:all .2s;
+        ">▶ PLAY LOOP</button>
+
+        <!-- Loop toggle (on/off indicator) -->
+        <div class="loop-toggle" id="loopToggle" role="button" tabindex="0" aria-pressed="false" aria-label="Loop status">
+          <span id="loopEmoji" style="font-size:1.2rem">⭕</span>
+          <div>
+            <div class="loop-toggle-label" id="loopLabel">LOOP STOPPED</div>
+            <div class="loop-toggle-sub" id="loopSub">Press ▶ PLAY LOOP to start</div>
+          </div>
+        </div>
+        <button class="center-stop" id="centerStop">■  STOP LOOP</button>
+      </div>
+
+      <!-- Info cards -->
+      <div class="info-cards">
+        <div class="info-card">
+          <div class="info-card-title teal">📊 Visualization</div>
+          <p>Adjacent keys share the most notes. <strong>C and G</strong> share 6 of 7. Each step = 1 accidental. The circle makes this <strong>spatial and instant</strong>.</p>
+        </div>
+        <div class="info-card">
+          <div class="info-card-title gold">🎵 Composition</div>
+          <p>Progressions in the side panels stay <strong>fully diatonic</strong> to the selected key. Change the key dropdown and tap again to instantly transpose.</p>
+        </div>
+        <div class="info-card" id="effCard">
+          <div class="info-card-title coral">⚡ Key Signature</div>
+          <div class="key-pills" id="keyPills"></div>
+        </div>
+        <div class="info-card">
+          <div class="info-card-title purple">🌊 Harmonic Motion</div>
+          <p><strong>CW ↻</strong> = dominant (tension→resolution). <strong>↺ CCW</strong> = subdominant (warm, floating). Adjacent = natural. Tritone = surprising.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT — Minor panel -->
+    <div class="panel panel-min" id="panelMin">
+      <h2>◉ Minor Keys</h2>
+      <div class="key-row">
+        <button class="nav-btn" id="minPrev" aria-label="Previous minor key">◀</button>
+        <select id="minSelect" aria-label="Select minor key"></select>
+        <button class="nav-btn" id="minNext" aria-label="Next minor key">▶</button>
+      </div>
+      <div class="btn-row">
+        <button class="pbtn" id="minArpUp" style="background:linear-gradient(135deg,#5a3a80,#3a1a5a);border-color:rgba(139,107,163,.5);color:#e0d0f8;">▲ Arp</button>
+        <button class="pbtn" id="minArpDn" style="background:linear-gradient(135deg,#3a1a5a,#20082a);border-color:rgba(139,107,163,.5);color:#e0d0f8;">▼ Arp</button>
+      </div>
+      <div class="btn-row">
+        <button class="pbtn" id="minSubDom" style="background:linear-gradient(135deg,#002020,#001010);border-color:rgba(139,107,163,.35);color:#c8a8e8;font-size:.63rem;">← Sub</button>
+        <button class="pbtn tonic-btn" id="minTonic" style="background:linear-gradient(135deg,#0d0615,#060010);border-color:rgba(200,168,232,.5);color:#c8a8e8;">Am</button>
+        <button class="pbtn" id="minDom" style="background:linear-gradient(135deg,#002020,#001010);border-color:rgba(139,107,163,.35);color:#c8a8e8;font-size:.63rem;">Dom →</button>
+      </div>
+      <div class="btn-row">
+        <button class="pbtn" id="minCW" style="background:linear-gradient(135deg,#001818,#000c0c);border-color:rgba(139,107,163,.35);color:#c8a8e8;font-size:.65rem;">CW ↻ Min</button>
+        <button class="pbtn" id="minCCW" style="background:linear-gradient(135deg,#001818,#000c0c);border-color:rgba(139,107,163,.35);color:#c8a8e8;font-size:.65rem;">↺ CCW Min</button>
+      </div>
+      <button class="stop-btn" id="minStop" style="background:linear-gradient(135deg,rgba(42,5,18,.95),rgba(21,0,8,.98));border:1.5px solid rgba(200,80,160,.5);color:#e080c0;">■  STOP</button>
+      <div class="prog-sep min">
+        <div class="prog-lbl min" id="minProgLbl">Minor Progressions — Am</div>
+        <div class="prog-list" id="minProgList"></div>
+        <div class="chord-pills" id="minPills"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+</main>
+
+<div class="spectrum-bar" aria-hidden="true"></div>
+<footer class="site-footer" role="contentinfo">
+  <p>&copy; 2026 <strong>Keys, Codes & Modes™</strong> | Created by <strong>Benjamin Ryan</strong> | All Rights Reserved</p>
+  <p style="margin-top:.4rem;font-size:.78rem;">Based on <em>"Keys, Codes, and Modes: A Visual Approach to Understanding Music"</em></p>
+  <p style="margin-top:.5rem;">1187 Coast Village Rd #110 &middot; Santa Barbara, CA 93108</p>
+  <p style="margin-top:.6rem;">
+    <a href="/privacy.html">Privacy Policy</a><a href="/terms.html">Terms</a>
+    <a href="/contact.html">Contact</a><a href="/index.html">Home</a><a href="/insights.html">All Apps</a>
+  </p>
+  <p style="margin-top:.6rem;font-size:.7rem;color:rgba(232,232,248,.3);">FreeStyle&reg; is a registered trademark &middot; U.S. Patents</p>
+</footer>
+
+<!-- Optional: real sampled piano/guitar sounds (soundfont-player, from CDN).
+     Loaded async and used only if it actually loads — if there's no network
+     (e.g. opened straight from file://), the app quietly falls back to its
+     built-in oscillator synth, so nothing breaks either way. -->
+<script src="https://cdn.jsdelivr.net/npm/soundfont-player@0.12.0/dist/soundfont-player.min.js" defer></script>
+
+<script>
+// ══════════════════════════════════════════════════════
+// KCM Circle of Fifths — Pure Vanilla JS, zero dependencies
+// Works from file://, offline, and on server
+// ══════════════════════════════════════════════════════
+
+// ── KCM 12-Color Chromatic Spectrum™ — C=Yellow at 12 o'clock ──
+const NOTE_COLORS = {
+  'C':'#FFFF00','Db':'#FFC400','D':'#FF8000','Eb':'#FF4000',
+  'E':'#FF0000','F':'#C4007F','Gb':'#8000FF','G':'#4000FF',
+  'Ab':'#0000FF','A':'#007FFF','Bb':'#00FF80','B':'#80FF00'
+};
+const DARK_TEXT   = new Set(['C','Db','D','Eb','Bb','B']);
+const textOn      = n => DARK_TEXT.has(n) ? '#0a0a15' : '#ffffff';
+
+const NOTE_ORDER  = ['C','G','D','A','E','B','Gb','Db','Ab','Eb','Bb','F'];
+const INNER_ORDER = ['A','E','B','Gb','Db','Ab','Eb','Bb','F','C','G','D'];
+const CHROMATIC   = ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
+const REL_MINOR   = {'C':'A','G':'E','D':'B','A':'Gb','E':'Db','B':'Ab','Gb':'Eb','Db':'Bb','Ab':'F','Eb':'C','Bb':'G','F':'D'};
+const REL_MAJOR   = {'A':'C','E':'G','B':'D','Gb':'A','Db':'E','Ab':'B','Eb':'Gb','Bb':'Db','F':'Ab','C':'Eb','G':'Bb','D':'F'};
+const NOTE_CHROMA = {'C':0,'Db':1,'D':2,'Eb':3,'E':4,'F':5,'Gb':6,'G':7,'Ab':8,'A':9,'Bb':10,'B':11,'C#':1,'D#':3,'F#':6,'G#':8,'A#':10};
+
+const DISPLAY_NOTE = {'Db':'D♭','Eb':'E♭','Gb':'G♭','Ab':'A♭','Bb':'B♭'};
+const dn = n => DISPLAY_NOTE[n] || n;
+
+const KEY_SIG_LABELS = ['C\n♮','G\n1♯','D\n2♯','A\n3♯','E\n4♯','B\n5♯','G♭/F♯\n6♭/6♯','D♭\n5♭','A♭\n4♭','E♭\n3♭','B♭\n2♭','F\n1♭'];
+// Right side of the circle (sharp keys) spells accidentals with sharps;
+// left side (flat keys) keeps flats — matches standard circle-of-fifths
+// convention. Only applies to relative-minor labels: Gb/Db/Ab only ever
+// occur as a relative minor at the sharp-side position that needs this
+// (F#m/C#m/G#m), never on the flat side, so no index check is needed.
+// The Gb/F# major position itself (bottom of the circle) is the genuine
+// enharmonic pivot and shows both names — handled separately below.
+const INNER_SHARP_DISPLAY = {'Gb':'F♯','Db':'C♯','Ab':'G♯'};
+const dnInnerMinor = n => INNER_SHARP_DISPLAY[n] || dn(n);
+const KEY_SIG_MAP = {
+  'C':'No sharps or flats','G':'1 sharp (F♯)','D':'2 sharps (F♯,C♯)',
+  'A':'3 sharps (F♯,C♯,G♯)','E':'4 sharps','B':'5 sharps',
+  'Gb':'6 flats (B♭,E♭,A♭,D♭,G♭,C♭)','Db':'5 flats (B♭,E♭,A♭,D♭,G♭)',
+  'Ab':'4 flats (B♭,E♭,A♭,D♭)','Eb':'3 flats (B♭,E♭,A♭)',
+  'Bb':'2 flats (B♭,E♭)','F':'1 flat (B♭)'
+};
+
+// ── Theory helpers ─────────────────────────────────────
+const getTriad      = r => { const i=CHROMATIC.indexOf(r); return [r,CHROMATIC[(i+4)%12],CHROMATIC[(i+7)%12]]; };
+const getMinorTriad = r => { const i=CHROMATIC.indexOf(r); return [r,CHROMATIC[(i+3)%12],CHROMATIC[(i+7)%12]]; };
+const getDim        = r => { const i=CHROMATIC.indexOf(r); return [r,CHROMATIC[(i+3)%12],CHROMATIC[(i+6)%12]]; };
+const majorDeg      = (root,semis) => CHROMATIC[(CHROMATIC.indexOf(root)+semis)%12];
+const buildChord    = (root,qual) => qual==='maj'?getTriad(root):qual==='min'?getMinorTriad(root):getDim(root);
+const stepNote      = (cur,dir,base) => { const i=base.indexOf(cur); return dir==='up'?base[(i+1)%base.length]:base[(i-1+base.length)%base.length]; };
+// Rotates a 12-key order (NOTE_ORDER or INNER_ORDER) so it starts at
+// startKey, giving the full round-the-circle sequence from that key —
+// used by the CW/CCW sequence buttons and the Loop player. This was
+// referenced in five places but never actually defined, so every click
+// on those controls threw a silent ReferenceError.
+const buildSeq = (base, startKey) => {
+  const i = base.indexOf(startKey);
+  if (i === -1) return base.slice();
+  return [...base.slice(i), ...base.slice(0, i)];
+};
+
+// ── EXTENDED RINGS — 7th / 9th / 11th / 13th off the relative minor ───
+// Offsets are semitones above the *ring's own root* (the relative minor's
+// root, or — in Dominant mode — the key's own dominant, i.e. the next
+// clockwise neighbor on this same wheel).
+// natural:  1,2,b3,4,5,b6,b7   (Aeolian)   → 7=b7, 9=2, 11=4, 13=b6
+// dorian:   1,2,b3,4,5, 6,b7   (raised 6)  → 7=b7, 9=2, 11=4, 13=nat6
+// harmonic: 1,2,b3,4,5,b6, 7   (raised 7)  → 7=nat7, 9=2, 11=4, 13=b6
+// dominant: mixolydian off the key's dominant → 7=b7, 9=2, 11=4, 13=nat6
+const EXT_MODES = {
+  natural:  { label:'Natural Minor',   base:'minor',    offsets:{7:10,9:2,11:5,13:8} },
+  dorian:   { label:'Dorian (Jazz)',   base:'minor',    offsets:{7:10,9:2,11:5,13:9} },
+  harmonic: { label:'Harmonic Minor',  base:'minor',    offsets:{7:11,9:2,11:5,13:8} },
+  dominant: { label:'Dominant V7–13',  base:'dominant', offsets:{7:10,9:2,11:5,13:9} },
+};
+const EXT_RINGS  = ['7','9','11','13'];
+const EXT_OCTAVE = {7:4, 9:5, 11:5, 13:5};
+const extRootFor = (majorNote, base) => {
+  if (base==='minor') return REL_MINOR[majorNote] || majorNote;
+  const idx = NOTE_ORDER.indexOf(majorNote);
+  return NOTE_ORDER[(idx+1)%NOTE_ORDER.length]; // one step clockwise = a fifth up = the dominant
+};
+const extNoteFor = (majorNote, ring, modeKey) => {
+  const mode = EXT_MODES[modeKey];
+  const root = extRootFor(majorNote, mode.base);
+  const rootPc = NOTE_CHROMA[root] ?? CHROMATIC.indexOf(root);
+  return CHROMATIC[(rootPc + mode.offsets[ring]) % 12];
+};
+
+const EXT_PRESETS = [
+  {id:'m7',    label:'Minor 7',      badge:'',              mode:'natural',  rings:['7']},
+  {id:'m9',    label:'Minor 9',      badge:'★ smoothest',   mode:'natural',  rings:['7','9']},
+  {id:'m11',   label:'Minor 11',     badge:'Dorian rec.',   mode:'dorian',   rings:['7','9','11']},
+  {id:'m13',   label:'Minor 13',     badge:'★ Dorian',      mode:'dorian',   rings:['7','9','11','13']},
+  {id:'dom9',  label:'Dominant 9',   badge:'★ strong pull', mode:'dominant', rings:['7','9']},
+  {id:'dom13', label:'Dominant 13',  badge:'full color',    mode:'dominant', rings:['7','9','11','13']},
+];
+
+// ── KCM ARPEGGIO LAW (PERMANENT) ─────────────────────
+// Major 1-3-5 ascending, Minor 1-b3-5 ascending.
+// Ascending = UP in pitch; octave increments when next chroma <= previous.
+// Descending = reverses ascending array (5-3-1 going DOWN).
+const assignOctaves = (notes, baseOct=4) => {
+  const res=[]; let oct=baseOct, prev=-1;
+  for(const n of notes){ const c=NOTE_CHROMA[n]??0; if(c<=prev)oct++; res.push({note:n,oct}); prev=c; }
+  return res;
+};
+
+// ── Progressions ─────────────────────────────────────
+const PROG_MAJ_SEMIS = [0,2,4,5,7,9,11];
+const PROG_MAJ_QUAL  = ['maj','min','min','maj','maj','min','dim'];
+const PROG_MIN_SEMIS = [0,2,3,5,7,8,10];
+const PROG_MIN_QUAL  = ['min','dim','maj','min','min','maj','maj'];
+
+const MAJOR_PROGS = [
+  {name:'I – IV – V – I',   desc:'Classic Rock / Blues',     degs:[0,3,4,0], tag:'Rock'},
+  {name:'I – V – vi – IV',  desc:'Pop Anthem',               degs:[0,4,5,3], tag:'Pop'},
+  {name:'I – vi – IV – V',  desc:'50s Doo-Wop',              degs:[0,5,3,4], tag:'50s'},
+  {name:'ii – V – I',       desc:'Jazz Cadence',             degs:[1,4,0],   tag:'Jazz'},
+  {name:'I – IV – vi – V',  desc:'Folk / Sensitive',         degs:[0,3,5,4], tag:'Folk'},
+  {name:'vi – IV – I – V',  desc:'Emotional / Modern Pop',   degs:[5,3,0,4], tag:'Pop'},
+  {name:'I – III – IV – I', desc:'Country / Blues',          degs:[0,2,3,0], tag:'Country'},
+  {name:'I – V – IV – I',   desc:'Power Trio Rock',          degs:[0,4,3,0], tag:'Rock'},
+  {name:'iii – vi – ii – V',desc:'Jazz Circle Motion',       degs:[2,5,1,4], tag:'Jazz'},
+  {name:'I – ii – V – I',   desc:'Jazz Turnaround',          degs:[0,1,4,0], tag:'Jazz'},
+];
+const MINOR_PROGS = [
+  {name:'i – iv – v',         desc:'Minor Blues / Classical', degs:[0,3,4],   tag:'Blues'},
+  {name:'i – VI – VII',       desc:'Natural Minor',           degs:[0,5,6],   tag:'Rock'},
+  {name:'i – iv – VII – III', desc:'Dark Journey',            degs:[0,3,6,2], tag:'Metal'},
+  {name:'i – VI – III – VII', desc:'Epic Cinematic',          degs:[0,5,2,6], tag:'Film'},
+  {name:'i – v – VI – iv',    desc:'Melancholic / Flamenco',  degs:[0,4,5,3], tag:'World'},
+  {name:'i – III – VI – VII', desc:'Spanish / Phrygian',      degs:[0,2,5,6], tag:'World'},
+  {name:'i – VII – VI – VII', desc:'Hard Rock / Aeolian',     degs:[0,6,5,6], tag:'Rock'},
+  {name:'ii° – V – i',        desc:'Minor Jazz Cadence',      degs:[1,4,0],   tag:'Jazz'},
+];
+
+// ── Audio engine ──────────────────────────────────────
+let audioCtx = null, masterGain = null;
+const getAudio = () => {
+  if(!audioCtx || audioCtx.state==='closed') {
+    audioCtx = new(window.AudioContext||window.webkitAudioContext)();
+    masterGain = audioCtx.createGain(); masterGain.gain.value=1.0;
+    masterGain.connect(audioCtx.destination);
+  }
+  if(audioCtx.state==='suspended') audioCtx.resume();
+  return audioCtx;
+};
+const noteToHz = (note,oct=4) => {
+  const s=NOTE_CHROMA[note]; if(s===undefined)return 440;
+  return 440*Math.pow(2,((oct+1)*12+s-69)/12);
+};
+// Which instrument's timbre to play with — set by the Explorer tabs
+// (keyboard→piano, fretboard→guitar, staff/circle→default synth pad).
+// Only ever read inside playNotes, which only runs from user-triggered
+// clicks (never during the page's initial render()), so no ordering risk.
+let _explTimbre = 'piano';
+
+// ── Optional real sampled instruments (soundfont-player, loaded from a
+// CDN — see the <script defer> tag above <head>/<body>). Used when
+// available; if the library never loads (offline, blocked network, or
+// still mid-load), playNotes below quietly keeps using the built-in
+// oscillator synth instead. Nothing here assumes Soundfont exists yet.
+let _sfPiano = null, _sfGuitar = null, _sfLoadStarted = false;
+function _explLoadSamples() {
+  if (_sfLoadStarted || typeof Soundfont === 'undefined') return;
+  _sfLoadStarted = true;
+  const ctx = getAudio();
+  // Route sampled instrument output through masterGain (not straight to
+  // ctx.destination, soundfont-player's default) — the WAV recorder taps
+  // masterGain specifically, so without this the Keyboard/Fretboard tabs'
+  // real piano/guitar samples would play audibly but never get captured.
+  Soundfont.instrument(ctx, 'acoustic_grand_piano', { destination: masterGain }).then(inst => { _sfPiano = inst; }).catch(() => {});
+  Soundfont.instrument(ctx, 'acoustic_guitar_steel', { destination: masterGain }).then(inst => { _sfGuitar = inst; }).catch(() => {});
+}
+// Retry a few times in case the deferred CDN script hasn't finished
+// loading yet when the page first paints (Soundfont still undefined).
+window.addEventListener('load', () => {
+  let tries = 0;
+  const retry = setInterval(() => {
+    tries++;
+    if (typeof Soundfont !== 'undefined') { _explLoadSamples(); clearInterval(retry); }
+    else if (tries > 20) clearInterval(retry); // ~10s, then give up quietly
+  }, 500);
+});
+
+const playNotes = (notes,oct=4,dur=0.9,delay=0) => {
+  const ctx=getAudio();
+  if (!_sfLoadStarted) _explLoadSamples();
+  const sampledInst = _explTimbre === 'piano' ? _sfPiano : _explTimbre === 'guitar' ? _sfGuitar : null;
+  if (sampledInst) {
+    notes.forEach(n => {
+      try { sampledInst.play(n + oct, ctx.currentTime + delay, { duration: dur, gain: 2.4, destination: masterGain }); }
+      catch (e) { /* fall through silently — recording capture below still runs */ }
+    });
+    if (typeof _cof_recording !== 'undefined' && _cof_recording && delay === 0) {
+      setTimeout(() => _cofRecordNote(notes, false, Math.round(dur * 1000)), Math.round(delay * 1000));
+    }
+    return;
+  }
+  notes.forEach(n=>{
+    const osc=ctx.createOscillator(), g=ctx.createGain();
+    const t0=ctx.currentTime+delay;
+    osc.frequency.value=noteToHz(n,oct);
+    osc.connect(g); g.connect(masterGain||ctx.destination);
+
+    if (_explTimbre === 'guitar') {
+      // Plucked string: fast attack, no sustain plateau — decays away
+      // exponentially right after the pluck, like a real guitar note.
+      osc.type='sawtooth';
+      g.gain.setValueAtTime(0.0001,t0);
+      g.gain.linearRampToValueAtTime(0.20,t0+0.004);
+      g.gain.exponentialRampToValueAtTime(0.0008,t0+dur);
+    } else if (_explTimbre === 'piano') {
+      // Hammer strike: quick attack, fast initial decay down to a lower
+      // sustain level, then a short release — rings rather than plucks.
+      osc.type='triangle';
+      g.gain.setValueAtTime(0.0001,t0);
+      g.gain.linearRampToValueAtTime(0.24,t0+0.008);
+      g.gain.exponentialRampToValueAtTime(0.09,t0+Math.min(0.18,dur*0.4));
+      g.gain.setValueAtTime(0.09,t0+Math.max(dur-0.08,0.19));
+      g.gain.linearRampToValueAtTime(0,t0+dur);
+    } else {
+      // Default synth pad — original tone, used for Staff / Chromatic Circle.
+      osc.type='sine';
+      g.gain.setValueAtTime(0,t0);
+      g.gain.linearRampToValueAtTime(0.18,t0+0.02);
+      g.gain.setValueAtTime(0.18,t0+dur-0.08);
+      g.gain.linearRampToValueAtTime(0,t0+dur);
+    }
+    osc.start(t0); osc.stop(t0+dur+0.02);
+  });
+  // Capture for recording
+  if(typeof _cof_recording!=='undefined' && _cof_recording && delay===0){
+    setTimeout(()=>_cofRecordNote(notes,false,Math.round(dur*1000)), Math.round(delay*1000));
+  }
+};
+
+// ── App state ─────────────────────────────────────────
+const S = {
+  majKey:      'C',
+  minKey:      'A',
+  active:      null,    // circle highlight {note, type}
+  loopActive:  null,    // circle highlight from loop {note, type}
+  soloPlaying: false,   // solo (triad, arp, progression) is running
+  loopRunning: false,   // loop sequence is running
+  loopDir:     'majCW', // which direction loop plays
+  loopStop:    false,   // flag to stop loop
+  soloStop:    false,   // flag to stop solo
+  progIdx:     null,
+  progChords:  [],
+  progChordIdx:-1,
+  extMode:     'natural',   // EXT_MODES key
+  extActive:   new Set(),   // Set of "ring-colIndex", ring in EXT_RINGS
+  hubLabel:    null,        // {top,bottom} — last chord/degree chosen via the extension rings, shown in the wheel's center; null shows the default branding
+};
+
+// combined active note for display: solo takes priority over loop
+const getActiveNote = () => S.active || S.loopActive || null;
+
+// ── Sync both panels when either changes ──────────────
+const setMajKey = k => { S.majKey=k; const rm=REL_MINOR[k]; if(rm)S.minKey=rm; render(); };
+const setMinKey = k => { S.minKey=k; const rm=REL_MAJOR[k]; if(rm)S.majKey=rm; render(); };
+
+// ── Stop all playback ─────────────────────────────────
+const stopAll = () => {
+  S.loopStop=true; S.soloStop=true;
+  S.loopRunning=false; S.soloPlaying=false;
+  S.active=null; S.loopActive=null;
+  S.progIdx=null; S.progChords=[]; S.progChordIdx=-1;
+  render();
+  setTimeout(()=>{ S.loopStop=false; S.soloStop=false; },150);
+};
+
+// Stop only the loop, keep solo playing
+const stopLoop = () => {
+  S.loopStop=true; S.loopRunning=false; S.loopActive=null;
+  render();
+  setTimeout(()=>{ S.loopStop=false; },150);
+};
+
+// ── Highlight a note temporarily ─────────────────────
+const flash = (note,type,ms=700) => {
+  S.active={note,type}; render();
+  setTimeout(()=>{ if(S.active?.note===note){S.active=null;render();} },ms);
+};
+
+// ── Play single triad (solo layer) ───────────────────
+const playTriad = async(note,isMinor=false) => {
+  if(S.soloPlaying)return;
+  S.soloPlaying=true; S.soloStop=false;
+  const triad=isMinor?getMinorTriad(note):getTriad(note);
+  S.active={note,type:isMinor?'inner':'outer'}; render();
+  playNotes(triad,4,0.9);
+  await sleep(750);
+  S.active=null; S.soloPlaying=false; render();
+};
+
+// ── KCM ARPEGGIO LAW (solo layer) ────────────────────
+const playArpeggio = async(note,isMinor,dir) => {
+  if(S.soloPlaying)return;
+  S.soloPlaying=true; S.soloStop=false;
+  const triad=isMinor?getMinorTriad(note):getTriad(note);
+  const asc=assignOctaves(triad,4);
+  const seq=dir==='down'?[...asc].reverse():asc;
+  for(const {note:n,oct} of seq){
+    if(S.soloStop)break;
+    S.active={note:n,type:isMinor?'inner':'outer'}; render();
+    playNotes([n],oct,0.35);
+    await sleep(280);
+  }
+  S.active=null; S.soloPlaying=false; render();
+};
+
+// ── CW / CCW sequence (panel buttons, non-loop) ───────
+const playSequence = async(notes,isMinor) => {
+  if(S.soloPlaying)return;
+  S.soloPlaying=true; S.soloStop=false;
+  for(let i=0;i<notes.length;i++){
+    if(S.soloStop)break;
+    const note=notes[i];
+    const triad=isMinor?getMinorTriad(note):getTriad(note);
+    S.active={note,type:isMinor?'inner':'outer'}; render();
+    playNotes(triad,4,0.68);
+    await sleep(750);
+    if(S.soloStop)break;
+  }
+  S.active=null; S.soloPlaying=false; render();
+};
+
+// ── LOOP PLAYER — independent layer ──────────────────
+// Runs continuously in background. Solo playback works on top.
+const startLoop = async() => {
+  if(S.loopRunning)return;
+  S.loopRunning=true; S.loopStop=false;
+  render();
+  while(S.loopRunning && !S.loopStop){
+    const dir=S.loopDir;
+    const isMinor=dir.startsWith('min');
+    const isCW=dir.endsWith('CW');
+    const base=isMinor?INNER_ORDER:NOTE_ORDER;
+    const startKey=isMinor?S.minKey:S.majKey;
+    const seq=buildSeq(base,startKey);
+    const notes=isCW?seq:[...seq].reverse();
+    for(let i=0;i<notes.length;i++){
+      if(S.loopStop||!S.loopRunning)break;
+      const note=notes[i];
+      const triad=isMinor?getMinorTriad(note):getTriad(note);
+      S.loopActive={note,type:isMinor?'inner':'outer'}; render();
+      playNotes(triad,4,0.65);
+      await sleep(720);
+      if(S.loopStop||!S.loopRunning)break;
+    }
+  }
+  S.loopActive=null; S.loopRunning=false; render();
+};
+
+// ── Progression playback (solo layer) ────────────────
+const playProgression = async(progDef,isMinor,rootNote) => {
+  if(S.soloPlaying)return;
+  S.soloPlaying=true; S.soloStop=false;
+  const semisArr=isMinor?PROG_MIN_SEMIS:PROG_MAJ_SEMIS;
+  const qualArr =isMinor?PROG_MIN_QUAL :PROG_MAJ_QUAL;
+  const roms    =isMinor?['i','ii°','III','iv','v','VI','VII']:['I','ii','iii','IV','V','vi','vii°'];
+  const chords = progDef.degs.map(deg=>({
+    root:majorDeg(rootNote,semisArr[deg]),
+    qual:qualArr[deg],
+    notes:buildChord(majorDeg(rootNote,semisArr[deg]),qualArr[deg]),
+    label:roms[deg]
+  }));
+  S.progChords=chords;
+  for(let i=0;i<chords.length;i++){
+    if(S.soloStop)break;
+    const ch=chords[i];
+    S.progChordIdx=i;
+    S.active={note:ch.root,type:ch.qual==='min'||ch.qual==='dim'?'inner':'outer'}; render();
+    playNotes(ch.notes,4,0.7);
+    await sleep(780);
+    if(S.soloStop)break;
+  }
+  S.progChordIdx=-1; S.active=null; S.soloPlaying=false; render();
+};
+
+const sleep = ms => new Promise(r=>setTimeout(r,ms));
+
+// ── Extended rings — toggle / play / compare ─────────
+// Extension dots are a persistent toggle (unlike the momentary major/minor
+// triad dots) so tones can be stacked and compared. Toggling a dot on
+// previews that column's full chord right away, played simultaneously.
+
+// Triad {note,oct} entries for a ring column, per the current extension
+// mode (minor triad for natural/dorian/harmonic, dominant triad for
+// Dominant V7-13).
+const triadEntriesForCol = (colIdx) => {
+  const majorNote = NOTE_ORDER[colIdx];
+  const mode = EXT_MODES[S.extMode];
+  const root = extRootFor(majorNote, mode.base);
+  const triad = mode.base==='minor' ? getMinorTriad(root) : getTriad(root);
+  return triad.map(n => ({note:n, oct:4}));
+};
+
+// {note,oct} entries for a ring column's full extended chord: the
+// underlying triad plus every extension tone currently toggled on in
+// that same column.
+const chordEntriesForCol = (colIdx) => {
+  const majorNote = NOTE_ORDER[colIdx];
+  const extEntries = [...S.extActive]
+    .filter(k => k.endsWith('-'+colIdx))
+    .map(k => k.split('-')[0])
+    .map(ring => ({note: extNoteFor(majorNote, ring, S.extMode), oct: EXT_OCTAVE[ring]}));
+  return [...triadEntriesForCol(colIdx), ...extEntries];
+};
+
+// Plays a list of {note,oct} entries either all at once (simultaneous —
+// how a real chord sounds) or as a quick arpeggio (staggered in order).
+const playChordEntries = (entries, {simultaneous=true, dur=1.1, stagger=0.09}={}) => {
+  entries.forEach((e,i) => playNotes([e.note], e.oct, dur, simultaneous ? 0 : stagger*i));
+};
+
+// Ring-dot click preview: hear that column's chord right now, all together.
+const playColumnChord = (colIdx) => playChordEntries(chordEntriesForCol(colIdx), {simultaneous:true});
+
+// Ring order outside-in. Each ring toward the center adds one tone on top
+// of the ones before it — an 11th implies the 7th and 9th, a 13th implies
+// all three — so activating a ring cascades outward-to-here, and clearing
+// one drops everything further toward the center that depended on it.
+const RING_LEVELS = ['7','9','11','13'];
+
+// Builds the hub's {top,bottom} label from whatever's currently active in
+// one column: top is a real chord symbol — the family root plus the
+// highest active extension (e.g. "Am9"), since a 9th chord already implies
+// the 7th under it; bottom names which key that family belongs to (e.g.
+// "relative minor of C"). Returns null when nothing's active in that
+// column, so callers can fall back to the default branding.
+const computeHubLabel = (colIdx) => {
+  const activeRings = RING_LEVELS.filter(r => S.extActive.has(r+'-'+colIdx));
+  if (activeRings.length === 0) return null;
+  const highest = activeRings[activeRings.length-1];
+  const majorNote = NOTE_ORDER[colIdx];
+  const mode = EXT_MODES[S.extMode];
+  const root = extRootFor(majorNote, mode.base);
+  const isMinor = mode.base === 'minor';
+  return {
+    top: `${dn(root)}${isMinor?'m':''}${highest}`,
+    bottom: `${isMinor?'relative minor':'dominant'} of ${dn(majorNote)}`,
+  };
+};
+
+const toggleExt = (ring, colIdx) => {
+  const key = ring+'-'+colIdx;
+  const turningOn = !S.extActive.has(key);
+  const level = RING_LEVELS.indexOf(ring);
+  if (turningOn) {
+    for (let i=0; i<=level; i++) S.extActive.add(RING_LEVELS[i]+'-'+colIdx);
+  } else {
+    for (let i=level; i<RING_LEVELS.length; i++) S.extActive.delete(RING_LEVELS[i]+'-'+colIdx);
+  }
+  // Broadcast the resulting chord in the wheel's center hub, in place of
+  // the static "Circle of 5ths" branding — falls back to that branding
+  // once this column has nothing left active.
+  S.hubLabel = computeHubLabel(colIdx);
+  render();
+  if (turningOn) playColumnChord(colIdx);
+};
+
+const extActiveList = () => [...S.extActive].map(k=>{
+  const [ring,idxStr] = k.split('-'); const idx = +idxStr;
+  const majorNote = NOTE_ORDER[idx];
+  const note = extNoteFor(majorNote, ring, S.extMode);
+  const oct = EXT_OCTAVE[ring];
+  return { ring, idx, majorNote, note, oct, sort:(NOTE_CHROMA[note]??0)+oct*12 };
+}).sort((a,b)=>a.sort-b.sort);
+
+// Entries for the Arpeggio / Together buttons: every active extension
+// tone, plus — only when they all belong to the same key column — that
+// column's triad too, so it sounds like a real chord rather than just the
+// upper tensions. When tones are toggled across two different columns
+// (comparing extensions from two different keys), there's no single triad
+// that applies, so only the raw tones play.
+const chordPlayEntries = () => {
+  const list = extActiveList();
+  if (list.length === 0) return [];
+  const sameCol = list.every(n => n.idx === list[0].idx);
+  const extEntries = list.map(n => ({note:n.note, oct:n.oct}));
+  return sameCol ? [...triadEntriesForCol(list[0].idx), ...extEntries] : extEntries;
+};
+
+// ▶ Arpeggio — notes staggered in order (root up through the stacked extensions).
+const playExtChord = () => playChordEntries(chordPlayEntries(), {simultaneous:false});
+// ▶▶ Together — every note sounded at once, like a real block chord.
+const playExtChordTogether = () => playChordEntries(chordPlayEntries(), {simultaneous:true});
+
+const compareExt = () => {
+  const list = extActiveList();
+  if (list.length!==2) return;
+  const [a,b] = list;
+  playNotes([a.note], a.oct, 0.65, 0);
+  playNotes([b.note], b.oct, 0.65, 0.85);
+  playNotes([a.note], a.oct, 1.2, 1.7);
+  playNotes([b.note], b.oct, 1.2, 1.7);
+};
+
+const clearExt = () => { S.extActive.clear(); S.hubLabel = null; render(); };
+
+const setExtMode = m => { S.extMode = m; render(); };
+
+const applyExtPreset = p => {
+  S.extMode = p.mode;
+  const idx = NOTE_ORDER.indexOf(S.majKey);
+  S.extActive = new Set(p.rings.map(r=> r+'-'+idx));
+  S.hubLabel = computeHubLabel(idx);
+  render();
+  const mode = EXT_MODES[p.mode];
+  const root = extRootFor(S.majKey, mode.base);
+  const triad = mode.base==='minor' ? getMinorTriad(root) : getTriad(root);
+  playNotes(triad, 4, 1.6, 0);
+  p.rings.forEach((ring,i)=>{
+    const note = extNoteFor(S.majKey, ring, p.mode);
+    playNotes([note], EXT_OCTAVE[ring], 1.6, 0.08*(i+1));
+  });
+};
+
+const renderExtPanel = () => {
+  const idx = NOTE_ORDER.indexOf(S.majKey);
+  const minorRoot = REL_MINOR[S.majKey] || S.majKey;
+  const lbl = document.getElementById('extKeyLabel');
+  if (lbl) lbl.textContent = `${dn(minorRoot)} minor`;
+
+  document.querySelectorAll('.ext-mode-btn').forEach(b=>{
+    b.classList.toggle('on', b.dataset.mode===S.extMode);
+  });
+
+  const box = document.getElementById('extChordBox');
+  const list = extActiveList();
+  if (box) {
+    box.innerHTML = list.length===0
+      ? '<span class="ext-empty">No extension tones selected yet — click a ring on the wheel, or try a preset above</span>'
+      : list.map(n=>{
+          const ringLbl = {7:'7th',9:'9th',11:'11th',13:'13th'}[n.ring];
+          const col = NOTE_COLORS[n.note]||'#888';
+          return `<strong style="color:${col}">${dn(n.note)}</strong> (${ringLbl} of ${dn(n.majorNote)})`;
+        }).join('  +  ');
+  }
+  const compareBtn = document.getElementById('extCompareBtn');
+  if (compareBtn) compareBtn.disabled = list.length!==2;
+  const playBtn = document.getElementById('extPlayBtn');
+  if (playBtn) playBtn.disabled = list.length===0;
+  const arpBtn = document.getElementById('extArpeggioBtn');
+  if (arpBtn) arpBtn.disabled = list.length===0;
+};
+
+// ══════════════════════════════════════════════════════
+// RENDER — builds the SVG circle and updates all DOM
+// ══════════════════════════════════════════════════════
+const render = () => {
+  renderCircle();
+  renderPanels();
+  renderLoopBlock();
+  renderEffCard();
+  renderExtPanel();
+  if (typeof renderExplorer === 'function') renderExplorer();
+};
+
+// ── SVG Circle ────────────────────────────────────────
+const SVG_NS = 'http://www.w3.org/2000/svg';
+const svgEl = (tag,attrs={}) => {
+  const el=document.createElementNS(SVG_NS,tag);
+  for(const[k,v] of Object.entries(attrs)) el.setAttribute(k,v);
+  return el;
+};
+
+// Extended-ring visual config, outside-in: relative minor ring stays where
+// the original app had it; four new rings for 7/9/11/13 pack in tighter
+// toward the hub. Key-signature labels move outside the major ring to make
+// room — matching the "numbers → major → minor → extensions toward center"
+// order the wheel was designed around.
+const EXT_RING_CFG = {
+  7:  {orbit:170, r:15, fs:10},
+  9:  {orbit:140, r:13, fs:9},
+  11: {orbit:113, r:12, fs:9},
+  13: {orbit:88,  r:11, fs:8},
+};
+// One pastel color per ring — a visual "lane" identity independent of
+// each dot's own note-pitch color. Used for the background tracks and the
+// legend under the Extended Tones panel.
+const RING_PASTEL = { 7:'#AEDFF7', 9:'#C9F2C7', 11:'#E3C9F2', 13:'#F7D9C4' };
+
+const renderCircle = () => {
+  const svg = document.getElementById('circleSvg');
+  svg.innerHTML='';
+  const cx=350,cy=350,outerOrbit=258,outerR=26,innerOrbit=208,innerR=19,ksSig=302;
+
+  // Background rings
+  const addCirc=(r,fill,stroke,sw,dash='')=>{
+    const c=svgEl('circle',{cx,cy,r,fill,stroke,'stroke-width':sw});
+    if(dash)c.setAttribute('stroke-dasharray',dash);
+    svg.appendChild(c);
+  };
+  addCirc(332,'none','rgba(0,192,192,0.15)','1');
+  addCirc(233,'none','rgba(0,128,128,0.12)','1','4,4');
+  addCirc(58,'#0d1f35','rgba(0,192,192,0.5)','2.5');
+  addCirc(50,'none','rgba(244,208,63,0.15)','1');
+  // Small decorative center dot — drawn *before* the hub text below so the
+  // bigger text always layers on top of it instead of the dot poking
+  // through the middle of the hub label.
+  addCirc(4,'rgba(244,208,63,0.35)','none','0');
+
+  // Hub text
+  const addTxt=(x,y,txt,fs,fill,fw='800',ff='Georgia,serif')=>{
+    const t=svgEl('text',{'x':x,'y':y,'text-anchor':'middle','font-size':fs,'fill':fill,'font-weight':fw,'font-family':ff,'pointer-events':'none','user-select':'none'});
+    t.textContent=txt; svg.appendChild(t);
+  };
+  if (S.hubLabel) {
+    // Broadcast the chord/degree just chosen on the extension rings.
+    addTxt(cx,cy-4,S.hubLabel.top,'22','#F4D03F');
+    addTxt(cx,cy+20,S.hubLabel.bottom,'11','rgba(244,208,63,0.75)','700','Arial,sans-serif');
+  } else {
+    addTxt(cx,cy-8,'Circle of','13','#F4D03F');
+    addTxt(cx,cy+7,'5ths','13','#F4D03F');
+    addTxt(cx,cy+22,'EXT.','9','rgba(244,208,63,0.6)','700','Arial,sans-serif');
+  }
+
+  // Soft pastel "lane" behind each extension ring — independent of the
+  // note-pitch coloring on the dots themselves — so all twelve 9th dots
+  // (say) read as one visual ring as you scan around the wheel, no matter
+  // which key/note lands at each position. Drawn full-circle, once, behind
+  // everything else, so the dots and their note-colored fills stay on top.
+  EXT_RINGS.forEach(ring=>{
+    const rc = EXT_RING_CFG[ring];
+    const track = svgEl('circle',{cx,cy,r:rc.orbit,fill:'none',stroke:RING_PASTEL[ring],'stroke-width':rc.r*2+4,opacity:'0.16'});
+    svg.appendChild(track);
+  });
+
+  NOTE_ORDER.forEach((note,index)=>{
+    const angle=(index*30-90)*(Math.PI/180);
+    const ox=cx+outerOrbit*Math.cos(angle), oy=cy+outerOrbit*Math.sin(angle);
+    const ix=cx+innerOrbit*Math.cos(angle), iy=cy+innerOrbit*Math.sin(angle);
+    const kx=cx+ksSig*Math.cos(angle), ky=cy+ksSig*Math.sin(angle);
+
+    const col=NOTE_COLORS[note]||'#888';
+    const relMin=REL_MINOR[note]||note;
+    const rmCol=NOTE_COLORS[relMin]||'#888';
+
+    const activeN = getActiveNote();
+    const isOA = activeN?.note===note && (activeN.type==='outer'||activeN.type==='tick');
+    const isIA = activeN?.note===relMin && (activeN.type==='inner'||activeN.type==='tick');
+
+    // Sector wedge — spans from just outside the hub to the major ring, so
+    // every ring (minor, 7th, 9th, 11th, 13th) sits inside the same tinted
+    // slice of its key's color.
+    const sa=(index*30-105)*(Math.PI/180), ea=(index*30-75)*(Math.PI/180);
+    const p=(a,r)=>({x:cx+r*Math.cos(a),y:cy+r*Math.sin(a)});
+    const wedgeInner=54, wedgeOuter=284;
+    const s0=p(sa,wedgeInner),e0=p(ea,wedgeInner),s1=p(sa,wedgeOuter),e1=p(ea,wedgeOuter);
+    const path=svgEl('path',{d:`M${s0.x},${s0.y} L${s1.x},${s1.y} A${wedgeOuter},${wedgeOuter} 0 0,1 ${e1.x},${e1.y} L${e0.x},${e0.y} A${wedgeInner},${wedgeInner} 0 0,0 ${s0.x},${s0.y} Z`,fill:col,opacity:'0.13',stroke:'none'});
+    svg.appendChild(path);
+
+    // Key sig labels — now sit just outside the major ring (outermost),
+    // matching classic circle-of-fifths layout.
+    const ks=KEY_SIG_LABELS[index].split('\n');
+    addTxt(kx,ky-2,ks[0],'8','rgba(0,220,220,0.6)','700','Arial,sans-serif');
+    addTxt(kx,ky+7,ks[1],'7','rgba(0,192,192,0.45)','600','Arial,sans-serif');
+
+    // ── OUTER DOT — Major ──────────────────────────
+    const g=document.createElementNS(SVG_NS,'g');
+    if(isOA){
+      const glow=svgEl('circle',{cx:ox,cy:oy,r:outerR+8,fill:'none',stroke:'#F4D03F','stroke-width':'2',opacity:'0.5','pointer-events':'none'});
+      g.appendChild(glow);
+    }
+    // Gb/F# (index 6) is the genuine enharmonic pivot at the bottom of the
+    // circle — both names are equally valid there, so show both instead of
+    // picking one. Everywhere else, dn() already gives the correct spelling.
+    const outerDisplay = note==='Gb' ? 'G♭/F♯' : dn(note);
+    const outerDot=svgEl('circle',{cx:ox,cy:oy,r:outerR,fill:col,stroke:isOA?'#F4D03F':'rgba(255,255,255,0.35)','stroke-width':isOA?'3.5':'1.8',opacity:isOA?'1':'0.9',cursor:'pointer',role:'button',tabindex:'0','aria-label':`Play ${outerDisplay} major`});
+    if(isOA) outerDot.setAttribute('filter',`drop-shadow(0 0 10px ${col})`);
+    outerDot.addEventListener('click',()=>{ if(!S.soloPlaying){S.majKey=note;S.minKey=REL_MINOR[note]||S.minKey; render(); playTriad(note,false);} });
+    outerDot.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();if(!S.soloPlaying){S.majKey=note;S.minKey=REL_MINOR[note]||S.minKey;render();playTriad(note,false);}} });
+    g.appendChild(outerDot);
+    const outerLbl=svgEl('text',{'x':ox,'y':oy+5,'text-anchor':'middle','font-size':note==='Gb'?'10':'14','fill':textOn(note),'font-weight':'900','font-family':'Georgia,serif','pointer-events':'none','user-select':'none'});
+    outerLbl.textContent=outerDisplay; g.appendChild(outerLbl);
+
+    // ── INNER DOT — Relative Minor ─────────────────
+    if(isIA){
+      const iglow=svgEl('circle',{cx:ix,cy:iy,r:innerR+7,fill:'none',stroke:'#F4D03F','stroke-width':'1.5',opacity:'0.4','pointer-events':'none'});
+      g.appendChild(iglow);
+    }
+    const innerDot=svgEl('circle',{cx:ix,cy:iy,r:innerR,fill:rmCol,stroke:isIA?'#F4D03F':'rgba(255,255,255,0.3)','stroke-width':isIA?'3':'1.5',opacity:isIA?'1':'0.88',cursor:'pointer',role:'button',tabindex:'0','aria-label':`Play ${dnInnerMinor(relMin)} minor`});
+    if(isIA) innerDot.setAttribute('filter',`drop-shadow(0 0 7px ${rmCol})`);
+    innerDot.addEventListener('click',()=>{ if(!S.soloPlaying){S.minKey=relMin;S.majKey=REL_MAJOR[relMin]||S.majKey;render();playTriad(relMin,true);} });
+    innerDot.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();if(!S.soloPlaying){S.minKey=relMin;S.majKey=REL_MAJOR[relMin]||S.majKey;render();playTriad(relMin,true);}} });
+    g.appendChild(innerDot);
+    const il1=svgEl('text',{'x':ix,'y':iy,'text-anchor':'middle','font-size':'8','fill':textOn(relMin),'font-weight':'800','font-family':'Georgia,serif','pointer-events':'none','user-select':'none'});
+    il1.textContent=dnInnerMinor(relMin); g.appendChild(il1);
+    const il2=svgEl('text',{'x':ix,'y':iy+9,'text-anchor':'middle','font-size':'7','fill':textOn(relMin),'font-weight':'700','font-family':'Arial,sans-serif','pointer-events':'none','user-select':'none'});
+    il2.textContent='m'; g.appendChild(il2);
+
+    svg.appendChild(g);
+
+    // ── EXTENDED RINGS — 7th / 9th / 11th / 13th ────
+    // Persistent toggle dots (not momentary triad playback): S.extActive
+    // tracks which are "on" so they can be stacked and compared, unlike the
+    // major/minor dots above which just flash while a triad plays.
+    EXT_RINGS.forEach(ring=>{
+      const cfg = EXT_RING_CFG[ring];
+      const ex = cx+cfg.orbit*Math.cos(angle), ey = cy+cfg.orbit*Math.sin(angle);
+      const extNote = extNoteFor(note, ring, S.extMode);
+      const extCol = NOTE_COLORS[extNote] || '#888';
+      const isOn = S.extActive.has(ring+'-'+index);
+      const eg = document.createElementNS(SVG_NS,'g');
+      // Bigger, invisible click/tap target. The rings pack tightly from the
+      // center outward (only ~2px of gap between one ring and the next), so
+      // padding is added tangentially (sideways, toward the neighboring
+      // column's dot, where there's plenty of room) rather than by growing
+      // the rings themselves and colliding with their radial neighbors.
+      // Padding scales per-ring off the actual gap to the next column's
+      // dot on this same ring, so it's as generous as possible everywhere
+      // (tight near the center, roomier further out) without ever
+      // touching a neighbor.
+      const ringSpacing = 2*Math.PI*cfg.orbit/12;
+      const hitPad = Math.max(4, Math.floor(ringSpacing/2 - cfg.r - 2));
+      const hit = svgEl('ellipse',{cx:ex,cy:ey,rx:cfg.r,ry:cfg.r+hitPad,transform:`rotate(${index*30-90} ${ex} ${ey})`,fill:'transparent',stroke:'none','pointer-events':'all',cursor:'pointer','aria-hidden':'true'});
+      // The actual toggle stays on 'click' — the same event the outer
+      // major/minor dots use, which every browser reliably treats as a
+      // real user gesture for unlocking Web Audio. Routing it through
+      // 'pointerdown' instead (tried previously) fired sooner, but on
+      // some browsers a pointerdown-triggered AudioContext never
+      // actually unlocks, so those rings toggled visually with no sound.
+      // 'pointerdown' is kept here only to warm the AudioContext up a
+      // touch earlier (getAudio() is a no-op if already running), so the
+      // click still feels immediate without risking silent rings.
+      hit.addEventListener('pointerdown',()=> getAudio());
+      hit.addEventListener('click',()=> toggleExt(ring,index));
+      eg.appendChild(hit);
+      if(isOn){
+        const eglow=svgEl('circle',{cx:ex,cy:ey,r:cfg.r+6,fill:'none',stroke:'#F4D03F','stroke-width':'1.5',opacity:'0.55','pointer-events':'none'});
+        eg.appendChild(eglow);
+      }
+      const dot=svgEl('circle',{cx:ex,cy:ey,r:cfg.r,fill:extCol,stroke:isOn?'#F4D03F':'rgba(255,255,255,0.28)','stroke-width':isOn?'2.6':'1.3',opacity:isOn?'1':'0.82',class:'extdot',role:'button',tabindex:'0','aria-pressed':isOn?'true':'false','aria-label':`Toggle ${dn(extNote)} — ${ring}th of ${dnInnerMinor(relMin)} minor`});
+      if(isOn) dot.setAttribute('filter',`drop-shadow(0 0 6px ${extCol})`);
+      // The dot is painted on top of the invisible hit-ellipse, so clicks
+      // landing on the visible dot itself hit-test to the dot, not the
+      // ellipse beneath it — it needs its own click handler too, or every
+      // click dead-centered on a ring (i.e. almost all of them) would
+      // register on nothing. The hit-ellipse's click handler only ever
+      // fires for the padding ring just outside the visible dot.
+      dot.addEventListener('click',()=> toggleExt(ring,index));
+      dot.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault(); toggleExt(ring,index);} });
+      eg.appendChild(dot);
+      const dispNote = note==='Gb' ? (INNER_SHARP_DISPLAY[extNote]||dn(extNote)) : dn(extNote);
+      const lbl=svgEl('text',{'x':ex,'y':ey+cfg.fs*0.35,'text-anchor':'middle','font-size':cfg.fs,'fill':textOn(extNote),'font-weight':'800','font-family':'Arial,sans-serif','pointer-events':'none','user-select':'none'});
+      // Note name plus the ring's interval number as a smaller raised
+      // tspan (e.g. "B" with a small "9" beside it) — dy-shift rather
+      // than the SVG baseline-shift attribute, since dy positioning is
+      // reliably supported everywhere.
+      const noteSpan = document.createElementNS(SVG_NS,'tspan');
+      noteSpan.textContent = dispNote;
+      lbl.appendChild(noteSpan);
+      const ringSpan = document.createElementNS(SVG_NS,'tspan');
+      ringSpan.setAttribute('font-size', (cfg.fs*0.62).toFixed(1));
+      ringSpan.setAttribute('dy', (-cfg.fs*0.32).toFixed(1));
+      ringSpan.textContent = ring;
+      lbl.appendChild(ringSpan);
+      eg.appendChild(lbl);
+      svg.appendChild(eg);
+    });
+  });
+};
+
+// ── Panel render ──────────────────────────────────────
+const renderPanels = () => {
+  const dis = S.soloPlaying;
+  // Major panel
+  const majSel=document.getElementById('majSelect');
+  if(majSel.value!==S.majKey) majSel.value=S.majKey;
+  document.getElementById('majTonic').textContent=dn(S.majKey);
+  document.getElementById('majTonic').disabled=dis;
+  document.getElementById('majSubDom').disabled=dis;
+  document.getElementById('majDom').disabled=dis;
+  document.getElementById('majArpUp').disabled=dis;
+  document.getElementById('majArpDn').disabled=dis;
+  document.getElementById('majCW').disabled=dis;
+  document.getElementById('majCCW').disabled=dis;
+  document.getElementById('majProgLbl').textContent=`Major Progressions — ${dn(S.majKey)}`;
+  renderProgList('maj', MAJOR_PROGS, false, S.majKey);
+  renderChordPills('maj');
+
+  // Minor panel
+  const minSel=document.getElementById('minSelect');
+  if(minSel.value!==S.minKey) minSel.value=S.minKey;
+  document.getElementById('minTonic').textContent=dn(S.minKey)+'m';
+  document.getElementById('minTonic').disabled=dis;
+  document.getElementById('minSubDom').disabled=dis;
+  document.getElementById('minDom').disabled=dis;
+  document.getElementById('minArpUp').disabled=dis;
+  document.getElementById('minArpDn').disabled=dis;
+  document.getElementById('minCW').disabled=dis;
+  document.getElementById('minCCW').disabled=dis;
+  document.getElementById('minProgLbl').textContent=`Minor Progressions — ${dn(S.minKey)}m`;
+  renderProgList('min', MINOR_PROGS, true, S.minKey);
+  renderChordPills('min');
+};
+
+const renderProgList = (side, progs, isMinor, root) => {
+  const list = document.getElementById(side+'ProgList');
+  // Only rebuild if key changed or first render
+  const currentKey = list.dataset.key;
+  if(currentKey===root && list.children.length===progs.length) {
+    // just update active states
+    [...list.children].forEach((btn,i)=>{
+      const isActive=S.progIdx&&S.progIdx.isMin===isMinor&&S.progIdx.idx===i;
+      btn.className=`prog-btn ${side}${isActive?' active':''}`;
+      btn.disabled=S.soloPlaying&&!isActive;
+      const nm=btn.querySelector('.prog-name');
+      if(nm&&isActive&&S.progChordIdx>=0&&S.progChords[S.progChordIdx])
+        nm.textContent=progs[i].name+' ♩';
+      else if(nm) nm.textContent=progs[i].name;
+    });
+    return;
+  }
+  list.dataset.key=root;
+  list.innerHTML='';
+  progs.forEach((prog,i)=>{
+    const btn=document.createElement('button');
+    const isActive=S.progIdx&&S.progIdx.isMin===isMinor&&S.progIdx.idx===i;
+    btn.className=`prog-btn ${side}${isActive?' active':''}`;
+    btn.disabled=S.soloPlaying&&!isActive;
+    btn.title=prog.desc;
+    btn.innerHTML=`<div class="prog-name">${prog.name}</div><div class="prog-meta"><span>${prog.desc}</span><span>${prog.tag}</span></div>`;
+    btn.addEventListener('click',()=>{
+      
+      S.progIdx={isMin:isMinor,idx:i};
+      S.progChords=[]; S.progChordIdx=-1;
+      render();
+      playProgression(prog,isMinor,root);
+    });
+    list.appendChild(btn);
+  });
+};
+
+const renderChordPills = side => {
+  const isMinor = side==='min';
+  if(!(S.progIdx?.isMin===isMinor)) { document.getElementById(side+'Pills').innerHTML=''; return; }
+  const pills = document.getElementById(side+'Pills');
+  if(S.progChords.length===0){pills.innerHTML='';return;}
+  pills.innerHTML='';
+  S.progChords.forEach((ch,i)=>{
+    const col=NOTE_COLORS[ch.root]||'#888';
+    const lit=i===S.progChordIdx;
+    const p=document.createElement('div');
+    p.className='cpill'+(lit?' lit':'');
+    p.textContent=ch.label;
+    p.style.background=lit?col:`${col}22`;
+    p.style.borderColor=col;
+    p.style.color=lit?textOn(ch.root):col;
+    p.style.boxShadow=lit?`0 0 10px ${col}66`:'none';
+    pills.appendChild(p);
+  });
+};
+
+const renderLoopBlock = () => {
+  const block   = document.getElementById('loopBlock');
+  const playBtn = document.getElementById('loopPlayBtn');
+  const toggle  = document.getElementById('loopToggle');
+  const emoji   = document.getElementById('loopEmoji');
+  const lbl     = document.getElementById('loopLabel');
+  const sub     = document.getElementById('loopSub');
+  if(!block) return;
+  block.classList.toggle('on', S.loopRunning);
+  toggle.setAttribute('aria-pressed', S.loopRunning);
+  if(S.loopRunning){
+    emoji.textContent='🔁'; lbl.textContent='LOOP RUNNING';
+    sub.textContent='Play chords on top — loop continues';
+    if(playBtn){ playBtn.textContent='■ STOP LOOP';
+      playBtn.style.background='linear-gradient(135deg,#600000,#300000)';
+      playBtn.style.borderColor='rgba(255,80,80,.6)'; playBtn.style.color='#ff9999'; }
+  } else {
+    emoji.textContent='⭕'; lbl.textContent='LOOP STOPPED';
+    sub.textContent='Press ▶ PLAY LOOP to start';
+    if(playBtn){ playBtn.textContent='▶ PLAY LOOP';
+      playBtn.style.background='linear-gradient(135deg,#006060,#003838)';
+      playBtn.style.borderColor='rgba(0,192,192,.6)'; playBtn.style.color='#e0ffff'; }
+  }
+  // Direction buttons
+  ['majCW','majCCW','minCW','minCCW'].forEach(dir=>{
+    const id='loop'+dir.charAt(0).toUpperCase()+dir.slice(1);
+    const el=document.getElementById(id);
+    if(el) el.classList.toggle('active', dir===S.loopDir);
+  });
+};
+
+const renderEffCard = () => {
+  const title=document.getElementById('effCard').querySelector('.info-card-title');
+  title.textContent=`⚡ ${dn(S.majKey)} — ${KEY_SIG_MAP[S.majKey]||''}`;
+  const pills=document.getElementById('keyPills');
+  pills.innerHTML='';
+  const roms=['I','ii','iii','IV','V','vi','vii°'];
+  PROG_MAJ_SEMIS.forEach((s,i)=>{
+    const n=majorDeg(S.majKey,s);
+    const q=PROG_MAJ_QUAL[i]==='maj'?'':PROG_MAJ_QUAL[i]==='min'?'m':'°';
+    const col=NOTE_COLORS[n]||'#888';
+    const p=document.createElement('div');
+    p.className='kpill';
+    p.textContent=roms[i]+' '+dn(n)+q;
+    p.style.background=`${col}22`; p.style.borderColor=`${col}55`; p.style.color=col;
+    p.style.border=`1px solid ${col}55`;
+    pills.appendChild(p);
+  });
+};
+
+// ── Build dropdowns ───────────────────────────────────
+const buildDropdown = (id, base, initialVal) => {
+  const sel=document.getElementById(id);
+  sel.innerHTML='';
+  base.forEach(n=>{ const o=document.createElement('option'); o.value=n; o.textContent=dn(n); sel.appendChild(o); });
+  sel.value=initialVal;
+};
+
+// ── Wire all buttons ──────────────────────────────────
+const wireButtons = () => {
+  // Dropdowns
+  document.getElementById('majSelect').addEventListener('change',e=>setMajKey(e.target.value));
+  document.getElementById('minSelect').addEventListener('change',e=>setMinKey(e.target.value));
+
+  // Major ◀▶
+  document.getElementById('majPrev').addEventListener('click',()=>{ if(!S.soloPlaying)setMajKey(stepNote(S.majKey,'down',NOTE_ORDER)); });
+  document.getElementById('majNext').addEventListener('click',()=>{ if(!S.soloPlaying)setMajKey(stepNote(S.majKey,'up',NOTE_ORDER)); });
+
+  // Minor ◀▶
+  document.getElementById('minPrev').addEventListener('click',()=>{ if(!S.soloPlaying)setMinKey(stepNote(S.minKey,'down',INNER_ORDER)); });
+  document.getElementById('minNext').addEventListener('click',()=>{ if(!S.soloPlaying)setMinKey(stepNote(S.minKey,'up',INNER_ORDER)); });
+
+  // Major buttons
+  document.getElementById('majArpUp').addEventListener('click',()=>playArpeggio(S.majKey,false,'up'));
+  document.getElementById('majArpDn').addEventListener('click',()=>playArpeggio(S.majKey,false,'down'));
+  document.getElementById('majTonic').addEventListener('click',()=>playTriad(S.majKey,false));
+  document.getElementById('majSubDom').addEventListener('click',()=>playTriad(stepNote(S.majKey,'down',NOTE_ORDER),false));
+  document.getElementById('majDom').addEventListener('click',()=>playTriad(stepNote(S.majKey,'up',NOTE_ORDER),false));
+  document.getElementById('majCW').addEventListener('click',()=>{ S.stopFlag=false; playSequence(buildSeq(NOTE_ORDER,S.majKey),false); });
+  document.getElementById('majCCW').addEventListener('click',()=>{ S.stopFlag=false; playSequence([...buildSeq(NOTE_ORDER,S.majKey)].reverse(),false); });
+  document.getElementById('majStop').addEventListener('click',stopAll);
+
+  // Minor buttons
+  document.getElementById('minArpUp').addEventListener('click',()=>playArpeggio(S.minKey,true,'up'));
+  document.getElementById('minArpDn').addEventListener('click',()=>playArpeggio(S.minKey,true,'down'));
+  document.getElementById('minTonic').addEventListener('click',()=>playTriad(S.minKey,true));
+  document.getElementById('minSubDom').addEventListener('click',()=>playTriad(stepNote(S.minKey,'down',INNER_ORDER),true));
+  document.getElementById('minDom').addEventListener('click',()=>playTriad(stepNote(S.minKey,'up',INNER_ORDER),true));
+  document.getElementById('minCW').addEventListener('click',()=>{ S.stopFlag=false; playSequence(buildSeq(INNER_ORDER,S.minKey),true); });
+  document.getElementById('minCCW').addEventListener('click',()=>{ S.stopFlag=false; playSequence([...buildSeq(INNER_ORDER,S.minKey)].reverse(),true); });
+  document.getElementById('minStop').addEventListener('click',stopAll);
+
+  // Center stop
+  document.getElementById('centerStop').addEventListener('click', stopAll);
+
+  // Loop PLAY button — toggles loop on/off
+  document.getElementById('loopPlayBtn').addEventListener('click', () => {
+    if(S.loopRunning){ stopLoop(); }
+    else { startLoop(); }
+  });
+
+  // Loop direction buttons
+  ['majCW','majCCW','minCW','minCCW'].forEach(dir => {
+    const id = 'loop' + dir.charAt(0).toUpperCase() + dir.slice(1);
+    const el = document.getElementById(id);
+    if(el) el.addEventListener('click', () => {
+      S.loopDir = dir;
+      // If loop is running, restart it in new direction
+      if(S.loopRunning){ stopLoop(); setTimeout(()=>startLoop(), 200); }
+      else { renderLoopBlock(); }
+    });
+  });
+
+  // Loop status display (click to stop if running)
+  document.getElementById('loopToggle').addEventListener('click', () => {
+    if(S.loopRunning) stopLoop();
+  });
+};
+
+// ── Wire Extended Tones controls ──────────────────────
+const wireExtControls = () => {
+  document.querySelectorAll('.ext-mode-btn').forEach(b=>{
+    b.addEventListener('click', ()=> setExtMode(b.dataset.mode));
+  });
+
+  const presetRow = document.getElementById('extPresetRow');
+  EXT_PRESETS.forEach(p=>{
+    const b = document.createElement('button');
+    b.className = 'ext-preset-btn';
+    b.innerHTML = `<span>${p.label}</span>` + (p.badge ? `<span class="ext-badge">${p.badge}</span>` : '');
+    b.addEventListener('click', ()=> applyExtPreset(p));
+    presetRow.appendChild(b);
+  });
+
+  document.getElementById('extPlayBtn').addEventListener('click', playExtChordTogether);
+  document.getElementById('extArpeggioBtn').addEventListener('click', playExtChord);
+  document.getElementById('extCompareBtn').addEventListener('click', compareExt);
+  document.getElementById('extClearBtn').addEventListener('click', clearExt);
+};
+
+// ── Init ──────────────────────────────────────────────
+buildDropdown('majSelect', NOTE_ORDER,  'C');
+buildDropdown('minSelect', INNER_ORDER, 'A');
+wireButtons();
+wireExtControls();
+render();
+
+// KCM Console bridge
+window.addEventListener('message',ev=>{
+  try{
+    if(!ev.data) return;
+    const S2F={'C#':'Db','D#':'Eb','F#':'Gb','G#':'Ab','A#':'Bb'};
+    if(ev.data.type==='KCM_TICK'){
+      const n=['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'][ev.data.payload?.notePC];
+      if(!n)return; S.active={note:n,type:'tick'}; render();
+      setTimeout(()=>{if(S.active?.type==='tick'){S.active=null;render();}},Math.max(ev.data.payload?.beatMs*.7,120));
+    } else if(ev.data.type==='KCM_STATE'&&ev.data.payload?.root){
+      const root=S2F[ev.data.payload.root]||ev.data.payload.root;
+      if(NOTE_ORDER.includes(root)){setMajKey(root);}
+    }
+  }catch(e){}
+});
+
+// Announce readiness to Console bridge — listener above is now mounted.
+// Bridge defers KCM_STATE delivery until this fires.
+try{ window.parent.postMessage({type:'KCM_PANEL_READY', panel:'circle-of-fifths'},'*'); }catch(e){}
+
+// ══════════════════════════════════════════════════════
+// RECORDING ENGINE — WAV + MIDI
+// ══════════════════════════════════════════════════════
+let _cof_recording  = false;
+let _cof_recStart   = 0;
+let _cof_midiEvents = [];   // {tick, type, midi, vel}
+let _cof_wavDest    = null;
+let _cof_wavRec     = null;
+let _cof_wavChunks  = [];
+let _cof_wavMime    = ['audio/webm;codecs=opus','audio/webm','audio/ogg']
+                        .find(m=>{ try{return MediaRecorder.isTypeSupported(m);}catch(e){return false;} }) || '';
+
+const _COF_PPQ  = 480;
+const _COF_BPM  = 100;
+const _COF_TPB  = _COF_PPQ; // ticks per beat
+
+function _cofMsToTicks(ms){ return Math.round(ms/1000*(_COF_BPM/60)*_COF_PPQ); }
+
+function _cofStartRec(){
+  const ctx = getAudio();
+  _cof_midiEvents = [];
+  _cof_wavChunks  = [];
+  _cof_recStart   = Date.now();
+  _cof_recording  = true;
+
+  // Tap master gain for WAV
+  try {
+    _cof_wavDest = ctx.createMediaStreamDestination();
+    masterGain.connect(_cof_wavDest);
+    _cof_wavRec  = new MediaRecorder(_cof_wavDest.stream, {mimeType:_cof_wavMime});
+    _cof_wavRec.ondataavailable = e => { if(e.data.size>0) _cof_wavChunks.push(e.data); };
+    _cof_wavRec.start(100);
+  } catch(e){ console.warn('WAV capture unavailable:', e); }
+
+  document.getElementById('cofRecordBtn').textContent = '⏹ STOP REC';
+  document.getElementById('cofRecordBtn').classList.add('recording');
+  document.getElementById('cofNoteCount').style.display = 'inline-block';
+  document.getElementById('cofRecStatus').textContent   = '🔴 Recording…';
+  document.getElementById('cofWavBtn').disabled  = true;
+  document.getElementById('cofMidiBtn').disabled = true;
+}
+
+function _cofStopRec(){
+  _cof_recording = false;
+  try { if(_cof_wavRec && _cof_wavRec.state!=='inactive') _cof_wavRec.stop(); } catch(e){}
+  try { if(_cof_wavDest) masterGain.disconnect(_cof_wavDest); } catch(e){}
+
+  document.getElementById('cofRecordBtn').textContent = '🔴 RECORD';
+  document.getElementById('cofRecordBtn').classList.remove('recording');
+  document.getElementById('cofRecStatus').textContent =
+    `Captured ${_cof_midiEvents.filter(e=>e.type===0x90).length} note-ons`;
+
+  const hasNotes = _cof_midiEvents.length > 0;
+  document.getElementById('cofWavBtn').disabled  = !hasNotes;
+  document.getElementById('cofMidiBtn').disabled = !hasNotes;
+  document.getElementById('cofClearBtn').disabled = !hasNotes;
+}
+
+function _cofRecordNote(noteNames, isMinor, durationMs){
+  if(!_cof_recording) return;
+  const t0 = Date.now() - _cof_recStart;
+
+  noteNames.forEach(n => {
+    const chroma = NOTE_CHROMA[n];
+    if(chroma===undefined) return;
+    // Octave 4 for minor, 4 for major
+    const midi = (4+1)*12 + chroma;  // oct 4 → midi 60 base
+    const onTick  = _cofMsToTicks(t0);
+    const offTick = _cofMsToTicks(t0 + durationMs);
+    _cof_midiEvents.push({tick:onTick,  type:0x90, midi, vel:80});
+    _cof_midiEvents.push({tick:offTick, type:0x80, midi, vel:0});
+  });
+
+  // Update counter
+  const count = _cof_midiEvents.filter(e=>e.type===0x90).length;
+  const el = document.getElementById('cofNoteCount');
+  el.textContent = count + (count===1?' note':' notes');
+}
+
+function _cofDownloadWAV(){
+  if(!_cof_wavChunks.length){ alert('No WAV data recorded.'); return; }
+  const blob = new Blob(_cof_wavChunks, {type:_cof_wavMime});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = `KCM-Circle-${Date.now()}.webm`;
+  a.click(); URL.revokeObjectURL(url);
+}
+
+function _cofDownloadMIDI(){
+  if(!_cof_midiEvents.length){ alert('No notes recorded.'); return; }
+  const usPerBeat = Math.round(60000000/_COF_BPM);
+  function varLen(v){const b=[];b.unshift(v&0x7f);v>>=7;while(v){b.unshift((v&0x7f)|0x80);v>>=7;}return b;}
+  function u32(v){return[(v>>24)&0xff,(v>>16)&0xff,(v>>8)&0xff,v&0xff];}
+  function u16(v){return[(v>>8)&0xff,v&0xff];}
+
+  // Sort by tick
+  const evts = [..._cof_midiEvents].sort((a,b)=>a.tick-b.tick);
+  const track=[];
+  track.push(...varLen(0),0xff,0x51,0x03,...u32(usPerBeat).slice(1));
+  const name=Array.from('KCM Circle of Fifths').map(c=>c.charCodeAt(0));
+  track.push(...varLen(0),0xff,0x03,...varLen(name.length),...name);
+  track.push(...varLen(0),0xc0,0); // program: piano
+
+  let prev=0;
+  evts.forEach(ev=>{
+    const delta=ev.tick-prev; prev=ev.tick;
+    track.push(...varLen(Math.max(0,delta)),ev.type,
+               Math.min(127,Math.max(0,ev.midi)),ev.vel);
+  });
+  track.push(...varLen(0),0xff,0x2f,0x00);
+
+  const header=[0x4d,0x54,0x68,0x64,...u32(6),0x00,0x00,0x00,0x01,...u16(_COF_PPQ)];
+  const trkH  =[0x4d,0x54,0x72,0x6b,...u32(track.length)];
+  const bytes = new Uint8Array([...header,...trkH,...track]);
+  const blob  = new Blob([bytes],{type:'audio/midi'});
+  const url   = URL.createObjectURL(blob);
+  const a     = document.createElement('a');
+  a.href=url; a.download=`KCM-Circle-${new Date().toISOString().slice(0,10)}.mid`;
+  a.click(); URL.revokeObjectURL(url);
+}
+
+// Wire record bar buttons
+document.getElementById('cofRecordBtn').addEventListener('click',()=>{
+  if(_cof_recording) _cofStopRec(); else _cofStartRec();
+});
+document.getElementById('cofWavBtn').addEventListener('click', _cofDownloadWAV);
+document.getElementById('cofMidiBtn').addEventListener('click', _cofDownloadMIDI);
+document.getElementById('cofClearBtn').addEventListener('click', ()=>{
+  _cof_midiEvents = [];
+  _cof_wavChunks  = [];
+  document.getElementById('cofWavBtn').disabled  = true;
+  document.getElementById('cofMidiBtn').disabled = true;
+  document.getElementById('cofClearBtn').disabled = true;
+  document.getElementById('cofNoteCount').style.display = 'none';
+  document.getElementById('cofNoteCount').textContent = '0 notes';
+  document.getElementById('cofRecStatus').textContent = 'Cleared — press RECORD to start again';
+});
+
+// ══════════════════════════════════════════════════════
+// KCM Explorer — Keyboard / Fretboard / Staff / Chromatic Circle
+// Read-only mini visualizations that mirror whatever key/chord is
+// currently active on the Circle of Fifths wheel (dots, tonic/sub/dom
+// buttons, arpeggios, sequences, loop). Wired in from render() above —
+// note this uses function declarations (not const) so they're hoisted
+// and available no matter where render() is first called from. State that
+// needs a real value (not just a hoisted function) uses "var" instead of
+// "let/const" for the same reason — var is safe to read before its own
+// line runs (yields undefined, not a crash); a const here would throw the
+// same temporal-dead-zone error the staff panel hit earlier.
+// ══════════════════════════════════════════════════════
+var _explFretCount = 5; // matches the main Guitar Fretboard panel's default
+
+function _explPc(name) {
+  return NOTE_CHROMA[name] !== undefined ? NOTE_CHROMA[name] : CHROMATIC.indexOf(name);
+}
+
+function _explCurrentTones() {
+  const active = (typeof getActiveNote === 'function') ? getActiveNote() : null;
+  if (active && active.note) {
+    const tones = active.type === 'inner' ? getMinorTriad(active.note) : getTriad(active.note);
+    return { tones, label: `${active.note}${active.type==='inner'?'m':''} triad` };
+  }
+  // Nothing actively sounding — default to the selected major key's scale.
+  const root = _explPc(S.majKey);
+  const majorSteps = [0,2,4,5,7,9,11];
+  const tones = majorSteps.map(st => CHROMATIC[(root+st)%12]);
+  return { tones, label: `${S.majKey} Major scale` };
+}
+
+function _explRenderKeyboard(tones) {
+  const svg = document.getElementById('explKeyboardSvg');
+  if (!svg) return;
+  const tonePcs = new Set(tones.map(_explPc));
+  const whiteOrder = ['C','D','E','F','G','A','B'];
+  const blackAfter = {'C':'Db','D':'Eb','F':'Gb','G':'Ab','A':'Bb'};
+  const wW = 700/7, wH = 170;
+  let html = '';
+  whiteOrder.forEach((n,i) => {
+    const x = i*wW;
+    const on = tonePcs.has(_explPc(n));
+    html += `<rect x="${x}" y="5" width="${wW-2}" height="${wH}" rx="4" fill="${on?NOTE_COLORS[n]:'#f5f5f0'}" stroke="#222" stroke-width="1.5"/>`;
+    html += `<text x="${x+wW/2-1}" y="${wH-10}" text-anchor="middle" font-size="11" font-weight="700" fill="${on?textOn(n):'#555'}">${n}</text>`;
+  });
+  whiteOrder.forEach((n,i) => {
+    const bn = blackAfter[n];
+    if (!bn) return;
+    const x = (i+1)*wW - wW*0.28;
+    const bw = wW*0.56, bh = wH*0.62;
+    const on = tonePcs.has(_explPc(bn));
+    html += `<rect x="${x}" y="5" width="${bw}" height="${bh}" rx="3" fill="${on?NOTE_COLORS[bn]:'#1a1a1a'}" stroke="#000" stroke-width="1.5"/>`;
+    html += `<text x="${x+bw/2}" y="${bh-8}" text-anchor="middle" font-size="9.5" font-weight="700" fill="${on?textOn(bn):'#ccc'}">${DISPLAY_NOTE[bn]||bn}</text>`;
+  });
+  svg.innerHTML = html;
+}
+
+function _explRenderFretboard(tones) {
+  const svg = document.getElementById('explFretboardSvg');
+  if (!svg) return;
+  const tonePcs = new Set(tones.map(_explPc));
+  // Vertical strings, bass (low E) on the LEFT — matches the main app's
+  // fretboard convention: strings run top-to-bottom, columns left-to-right
+  // are E(low) A D G B E(high), frets stack downward from the nut.
+  const STRINGS = ['E','A','D','G','B','E'];
+  const FRETS = _explFretCount || 5;
+  const w = 340, h = 260, padL = 30, padT = 40, padR = 20, padB = 20;
+  const stringSpc = (w-padL-padR)/(STRINGS.length-1);
+  const fretH = (h-padT-padB)/FRETS;
+  let html = `<rect x="${padL-2}" y="${padT-2}" width="${stringSpc*(STRINGS.length-1)+4}" height="4" fill="#F4D03F"/>`;
+  for (let f=1; f<=FRETS; f++) {
+    const y = padT + f*fretH;
+    html += `<line x1="${padL}" y1="${y}" x2="${padL+stringSpc*(STRINGS.length-1)}" y2="${y}" stroke="rgba(0,192,192,0.3)" stroke-width="1.5"/>`;
+  }
+  STRINGS.forEach((openNote,si) => {
+    const x = padL + si*stringSpc;
+    html += `<line x1="${x}" y1="${padT}" x2="${x}" y2="${h-padB}" stroke="rgba(200,200,220,0.35)" stroke-width="${1+si*0.3}"/>`;
+    html += `<text x="${x}" y="18" text-anchor="middle" font-size="11" font-weight="700" fill="#c8c8e0">${openNote}</text>`;
+    const openPc = _explPc(openNote);
+    for (let f=0; f<=FRETS; f++) {
+      const notePc = (openPc+f)%12;
+      const noteName = CHROMATIC[notePc];
+      if (!tonePcs.has(notePc)) continue;
+      const y = f===0 ? padT : padT + (f-0.5)*fretH;
+      html += `<circle cx="${x}" cy="${y}" r="10" fill="${NOTE_COLORS[noteName]}" stroke="#000" stroke-width="1.5"/>`;
+      html += `<text x="${x}" y="${y+4}" text-anchor="middle" font-size="9" font-weight="700" fill="${textOn(noteName)}">${noteName}</text>`;
+    }
+  });
+  svg.innerHTML = html;
+}
+
+// Simplified treble-staff placement: maps each pitch class to the nearest
+// natural line/space (sharps/flats ride their natural neighbor's position).
+// Good for "which notes are in this chord" at a glance — not strict notation.
+// Note: this lookup lives *inside* the function (not as a top-level const)
+// on purpose — render() is first called near the top of the script, before
+// a top-level const declared down here would be initialized, which throws
+// a temporal-dead-zone ReferenceError and silently kills everything
+// downstream of that render() call (including note playback).
+function _explStaffY(n) {
+  const step = {'C':0,'Db':0,'D':1,'Eb':1,'E':2,'F':3,'Gb':3,'G':4,'Ab':4,'A':5,'Bb':5,'B':6};
+  return 96 - step[n]*8;
+}
+
+function _explRenderStaff(tones) {
+  const svg = document.getElementById('explStaffSvg');
+  if (!svg) return;
+  const left = 60, right = 640, top = 20;
+  let html = '';
+  for (let i=0; i<5; i++) {
+    const y = top + i*16;
+    html += `<line x1="${left}" y1="${y}" x2="${right}" y2="${y}" stroke="rgba(200,200,220,0.5)" stroke-width="1.5"/>`;
+  }
+  html += `<text x="18" y="${top+58}" font-size="52" fill="#F4D03F" font-family="serif">𝄞</text>`;
+  const spacing = (right-left-40) / Math.max(tones.length,1);
+  tones.forEach((n,i) => {
+    const x = left+50+i*spacing;
+    const y = top + _explStaffY(n);
+    html += `<ellipse cx="${x}" cy="${y}" rx="9" ry="7" fill="${NOTE_COLORS[n]}" stroke="#000" stroke-width="1.5"/>`;
+    html += `<text x="${x}" y="${y+28}" text-anchor="middle" font-size="10" font-weight="700" fill="${NOTE_COLORS[n]}">${n}</text>`;
+  });
+  svg.innerHTML = html;
+}
+
+function _explRenderCircle(tones) {
+  const svg = document.getElementById('explCircleSvg');
+  if (!svg) return;
+  const tonePcs = new Set(tones.map(_explPc));
+  const cx=150, cy=150, r=110;
+  let html = '';
+  for (let i=0; i<12; i++) {
+    const angle = (i/12)*Math.PI*2 - Math.PI/2;
+    const x = cx+r*Math.cos(angle), y = cy+r*Math.sin(angle);
+    const n = CHROMATIC[i];
+    const on = tonePcs.has(i);
+    html += `<circle cx="${x}" cy="${y}" r="${on?20:14}" fill="${on?NOTE_COLORS[n]:'rgba(255,255,255,0.08)'}" stroke="${on?'#fff':'rgba(255,255,255,0.2)'}" stroke-width="${on?2:1}"/>`;
+    html += `<text x="${x}" y="${y+4}" text-anchor="middle" font-size="${on?12:10}" font-weight="700" fill="${on?textOn(n):'rgba(255,255,255,0.4)'}">${n}</text>`;
+  }
+  svg.innerHTML = html;
+}
+
+function renderExplorer() {
+  const { tones, label } = _explCurrentTones();
+  const readout = document.getElementById('explorerReadout');
+  if (readout) readout.textContent = `Showing: ${label}  —  ${tones.join(' · ')}`;
+  _explRenderKeyboard(tones);
+  _explRenderFretboard(tones);
+  _explRenderStaff(tones);
+  _explRenderCircle(tones);
+}
+
+function _explShowPanel(name) {
+  // Switching tabs also switches what the wheel/buttons actually sound like.
+  const TIMBRE = { keyboard:'piano', fretboard:'guitar', staff:'default', circle:'default' };
+  _explTimbre = TIMBRE[name] || 'default';
+  if (typeof _explLoadSamples === 'function') _explLoadSamples(); // start fetching samples early
+  document.querySelectorAll('.explorer-panel').forEach(p => {
+    p.style.display = p.dataset.panel === name ? 'block' : 'none';
+  });
+  // Each tab is themed to its instrument — keyboard (cool silver-blue),
+  // fretboard (wood/string gold), staff (manuscript purple), chromatic
+  // circle (spectrum coral) — both at rest and when active.
+  const THEME = {
+    keyboard:  { rest:['rgba(200,220,255,0.3)','rgba(20,28,45,0.5)','#a8bcdc'],  active:['rgba(200,220,255,0.85)','linear-gradient(135deg,#3a4a6a,#1a2438)','#eaf2ff'] },
+    fretboard: { rest:['rgba(244,208,63,0.3)','rgba(40,32,10,0.5)','#c8ac60'],   active:['rgba(244,208,63,0.85)','linear-gradient(135deg,#8a6a20,#4a3810)','#fff2c0'] },
+    staff:     { rest:['rgba(139,107,163,0.35)','rgba(28,20,38,0.5)','#b89cd0'],active:['rgba(200,168,232,0.85)','linear-gradient(135deg,#5a3a80,#2a1a48)','#ecd8ff'] },
+    circle:    { rest:['rgba(207,122,90,0.35)','rgba(40,22,15,0.5)','#d89878'], active:['rgba(255,150,110,0.85)','linear-gradient(135deg,#a85a3a,#5a2a18)','#ffdcc4'] },
+  };
+  document.querySelectorAll('.explorer-tab').forEach(b => {
+    const on = b.dataset.panel === name;
+    const t = THEME[b.dataset.panel] || THEME.keyboard;
+    const [borderColor, background, color] = on ? t.active : t.rest;
+    b.style.borderColor = borderColor;
+    b.style.background = background;
+    b.style.color = color;
+  });
+}
+
+document.querySelectorAll('.explorer-tab').forEach(b => {
+  b.addEventListener('click', () => _explShowPanel(b.dataset.panel));
+});
+
+// Fret-count row (4 / 5 / 12, matching the main Guitar Fretboard panel)
+function _explSetFretCount(n) {
+  _explFretCount = n;
+  document.querySelectorAll('.expl-fret-btn').forEach(b => {
+    const on = parseInt(b.dataset.frets) === n;
+    b.style.background = on ? 'linear-gradient(135deg,#006060,#003838)' : 'rgba(0,40,40,0.4)';
+    b.style.borderColor = on ? 'rgba(0,192,192,0.7)' : 'rgba(0,192,192,0.35)';
+    b.style.color = on ? '#a0ffff' : '#8fb0b0';
+  });
+  renderExplorer();
+}
+document.querySelectorAll('.expl-fret-btn').forEach(b => {
+  b.addEventListener('click', () => _explSetFretCount(parseInt(b.dataset.frets)));
+});
+_explSetFretCount(5);
+_explShowPanel('keyboard');
+renderExplorer();
+
+</script>
+</body>
+</html>
