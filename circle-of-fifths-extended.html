@@ -848,12 +848,12 @@ const chordEntriesForCol = (colIdx) => {
 
 // Plays a list of {note,oct} entries either all at once (simultaneous —
 // how a real chord sounds) or as a quick arpeggio (staggered in order).
-const playChordEntries = (entries, {simultaneous=true, dur=1.1, stagger=0.09}={}) => {
-  entries.forEach((e,i) => playNotes([e.note], e.oct, dur, simultaneous ? 0 : stagger*i));
+const playChordEntries = (entries, {simultaneous=true, dur=1.1, stagger=0.09, startAt=0}={}) => {
+  entries.forEach((e,i) => playNotes([e.note], e.oct, dur, startAt + (simultaneous ? 0 : stagger*i)));
 };
 
 // Ring-dot click preview: hear that column's chord right now, all together.
-const playColumnChord = (colIdx) => playChordEntries(chordEntriesForCol(colIdx), {simultaneous:true});
+const playColumnChord = (colIdx, startAt=0) => playChordEntries(chordEntriesForCol(colIdx), {simultaneous:true, startAt});
 
 // Ring order outside-in. Each ring toward the center adds one tone on top
 // of the ones before it — an 11th implies the 7th and 9th, a 13th implies
@@ -895,7 +895,18 @@ const toggleExt = (ring, colIdx) => {
   // once this column has nothing left active.
   S.hubLabel = computeHubLabel(colIdx);
   render();
-  if (turningOn) playColumnChord(colIdx);
+  if (turningOn) {
+    // Adjacent rings share almost all their notes once stacked (an 11th
+    // and a 13th differ by exactly one tone out of five or six sounding
+    // together), so the newly-toggled tone gets buried and two adjacent
+    // rings can be hard to tell apart by ear. Play it alone first as a
+    // quick callout, then the full chord half a beat later, so what
+    // actually changed is audible before it's folded into the stack.
+    const majorNote = NOTE_ORDER[colIdx];
+    const newNote = extNoteFor(majorNote, ring, S.extMode);
+    playNotes([newNote], EXT_OCTAVE[ring], 0.4, 0);
+    playColumnChord(colIdx, 0.45);
+  }
 };
 
 const extActiveList = () => [...S.extActive].map(k=>{
