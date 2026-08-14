@@ -562,6 +562,32 @@ body.bridge-test-mode #bridge-test-panel {
   background: var(--bg-deep);
 }
 
+/* ─── Circle of Fifths variant toggle (Standard / Extended) ─────────────── */
+.kcm-cof-toggle {
+  display: flex;
+  flex-shrink: 0;
+  background: var(--bg-deep);
+  border: 1px solid var(--border-teal);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.kcm-cof-toggle__btn {
+  padding: 0.3rem 0.7rem;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.kcm-cof-toggle__btn + .kcm-cof-toggle__btn { border-left: 1px solid var(--border-teal); }
+.kcm-cof-toggle__btn:hover { background: var(--bg-elevated); color: var(--text-primary); }
+.kcm-cof-toggle__btn.is-active { background: var(--primary-purple); color: var(--bg-deep); }
+.kcm-cof-toggle__btn:focus-visible { outline: 2px solid var(--primary-gold); outline-offset: -2px; }
+
 /* ─── Stop All button (always visible in header) ────────────────────────── */
 .kcm-stop-btn {
   padding: 0.4rem 1rem;

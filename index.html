@@ -211,6 +211,10 @@
         <div class="kcm-panel__header">
           <span class="kcm-panel__accent" style="background:var(--primary-purple);"></span>
           <h3 class="kcm-panel__title">Circle of Fifths</h3>
+          <div class="kcm-cof-toggle" role="group" aria-label="Circle of Fifths view">
+            <button class="kcm-cof-toggle__btn is-active" id="cof-toggle-standard" data-cof-variant="standard" aria-pressed="true">Standard</button>
+            <button class="kcm-cof-toggle__btn" id="cof-toggle-extended" data-cof-variant="extended" aria-pressed="false">Extended</button>
+          </div>
           <div class="kcm-panel__controls">
             <button class="kcm-panel__btn" data-panel-action="minimize" aria-label="Minimize panel">−</button>
           </div>
@@ -226,6 +230,33 @@
           ></iframe>
         </div>
       </div>
+      <script>
+      (function(){
+        var KEY = 'kcm_cof_variant';
+        var SRCS = { standard: 'circle-of-fifths.html', extended: 'circle-of-fifths-extended.html' };
+        var iframe = document.getElementById('iframe-cof');
+        var btnStd = document.getElementById('cof-toggle-standard');
+        var btnExt = document.getElementById('cof-toggle-extended');
+        function apply(variant){
+          if (!SRCS[variant]) variant = 'standard';
+          if (iframe && iframe.getAttribute('src') !== SRCS[variant]) {
+            iframe.src = SRCS[variant];
+          }
+          [btnStd, btnExt].forEach(function(b){
+            if (!b) return;
+            var active = b.getAttribute('data-cof-variant') === variant;
+            b.classList.toggle('is-active', active);
+            b.setAttribute('aria-pressed', active ? 'true' : 'false');
+          });
+          try { localStorage.setItem(KEY, variant); } catch (e) {}
+        }
+        if (btnStd) btnStd.addEventListener('click', function(){ apply('standard'); });
+        if (btnExt) btnExt.addEventListener('click', function(){ apply('extended'); });
+        var saved = 'standard';
+        try { saved = localStorage.getItem(KEY) || 'standard'; } catch (e) {}
+        apply(saved);
+      })();
+      </script>
 
       <!-- Panel 3: Modal Stencil Player -->
       <div class="kcm-panel" id="panel-msp">
