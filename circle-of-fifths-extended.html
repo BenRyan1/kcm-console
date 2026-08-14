@@ -895,18 +895,9 @@ const toggleExt = (ring, colIdx) => {
   // once this column has nothing left active.
   S.hubLabel = computeHubLabel(colIdx);
   render();
-  if (turningOn) {
-    // Adjacent rings share almost all their notes once stacked (an 11th
-    // and a 13th differ by exactly one tone out of five or six sounding
-    // together), so the newly-toggled tone gets buried and two adjacent
-    // rings can be hard to tell apart by ear. Play it alone first as a
-    // quick callout, then the full chord half a beat later, so what
-    // actually changed is audible before it's folded into the stack.
-    const majorNote = NOTE_ORDER[colIdx];
-    const newNote = extNoteFor(majorNote, ring, S.extMode);
-    playNotes([newNote], EXT_OCTAVE[ring], 0.4, 0);
-    playColumnChord(colIdx, 0.45);
-  }
+  // One simultaneous chord — root and every stacked tone sound together,
+  // no note played ahead of the rest and no arpeggiation.
+  if (turningOn) playColumnChord(colIdx);
 };
 
 const extActiveList = () => [...S.extActive].map(k=>{
@@ -956,14 +947,9 @@ const applyExtPreset = p => {
   S.extActive = new Set(p.rings.map(r=> r+'-'+idx));
   S.hubLabel = computeHubLabel(idx);
   render();
-  const mode = EXT_MODES[p.mode];
-  const root = extRootFor(S.majKey, mode.base);
-  const triad = mode.base==='minor' ? getMinorTriad(root) : getTriad(root);
-  playNotes(triad, 4, 1.6, 0);
-  p.rings.forEach((ring,i)=>{
-    const note = extNoteFor(S.majKey, ring, p.mode);
-    playNotes([note], EXT_OCTAVE[ring], 1.6, 0.08*(i+1));
-  });
+  // One simultaneous chord — same as everywhere else on this wheel now,
+  // no staggering between the triad and the stacked extension tones.
+  playColumnChord(idx);
 };
 
 const renderExtPanel = () => {
