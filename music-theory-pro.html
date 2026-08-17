@@ -2224,6 +2224,8 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                 <button class="view-btn" data-view="circleType">⭕ Type-to-Play</button>
                 <button class="view-btn" id="instrumentBtn" onclick="toggleInstrumentPicker()" aria-haspopup="true" aria-expanded="false">🎸 Instrument: <span id="instrumentBtnLabel">Synth</span></button>
                 <button class="view-btn" id="midiStatusBtn" onclick="toggleMidiStatusPanel()" aria-haspopup="true" aria-expanded="false" title="Live MIDI input — connect a guitar-to-MIDI controller (e.g. Fishman TriplePlay) or a MIDI keyboard">🎹 MIDI: <span id="midiStatusLabel">Not Connected</span></button>
+                <button class="view-btn" id="createMidiBtn" onclick="downloadMIDI()" title="Downloads your recorded notes as a real .mid file. Hit Record (in the Sing panel or recorder controls), play/sing some notes, then click this.">💾 Create MIDI File</button>
+                <button class="view-btn" id="melodyLibraryBtn" onclick="toggleMelodyLibraryPanel()" aria-haspopup="true" aria-expanded="false" title="Browse and download melodies from the KCM Melody Library — 350+ Billboard #1 songs, 1950–2024">📂 Melody Library</button>
                 <button id="globalPlayBtn" class="view-action-btn" style="background:linear-gradient(135deg, var(--primary-teal) 0%, #006666 100%); border-color:var(--primary-teal); color:#fff; font-weight:800;">▶ Play</button>
                 <button id="globalStopBtn" class="view-action-btn" style="background:linear-gradient(135deg, var(--primary-coral) 0%, #C4341C 100%); border-color:var(--primary-coral); color:#fff; font-weight:800;">■ Stop</button>
             </div>
@@ -2276,6 +2278,36 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                 <div style="display:flex; justify-content:center; gap:14px; margin-top:0.5rem; font-size:0.6rem; color:#b0b0cc;">
                     <span><span style="color:var(--primary-teal);">●</span> in scale/chord</span>
                     <span><span style="color:#ff5555;">●</span> outside</span>
+                </div>
+            </div>
+
+            <!-- ── MELODY LIBRARY PANEL — same show/hide dropdown pattern as
+                 Instrument/Live MIDI above. Lazily fetches the file tree from
+                 the public BenRyan1/KCM_Melody_Library GitHub repo (350+
+                 Billboard #1 melodies, 1950–2024, BIMMUDA dataset) the first
+                 time it's opened, then lets you filter by decade and download
+                 any melody as a .mid file. Driven by loadMelodyLibrary() /
+                 renderMelodyLibraryList() / filterMelodyLibrary() below. ── -->
+            <div id="melodyLibraryPanel" style="display:none; margin:0.5rem 0 0; width:100%; box-sizing:border-box;
+                 background:rgba(10,10,25,0.97); border:2px solid var(--primary-teal);
+                 border-radius:14px; padding:0.75rem 1rem; box-shadow:0 8px 32px rgba(0,128,128,0.35);">
+                <div style="font-size:0.65rem; font-weight:700; letter-spacing:1px; color:var(--primary-teal);
+                     text-align:center; margin-bottom:0.5rem; font-family:var(--font-display);">MELODY LIBRARY</div>
+                <div id="melodyLibraryStatus" style="text-align:center; font-size:0.62rem; color:#b0b0cc; margin-bottom:0.5rem;">⏳ Loading…</div>
+                <div id="melodyDecadeRow" style="display:flex; flex-wrap:wrap; gap:4px; justify-content:center; margin-bottom:0.6rem;">
+                    <button class="inst-btn melody-decade-btn active" data-decade="all" onclick="filterMelodyLibrary('all')">All</button>
+                    <button class="inst-btn melody-decade-btn" data-decade="1950s" onclick="filterMelodyLibrary('1950s')">50s</button>
+                    <button class="inst-btn melody-decade-btn" data-decade="1960s" onclick="filterMelodyLibrary('1960s')">60s</button>
+                    <button class="inst-btn melody-decade-btn" data-decade="1970s" onclick="filterMelodyLibrary('1970s')">70s</button>
+                    <button class="inst-btn melody-decade-btn" data-decade="1980s" onclick="filterMelodyLibrary('1980s')">80s</button>
+                    <button class="inst-btn melody-decade-btn" data-decade="1990s" onclick="filterMelodyLibrary('1990s')">90s</button>
+                    <button class="inst-btn melody-decade-btn" data-decade="2000s" onclick="filterMelodyLibrary('2000s')">00s</button>
+                    <button class="inst-btn melody-decade-btn" data-decade="2010s" onclick="filterMelodyLibrary('2010s')">10s</button>
+                    <button class="inst-btn melody-decade-btn" data-decade="2020s" onclick="filterMelodyLibrary('2020s')">20s</button>
+                </div>
+                <div id="melodyLibraryList" style="max-height:260px; overflow-y:auto; display:flex; flex-direction:column; gap:4px;"></div>
+                <div style="text-align:center; margin-top:0.6rem;">
+                    <a href="https://github.com/BenRyan1/KCM_Melody_Library" target="_blank" rel="noopener" style="font-size:0.6rem; color:#b0b0cc;">View full repo on GitHub ↗</a>
                 </div>
             </div>
 
@@ -3870,6 +3902,94 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
             setTimeout(() => document.addEventListener('click', closeHandler), 200);
         }
         window.toggleMidiStatusPanel = toggleMidiStatusPanel;
+
+        // ── Melody Library panel — same show/hide dropdown pattern as
+        // Instrument/Live MIDI. Fetches the file tree from the public
+        // BenRyan1/KCM_Melody_Library repo (one API call, cached after
+        // first load) and lets the user filter by decade and download any
+        // melody as a real .mid file (raw.githubusercontent.com, no auth
+        // needed since the repo is public). ──
+        let melodyLibraryFiles = null;   // cached [{name, decade, year, label, rawUrl}]
+        let currentMelodyDecade = 'all';
+
+        function toggleMelodyLibraryPanel() {
+            const panel = document.getElementById('melodyLibraryPanel');
+            const btn   = document.getElementById('melodyLibraryBtn');
+            if (!panel) return;
+            const isOpen = panel.style.display !== 'none';
+            if (isOpen) {
+                panel.style.display = 'none';
+                if (btn) { btn.classList.remove('open'); btn.setAttribute('aria-expanded','false'); }
+                return;
+            }
+            panel.style.display = 'block';
+            if (btn) { btn.classList.add('open'); btn.setAttribute('aria-expanded','true'); }
+            loadMelodyLibrary();
+            const closeHandler = (e) => {
+                if (panel.contains(e.target) || (btn && btn.contains(e.target))) return;
+                panel.style.display = 'none';
+                if (btn) { btn.classList.remove('open'); btn.setAttribute('aria-expanded','false'); }
+                document.removeEventListener('click', closeHandler);
+            };
+            setTimeout(() => document.addEventListener('click', closeHandler), 200);
+        }
+        window.toggleMelodyLibraryPanel = toggleMelodyLibraryPanel;
+
+        async function loadMelodyLibrary() {
+            const status = document.getElementById('melodyLibraryStatus');
+            if (melodyLibraryFiles) { renderMelodyLibraryList(currentMelodyDecade); return; }
+            if (status) status.textContent = '⏳ Loading melody library…';
+            try {
+                const res = await fetch('https://api.github.com/repos/BenRyan1/KCM_Melody_Library/git/trees/main?recursive=1');
+                if (!res.ok) throw new Error('GitHub API error ' + res.status);
+                const data = await res.json();
+                melodyLibraryFiles = (data.tree || [])
+                    .filter(e => e.type === 'blob' && e.path.startsWith('full_melodies/') && e.path.endsWith('.mid'))
+                    .map(e => {
+                        const name = e.path.split('/').pop();
+                        const m = name.match(/^(\d{4})_([\w]+)_full\.mid$/);
+                        const year = m ? m[1] : '????';
+                        const decade = m ? (Math.floor(parseInt(m[1], 10) / 10) * 10) + 's' : 'other';
+                        return {
+                            name, decade, year,
+                            label: `${year} — Track ${m ? m[2].toUpperCase() : '?'}`,
+                            rawUrl: `https://raw.githubusercontent.com/BenRyan1/KCM_Melody_Library/main/${e.path}`
+                        };
+                    })
+                    .sort((a, b) => a.name.localeCompare(b.name));
+                if (status) status.textContent = `✓ ${melodyLibraryFiles.length} melodies · 1950–2024 Billboard #1s`;
+                renderMelodyLibraryList(currentMelodyDecade);
+            } catch (err) {
+                console.error('Melody library load error:', err);
+                if (status) status.textContent = '⚠️ Could not load library — check your connection.';
+            }
+        }
+        window.loadMelodyLibrary = loadMelodyLibrary;
+
+        function renderMelodyLibraryList(decadeFilter) {
+            const container = document.getElementById('melodyLibraryList');
+            if (!container || !melodyLibraryFiles) return;
+            const files = decadeFilter === 'all' ? melodyLibraryFiles : melodyLibraryFiles.filter(f => f.decade === decadeFilter);
+            if (files.length === 0) {
+                container.innerHTML = '<div style="text-align:center;color:#b0b0cc;font-size:0.65rem;padding:0.75rem;">No melodies in this range.</div>';
+                return;
+            }
+            container.innerHTML = files.map(f => `
+                <a href="${f.rawUrl}" download="${f.name}" title="Download ${f.name}"
+                   style="display:flex; justify-content:space-between; align-items:center; padding:0.4rem 0.6rem;
+                          background:rgba(0,128,128,0.08); border:1px solid rgba(0,128,128,0.2); border-radius:6px;
+                          color:#e8e8f8; font-size:0.66rem; text-decoration:none;">
+                    <span>${f.label}</span><span style="color:var(--primary-gold,#F4D03F);">⬇</span>
+                </a>`).join('');
+        }
+        window.renderMelodyLibraryList = renderMelodyLibraryList;
+
+        function filterMelodyLibrary(decade) {
+            currentMelodyDecade = decade;
+            document.querySelectorAll('.melody-decade-btn').forEach(b => b.classList.toggle('active', b.dataset.decade === decade));
+            renderMelodyLibraryList(decade);
+        }
+        window.filterMelodyLibrary = filterMelodyLibrary;
 
         // ── MIDI init (graceful — security policy may block, e.g. Safari
         // without Web MIDI support) ──────────────────────────────────
