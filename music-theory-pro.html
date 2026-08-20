@@ -6405,7 +6405,15 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
             // ── SCALE MODE: light every fret cell whose note is in litNotes ──
             // Simple rule: if the note at this fret is revealed, dot is ON.
             // No one-per-string restriction — show the full pattern.
-            const isChordMode = (currentLevel === '3' || currentLevel === '4' || currentLevel === '1');
+            // Extended chords (level '4': 7th/9th/11th/13th) are excluded from
+            // "one dot per string" chord mode on purpose. A 13th chord spans
+            // up to 21 semitones (root..13) across 7 pitch classes, so the
+            // single-voicing picker below (bestFret) was hiding most of the
+            // tension tones within a short fret window, leaving them
+            // colored-but-unlit. Extended chords now fall through to the
+            // "light every matching frame" branch just like scales do, so
+            // every fret across the neck that carries a chord tone glows.
+            const isChordMode = (currentLevel === '3' || currentLevel === '1');
 
             if (!isChordMode) {
                 // SCALE / PENTATONIC / MODE: show all matching dots
