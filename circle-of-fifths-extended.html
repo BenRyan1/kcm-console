@@ -1313,20 +1313,13 @@ const renderCircle = () => {
       dot.addEventListener('click',()=> toggleExt(ring,index));
       dot.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault(); toggleExt(ring,index);} });
       eg.appendChild(dot);
-      const dispNote = note==='Gb' ? (INNER_SHARP_DISPLAY[extNote]||dn(extNote)) : dn(extNote);
+      // Dot label is just the extension number itself (7 / 9 / 11 / 13) —
+      // no note name. Ben's call: the note-name-plus-superscript-number
+      // combo was cluttered on rings this tightly packed; the bare
+      // interval number reads faster at a glance and the note is still
+      // available via hover/aria-label and by ear when toggled.
       const lbl=svgEl('text',{'x':ex,'y':ey+cfg.fs*0.35,'text-anchor':'middle','font-size':cfg.fs,'fill':textOn(extNote),'font-weight':'800','font-family':'Arial,sans-serif','pointer-events':'none','user-select':'none'});
-      // Note name plus the ring's interval number as a smaller raised
-      // tspan (e.g. "B" with a small "9" beside it) — dy-shift rather
-      // than the SVG baseline-shift attribute, since dy positioning is
-      // reliably supported everywhere.
-      const noteSpan = document.createElementNS(SVG_NS,'tspan');
-      noteSpan.textContent = dispNote;
-      lbl.appendChild(noteSpan);
-      const ringSpan = document.createElementNS(SVG_NS,'tspan');
-      ringSpan.setAttribute('font-size', (cfg.fs*0.62).toFixed(1));
-      ringSpan.setAttribute('dy', (-cfg.fs*0.32).toFixed(1));
-      ringSpan.textContent = ring;
-      lbl.appendChild(ringSpan);
+      lbl.textContent = ring;
       eg.appendChild(lbl);
       svg.appendChild(eg);
     });
