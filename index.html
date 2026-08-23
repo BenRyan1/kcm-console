@@ -281,6 +281,30 @@
 
       <!-- Panel 4: Chromatic Circle & Fretboard (Melody Library) -->
       <div class="kcm-panel" id="panel-neck"><div class="kcm-panel__header"><span class="kcm-panel__accent" style="background:var(--pc-D);"></span><h3 class="kcm-panel__title">Melody Library</h3><div class="kcm-panel__controls"><button class="kcm-panel__btn" data-panel-action="minimize" aria-label="Minimize panel">-</button></div></div><div class="kcm-panel__body"><iframe id="iframe-neck" class="kcm-panel__iframe" src="kcm-midi-chromatic-circle.html" title="Chromatic Circle &amp; Fretboard — MIDI Player" allow="autoplay" loading="lazy"></iframe></div></div>
+      <script>
+      // ── Panel auto-height ────────────────────────────────────────────
+      // Every .kcm-panel__iframe is a fixed 950px in CSS. This panel's
+      // content (circle + piano + fretboard + controls + melody library)
+      // runs taller than that, which forced a SECOND scrollbar inside the
+      // iframe — the mouse wheel would get captured scrolling that inner
+      // iframe instead of the console page, feeling "stuck" instead of
+      // free-wheeling. The panel page itself (kcm-midi-chromatic-circle.html)
+      // now reports its real content height via postMessage; this listener
+      // resizes the matching iframe to fit it exactly, so there's only one
+      // scrollbar again. Keyed by panel name -> iframe id so any future
+      // panel can opt in the same way just by sending KCM_PANEL_HEIGHT.
+      (function(){
+        var PANEL_IFRAME_IDS = { 'kcm-midi-chromatic-circle': 'iframe-neck' };
+        window.addEventListener('message', function(e){
+          if (!e.data || e.data.type !== 'KCM_PANEL_HEIGHT') return;
+          var iframeId = PANEL_IFRAME_IDS[e.data.panel];
+          if (!iframeId) return;
+          var iframe = document.getElementById(iframeId);
+          var h = parseInt(e.data.height, 10);
+          if (iframe && h > 0) iframe.style.height = (h + 24) + 'px';
+        });
+      })();
+      </script>
 
       <!-- Panel 5: KCM Chromatic Universe -->
       <div class="kcm-panel" id="panel-cu">

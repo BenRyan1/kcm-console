@@ -1220,5 +1220,37 @@ builtinSelect.addEventListener('dblclick', loadBuiltinSelection);
 /* ---------------- Boot ---------------- */
 setSong(buildDemoSong());
 </script>
+
+<!-- ── Panel-height reporting ────────────────────────────────────────
+     When embedded in the console (index.html), this page sits inside
+     an iframe with a fixed 950px CSS height. This page's own content
+     (circle + piano + fretboard + controls + melody library + GitHub
+     browse) runs taller than that, so the fixed height forced a second,
+     separate scrollbar INSIDE the iframe — the page felt "stuck": the
+     mouse wheel would scroll that inner iframe instead of the console
+     page, and once it hit its own scroll limit it didn't hand off back
+     to the console smoothly. Reporting real content height lets the
+     console resize the iframe to fit, so there's only ever ONE
+     scrollbar (the console page's own) and scrolling is free-wheeling
+     again. No-op when opened directly (not in an iframe). ── -->
+<script>
+(function(){
+  if (window.self === window.top) return; // opened directly, not embedded
+  function reportHeight(){
+    var h = document.documentElement.scrollHeight;
+    try { window.parent.postMessage({ type: 'KCM_PANEL_HEIGHT', panel: 'kcm-midi-chromatic-circle', height: h }, '*'); } catch(e) {}
+  }
+  window.addEventListener('load', reportHeight);
+  window.addEventListener('resize', reportHeight);
+  if (window.ResizeObserver) {
+    new ResizeObserver(reportHeight).observe(document.documentElement);
+  } else {
+    // Fallback for older browsers: a few delayed re-checks catches most
+    // late layout shifts (fonts, the melody list rendering, etc.)
+    [300, 800, 1500, 3000].forEach(function(ms){ setTimeout(reportHeight, ms); });
+  }
+  reportHeight();
+})();
+</script>
 </body>
 </html>
