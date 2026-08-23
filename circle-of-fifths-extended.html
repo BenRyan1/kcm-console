@@ -801,6 +801,7 @@ const S = {
   extMode:     'natural',   // EXT_MODES key
   extActive:   new Set(),   // Set of "ring-colIndex", ring in EXT_RINGS
   hubLabel:    null,        // {top,bottom} — last chord/degree chosen via the extension rings, shown in the wheel's center; null shows the default branding
+  lastPick:    null,        // 'ext' | 'triad' | null — which kind of selection happened most recently, so the Explorer section below (Keyboard/Fretboard/Staff/Chromatic Circle) knows whether to mirror the toggled extension stack or a plain triad click
   majExtLevel: 'triad',     // 'triad' | '7' | 'auto' — default level for Major-panel progressions
   minExtLevel: 'triad',     // same, for Minor-panel progressions
   progOverrides:{},         // per-chord level override for the CURRENTLY displayed progression, keyed by chord index
@@ -956,28 +957,44 @@ const sleep = ms => new Promise(r=>setTimeout(r,ms));
 // triad dots) so tones can be stacked and compared. Toggling a dot on
 // previews that column's full chord right away, played simultaneously.
 
+// Ordered note NAMES (no octave yet) for a ring column's full stack:
+// triad root/3rd/5th, then whichever extension rings are currently
+// toggled on, in ring order (7→9→11→13).
+const stackNamesForCol = (colIdx) => {
+  const majorNote = NOTE_ORDER[colIdx];
+  const mode = EXT_MODES[S.extMode];
+  const root = extRootFor(majorNote, mode.base);
+  const triad = mode.base==='minor' ? getMinorTriad(root) : getTriad(root);
+  const ringNotes = EXT_RINGS
+    .filter(r => S.extActive.has(r+'-'+colIdx))
+    .map(r => extNoteFor(majorNote, r, S.extMode));
+  return [...triad, ...ringNotes];
+};
+
 // Triad {note,oct} entries for a ring column, per the current extension
 // mode (minor triad for natural/dorian/harmonic, dominant triad for
-// Dominant V7-13).
+// Dominant V7-13). Octaves come from the KCM ARPEGGIO LAW (assignOctaves,
+// above) rather than a flat oct:4 for every note — a flat octave doesn't
+// keep the notes in register order (e.g. a minor triad's root can sit
+// above its own 3rd at a fixed octave), which read as random jumping when
+// arpeggiated instead of a clean ascend.
 const triadEntriesForCol = (colIdx) => {
   const majorNote = NOTE_ORDER[colIdx];
   const mode = EXT_MODES[S.extMode];
   const root = extRootFor(majorNote, mode.base);
   const triad = mode.base==='minor' ? getMinorTriad(root) : getTriad(root);
-  return triad.map(n => ({note:n, oct:4}));
+  return assignOctaves(triad, 4);
 };
 
 // {note,oct} entries for a ring column's full extended chord: the
 // underlying triad plus every extension tone currently toggled on in
-// that same column.
-const chordEntriesForCol = (colIdx) => {
-  const majorNote = NOTE_ORDER[colIdx];
-  const extEntries = [...S.extActive]
-    .filter(k => k.endsWith('-'+colIdx))
-    .map(k => k.split('-')[0])
-    .map(ring => ({note: extNoteFor(majorNote, ring, S.extMode), oct: EXT_OCTAVE[ring]}));
-  return [...triadEntriesForCol(colIdx), ...extEntries];
-};
+// that same column, voiced as ONE continuously-ascending stack (KCM
+// ARPEGGIO LAW) instead of the triad pinned to oct4 and every ring pinned
+// to its own fixed octave independent of the actual notes involved — the
+// old approach could and did produce backward jumps (e.g. an 11th landing
+// lower in pitch than the 9th right before it, even though it's "higher"
+// on paper).
+const chordEntriesForCol = (colIdx) => assignOctaves(stackNamesForCol(colIdx), 4);
 
 // Plays a list of {note,oct} entries either all at once (simultaneous —
 // how a real chord sounds) or as a quick arpeggio (staggered in order).
@@ -1032,6 +1049,10 @@ const toggleExt = (ring, colIdx) => {
   // the static "Circle of 5ths" branding — falls back to that branding
   // once this column has nothing left active.
   S.hubLabel = computeHubLabel(colIdx);
+  // Extension rings now "own" the Explorer section below too, same idea
+  // as the hub — once this column is empty again there's nothing to
+  // mirror, so fall back rather than keep claiming the extension lane.
+  S.lastPick = S.extActive.size > 0 ? 'ext' : null;
   render();
   if (turningOn) playColumnChord(colIdx);
 };
@@ -1054,8 +1075,16 @@ const chordPlayEntries = () => {
   const list = extActiveList();
   if (list.length === 0) return [];
   const sameCol = list.every(n => n.idx === list[0].idx);
-  const extEntries = list.map(n => ({note:n.note, oct:n.oct}));
-  return sameCol ? [...triadEntriesForCol(list[0].idx), ...extEntries] : extEntries;
+  // Same column: hand off to chordEntriesForCol so the triad and every
+  // active extension come back as one properly-ascending stack (KCM
+  // ARPEGGIO LAW), rather than concatenating a fixed-octave triad with
+  // fixed-octave extension tones that don't necessarily continue upward
+  // from where the triad left off.
+  if (sameCol) return chordEntriesForCol(list[0].idx);
+  // Different columns (comparing extensions from two different keys):
+  // no single triad applies, so just the raw tones — already sorted
+  // ascending by extActiveList's own pitch-sort, so no jump risk there.
+  return list.map(n => ({note:n.note, oct:n.oct}));
 };
 
 // ▶ Arpeggio — notes staggered in order (root up through the stacked extensions).
@@ -1073,7 +1102,7 @@ const compareExt = () => {
   playNotes([b.note], b.oct, 1.2, 1.7);
 };
 
-const clearExt = () => { S.extActive.clear(); S.hubLabel = null; render(); };
+const clearExt = () => { S.extActive.clear(); S.hubLabel = null; S.lastPick = null; render(); };
 
 const setExtMode = m => { S.extMode = m; render(); };
 
@@ -1082,15 +1111,19 @@ const applyExtPreset = p => {
   const idx = NOTE_ORDER.indexOf(S.majKey);
   S.extActive = new Set(p.rings.map(r=> r+'-'+idx));
   S.hubLabel = computeHubLabel(idx);
+  S.lastPick = 'ext';
   render();
   const mode = EXT_MODES[p.mode];
   const root = extRootFor(S.majKey, mode.base);
   const triad = mode.base==='minor' ? getMinorTriad(root) : getTriad(root);
-  playNotes(triad, 4, 1.6, 0);
-  p.rings.forEach((ring,i)=>{
-    const note = extNoteFor(S.majKey, ring, p.mode);
-    playNotes([note], EXT_OCTAVE[ring], 1.6, 0.08*(i+1));
-  });
+  const ringNotes = p.rings.map(ring => extNoteFor(S.majKey, ring, p.mode));
+  // KCM ARPEGGIO LAW again — triad plus every preset ring as one
+  // ascending stack, not the triad pinned to oct4 and each ring pinned to
+  // its own fixed octave (which could land a later ring lower than an
+  // earlier one).
+  const stack = assignOctaves([...triad, ...ringNotes], 4);
+  stack.slice(0, triad.length).forEach(e => playNotes([e.note], e.oct, 1.6, 0));
+  stack.slice(triad.length).forEach((e,i) => playNotes([e.note], e.oct, 1.6, 0.08*(i+1)));
 };
 
 const renderExtPanel = () => {
@@ -1252,8 +1285,8 @@ const renderCircle = () => {
     // column, even after you'd moved on to a new key out here. The two
     // outer rings now "reconnect" the center display to the current click,
     // same as the extension rings already did.
-    outerDot.addEventListener('click',()=>{ if(!S.soloPlaying){S.majKey=note;S.minKey=REL_MINOR[note]||S.minKey; S.hubLabel={top:outerDisplay,bottom:'major'}; render(); playTriad(note,false);} });
-    outerDot.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();if(!S.soloPlaying){S.majKey=note;S.minKey=REL_MINOR[note]||S.minKey;S.hubLabel={top:outerDisplay,bottom:'major'};render();playTriad(note,false);}} });
+    outerDot.addEventListener('click',()=>{ if(!S.soloPlaying){S.majKey=note;S.minKey=REL_MINOR[note]||S.minKey; S.hubLabel={top:outerDisplay,bottom:'major'};S.lastPick='triad'; render(); playTriad(note,false);} });
+    outerDot.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();if(!S.soloPlaying){S.majKey=note;S.minKey=REL_MINOR[note]||S.minKey;S.hubLabel={top:outerDisplay,bottom:'major'};S.lastPick='triad';render();playTriad(note,false);}} });
     g.appendChild(outerDot);
     const outerLbl=svgEl('text',{'x':ox,'y':oy+5,'text-anchor':'middle','font-size':note==='Gb'?'10':'14','fill':textOn(note),'font-weight':'900','font-family':'Georgia,serif','pointer-events':'none','user-select':'none'});
     outerLbl.textContent=outerDisplay; g.appendChild(outerLbl);
@@ -1265,8 +1298,8 @@ const renderCircle = () => {
     }
     const innerDot=svgEl('circle',{cx:ix,cy:iy,r:innerR,fill:rmCol,stroke:isIA?'#F4D03F':'rgba(255,255,255,0.3)','stroke-width':isIA?'3':'1.5',opacity:isIA?'1':'0.88',cursor:'pointer',role:'button',tabindex:'0','aria-label':`Play ${dnInnerMinor(relMin)} minor`});
     if(isIA) innerDot.setAttribute('filter',`drop-shadow(0 0 7px ${rmCol})`);
-    innerDot.addEventListener('click',()=>{ if(!S.soloPlaying){S.minKey=relMin;S.majKey=REL_MAJOR[relMin]||S.majKey;S.hubLabel={top:dnInnerMinor(relMin)+'m',bottom:'relative minor'};render();playTriad(relMin,true);} });
-    innerDot.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();if(!S.soloPlaying){S.minKey=relMin;S.majKey=REL_MAJOR[relMin]||S.majKey;S.hubLabel={top:dnInnerMinor(relMin)+'m',bottom:'relative minor'};render();playTriad(relMin,true);}} });
+    innerDot.addEventListener('click',()=>{ if(!S.soloPlaying){S.minKey=relMin;S.majKey=REL_MAJOR[relMin]||S.majKey;S.hubLabel={top:dnInnerMinor(relMin)+'m',bottom:'relative minor'};S.lastPick='triad';render();playTriad(relMin,true);} });
+    innerDot.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();if(!S.soloPlaying){S.minKey=relMin;S.majKey=REL_MAJOR[relMin]||S.majKey;S.hubLabel={top:dnInnerMinor(relMin)+'m',bottom:'relative minor'};S.lastPick='triad';render();playTriad(relMin,true);}} });
     g.appendChild(innerDot);
     const il1=svgEl('text',{'x':ix,'y':iy,'text-anchor':'middle','font-size':'8','fill':textOn(relMin),'font-weight':'800','font-family':'Georgia,serif','pointer-events':'none','user-select':'none'});
     il1.textContent=dnInnerMinor(relMin); g.appendChild(il1);
@@ -1793,6 +1826,23 @@ function _explPc(name) {
 }
 
 function _explCurrentTones() {
+  // Extension rings take priority when they're the most recent thing you
+  // touched — connects the Explorer section (Keyboard/Fretboard/Staff/
+  // Chromatic Circle) to whatever's actually toggled up in the Extended
+  // Tones panel, instead of it always showing the plain major scale
+  // regardless of what chord is on screen above it.
+  if (S.lastPick === 'ext' && S.extActive.size > 0) {
+    const list = extActiveList();
+    const sameCol = list.every(n => n.idx === list[0].idx);
+    if (sameCol) {
+      const tones = stackNamesForCol(list[0].idx);
+      const label = S.hubLabel ? `${S.hubLabel.top} — ${S.hubLabel.bottom}` : `${dn(NOTE_ORDER[list[0].idx])} extension chord`;
+      return { tones, label };
+    }
+    // Comparing extensions across two different keys — no single
+    // chord/scale applies, so just the raw tones being compared.
+    return { tones: list.map(n => n.note), label: 'compared extension tones' };
+  }
   const active = (typeof getActiveNote === 'function') ? getActiveNote() : null;
   if (active && active.note) {
     const tones = active.type === 'inner' ? getMinorTriad(active.note) : getTriad(active.note);
