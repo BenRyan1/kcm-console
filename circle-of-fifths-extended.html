@@ -277,6 +277,11 @@ body{font-family:var(--font-b);background:radial-gradient(ellipse at 30% 20%,#1e
           Click a ring dot to toggle it in or out and hear it &mdash; each ring toward the center stacks one more tone on top of the last. Then <strong>▶ Play Chord</strong> (all at once), <strong>♪ Arpeggio</strong> (one at a time, low to high), or <strong>⇄ Compare</strong> exactly two.
         </div>
 
+        <div class="ext-row" style="margin-bottom:10px;">
+          <button class="ext-play-btn" id="extPlayBtnTop" style="flex:2;">▶ Play</button>
+          <button class="stop-btn" id="extStopBtnTop" style="flex:1;margin-top:0;background:linear-gradient(135deg,rgba(42,5,5,.95),rgba(21,0,0,.98));border:1.5px solid rgba(255,80,80,.5);color:#ff9999;">■ Stop</button>
+        </div>
+
         <div class="ext-row" id="extModeRow">
           <button class="ext-mode-btn" data-mode="natural">Natural Minor</button>
           <button class="ext-mode-btn" data-mode="dorian">Dorian (Jazz)</button>
@@ -1582,6 +1587,13 @@ const wireExtControls = () => {
   document.getElementById('extArpeggioBtn').addEventListener('click', playExtChord);
   document.getElementById('extCompareBtn').addEventListener('click', compareExt);
   document.getElementById('extClearBtn').addEventListener('click', clearExt);
+  // Same Play Chord action as the row below, just mirrored up top so you
+  // don't have to scroll past the mode/preset buttons to hear what's
+  // currently toggled — plus a dedicated Stop up here too, since Arpeggio
+  // and Compare both take a couple seconds to finish and previously the
+  // only way to cut them off was the far-away center Stop button.
+  document.getElementById('extPlayBtnTop').addEventListener('click', playExtChordTogether);
+  document.getElementById('extStopBtnTop').addEventListener('click', stopAll);
 };
 
 // ── Wire progression extension-level controls ─────────
