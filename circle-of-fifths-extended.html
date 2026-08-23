@@ -990,11 +990,14 @@ const playColumnChord = (colIdx) => playChordEntries(chordEntriesForCol(colIdx),
 const RING_LEVELS = ['7','9','11','13'];
 
 // Builds the hub's {top,bottom} label from whatever's currently active in
-// one column: top is a real chord symbol — the family root plus the
-// highest active extension (e.g. "Am9"), since a 9th chord already implies
-// the 7th under it; bottom names which key that family belongs to (e.g.
-// "relative minor of C"). Returns null when nothing's active in that
-// column, so callers can fall back to the default branding.
+// one column: top is the actual pitch letter of whichever ring was just
+// actuated (the highest active one — clicking a ring always lands there,
+// since turning one on fills in everything below it), so the hub visibly
+// confirms which note you just added rather than only a chord symbol
+// changing digits (Am11→Am13 reads as "one character changed"; seeing
+// "F" for the 13th makes clear a real new pitch just sounded). Bottom
+// spells out the chord symbol and context. Returns null when nothing's
+// active in that column, so callers can fall back to the default branding.
 const computeHubLabel = (colIdx) => {
   const activeRings = RING_LEVELS.filter(r => S.extActive.has(r+'-'+colIdx));
   if (activeRings.length === 0) return null;
@@ -1003,9 +1006,11 @@ const computeHubLabel = (colIdx) => {
   const mode = EXT_MODES[S.extMode];
   const root = extRootFor(majorNote, mode.base);
   const isMinor = mode.base === 'minor';
+  const actuatedNote = extNoteFor(majorNote, highest, S.extMode);
+  const chordSym = `${dn(root)}${isMinor?'m':''}${highest}`;
   return {
-    top: `${dn(root)}${isMinor?'m':''}${highest}`,
-    bottom: `${isMinor?'relative minor':'dominant'} of ${dn(majorNote)}`,
+    top: dn(actuatedNote),
+    bottom: `${highest}th · ${chordSym} (${isMinor?'rel. minor':'dominant'} of ${dn(majorNote)})`,
   };
 };
 
