@@ -1030,9 +1030,14 @@ const computeHubLabel = (colIdx) => {
   const isMinor = mode.base === 'minor';
   const actuatedNote = extNoteFor(majorNote, highest, S.extMode);
   const chordSym = `${dn(root)}${isMinor?'m':''}${highest}`;
+  // Three lines: the actuated note by itself, the ring/chord symbol, then
+  // the key context in its own line — was previously the last two crammed
+  // onto one line together, which read as one dense line instead of two
+  // separate facts.
   return {
     top: dn(actuatedNote),
-    bottom: `${highest}th · ${chordSym} (${isMinor?'rel. minor':'dominant'} of ${dn(majorNote)})`,
+    mid: `${highest}th · ${chordSym}`,
+    bottom: `(${isMinor?'rel. minor':'dominant'} of ${dn(majorNote)})`,
   };
 };
 
@@ -1217,9 +1222,19 @@ const renderCircle = () => {
     t.textContent=txt; svg.appendChild(t);
   };
   if (S.hubLabel) {
-    // Broadcast the chord/degree just chosen on the extension rings.
-    addTxt(cx,cy-4,S.hubLabel.top,'22','#F4D03F');
-    addTxt(cx,cy+20,S.hubLabel.bottom,'11','rgba(244,208,63,0.75)','700','Arial,sans-serif');
+    // Broadcast the chord/degree just chosen on the extension rings, as
+    // three separate lines: the actuated note, the ring/chord symbol, and
+    // the key context — was two lines with the symbol and context crammed
+    // together, which read as one cluttered line instead of two clean
+    // ones. Plain major/minor dot clicks only ever set top+bottom (no
+    // mid), so that case collapses back to two lines automatically.
+    addTxt(cx,cy-15,S.hubLabel.top,'22','#F4D03F');
+    if (S.hubLabel.mid) {
+      addTxt(cx,cy+8,S.hubLabel.mid,'11','rgba(244,208,63,0.85)','700','Arial,sans-serif');
+      addTxt(cx,cy+21,S.hubLabel.bottom,'10','rgba(244,208,63,0.65)','700','Arial,sans-serif');
+    } else {
+      addTxt(cx,cy+14,S.hubLabel.bottom,'11','rgba(244,208,63,0.75)','700','Arial,sans-serif');
+    }
   } else {
     addTxt(cx,cy-8,'Circle of','13','#F4D03F');
     addTxt(cx,cy+7,'5ths','13','#F4D03F');
@@ -1836,7 +1851,7 @@ function _explCurrentTones() {
     const sameCol = list.every(n => n.idx === list[0].idx);
     if (sameCol) {
       const tones = stackNamesForCol(list[0].idx);
-      const label = S.hubLabel ? `${S.hubLabel.top} — ${S.hubLabel.bottom}` : `${dn(NOTE_ORDER[list[0].idx])} extension chord`;
+      const label = S.hubLabel ? `${S.hubLabel.top} — ${S.hubLabel.mid||''} ${S.hubLabel.bottom}`.replace(/\s+/g,' ').trim() : `${dn(NOTE_ORDER[list[0].idx])} extension chord`;
       return { tones, label };
     }
     // Comparing extensions across two different keys — no single
