@@ -1241,8 +1241,14 @@ const renderCircle = () => {
     const outerDisplay = note==='Gb' ? 'G♭/F♯' : dn(note);
     const outerDot=svgEl('circle',{cx:ox,cy:oy,r:outerR,fill:col,stroke:isOA?'#F4D03F':'rgba(255,255,255,0.35)','stroke-width':isOA?'3.5':'1.8',opacity:isOA?'1':'0.9',cursor:'pointer',role:'button',tabindex:'0','aria-label':`Play ${outerDisplay} major`});
     if(isOA) outerDot.setAttribute('filter',`drop-shadow(0 0 10px ${col})`);
-    outerDot.addEventListener('click',()=>{ if(!S.soloPlaying){S.majKey=note;S.minKey=REL_MINOR[note]||S.minKey; render(); playTriad(note,false);} });
-    outerDot.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();if(!S.soloPlaying){S.majKey=note;S.minKey=REL_MINOR[note]||S.minKey;render();playTriad(note,false);}} });
+    // Clicking either outer ring (major or minor, below) re-points the hub
+    // at whatever key you just picked — previously it kept showing
+    // whatever extension chord was last toggled on a completely different
+    // column, even after you'd moved on to a new key out here. The two
+    // outer rings now "reconnect" the center display to the current click,
+    // same as the extension rings already did.
+    outerDot.addEventListener('click',()=>{ if(!S.soloPlaying){S.majKey=note;S.minKey=REL_MINOR[note]||S.minKey; S.hubLabel={top:outerDisplay,bottom:'major'}; render(); playTriad(note,false);} });
+    outerDot.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();if(!S.soloPlaying){S.majKey=note;S.minKey=REL_MINOR[note]||S.minKey;S.hubLabel={top:outerDisplay,bottom:'major'};render();playTriad(note,false);}} });
     g.appendChild(outerDot);
     const outerLbl=svgEl('text',{'x':ox,'y':oy+5,'text-anchor':'middle','font-size':note==='Gb'?'10':'14','fill':textOn(note),'font-weight':'900','font-family':'Georgia,serif','pointer-events':'none','user-select':'none'});
     outerLbl.textContent=outerDisplay; g.appendChild(outerLbl);
@@ -1254,8 +1260,8 @@ const renderCircle = () => {
     }
     const innerDot=svgEl('circle',{cx:ix,cy:iy,r:innerR,fill:rmCol,stroke:isIA?'#F4D03F':'rgba(255,255,255,0.3)','stroke-width':isIA?'3':'1.5',opacity:isIA?'1':'0.88',cursor:'pointer',role:'button',tabindex:'0','aria-label':`Play ${dnInnerMinor(relMin)} minor`});
     if(isIA) innerDot.setAttribute('filter',`drop-shadow(0 0 7px ${rmCol})`);
-    innerDot.addEventListener('click',()=>{ if(!S.soloPlaying){S.minKey=relMin;S.majKey=REL_MAJOR[relMin]||S.majKey;render();playTriad(relMin,true);} });
-    innerDot.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();if(!S.soloPlaying){S.minKey=relMin;S.majKey=REL_MAJOR[relMin]||S.majKey;render();playTriad(relMin,true);}} });
+    innerDot.addEventListener('click',()=>{ if(!S.soloPlaying){S.minKey=relMin;S.majKey=REL_MAJOR[relMin]||S.majKey;S.hubLabel={top:dnInnerMinor(relMin)+'m',bottom:'relative minor'};render();playTriad(relMin,true);} });
+    innerDot.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();if(!S.soloPlaying){S.minKey=relMin;S.majKey=REL_MAJOR[relMin]||S.majKey;S.hubLabel={top:dnInnerMinor(relMin)+'m',bottom:'relative minor'};render();playTriad(relMin,true);}} });
     g.appendChild(innerDot);
     const il1=svgEl('text',{'x':ix,'y':iy,'text-anchor':'middle','font-size':'8','fill':textOn(relMin),'font-weight':'800','font-family':'Georgia,serif','pointer-events':'none','user-select':'none'});
     il1.textContent=dnInnerMinor(relMin); g.appendChild(il1);
