@@ -1,16 +1,25 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<!-- Note: this Extended build intentionally omits the /js/kcm-app-gate.js
+     paywall snippet used on the live site's app pages — that script hides
+     the whole page until it loads, which only succeeds when served from
+     the real keyscodesandmodes.com domain. Left in, this file would open
+     to a permanently blank screen anywhere else (locally, as a download,
+     via file://). Add the two gate lines back in once this is deployed
+     alongside the other /apps/*.html pages, if it should be tier-gated
+     like them. -->
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Circle of Fifths | Keys, Codes & Modes™</title>
-<meta name="description" content="Interactive Circle of Fifths — chord progressions, arpeggios, major and minor keys. Free visual music theory by Benjamin Ryan.">
+<title>Circle of Fifths Extended | Keys, Codes & Modes™</title>
+<meta name="description" content="Circle of Fifths Extended — the classic wheel plus interior rings for 7th, 9th, 11th and 13th chord extensions off each relative minor. Toggle tones, compare intervals, and hear best-sound presets. By Benjamin Ryan.">
 <meta name="author" content="Benjamin Ryan">
 <meta name="robots" content="index, follow">
-<link rel="canonical" href="https://keyscodesandmodes.com/circle-of-fifths.html">
-<meta property="og:title" content="Interactive Circle of Fifths | Keys, Codes & Modes™">
-<meta property="og:description" content="Click any key to hear triads, arpeggios, and chord progressions. Free music theory by Benjamin Ryan.">
-<meta property="og:url" content="https://keyscodesandmodes.com/circle-of-fifths.html">
+<link rel="canonical" href="https://keyscodesandmodes.com/circle-of-fifths-extended.html">
+<meta property="og:title" content="Circle of Fifths Extended | Keys, Codes & Modes™">
+<meta property="og:description" content="The Circle of Fifths, extended inward with 7th/9th/11th/13th rings off each relative minor — click to toggle tones and hear how extensions sound together.">
+<meta property="og:url" content="https://keyscodesandmodes.com/circle-of-fifths-extended.html">
 <meta property="og:image" content="https://keyscodesandmodes.com/images/kcm-social-share.jpg">
 <meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
 <!-- NO external JS dependencies — fully self-contained, works from file:// -->
@@ -82,8 +91,18 @@ body{font-family:var(--font-b);background:radial-gradient(ellipse at 30% 20%,#1e
 .prog-name{font-family:var(--font-d);font-size:.65rem;font-weight:800;letter-spacing:.3px;margin-bottom:1px;}
 .prog-meta{font-size:.58rem;color:rgba(232,232,248,.5);font-weight:600;display:flex;justify-content:space-between;}
 .chord-pills{display:flex;flex-wrap:wrap;gap:3px;margin-top:6px;padding:5px 4px;background:rgba(0,0,0,.4);border-radius:8px;border:1px solid rgba(0,128,128,.12);min-height:10px;}
-.cpill{font-size:.62rem;font-weight:800;font-family:var(--font-d);padding:3px 6px;border-radius:6px;border:1.5px solid;transition:all .12s;opacity:.5;}
+.cpill{font-size:.62rem;font-weight:800;font-family:var(--font-d);padding:3px 6px;border-radius:6px;border:1.5px solid;transition:all .12s;opacity:.5;cursor:pointer;}
 .cpill.lit{opacity:1;transform:scale(1.08);}
+.cpill.disabled{cursor:not-allowed;}
+.cpill .warn{font-size:.85em;margin-left:1px;}
+
+/* ── Progression extension-level controls ─────────── */
+.ext-level-row{display:flex;gap:4px;margin-bottom:4px;}
+.ext-level-btn{flex:1;font-size:.6rem;font-weight:700;padding:5px 3px;border-radius:8px;cursor:pointer;border:1.5px solid rgba(0,192,192,.3);background:rgba(0,40,40,.3);color:rgba(232,232,248,.65);text-align:center;transition:all .15s;}
+.ext-level-btn:hover{border-color:rgba(0,192,192,.6);}
+.ext-level-btn.on{background:linear-gradient(135deg,#5a3a80,#2a1a48);border-color:#c8a8e8;color:#ecd8ff;box-shadow:0 0 8px rgba(139,107,163,.35);}
+.panel-min .ext-level-btn.on{background:linear-gradient(135deg,#006060,#003838);border-color:rgba(0,192,192,.7);color:#e0ffff;}
+.ext-level-cap{font-size:.56rem;line-height:1.5;color:rgba(232,232,248,.4);margin-bottom:6px;text-align:center;}
 
 /* ── Center column ───────────────────────────────── */
 .center-col{display:flex;flex-direction:column;align-items:center;gap:.7rem;}
@@ -106,6 +125,28 @@ body{font-family:var(--font-b);background:radial-gradient(ellipse at 30% 20%,#1e
 .loop-dir-btn{flex:1;padding:5px 3px;font-size:.6rem;font-weight:800;border-radius:8px;cursor:pointer;border:1.5px solid rgba(0,192,192,.25);background:rgba(0,128,128,.08);color:rgba(232,232,248,.6);transition:all .2s;text-align:center;letter-spacing:.3px;}
 .loop-dir-btn.active{border-color:rgba(0,192,192,.7);background:rgba(0,128,128,.3);color:#e0ffff;}
 .loop-dir-btn:hover{border-color:rgba(0,192,192,.5);color:#c0f0f0;}
+
+/* ── Extended Tones block ─────────────────────────── */
+.ext-block{width:100%;background:linear-gradient(135deg,rgba(139,107,163,.09),rgba(0,128,128,.06));border:1.5px solid rgba(244,208,63,.28);border-radius:14px;padding:12px 14px;margin:8px 0;}
+.ext-title{color:#F4D03F;font-weight:800;font-family:var(--font-d);font-size:.78rem;letter-spacing:1px;text-align:center;text-transform:uppercase;margin-bottom:6px;}
+.ext-steps{font-size:.68rem;color:rgba(232,232,248,.65);line-height:1.7;text-align:center;margin-bottom:10px;}
+.ext-steps strong{color:#F4D03F;}
+.ext-row{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:8px;}
+.ext-mode-btn,.ext-preset-btn{font-family:var(--font-b);font-size:.68rem;font-weight:700;color:rgba(232,232,248,.75);background:rgba(0,40,40,.35);border:1.5px solid rgba(0,192,192,.3);border-radius:9px;padding:6px 10px;cursor:pointer;transition:all .18s;}
+.ext-mode-btn:hover,.ext-preset-btn:hover{border-color:rgba(0,192,192,.6);color:#e0ffff;}
+.ext-mode-btn.on{background:linear-gradient(135deg,#5a3a80,#2a1a48);border-color:#c8a8e8;color:#ecd8ff;box-shadow:0 0 10px rgba(139,107,163,.35);}
+.ext-preset-btn{display:flex;flex-direction:column;align-items:flex-start;gap:1px;min-width:118px;text-align:left;}
+.ext-preset-btn .ext-badge{font-size:.6rem;color:#F4D03F;font-weight:800;}
+.ext-chordbox{min-height:20px;font-size:.78rem;color:#a0f0f0;text-align:center;padding:8px 10px;background:rgba(0,0,0,.35);border:1px solid rgba(0,128,128,.2);border-radius:9px;margin-bottom:8px;line-height:1.6;}
+.ext-chordbox .ext-empty{color:rgba(232,232,248,.4);font-style:italic;}
+.ext-play-btn{flex:1;min-width:120px;padding:9px 10px;border-radius:10px;font-size:.75rem;font-weight:800;cursor:pointer;letter-spacing:.5px;background:linear-gradient(135deg,#006060,#003838);border:2px solid rgba(0,192,192,.55);color:#e0ffff;transition:all .2s;}
+.ext-play-btn:hover{filter:brightness(1.12);}
+.ext-play-btn:disabled{opacity:.35;cursor:not-allowed;filter:none;}
+.ext-clear-btn{padding:9px 14px;border-radius:10px;font-size:.75rem;font-weight:800;cursor:pointer;letter-spacing:.5px;background:linear-gradient(135deg,#3a1a00,#1a0a00);border:1.5px solid rgba(255,150,80,.4);color:#ffb380;}
+.ext-note{font-size:.68rem;color:rgba(232,232,248,.6);line-height:1.65;margin-top:2px;}
+.ext-note strong{color:var(--text);}
+.extdot{cursor:pointer;}
+.extdot:hover{filter:brightness(1.25);}
 
 /* ── Info cards ──────────────────────────────────── */
 .info-cards{width:100%;display:flex;flex-direction:column;gap:6px;}
@@ -174,8 +215,8 @@ body{font-family:var(--font-b);background:radial-gradient(ellipse at 30% 20%,#1e
 <main id="main-content" role="main">
 <div id="app">
   <div class="page-hero">
-    <h1>Circle of Fifths</h1>
-    <p>⬤ Major keys (left) &nbsp;·&nbsp; Click any dot to play &nbsp;·&nbsp; ◉ Relative Minor (right) &nbsp;·&nbsp; Progressions in each panel</p>
+    <h1>Circle of Fifths — Extended</h1>
+    <p>⬤ Major keys &nbsp;·&nbsp; ◉ Relative Minor &nbsp;·&nbsp; then four new interior rings — <strong style="color:#F4D03F;">7th · 9th · 11th · 13th</strong> — built from each minor. Toggle rings on/off below the wheel to hear extensions alone or stacked together.</p>
   </div>
 
   <div class="three-col">
@@ -202,6 +243,12 @@ body{font-family:var(--font-b);background:radial-gradient(ellipse at 30% 20%,#1e
       </div>
       <button class="stop-btn" id="majStop" style="background:linear-gradient(135deg,rgba(42,5,5,.95),rgba(21,0,0,.98));border:1.5px solid rgba(255,80,80,.5);color:#ff9999;">■  STOP</button>
       <div class="prog-sep maj">
+        <div class="ext-level-row" id="majExtLevelRow">
+          <button class="ext-level-btn" data-side="maj" data-level="triad">Triads</button>
+          <button class="ext-level-btn" data-side="maj" data-level="7">7ths</button>
+          <button class="ext-level-btn" data-side="maj" data-level="auto">Auto ✨</button>
+        </div>
+        <div class="ext-level-cap">Auto adds diatonic 9/11/13 per chord, skipping clashing tones. Tap a chord pill below to cycle just that one.</div>
         <div class="prog-lbl maj" id="majProgLbl">Major Progressions — C</div>
         <div class="prog-list" id="majProgList"></div>
         <div class="chord-pills" id="majPills"></div>
@@ -211,9 +258,53 @@ body{font-family:var(--font-b);background:radial-gradient(ellipse at 30% 20%,#1e
     <!-- CENTER — Circle + loop -->
     <div class="center-col">
       <div class="circle-wrap">
-        <svg id="circleSvg" viewBox="0 0 500 500" class="circle-svg" role="img" aria-label="Interactive Circle of Fifths — C at 12 o'clock, clockwise ascending">
+        <svg id="circleSvg" viewBox="0 0 700 700" class="circle-svg" role="img" aria-label="Interactive Circle of Fifths Extended — C at 12 o'clock, clockwise ascending, with 7th/9th/11th/13th rings toward the center">
           <!-- drawn by JS -->
         </svg>
+      </div>
+
+      <!-- ── Extended Tones: 7th/9th/11th/13th rings off the relative minor ── -->
+      <div class="ext-block" id="extBlock">
+        <div class="ext-title">🎹 Extended Tones — 7ths, 9ths, 11ths &amp; 13ths</div>
+        <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:8px;font-size:.62rem;font-weight:700;color:rgba(232,232,248,.7);">
+          <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#AEDFF7;margin-right:4px;vertical-align:middle;"></span>7th</span>
+          <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#C9F2C7;margin-right:4px;vertical-align:middle;"></span>9th</span>
+          <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#E3C9F2;margin-right:4px;vertical-align:middle;"></span>11th</span>
+          <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#F7D9C4;margin-right:4px;vertical-align:middle;"></span>13th</span>
+        </div>
+        <div class="ext-steps">
+          Rings apply to <strong id="extKeyLabel">A minor</strong> (relative minor of the Major panel's key).
+          Click a ring dot to toggle it in or out and hear it &mdash; each ring toward the center stacks one more tone on top of the last. Then <strong>▶ Play Chord</strong> (all at once), <strong>♪ Arpeggio</strong> (one at a time, low to high), or <strong>⇄ Compare</strong> exactly two.
+        </div>
+
+        <div class="ext-row" style="margin-bottom:10px;">
+          <button class="ext-play-btn" id="extPlayBtnTop" style="flex:2;">▶ Play</button>
+          <button class="stop-btn" id="extStopBtnTop" style="flex:1;margin-top:0;background:linear-gradient(135deg,rgba(42,5,5,.95),rgba(21,0,0,.98));border:1.5px solid rgba(255,80,80,.5);color:#ff9999;">■ Stop</button>
+        </div>
+
+        <div class="ext-row" id="extModeRow">
+          <button class="ext-mode-btn" data-mode="natural">Natural Minor</button>
+          <button class="ext-mode-btn" data-mode="dorian">Dorian (Jazz)</button>
+          <button class="ext-mode-btn" data-mode="harmonic">Harmonic Minor</button>
+          <button class="ext-mode-btn" data-mode="dominant">Dominant V7&ndash;13</button>
+        </div>
+
+        <div class="ext-row" id="extPresetRow"></div>
+
+        <div class="ext-chordbox" id="extChordBox"><span class="ext-empty">No extension tones selected yet — click a ring on the wheel, or try a preset above</span></div>
+
+        <div class="ext-row">
+          <button class="ext-play-btn" id="extPlayBtn">▶ Play Chord</button>
+          <button class="ext-play-btn" id="extArpeggioBtn">♪ Arpeggio</button>
+          <button class="ext-play-btn" id="extCompareBtn" disabled>⇄ Compare (pick exactly 2)</button>
+          <button class="ext-clear-btn" id="extClearBtn">Clear rings</button>
+        </div>
+
+        <p class="ext-note">
+          <strong>Minor 9</strong> is the safest "instant color" move — a 9th above a m7 chord clashes with nothing, so it always sounds smooth.
+          <strong>Dominant 9</strong> (built on this key's own dominant) gives the strongest pull back to the tonic.
+          For <strong>11ths and 13ths</strong>, switch to <strong>Dorian</strong>: natural minor's ♭13 sits a half-step above the 5th and clashes — Dorian's natural 13 removes that clash, so 11/13 voicings sound clean instead of muddy.
+        </p>
       </div>
 
       <!-- ── Explorer: see the current key/chord on Keyboard, Fretboard, Staff, Chromatic Circle ── -->
@@ -334,6 +425,12 @@ body{font-family:var(--font-b);background:radial-gradient(ellipse at 30% 20%,#1e
       </div>
       <button class="stop-btn" id="minStop" style="background:linear-gradient(135deg,rgba(42,5,18,.95),rgba(21,0,8,.98));border:1.5px solid rgba(200,80,160,.5);color:#e080c0;">■  STOP</button>
       <div class="prog-sep min">
+        <div class="ext-level-row" id="minExtLevelRow">
+          <button class="ext-level-btn" data-side="min" data-level="triad">Triads</button>
+          <button class="ext-level-btn" data-side="min" data-level="7">7ths</button>
+          <button class="ext-level-btn" data-side="min" data-level="auto">Auto ✨</button>
+        </div>
+        <div class="ext-level-cap">Auto adds diatonic 9/11/13 per chord, skipping clashing tones. Tap a chord pill below to cycle just that one.</div>
         <div class="prog-lbl min" id="minProgLbl">Minor Progressions — Am</div>
         <div class="prog-list" id="minProgList"></div>
         <div class="chord-pills" id="minPills"></div>
@@ -424,6 +521,43 @@ const buildSeq = (base, startKey) => {
   return [...base.slice(i), ...base.slice(0, i)];
 };
 
+// ── EXTENDED RINGS — 7th / 9th / 11th / 13th off the relative minor ───
+// Offsets are semitones above the *ring's own root* (the relative minor's
+// root, or — in Dominant mode — the key's own dominant, i.e. the next
+// clockwise neighbor on this same wheel).
+// natural:  1,2,b3,4,5,b6,b7   (Aeolian)   → 7=b7, 9=2, 11=4, 13=b6
+// dorian:   1,2,b3,4,5, 6,b7   (raised 6)  → 7=b7, 9=2, 11=4, 13=nat6
+// harmonic: 1,2,b3,4,5,b6, 7   (raised 7)  → 7=nat7, 9=2, 11=4, 13=b6
+// dominant: mixolydian off the key's dominant → 7=b7, 9=2, 11=4, 13=nat6
+const EXT_MODES = {
+  natural:  { label:'Natural Minor',   base:'minor',    offsets:{7:10,9:2,11:5,13:8} },
+  dorian:   { label:'Dorian (Jazz)',   base:'minor',    offsets:{7:10,9:2,11:5,13:9} },
+  harmonic: { label:'Harmonic Minor',  base:'minor',    offsets:{7:11,9:2,11:5,13:8} },
+  dominant: { label:'Dominant V7–13',  base:'dominant', offsets:{7:10,9:2,11:5,13:9} },
+};
+const EXT_RINGS  = ['7','9','11','13'];
+const EXT_OCTAVE = {7:4, 9:5, 11:5, 13:5};
+const extRootFor = (majorNote, base) => {
+  if (base==='minor') return REL_MINOR[majorNote] || majorNote;
+  const idx = NOTE_ORDER.indexOf(majorNote);
+  return NOTE_ORDER[(idx+1)%NOTE_ORDER.length]; // one step clockwise = a fifth up = the dominant
+};
+const extNoteFor = (majorNote, ring, modeKey) => {
+  const mode = EXT_MODES[modeKey];
+  const root = extRootFor(majorNote, mode.base);
+  const rootPc = NOTE_CHROMA[root] ?? CHROMATIC.indexOf(root);
+  return CHROMATIC[(rootPc + mode.offsets[ring]) % 12];
+};
+
+const EXT_PRESETS = [
+  {id:'m7',    label:'Minor 7',      badge:'',              mode:'natural',  rings:['7']},
+  {id:'m9',    label:'Minor 9',      badge:'★ smoothest',   mode:'natural',  rings:['7','9']},
+  {id:'m11',   label:'Minor 11',     badge:'Dorian rec.',   mode:'dorian',   rings:['7','9','11']},
+  {id:'m13',   label:'Minor 13',     badge:'★ Dorian',      mode:'dorian',   rings:['7','9','11','13']},
+  {id:'dom9',  label:'Dominant 9',   badge:'★ strong pull', mode:'dominant', rings:['7','9']},
+  {id:'dom13', label:'Dominant 13',  badge:'full color',    mode:'dominant', rings:['7','9','11','13']},
+];
+
 // ── KCM ARPEGGIO LAW (PERMANENT) ─────────────────────
 // Major 1-3-5 ascending, Minor 1-b3-5 ascending.
 // Ascending = UP in pitch; octave increments when next chroma <= previous.
@@ -439,6 +573,92 @@ const PROG_MAJ_SEMIS = [0,2,4,5,7,9,11];
 const PROG_MAJ_QUAL  = ['maj','min','min','maj','maj','min','dim'];
 const PROG_MIN_SEMIS = [0,2,3,5,7,8,10];
 const PROG_MIN_QUAL  = ['min','dim','maj','min','min','maj','maj'];
+const ROMS_MAJ = ['I','ii','iii','IV','V','vi','vii°'];
+const ROMS_MIN = ['i','ii°','III','iv','v','VI','VII'];
+
+// ── Diatonic tensions per scale degree ────────────────
+// Every diatonic 7th chord built from a major scale is also a mode of that
+// scale (I=Ionian, ii=Dorian, iii=Phrygian, IV=Lydian, V=Mixolydian,
+// vi=Aeolian, vii°=Locrian). A natural-minor key's degrees are the same
+// seven modes, just starting 5 steps later (i=Aeolian, ii°=Locrian,
+// III=Ionian, iv=Dorian, v=Phrygian, VI=Lydian, VII=Mixolydian) — so one
+// table covers both panels.
+// Offsets are semitones above THAT CHORD'S OWN ROOT for the 7th/9th/11th/13th.
+const MODES7 = ['Ionian','Dorian','Phrygian','Lydian','Mixolydian','Aeolian','Locrian'];
+const MODE_OFFSETS = [
+  {7:11,9:2,11:5,13:9},  // Ionian    (I)     — maj7
+  {7:10,9:2,11:5,13:9},  // Dorian    (ii)    — m7
+  {7:10,9:1,11:5,13:8},  // Phrygian  (iii)   — m7
+  {7:11,9:2,11:6,13:9},  // Lydian    (IV)    — maj7, #11
+  {7:10,9:2,11:5,13:9},  // Mixolydian(V)     — dom7
+  {7:10,9:2,11:5,13:8},  // Aeolian   (vi)    — m7
+  {7:10,9:1,11:5,13:8},  // Locrian   (vii°)  — m7b5
+];
+// A tension is a classic "avoid note" when it lands a half-step above a
+// chord tone (root/3rd/5th/7th) — the one objective rule behind all of
+// this. Computed once from MODE_OFFSETS rather than hand-guessed:
+//   Ionian: 11 sits a half-step above the maj3 → avoid; 9 & 13 clean.
+//   Dorian: nothing clashes → 9, 11, 13 all clean.
+//   Phrygian: b9 clashes with the root, b13 clashes with the 5th → only 11 clean.
+//   Lydian: the #11 is the raised 4th, a whole step above the 3rd → everything clean.
+//   Mixolydian: 11 clashes with the maj3 (same as Ionian) → 9 & 13 clean.
+//   Aeolian: b13 clashes with the 5th → 9 & 11 clean.
+//   Locrian: b9 clashes with the root → 11 & 13 clean.
+const MODE_TENSIONS = [
+  {clean:['9','13'],      avoid:['11']},      // Ionian
+  {clean:['9','11','13'], avoid:[]},          // Dorian
+  {clean:['11'],          avoid:['9','13']},  // Phrygian
+  {clean:['9','11','13'], avoid:[]},          // Lydian
+  {clean:['9','13'],      avoid:['11']},      // Mixolydian
+  {clean:['9','11'],      avoid:['13']},      // Aeolian
+  {clean:['11','13'],     avoid:['9']},       // Locrian
+];
+const modeIndexForDegree = (degIdx, isMinor) => isMinor ? (degIdx+5)%7 : degIdx;
+const tensionLabel = (ring, modeIdx) => {
+  const off = MODE_OFFSETS[modeIdx][ring];
+  if (ring==='9')  return off===1 ? '♭9'  : '9';
+  if (ring==='11') return off===6 ? '♯11' : '11';
+  if (ring==='13') return off===8 ? '♭13' : '13';
+  return ring;
+};
+const modeTensionTitle = modeIdx => {
+  const t = MODE_TENSIONS[modeIdx];
+  const c = t.clean.length ? t.clean.map(r=>tensionLabel(r,modeIdx)).join(', ') : 'none';
+  const a = t.avoid.length ? t.avoid.map(r=>tensionLabel(r,modeIdx)).join(', ') : 'none';
+  return `${MODES7[modeIdx]} mode — clean: ${c}  ·  avoid: ${a}`;
+};
+
+// Builds one chord of a progression at a given extension level.
+// 'triad' = just the 1-3-5 triad (original behavior).
+// '7'     = triad + the diatonic 7th.
+// 'auto'  = triad + 7th + every diatonic tension that's "clean" for this
+//           degree's mode (skips avoid notes automatically).
+// Voicing mirrors the wheel's extended rings: chord tones (1-3-5-7) sit in
+// one octave, and 9/11/13 tensions sit a full octave above — ascending in
+// pitch as the extensions stack, same idea as the rings ascending toward
+// the wheel's center.
+const buildDegreeChord = (rootNote, degIdx, isMinor, level) => {
+  const semisArr = isMinor?PROG_MIN_SEMIS:PROG_MAJ_SEMIS;
+  const qualArr  = isMinor?PROG_MIN_QUAL:PROG_MAJ_QUAL;
+  const roms     = isMinor?ROMS_MIN:ROMS_MAJ;
+  const chordRoot = majorDeg(rootNote, semisArr[degIdx]);
+  const modeIdx = modeIndexForDegree(degIdx, isMinor);
+  const baseNotes = buildChord(chordRoot, qualArr[degIdx]); // triad: root,3rd,5th
+  let rings = [];
+  if (level==='7') rings = ['7'];
+  else if (level==='auto') rings = ['7', ...MODE_TENSIONS[modeIdx].clean];
+  const rootPc = NOTE_CHROMA[chordRoot] ?? CHROMATIC.indexOf(chordRoot);
+  if (rings.includes('7')) baseNotes.push(CHROMATIC[(rootPc+MODE_OFFSETS[modeIdx][7])%12]);
+  const tensionRings = rings.filter(r=>r!=='7');
+  const tensionNotes = tensionRings.map(r=> CHROMATIC[(rootPc+MODE_OFFSETS[modeIdx][r])%12]);
+  const isMaj7 = MODE_OFFSETS[modeIdx][7]===11;
+  const topRing = rings.length ? rings[rings.length-1] : null;
+  const label = roms[degIdx] + (topRing ? (isMaj7?'Δ':'') + topRing : '');
+  const avoidUsed = tensionRings.filter(r=> MODE_TENSIONS[modeIdx].avoid.includes(r));
+  return { root:chordRoot, qual:qualArr[degIdx], baseNotes, tensionNotes,
+    notes:[...baseNotes, ...tensionNotes], degIdx, modeIdx, rings, level,
+    label, avoidUsed, title: modeTensionTitle(modeIdx) };
+};
 
 const MAJOR_PROGS = [
   {name:'I – IV – V – I',   desc:'Classic Rock / Blues',     degs:[0,3,4,0], tag:'Rock'},
@@ -578,6 +798,13 @@ const S = {
   progIdx:     null,
   progChords:  [],
   progChordIdx:-1,
+  extMode:     'natural',   // EXT_MODES key
+  extActive:   new Set(),   // Set of "ring-colIndex", ring in EXT_RINGS
+  hubLabel:    null,        // {top,bottom} — last chord/degree chosen via the extension rings, shown in the wheel's center; null shows the default branding
+  lastPick:    null,        // 'ext' | 'triad' | null — which kind of selection happened most recently, so the Explorer section below (Keyboard/Fretboard/Staff/Chromatic Circle) knows whether to mirror the toggled extension stack or a plain triad click
+  majExtLevel: 'triad',     // 'triad' | '7' | 'auto' — default level for Major-panel progressions
+  minExtLevel: 'triad',     // same, for Minor-panel progressions
+  progOverrides:{},         // per-chord level override for the CURRENTLY displayed progression, keyed by chord index
 };
 
 // combined active note for display: solo takes priority over loop
@@ -592,7 +819,7 @@ const stopAll = () => {
   S.loopStop=true; S.soloStop=true;
   S.loopRunning=false; S.soloPlaying=false;
   S.active=null; S.loopActive=null;
-  S.progIdx=null; S.progChords=[]; S.progChordIdx=-1;
+  S.progIdx=null; S.progChords=[]; S.progChordIdx=-1; S.progOverrides={};
   render();
   setTimeout(()=>{ S.loopStop=false; S.soloStop=false; },150);
 };
@@ -684,29 +911,254 @@ const startLoop = async() => {
 const playProgression = async(progDef,isMinor,rootNote) => {
   if(S.soloPlaying)return;
   S.soloPlaying=true; S.soloStop=false;
-  const semisArr=isMinor?PROG_MIN_SEMIS:PROG_MAJ_SEMIS;
-  const qualArr =isMinor?PROG_MIN_QUAL :PROG_MAJ_QUAL;
-  const roms    =isMinor?['i','ii°','III','iv','v','VI','VII']:['I','ii','iii','IV','V','vi','vii°'];
-  const chords = progDef.degs.map(deg=>({
-    root:majorDeg(rootNote,semisArr[deg]),
-    qual:qualArr[deg],
-    notes:buildChord(majorDeg(rootNote,semisArr[deg]),qualArr[deg]),
-    label:roms[deg]
-  }));
+  const level = isMinor ? S.minExtLevel : S.majExtLevel;
+  S.progOverrides = {}; // fresh progression pick clears any per-chord manual overrides
+  const chords = progDef.degs.map((deg,i)=> buildDegreeChord(rootNote, deg, isMinor, level));
   S.progChords=chords;
   for(let i=0;i<chords.length;i++){
     if(S.soloStop)break;
     const ch=chords[i];
     S.progChordIdx=i;
     S.active={note:ch.root,type:ch.qual==='min'||ch.qual==='dim'?'inner':'outer'}; render();
-    playNotes(ch.notes,4,0.7);
-    await sleep(780);
+    const dur = ch.tensionNotes.length ? 0.95 : 0.7;
+    playNotes(ch.baseNotes,4,dur);
+    if(ch.tensionNotes.length) playNotes(ch.tensionNotes,5,dur); // tensions voiced an octave up — ascending, same idea as the wheel's inner rings
+    await sleep(ch.tensionNotes.length ? 900 : 780);
     if(S.soloStop)break;
   }
   S.progChordIdx=-1; S.active=null; S.soloPlaying=false; render();
 };
 
+// Re-level one chord in the currently displayed progression without
+// replaying the whole thing — lets you audition Triad → 7th → Auto on a
+// single degree to hear exactly what that tension adds.
+const cyclePillLevel = i => {
+  if (S.soloPlaying || !S.progIdx) return;
+  const isMinor = S.progIdx.isMin;
+  const progDef = (isMinor?MINOR_PROGS:MAJOR_PROGS)[S.progIdx.idx];
+  const deg = progDef.degs[i];
+  const rootNote = isMinor ? S.minKey : S.majKey;
+  const order = ['triad','7','auto'];
+  const cur = S.progOverrides[i] || (isMinor?S.minExtLevel:S.majExtLevel);
+  const next = order[(order.indexOf(cur)+1)%order.length];
+  S.progOverrides[i] = next;
+  const ch = buildDegreeChord(rootNote, deg, isMinor, next);
+  S.progChords[i] = ch;
+  render();
+  const dur = ch.tensionNotes.length ? 0.95 : 0.7;
+  playNotes(ch.baseNotes,4,dur);
+  if (ch.tensionNotes.length) playNotes(ch.tensionNotes,5,dur);
+};
+
 const sleep = ms => new Promise(r=>setTimeout(r,ms));
+
+// ── Extended rings — toggle / play / compare ─────────
+// Extension dots are a persistent toggle (unlike the momentary major/minor
+// triad dots) so tones can be stacked and compared. Toggling a dot on
+// previews that column's full chord right away, played simultaneously.
+
+// Ordered note NAMES (no octave yet) for a ring column's full stack:
+// triad root/3rd/5th, then whichever extension rings are currently
+// toggled on, in ring order (7→9→11→13).
+const stackNamesForCol = (colIdx) => {
+  const majorNote = NOTE_ORDER[colIdx];
+  const mode = EXT_MODES[S.extMode];
+  const root = extRootFor(majorNote, mode.base);
+  const triad = mode.base==='minor' ? getMinorTriad(root) : getTriad(root);
+  const ringNotes = EXT_RINGS
+    .filter(r => S.extActive.has(r+'-'+colIdx))
+    .map(r => extNoteFor(majorNote, r, S.extMode));
+  return [...triad, ...ringNotes];
+};
+
+// Triad {note,oct} entries for a ring column, per the current extension
+// mode (minor triad for natural/dorian/harmonic, dominant triad for
+// Dominant V7-13). Octaves come from the KCM ARPEGGIO LAW (assignOctaves,
+// above) rather than a flat oct:4 for every note — a flat octave doesn't
+// keep the notes in register order (e.g. a minor triad's root can sit
+// above its own 3rd at a fixed octave), which read as random jumping when
+// arpeggiated instead of a clean ascend.
+const triadEntriesForCol = (colIdx) => {
+  const majorNote = NOTE_ORDER[colIdx];
+  const mode = EXT_MODES[S.extMode];
+  const root = extRootFor(majorNote, mode.base);
+  const triad = mode.base==='minor' ? getMinorTriad(root) : getTriad(root);
+  return assignOctaves(triad, 4);
+};
+
+// {note,oct} entries for a ring column's full extended chord: the
+// underlying triad plus every extension tone currently toggled on in
+// that same column, voiced as ONE continuously-ascending stack (KCM
+// ARPEGGIO LAW) instead of the triad pinned to oct4 and every ring pinned
+// to its own fixed octave independent of the actual notes involved — the
+// old approach could and did produce backward jumps (e.g. an 11th landing
+// lower in pitch than the 9th right before it, even though it's "higher"
+// on paper).
+const chordEntriesForCol = (colIdx) => assignOctaves(stackNamesForCol(colIdx), 4);
+
+// Plays a list of {note,oct} entries either all at once (simultaneous —
+// how a real chord sounds) or as a quick arpeggio (staggered in order).
+const playChordEntries = (entries, {simultaneous=true, dur=1.1, stagger=0.09}={}) => {
+  entries.forEach((e,i) => playNotes([e.note], e.oct, dur, simultaneous ? 0 : stagger*i));
+};
+
+// Ring-dot click preview: hear that column's chord right now, all together.
+const playColumnChord = (colIdx) => playChordEntries(chordEntriesForCol(colIdx), {simultaneous:true});
+
+// Ring order outside-in. Each ring toward the center adds one tone on top
+// of the ones before it — an 11th implies the 7th and 9th, a 13th implies
+// all three — so activating a ring cascades outward-to-here, and clearing
+// one drops everything further toward the center that depended on it.
+const RING_LEVELS = ['7','9','11','13'];
+
+// Builds the hub's {top,bottom} label from whatever's currently active in
+// one column: top is the actual pitch letter of whichever ring was just
+// actuated (the highest active one — clicking a ring always lands there,
+// since turning one on fills in everything below it), so the hub visibly
+// confirms which note you just added rather than only a chord symbol
+// changing digits (Am11→Am13 reads as "one character changed"; seeing
+// "F" for the 13th makes clear a real new pitch just sounded). Bottom
+// spells out the chord symbol and context. Returns null when nothing's
+// active in that column, so callers can fall back to the default branding.
+const computeHubLabel = (colIdx) => {
+  const activeRings = RING_LEVELS.filter(r => S.extActive.has(r+'-'+colIdx));
+  if (activeRings.length === 0) return null;
+  const highest = activeRings[activeRings.length-1];
+  const majorNote = NOTE_ORDER[colIdx];
+  const mode = EXT_MODES[S.extMode];
+  const root = extRootFor(majorNote, mode.base);
+  const isMinor = mode.base === 'minor';
+  const actuatedNote = extNoteFor(majorNote, highest, S.extMode);
+  const chordSym = `${dn(root)}${isMinor?'m':''}${highest}`;
+  // Three lines: the actuated note by itself, the ring/chord symbol, then
+  // the key context in its own line — was previously the last two crammed
+  // onto one line together, which read as one dense line instead of two
+  // separate facts.
+  return {
+    top: dn(actuatedNote),
+    mid: `${highest}th · ${chordSym}`,
+    bottom: `(${isMinor?'rel. minor':'dominant'} of ${dn(majorNote)})`,
+  };
+};
+
+const toggleExt = (ring, colIdx) => {
+  const key = ring+'-'+colIdx;
+  const turningOn = !S.extActive.has(key);
+  const level = RING_LEVELS.indexOf(ring);
+  if (turningOn) {
+    for (let i=0; i<=level; i++) S.extActive.add(RING_LEVELS[i]+'-'+colIdx);
+  } else {
+    for (let i=level; i<RING_LEVELS.length; i++) S.extActive.delete(RING_LEVELS[i]+'-'+colIdx);
+  }
+  // Broadcast the resulting chord in the wheel's center hub, in place of
+  // the static "Circle of 5ths" branding — falls back to that branding
+  // once this column has nothing left active.
+  S.hubLabel = computeHubLabel(colIdx);
+  // Extension rings now "own" the Explorer section below too, same idea
+  // as the hub — once this column is empty again there's nothing to
+  // mirror, so fall back rather than keep claiming the extension lane.
+  S.lastPick = S.extActive.size > 0 ? 'ext' : null;
+  render();
+  if (turningOn) playColumnChord(colIdx);
+};
+
+const extActiveList = () => [...S.extActive].map(k=>{
+  const [ring,idxStr] = k.split('-'); const idx = +idxStr;
+  const majorNote = NOTE_ORDER[idx];
+  const note = extNoteFor(majorNote, ring, S.extMode);
+  const oct = EXT_OCTAVE[ring];
+  return { ring, idx, majorNote, note, oct, sort:(NOTE_CHROMA[note]??0)+oct*12 };
+}).sort((a,b)=>a.sort-b.sort);
+
+// Entries for the Arpeggio / Together buttons: every active extension
+// tone, plus — only when they all belong to the same key column — that
+// column's triad too, so it sounds like a real chord rather than just the
+// upper tensions. When tones are toggled across two different columns
+// (comparing extensions from two different keys), there's no single triad
+// that applies, so only the raw tones play.
+const chordPlayEntries = () => {
+  const list = extActiveList();
+  if (list.length === 0) return [];
+  const sameCol = list.every(n => n.idx === list[0].idx);
+  // Same column: hand off to chordEntriesForCol so the triad and every
+  // active extension come back as one properly-ascending stack (KCM
+  // ARPEGGIO LAW), rather than concatenating a fixed-octave triad with
+  // fixed-octave extension tones that don't necessarily continue upward
+  // from where the triad left off.
+  if (sameCol) return chordEntriesForCol(list[0].idx);
+  // Different columns (comparing extensions from two different keys):
+  // no single triad applies, so just the raw tones — already sorted
+  // ascending by extActiveList's own pitch-sort, so no jump risk there.
+  return list.map(n => ({note:n.note, oct:n.oct}));
+};
+
+// ▶ Arpeggio — notes staggered in order (root up through the stacked extensions).
+const playExtChord = () => playChordEntries(chordPlayEntries(), {simultaneous:false});
+// ▶▶ Together — every note sounded at once, like a real block chord.
+const playExtChordTogether = () => playChordEntries(chordPlayEntries(), {simultaneous:true});
+
+const compareExt = () => {
+  const list = extActiveList();
+  if (list.length!==2) return;
+  const [a,b] = list;
+  playNotes([a.note], a.oct, 0.65, 0);
+  playNotes([b.note], b.oct, 0.65, 0.85);
+  playNotes([a.note], a.oct, 1.2, 1.7);
+  playNotes([b.note], b.oct, 1.2, 1.7);
+};
+
+const clearExt = () => { S.extActive.clear(); S.hubLabel = null; S.lastPick = null; render(); };
+
+const setExtMode = m => { S.extMode = m; render(); };
+
+const applyExtPreset = p => {
+  S.extMode = p.mode;
+  const idx = NOTE_ORDER.indexOf(S.majKey);
+  S.extActive = new Set(p.rings.map(r=> r+'-'+idx));
+  S.hubLabel = computeHubLabel(idx);
+  S.lastPick = 'ext';
+  render();
+  const mode = EXT_MODES[p.mode];
+  const root = extRootFor(S.majKey, mode.base);
+  const triad = mode.base==='minor' ? getMinorTriad(root) : getTriad(root);
+  const ringNotes = p.rings.map(ring => extNoteFor(S.majKey, ring, p.mode));
+  // KCM ARPEGGIO LAW again — triad plus every preset ring as one
+  // ascending stack, not the triad pinned to oct4 and each ring pinned to
+  // its own fixed octave (which could land a later ring lower than an
+  // earlier one).
+  const stack = assignOctaves([...triad, ...ringNotes], 4);
+  stack.slice(0, triad.length).forEach(e => playNotes([e.note], e.oct, 1.6, 0));
+  stack.slice(triad.length).forEach((e,i) => playNotes([e.note], e.oct, 1.6, 0.08*(i+1)));
+};
+
+const renderExtPanel = () => {
+  const idx = NOTE_ORDER.indexOf(S.majKey);
+  const minorRoot = REL_MINOR[S.majKey] || S.majKey;
+  const lbl = document.getElementById('extKeyLabel');
+  if (lbl) lbl.textContent = `${dn(minorRoot)} minor`;
+
+  document.querySelectorAll('.ext-mode-btn').forEach(b=>{
+    b.classList.toggle('on', b.dataset.mode===S.extMode);
+  });
+
+  const box = document.getElementById('extChordBox');
+  const list = extActiveList();
+  if (box) {
+    box.innerHTML = list.length===0
+      ? '<span class="ext-empty">No extension tones selected yet — click a ring on the wheel, or try a preset above</span>'
+      : list.map(n=>{
+          const ringLbl = {7:'7th',9:'9th',11:'11th',13:'13th'}[n.ring];
+          const col = NOTE_COLORS[n.note]||'#888';
+          return `<strong style="color:${col}">${dn(n.note)}</strong> (${ringLbl} of ${dn(n.majorNote)})`;
+        }).join('  +  ');
+  }
+  const compareBtn = document.getElementById('extCompareBtn');
+  if (compareBtn) compareBtn.disabled = list.length!==2;
+  const playBtn = document.getElementById('extPlayBtn');
+  if (playBtn) playBtn.disabled = list.length===0;
+  const arpBtn = document.getElementById('extArpeggioBtn');
+  if (arpBtn) arpBtn.disabled = list.length===0;
+};
 
 // ══════════════════════════════════════════════════════
 // RENDER — builds the SVG circle and updates all DOM
@@ -716,6 +1168,7 @@ const render = () => {
   renderPanels();
   renderLoopBlock();
   renderEffCard();
+  renderExtPanel();
   if (typeof renderExplorer === 'function') renderExplorer();
 };
 
@@ -727,10 +1180,26 @@ const svgEl = (tag,attrs={}) => {
   return el;
 };
 
+// Extended-ring visual config, outside-in: relative minor ring stays where
+// the original app had it; four new rings for 7/9/11/13 pack in tighter
+// toward the hub. Key-signature labels move outside the major ring to make
+// room — matching the "numbers → major → minor → extensions toward center"
+// order the wheel was designed around.
+const EXT_RING_CFG = {
+  7:  {orbit:170, r:15, fs:10},
+  9:  {orbit:140, r:13, fs:9},
+  11: {orbit:113, r:12, fs:9},
+  13: {orbit:88,  r:11, fs:8},
+};
+// One pastel color per ring — a visual "lane" identity independent of
+// each dot's own note-pitch color. Used for the background tracks and the
+// legend under the Extended Tones panel.
+const RING_PASTEL = { 7:'#AEDFF7', 9:'#C9F2C7', 11:'#E3C9F2', 13:'#F7D9C4' };
+
 const renderCircle = () => {
   const svg = document.getElementById('circleSvg');
   svg.innerHTML='';
-  const cx=250,cy=250,outerOrbit=193,outerR=30,innerOrbit=137,innerR=21,ksSig=96;
+  const cx=350,cy=350,outerOrbit=258,outerR=26,innerOrbit=208,innerR=19,ksSig=302;
 
   // Background rings
   const addCirc=(r,fill,stroke,sw,dash='')=>{
@@ -738,28 +1207,55 @@ const renderCircle = () => {
     if(dash)c.setAttribute('stroke-dasharray',dash);
     svg.appendChild(c);
   };
-  addCirc(237,'none','rgba(0,192,192,0.15)','1');
-  addCirc(158,'none','rgba(0,128,128,0.12)','1','4,4');
-  addCirc(84,'#0d1f35','rgba(0,192,192,0.5)','2.5');
-  addCirc(74,'none','rgba(244,208,63,0.15)','1');
+  addCirc(332,'none','rgba(0,192,192,0.15)','1');
+  addCirc(233,'none','rgba(0,128,128,0.12)','1','4,4');
+  addCirc(58,'#0d1f35','rgba(0,192,192,0.5)','2.5');
+  addCirc(50,'none','rgba(244,208,63,0.15)','1');
   // Small decorative center dot — drawn *before* the hub text below so the
   // bigger text always layers on top of it instead of the dot poking
-  // through the middle of "Circle of / Fifths".
-  addCirc(5,'rgba(244,208,63,0.35)','none','0');
+  // through the middle of the hub label.
+  addCirc(4,'rgba(244,208,63,0.35)','none','0');
 
   // Hub text
   const addTxt=(x,y,txt,fs,fill,fw='800',ff='Georgia,serif')=>{
     const t=svgEl('text',{'x':x,'y':y,'text-anchor':'middle','font-size':fs,'fill':fill,'font-weight':fw,'font-family':ff,'pointer-events':'none','user-select':'none'});
     t.textContent=txt; svg.appendChild(t);
   };
-  addTxt(250,241,'Circle of','17','#F4D03F');
-  addTxt(250,264,'Fifths','17','#F4D03F');
+  if (S.hubLabel) {
+    // Broadcast the chord/degree just chosen on the extension rings, as
+    // three separate lines: the actuated note, the ring/chord symbol, and
+    // the key context — was two lines with the symbol and context crammed
+    // together, which read as one cluttered line instead of two clean
+    // ones. Plain major/minor dot clicks only ever set top+bottom (no
+    // mid), so that case collapses back to two lines automatically.
+    addTxt(cx,cy-15,S.hubLabel.top,'22','#F4D03F');
+    if (S.hubLabel.mid) {
+      addTxt(cx,cy+8,S.hubLabel.mid,'11','rgba(244,208,63,0.85)','700','Arial,sans-serif');
+      addTxt(cx,cy+21,S.hubLabel.bottom,'10','rgba(244,208,63,0.65)','700','Arial,sans-serif');
+    } else {
+      addTxt(cx,cy+14,S.hubLabel.bottom,'11','rgba(244,208,63,0.75)','700','Arial,sans-serif');
+    }
+  } else {
+    addTxt(cx,cy-8,'Circle of','13','#F4D03F');
+    addTxt(cx,cy+7,'5ths','13','#F4D03F');
+    addTxt(cx,cy+22,'EXT.','9','rgba(244,208,63,0.6)','700','Arial,sans-serif');
+  }
+
+  // Soft pastel "lane" behind each extension ring — independent of the
+  // note-pitch coloring on the dots themselves — so all twelve 9th dots
+  // (say) read as one visual ring as you scan around the wheel, no matter
+  // which key/note lands at each position. Drawn full-circle, once, behind
+  // everything else, so the dots and their note-colored fills stay on top.
+  EXT_RINGS.forEach(ring=>{
+    const rc = EXT_RING_CFG[ring];
+    const track = svgEl('circle',{cx,cy,r:rc.orbit,fill:'none',stroke:RING_PASTEL[ring],'stroke-width':rc.r*2+4,opacity:'0.16'});
+    svg.appendChild(track);
+  });
 
   NOTE_ORDER.forEach((note,index)=>{
     const angle=(index*30-90)*(Math.PI/180);
     const ox=cx+outerOrbit*Math.cos(angle), oy=cy+outerOrbit*Math.sin(angle);
-    const iAngle=(index*30-90)*(Math.PI/180);
-    const ix=cx+innerOrbit*Math.cos(iAngle), iy=cy+innerOrbit*Math.sin(iAngle);
+    const ix=cx+innerOrbit*Math.cos(angle), iy=cy+innerOrbit*Math.sin(angle);
     const kx=cx+ksSig*Math.cos(angle), ky=cy+ksSig*Math.sin(angle);
 
     const col=NOTE_COLORS[note]||'#888';
@@ -770,19 +1266,21 @@ const renderCircle = () => {
     const isOA = activeN?.note===note && (activeN.type==='outer'||activeN.type==='tick');
     const isIA = activeN?.note===relMin && (activeN.type==='inner'||activeN.type==='tick');
 
-    // Sector wedge
+    // Sector wedge — spans from just outside the hub to the major ring, so
+    // every ring (minor, 7th, 9th, 11th, 13th) sits inside the same tinted
+    // slice of its key's color.
     const sa=(index*30-105)*(Math.PI/180), ea=(index*30-75)*(Math.PI/180);
     const p=(a,r)=>({x:cx+r*Math.cos(a),y:cy+r*Math.sin(a)});
-    const s0=p(sa,90),e0=p(ea,90),s1=p(sa,242),e1=p(ea,242);
-    const path=svgEl('path',{d:`M${s0.x},${s0.y} L${s1.x},${s1.y} A242,242 0 0,1 ${e1.x},${e1.y} L${e0.x},${e0.y} A90,90 0 0,0 ${s0.x},${s0.y} Z`,fill:col,opacity:'0.13',stroke:'none'});
+    const wedgeInner=54, wedgeOuter=284;
+    const s0=p(sa,wedgeInner),e0=p(ea,wedgeInner),s1=p(sa,wedgeOuter),e1=p(ea,wedgeOuter);
+    const path=svgEl('path',{d:`M${s0.x},${s0.y} L${s1.x},${s1.y} A${wedgeOuter},${wedgeOuter} 0 0,1 ${e1.x},${e1.y} L${e0.x},${e0.y} A${wedgeInner},${wedgeInner} 0 0,0 ${s0.x},${s0.y} Z`,fill:col,opacity:'0.13',stroke:'none'});
     svg.appendChild(path);
 
-    // Key sig labels — pulled toward center (ksSig radius) with a tighter
-    // two-line stack so they clear the inner (minor-key) dot ring instead
-    // of overlapping it.
+    // Key sig labels — now sit just outside the major ring (outermost),
+    // matching classic circle-of-fifths layout.
     const ks=KEY_SIG_LABELS[index].split('\n');
-    addTxt(kx,ky-2,ks[0],'7','rgba(0,220,220,0.55)','700','Arial,sans-serif');
-    addTxt(kx,ky+5,ks[1],'6','rgba(0,192,192,0.4)','600','Arial,sans-serif');
+    addTxt(kx,ky-2,ks[0],'8','rgba(0,220,220,0.6)','700','Arial,sans-serif');
+    addTxt(kx,ky+7,ks[1],'7','rgba(0,192,192,0.45)','600','Arial,sans-serif');
 
     // ── OUTER DOT — Major ──────────────────────────
     const g=document.createElementNS(SVG_NS,'g');
@@ -796,8 +1294,14 @@ const renderCircle = () => {
     const outerDisplay = note==='Gb' ? 'G♭/F♯' : dn(note);
     const outerDot=svgEl('circle',{cx:ox,cy:oy,r:outerR,fill:col,stroke:isOA?'#F4D03F':'rgba(255,255,255,0.35)','stroke-width':isOA?'3.5':'1.8',opacity:isOA?'1':'0.9',cursor:'pointer',role:'button',tabindex:'0','aria-label':`Play ${outerDisplay} major`});
     if(isOA) outerDot.setAttribute('filter',`drop-shadow(0 0 10px ${col})`);
-    outerDot.addEventListener('click',()=>{ if(!S.soloPlaying){S.majKey=note;S.minKey=REL_MINOR[note]||S.minKey; render(); playTriad(note,false);} });
-    outerDot.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();if(!S.soloPlaying){S.majKey=note;S.minKey=REL_MINOR[note]||S.minKey;render();playTriad(note,false);}} });
+    // Clicking either outer ring (major or minor, below) re-points the hub
+    // at whatever key you just picked — previously it kept showing
+    // whatever extension chord was last toggled on a completely different
+    // column, even after you'd moved on to a new key out here. The two
+    // outer rings now "reconnect" the center display to the current click,
+    // same as the extension rings already did.
+    outerDot.addEventListener('click',()=>{ if(!S.soloPlaying){S.majKey=note;S.minKey=REL_MINOR[note]||S.minKey; S.hubLabel={top:outerDisplay,bottom:'major'};S.lastPick='triad'; render(); playTriad(note,false);} });
+    outerDot.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();if(!S.soloPlaying){S.majKey=note;S.minKey=REL_MINOR[note]||S.minKey;S.hubLabel={top:outerDisplay,bottom:'major'};S.lastPick='triad';render();playTriad(note,false);}} });
     g.appendChild(outerDot);
     const outerLbl=svgEl('text',{'x':ox,'y':oy+5,'text-anchor':'middle','font-size':note==='Gb'?'10':'14','fill':textOn(note),'font-weight':'900','font-family':'Georgia,serif','pointer-events':'none','user-select':'none'});
     outerLbl.textContent=outerDisplay; g.appendChild(outerLbl);
@@ -809,8 +1313,8 @@ const renderCircle = () => {
     }
     const innerDot=svgEl('circle',{cx:ix,cy:iy,r:innerR,fill:rmCol,stroke:isIA?'#F4D03F':'rgba(255,255,255,0.3)','stroke-width':isIA?'3':'1.5',opacity:isIA?'1':'0.88',cursor:'pointer',role:'button',tabindex:'0','aria-label':`Play ${dnInnerMinor(relMin)} minor`});
     if(isIA) innerDot.setAttribute('filter',`drop-shadow(0 0 7px ${rmCol})`);
-    innerDot.addEventListener('click',()=>{ if(!S.soloPlaying){S.minKey=relMin;S.majKey=REL_MAJOR[relMin]||S.majKey;render();playTriad(relMin,true);} });
-    innerDot.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();if(!S.soloPlaying){S.minKey=relMin;S.majKey=REL_MAJOR[relMin]||S.majKey;render();playTriad(relMin,true);}} });
+    innerDot.addEventListener('click',()=>{ if(!S.soloPlaying){S.minKey=relMin;S.majKey=REL_MAJOR[relMin]||S.majKey;S.hubLabel={top:dnInnerMinor(relMin)+'m',bottom:'relative minor'};S.lastPick='triad';render();playTriad(relMin,true);} });
+    innerDot.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();if(!S.soloPlaying){S.minKey=relMin;S.majKey=REL_MAJOR[relMin]||S.majKey;S.hubLabel={top:dnInnerMinor(relMin)+'m',bottom:'relative minor'};S.lastPick='triad';render();playTriad(relMin,true);}} });
     g.appendChild(innerDot);
     const il1=svgEl('text',{'x':ix,'y':iy,'text-anchor':'middle','font-size':'8','fill':textOn(relMin),'font-weight':'800','font-family':'Georgia,serif','pointer-events':'none','user-select':'none'});
     il1.textContent=dnInnerMinor(relMin); g.appendChild(il1);
@@ -818,6 +1322,71 @@ const renderCircle = () => {
     il2.textContent='m'; g.appendChild(il2);
 
     svg.appendChild(g);
+
+    // ── EXTENDED RINGS — 7th / 9th / 11th / 13th ────
+    // Persistent toggle dots (not momentary triad playback): S.extActive
+    // tracks which are "on" so they can be stacked and compared, unlike the
+    // major/minor dots above which just flash while a triad plays.
+    EXT_RINGS.forEach(ring=>{
+      const cfg = EXT_RING_CFG[ring];
+      const ex = cx+cfg.orbit*Math.cos(angle), ey = cy+cfg.orbit*Math.sin(angle);
+      const extNote = extNoteFor(note, ring, S.extMode);
+      const extCol = NOTE_COLORS[extNote] || '#888';
+      const isOn = S.extActive.has(ring+'-'+index);
+      const eg = document.createElementNS(SVG_NS,'g');
+      // Bigger, invisible click/tap target — heightened sensitivity so a
+      // near-miss still registers. Tangentially (sideways, toward the
+      // neighboring column's same ring) padding fills the full gap right up
+      // to — but not into — the next column's dot: hitPad now uses the
+      // entire available half-gap (ringSpacing/2 - cfg.r) with no extra
+      // safety buffer subtracted, so it's as generous as it can be without
+      // ever overlapping a neighboring column. Radially (toward/away from
+      // the center, where the rings pack within only ~2px of each other)
+      // there was previously ZERO tolerance — a click one pixel off the
+      // dot's exact radius missed entirely — so a modest +3px radial pad is
+      // added too; a few pixels of overlap with the immediately adjacent
+      // ring is an acceptable trade for not missing clicks near the edge.
+      const ringSpacing = 2*Math.PI*cfg.orbit/12;
+      const hitPad = Math.max(6, Math.floor(ringSpacing/2 - cfg.r));
+      const hitRadialPad = 3;
+      const hit = svgEl('ellipse',{cx:ex,cy:ey,rx:cfg.r+hitRadialPad,ry:cfg.r+hitPad,transform:`rotate(${index*30-90} ${ex} ${ey})`,fill:'transparent',stroke:'none','pointer-events':'all',cursor:'pointer','aria-hidden':'true'});
+      // The actual toggle stays on 'click' — the same event the outer
+      // major/minor dots use, which every browser reliably treats as a
+      // real user gesture for unlocking Web Audio. Routing it through
+      // 'pointerdown' instead (tried previously) fired sooner, but on
+      // some browsers a pointerdown-triggered AudioContext never
+      // actually unlocks, so those rings toggled visually with no sound.
+      // 'pointerdown' is kept here only to warm the AudioContext up a
+      // touch earlier (getAudio() is a no-op if already running), so the
+      // click still feels immediate without risking silent rings.
+      hit.addEventListener('pointerdown',()=> getAudio());
+      hit.addEventListener('click',()=> toggleExt(ring,index));
+      eg.appendChild(hit);
+      if(isOn){
+        const eglow=svgEl('circle',{cx:ex,cy:ey,r:cfg.r+6,fill:'none',stroke:'#F4D03F','stroke-width':'1.5',opacity:'0.55','pointer-events':'none'});
+        eg.appendChild(eglow);
+      }
+      const dot=svgEl('circle',{cx:ex,cy:ey,r:cfg.r,fill:extCol,stroke:isOn?'#F4D03F':'rgba(255,255,255,0.28)','stroke-width':isOn?'2.6':'1.3',opacity:isOn?'1':'0.82',class:'extdot',role:'button',tabindex:'0','aria-pressed':isOn?'true':'false','aria-label':`Toggle ${dn(extNote)} — ${ring}th of ${dnInnerMinor(relMin)} minor`});
+      if(isOn) dot.setAttribute('filter',`drop-shadow(0 0 6px ${extCol})`);
+      // The dot is painted on top of the invisible hit-ellipse, so clicks
+      // landing on the visible dot itself hit-test to the dot, not the
+      // ellipse beneath it — it needs its own click handler too, or every
+      // click dead-centered on a ring (i.e. almost all of them) would
+      // register on nothing. The hit-ellipse's click handler only ever
+      // fires for the padding ring just outside the visible dot.
+      dot.addEventListener('click',()=> toggleExt(ring,index));
+      dot.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault(); toggleExt(ring,index);} });
+      eg.appendChild(dot);
+      // Dot label is just the extension number itself (7 / 9 / 11 / 13) —
+      // no note name. Ben's call: the note-name-plus-superscript-number
+      // combo was cluttered on rings this tightly packed; the bare
+      // interval number reads faster at a glance and the note is still
+      // available via hover/aria-label and by ear when toggled.
+      const lbl=svgEl('text',{'x':ex,'y':ey+cfg.fs*0.35,'text-anchor':'middle','font-size':cfg.fs,'fill':textOn(extNote),'font-weight':'800','font-family':'Arial,sans-serif','pointer-events':'none','user-select':'none'});
+      lbl.textContent = ring;
+      eg.appendChild(lbl);
+      svg.appendChild(eg);
+    });
   });
 };
 
@@ -838,6 +1407,7 @@ const renderPanels = () => {
   document.getElementById('majProgLbl').textContent=`Major Progressions — ${dn(S.majKey)}`;
   renderProgList('maj', MAJOR_PROGS, false, S.majKey);
   renderChordPills('maj');
+  renderExtLevelRow('maj');
 
   // Minor panel
   const minSel=document.getElementById('minSelect');
@@ -853,6 +1423,15 @@ const renderPanels = () => {
   document.getElementById('minProgLbl').textContent=`Minor Progressions — ${dn(S.minKey)}m`;
   renderProgList('min', MINOR_PROGS, true, S.minKey);
   renderChordPills('min');
+  renderExtLevelRow('min');
+};
+
+const renderExtLevelRow = side => {
+  const level = side==='maj' ? S.majExtLevel : S.minExtLevel;
+  document.querySelectorAll(`#${side}ExtLevelRow .ext-level-btn`).forEach(b=>{
+    b.classList.toggle('on', b.dataset.level===level);
+    b.disabled = S.soloPlaying;
+  });
 };
 
 const renderProgList = (side, progs, isMinor, root) => {
@@ -901,13 +1480,19 @@ const renderChordPills = side => {
   S.progChords.forEach((ch,i)=>{
     const col=NOTE_COLORS[ch.root]||'#888';
     const lit=i===S.progChordIdx;
-    const p=document.createElement('div');
-    p.className='cpill'+(lit?' lit':'');
-    p.textContent=ch.label;
+    const p=document.createElement('button');
+    p.type='button';
+    p.className='cpill'+(lit?' lit':'')+(S.soloPlaying?' disabled':'');
+    p.disabled = S.soloPlaying;
+    p.textContent=ch.label + (ch.avoidUsed && ch.avoidUsed.length ? ' ⚠' : '');
     p.style.background=lit?col:`${col}22`;
     p.style.borderColor=col;
     p.style.color=lit?textOn(ch.root):col;
     p.style.boxShadow=lit?`0 0 10px ${col}66`:'none';
+    const avoidTxt = ch.avoidUsed && ch.avoidUsed.length
+      ? `  (⚠ ${ch.avoidUsed.map(r=>tensionLabel(r,ch.modeIdx)).join(', ')} clashes here — still fine to try)` : '';
+    p.title = `${ch.title}${avoidTxt}\nTap to cycle: Triad → 7th → Auto`;
+    p.addEventListener('click', ()=> cyclePillLevel(i));
     pills.appendChild(p);
   });
 };
@@ -1031,10 +1616,52 @@ const wireButtons = () => {
   });
 };
 
+// ── Wire Extended Tones controls ──────────────────────
+const wireExtControls = () => {
+  document.querySelectorAll('.ext-mode-btn').forEach(b=>{
+    b.addEventListener('click', ()=> setExtMode(b.dataset.mode));
+  });
+
+  const presetRow = document.getElementById('extPresetRow');
+  EXT_PRESETS.forEach(p=>{
+    const b = document.createElement('button');
+    b.className = 'ext-preset-btn';
+    b.innerHTML = `<span>${p.label}</span>` + (p.badge ? `<span class="ext-badge">${p.badge}</span>` : '');
+    b.addEventListener('click', ()=> applyExtPreset(p));
+    presetRow.appendChild(b);
+  });
+
+  document.getElementById('extPlayBtn').addEventListener('click', playExtChordTogether);
+  document.getElementById('extArpeggioBtn').addEventListener('click', playExtChord);
+  document.getElementById('extCompareBtn').addEventListener('click', compareExt);
+  document.getElementById('extClearBtn').addEventListener('click', clearExt);
+  // Same Play Chord action as the row below, just mirrored up top so you
+  // don't have to scroll past the mode/preset buttons to hear what's
+  // currently toggled — plus a dedicated Stop up here too, since Arpeggio
+  // and Compare both take a couple seconds to finish and previously the
+  // only way to cut them off was the far-away center Stop button.
+  document.getElementById('extPlayBtnTop').addEventListener('click', playExtChordTogether);
+  document.getElementById('extStopBtnTop').addEventListener('click', stopAll);
+};
+
+// ── Wire progression extension-level controls ─────────
+const wireProgLevels = () => {
+  document.querySelectorAll('.ext-level-btn').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      if (S.soloPlaying) return;
+      if (b.dataset.side==='maj') S.majExtLevel = b.dataset.level;
+      else S.minExtLevel = b.dataset.level;
+      renderExtLevelRow(b.dataset.side);
+    });
+  });
+};
+
 // ── Init ──────────────────────────────────────────────
 buildDropdown('majSelect', NOTE_ORDER,  'C');
 buildDropdown('minSelect', INNER_ORDER, 'A');
 wireButtons();
+wireExtControls();
+wireProgLevels();
 render();
 
 // KCM Console bridge
@@ -1214,6 +1841,23 @@ function _explPc(name) {
 }
 
 function _explCurrentTones() {
+  // Extension rings take priority when they're the most recent thing you
+  // touched — connects the Explorer section (Keyboard/Fretboard/Staff/
+  // Chromatic Circle) to whatever's actually toggled up in the Extended
+  // Tones panel, instead of it always showing the plain major scale
+  // regardless of what chord is on screen above it.
+  if (S.lastPick === 'ext' && S.extActive.size > 0) {
+    const list = extActiveList();
+    const sameCol = list.every(n => n.idx === list[0].idx);
+    if (sameCol) {
+      const tones = stackNamesForCol(list[0].idx);
+      const label = S.hubLabel ? `${S.hubLabel.top} — ${S.hubLabel.mid||''} ${S.hubLabel.bottom}`.replace(/\s+/g,' ').trim() : `${dn(NOTE_ORDER[list[0].idx])} extension chord`;
+      return { tones, label };
+    }
+    // Comparing extensions across two different keys — no single
+    // chord/scale applies, so just the raw tones being compared.
+    return { tones: list.map(n => n.note), label: 'compared extension tones' };
+  }
   const active = (typeof getActiveNote === 'function') ? getActiveNote() : null;
   if (active && active.note) {
     const tones = active.type === 'inner' ? getMinorTriad(active.note) : getTriad(active.note);

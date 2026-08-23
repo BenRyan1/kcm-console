@@ -2285,14 +2285,20 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                  Instrument/Live MIDI above. Lazily fetches the file tree from
                  the public BenRyan1/KCM_Melody_Library GitHub repo (350+
                  Billboard #1 melodies, 1950–2024, BIMMUDA dataset) the first
-                 time it's opened, then lets you filter by decade and download
-                 any melody as a .mid file. Driven by loadMelodyLibrary() /
+                 time it's opened, then lets you filter by decade, PLAY any
+                 melody note-by-note across the circle/piano/fretboard
+                 (playLibraryMelody(), parses the real .mid file client-side),
+                 or download it as a .mid file. Driven by loadMelodyLibrary() /
                  renderMelodyLibraryList() / filterMelodyLibrary() below. ── -->
             <div id="melodyLibraryPanel" style="display:none; margin:0.5rem 0 0; width:100%; box-sizing:border-box;
                  background:rgba(10,10,25,0.97); border:2px solid var(--primary-teal);
                  border-radius:14px; padding:0.75rem 1rem; box-shadow:0 8px 32px rgba(0,128,128,0.35);">
-                <div style="font-size:0.65rem; font-weight:700; letter-spacing:1px; color:var(--primary-teal);
-                     text-align:center; margin-bottom:0.5rem; font-family:var(--font-display);">MELODY LIBRARY</div>
+                <div style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:0.5rem;">
+                    <span style="font-size:0.65rem; font-weight:700; letter-spacing:1px; color:var(--primary-teal);
+                     font-family:var(--font-display);">MELODY LIBRARY</span>
+                    <button class="inst-btn" id="melodyStopBtn" onclick="stopLibraryMelody()"
+                        title="Stop melody playback" style="padding:2px 9px; font-size:0.6rem;">■ Stop</button>
+                </div>
                 <div id="melodyLibraryStatus" style="text-align:center; font-size:0.62rem; color:#b0b0cc; margin-bottom:0.5rem;">⏳ Loading…</div>
                 <div id="melodyDecadeRow" style="display:flex; flex-wrap:wrap; gap:4px; justify-content:center; margin-bottom:0.6rem;">
                     <button class="inst-btn melody-decade-btn active" data-decade="all" onclick="filterMelodyLibrary('all')">All</button>
@@ -3975,12 +3981,23 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 return;
             }
             container.innerHTML = files.map(f => `
-                <a href="${f.rawUrl}" download="${f.name}" title="Download ${f.name}"
-                   style="display:flex; justify-content:space-between; align-items:center; padding:0.4rem 0.6rem;
+                <div class="melody-row" data-raw-url="${f.rawUrl}" data-name="${f.name}" data-label="${f.label.replace(/"/g,'&quot;')}"
+                   style="display:flex; justify-content:space-between; align-items:center; gap:8px; padding:0.4rem 0.6rem;
                           background:rgba(0,128,128,0.08); border:1px solid rgba(0,128,128,0.2); border-radius:6px;
-                          color:#e8e8f8; font-size:0.66rem; text-decoration:none;">
-                    <span>${f.label}</span><span style="color:var(--primary-gold,#F4D03F);">⬇</span>
-                </a>`).join('');
+                          color:#e8e8f8; font-size:0.66rem;">
+                    <span style="flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${f.label}</span>
+                    <button class="melody-play-btn" title="Play ${f.label} in the app" aria-label="Play ${f.label}"
+                        style="flex:0 0 auto; background:rgba(0,128,128,0.25); border:1px solid var(--primary-teal,#008080); border-radius:5px;
+                               color:#e8e8f8; cursor:pointer; font-size:0.68rem; padding:2px 8px; line-height:1.6;">▶</button>
+                    <a href="${f.rawUrl}" download="${f.name}" title="Download ${f.name}" aria-label="Download ${f.name}"
+                       style="flex:0 0 auto; color:var(--primary-gold,#F4D03F); text-decoration:none;">⬇</a>
+                </div>`).join('');
+            container.querySelectorAll('.melody-play-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const row = btn.closest('.melody-row');
+                    if (row) playLibraryMelody({ rawUrl: row.dataset.rawUrl, name: row.dataset.name, label: row.dataset.label });
+                });
+            });
         }
         window.renderMelodyLibraryList = renderMelodyLibraryList;
 
@@ -3990,6 +4007,242 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
             renderMelodyLibraryList(decade);
         }
         window.filterMelodyLibrary = filterMelodyLibrary;
+
+        // ══════════════════════════════════════════════════════════════
+        // REAL MELODY PLAYBACK — parses the actual .mid file for a Melody
+        // Library entry and plays its real note-by-note tune through the
+        // circle + piano + fretboard, using this app's OWN synth
+        // (_playAt) and highlight engine (highlightMTPNotes, exposed on
+        // window just below its definition). Previously this panel only
+        // offered a download link; the button above now plays the song
+        // in place. Nothing about the existing fret 4/5/12 toggle, chord/
+        // scale mode, or stencil overlay on the fretboard is touched —
+        // this is purely additive and shares no state with them.
+        //
+        // MIDI parser is vanilla JS, ported 1:1 (function bodies
+        // unchanged) from the standalone "Chromatic Circle & Fretboard —
+        // MIDI Player" page (Aug 2026), just renamed with an _mtp prefix
+        // so nothing collides with identifiers already used elsewhere in
+        // this file. ──────────────────────────────────────────────────
+        function _mtpReadVarLen(bytes, pos) {
+            let value = 0, b;
+            do { b = bytes[pos++]; value = (value << 7) | (b & 0x7f); } while (b & 0x80);
+            return [value, pos];
+        }
+        function _mtpBytesToString(bytes) {
+            let s = '';
+            for (let i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
+            try { return decodeURIComponent(escape(s)); } catch (e) { return s; }
+        }
+        function _mtpParseMidi(buffer) {
+            const bytes = new Uint8Array(buffer);
+            let pos = 0;
+            function readStr(len) { let s = ''; for (let i = 0; i < len; i++) s += String.fromCharCode(bytes[pos++]); return s; }
+            function readUint32() { const v = (bytes[pos] << 24) | (bytes[pos+1] << 16) | (bytes[pos+2] << 8) | bytes[pos+3]; pos += 4; return v >>> 0; }
+            function readUint16() { const v = (bytes[pos] << 8) | bytes[pos+1]; pos += 2; return v; }
+            if (bytes.length < 14 || readStr(4) !== 'MThd') throw new Error('Not a valid MIDI file (missing MThd header)');
+            const headerLen = readUint32();
+            const format = readUint16();
+            const numTracks = readUint16();
+            const division = readUint16();
+            if (headerLen > 6) pos += headerLen - 6;
+            let ticksPerQuarter = 480;
+            if ((division & 0x8000) === 0) {
+                ticksPerQuarter = division || 480;
+            } else {
+                const framesPerSecond = 256 - ((division >> 8) & 0xff);
+                const ticksPerFrame = division & 0xff;
+                ticksPerQuarter = Math.round((framesPerSecond * ticksPerFrame) / 2) || 480;
+            }
+            const tracks = [], tempoEvents = [], lyricEvents = [];
+            let trackName = null;
+            for (let t = 0; t < numTracks && pos < bytes.length; t++) {
+                const chunkId = readStr(4);
+                const chunkLen = readUint32();
+                const chunkEnd = pos + chunkLen;
+                if (chunkId !== 'MTrk') { pos = chunkEnd; continue; }
+                let tick = 0, runningStatus = null;
+                const events = [];
+                while (pos < chunkEnd) {
+                    let delta;
+                    [delta, pos] = _mtpReadVarLen(bytes, pos);
+                    tick += delta;
+                    let statusByte = bytes[pos];
+                    if (statusByte & 0x80) { runningStatus = statusByte; pos++; } else { statusByte = runningStatus; }
+                    if (statusByte === 0xff) {
+                        const metaType = bytes[pos++];
+                        let len;
+                        [len, pos] = _mtpReadVarLen(bytes, pos);
+                        const data = bytes.slice(pos, pos + len);
+                        pos += len;
+                        if (metaType === 0x51 && data.length >= 3) {
+                            tempoEvents.push({ tick, usPerQuarter: (data[0] << 16) | (data[1] << 8) | data[2] });
+                        } else if (metaType === 0x05 || metaType === 0x01) {
+                            const text = _mtpBytesToString(data).trim();
+                            if (text) lyricEvents.push({ tick, text });
+                        } else if (metaType === 0x03 && !trackName) {
+                            const text = _mtpBytesToString(data).trim();
+                            if (text) trackName = text;
+                        }
+                    } else if (statusByte === 0xf0 || statusByte === 0xf7) {
+                        let len;
+                        [len, pos] = _mtpReadVarLen(bytes, pos);
+                        pos += len;
+                    } else if (statusByte == null) {
+                        break;
+                    } else {
+                        const type = statusByte & 0xf0;
+                        const channel = statusByte & 0x0f;
+                        const d1 = bytes[pos++];
+                        if (type === 0xc0 || type === 0xd0) { events.push({ tick, type, channel, d1 }); }
+                        else { const d2 = bytes[pos++]; events.push({ tick, type, channel, d1, d2 }); }
+                    }
+                }
+                pos = chunkEnd;
+                tracks.push(events);
+            }
+            return { format, ticksPerQuarter, tracks, tempoEvents, lyricEvents, trackName };
+        }
+        function _mtpBuildTempoMap(tempoEvents, ticksPerQuarter) {
+            const sorted = tempoEvents.slice().sort((a, b) => a.tick - b.tick);
+            if (!sorted.length || sorted[0].tick !== 0) sorted.unshift({ tick: 0, usPerQuarter: 500000 });
+            const map = [];
+            let lastTick = -1;
+            sorted.forEach(ev => {
+                if (ev.tick === lastTick && map.length) map[map.length - 1].usPerQuarter = ev.usPerQuarter;
+                else { map.push({ tick: ev.tick, usPerQuarter: ev.usPerQuarter }); lastTick = ev.tick; }
+            });
+            let cumMs = 0;
+            for (let i = 0; i < map.length; i++) {
+                if (i > 0) {
+                    const prev = map[i - 1];
+                    cumMs += ((map[i].tick - prev.tick) * (prev.usPerQuarter / ticksPerQuarter)) / 1000;
+                }
+                map[i].cumMs = cumMs;
+            }
+            return map;
+        }
+        function _mtpMakeTickToMs(map, ticksPerQuarter) {
+            return function(tick) {
+                let seg = map[0];
+                for (let i = 0; i < map.length; i++) { if (map[i].tick <= tick) seg = map[i]; else break; }
+                return seg.cumMs + ((tick - seg.tick) * (seg.usPerQuarter / ticksPerQuarter)) / 1000;
+            };
+        }
+        function _mtpBuildStepsFromNotes(notes) {
+            const EPS = 30;
+            const groups = [];
+            notes.forEach(n => {
+                const g = groups[groups.length - 1];
+                if (g && Math.abs(n.tStart - g.tStart) <= EPS) g.notes.push(n);
+                else groups.push({ tStart: n.tStart, notes: [n] });
+            });
+            for (let i = 0; i < groups.length; i++) {
+                const g = groups[i];
+                g.notes.sort((a, b) => a.midi - b.midi);
+                const maxEnd = Math.max(...g.notes.map(n => n.tEnd));
+                const nextStart = i < groups.length - 1 ? groups[i + 1].tStart : maxEnd;
+                g.durationMs = Math.max(80, nextStart - g.tStart);
+            }
+            return groups;
+        }
+        function _mtpSongFromParsedMidi(parsed, title) {
+            const tempoMap = _mtpBuildTempoMap(parsed.tempoEvents, parsed.ticksPerQuarter);
+            const tickToMs = _mtpMakeTickToMs(tempoMap, parsed.ticksPerQuarter);
+            let tracksToUse = parsed.tracks;
+            if (parsed.format === 2 && parsed.tracks.length > 1) {
+                tracksToUse = [parsed.tracks.find(tr => tr.length) || parsed.tracks[0]];
+            }
+            const notes = [];
+            tracksToUse.forEach(events => {
+                const active = {};
+                events.forEach(ev => {
+                    if (ev.channel === 9) return; // GM percussion channel — not pitched
+                    const key = ev.channel * 128 + ev.d1;
+                    if (ev.type === 0x90 && ev.d2 > 0) {
+                        active[key] = { startTick: ev.tick, velocity: ev.d2 };
+                    } else if (ev.type === 0x80 || (ev.type === 0x90 && ev.d2 === 0)) {
+                        const on = active[key];
+                        if (on) {
+                            notes.push({ midi: ev.d1, velocity: on.velocity, tStart: tickToMs(on.startTick), tEnd: tickToMs(ev.tick) });
+                            delete active[key];
+                        }
+                    }
+                });
+            });
+            notes.sort((a, b) => a.tStart - b.tStart);
+            if (!notes.length) throw new Error('No pitched notes found in this MIDI file.');
+            const steps = _mtpBuildStepsFromNotes(notes);
+            const lyricsMs = parsed.lyricEvents.map(l => ({ t: tickToMs(l.tick), text: l.text }));
+            steps.forEach(g => {
+                let best = null, bestDist = Infinity;
+                lyricsMs.forEach(l => {
+                    const d = Math.abs(l.t - g.tStart);
+                    if (d < bestDist && d < 500) { bestDist = d; best = l.text; }
+                });
+                g.lyric = best;
+            });
+            return { title: title || parsed.trackName || 'Untitled MIDI', steps };
+        }
+
+        // ── Playback engine — schedules steps with setTimeout, plays
+        // each step's notes through _playAt() (the app's own low-level
+        // synth call — same one every other feature funnels through, so
+        // Record Studio capture etc. keep working automatically) and
+        // lights circle+piano+fretboard via highlightMTPNotes(). ──
+        let _mtpMelody = { song: null, playing: false, loop: false, timers: [] };
+
+        function stopLibraryMelody() {
+            _mtpMelody.playing = false;
+            _mtpMelody.timers.forEach(t => clearTimeout(t));
+            _mtpMelody.timers = [];
+        }
+        window.stopLibraryMelody = stopLibraryMelody;
+
+        function _mtpScheduleStep(i) {
+            if (!_mtpMelody.playing || !_mtpMelody.song) return;
+            const steps = _mtpMelody.song.steps;
+            const statusEl = document.getElementById('melodyLibraryStatus');
+            if (i >= steps.length) {
+                if (_mtpMelody.loop) { _mtpScheduleStep(0); return; }
+                _mtpMelody.playing = false;
+                if (statusEl) statusEl.textContent = '✓ Finished: ' + _mtpMelody.song.title;
+                return;
+            }
+            const step = steps[i];
+            const pcs = [...new Set(step.notes.map(n => ((n.midi % 12) + 12) % 12))];
+            const oct = Math.floor(step.notes[0].midi / 12) - 1;
+            const durSec = Math.max(0.12, (step.durationMs / 1000) * 0.92);
+            try {
+                if (!audioContext || !audioReady) initAudio();
+                if (audioContext) pcs.forEach(pc => _playAt(pc, oct, audioContext.currentTime, durSec, 0.22));
+            } catch (e) { console.error('Melody playback audio error:', e); }
+            if (typeof window.highlightMTPNotes === 'function') window.highlightMTPNotes(pcs);
+            if (statusEl) statusEl.textContent = '▶ ' + _mtpMelody.song.title + (step.lyric ? ' — ' + step.lyric : '');
+            const t = setTimeout(() => _mtpScheduleStep(i + 1), step.durationMs);
+            _mtpMelody.timers.push(t);
+        }
+
+        async function playLibraryMelody(entry) {
+            const statusEl = document.getElementById('melodyLibraryStatus');
+            stopLibraryMelody();
+            try {
+                if (statusEl) statusEl.textContent = '⏳ Loading "' + entry.label + '"…';
+                const res = await fetch(entry.rawUrl);
+                if (!res.ok) throw new Error('fetch failed (' + res.status + ')');
+                const buffer = await res.arrayBuffer();
+                const parsed = _mtpParseMidi(buffer);
+                const song = _mtpSongFromParsedMidi(parsed, entry.label);
+                _mtpMelody.song = song;
+                _mtpMelody.playing = true;
+                if (statusEl) statusEl.textContent = '▶ Playing: ' + entry.label;
+                _mtpScheduleStep(0);
+            } catch (err) {
+                console.error('Melody playback error:', err);
+                if (statusEl) statusEl.textContent = '⚠️ Could not play "' + entry.label + '": ' + err.message;
+            }
+        }
+        window.playLibraryMelody = playLibraryMelody;
 
         // ── MIDI init (graceful — security policy may block, e.g. Safari
         // without Web MIDI support) ──────────────────────────────────
@@ -11350,6 +11603,7 @@ async function kcmAIAsk(type) {
             window.updateStaffNotation(pcs);
         }
     }
+    window.highlightMTPNotes = highlightMTPNotes;
 
     // ── Update label block ───────────────────────────────────
     function updateLabelBlock() {
