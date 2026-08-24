@@ -7,3 +7,7 @@ preview_urls = true
 [[routes]]
 pattern = "keyscodesandmodes.com/api/*"
 zone_name = "keyscodesandmodes.com"
+
+[[kv_namespaces]]
+binding = "REVOKED_SESSIONS"
+id = "158e3ba3ffb2474b97c7be753039bf9a"

@@ -75,7 +75,16 @@ export default {
     }
     // Returns the verified payload ({tier, exp, ...}) or null — never
     // throws, so callers can treat any falsy return as "not premium."
-    async function verifySession(token, secret) {
+    //
+    // `revokedKV` (added 2026-08-24) is the REVOKED_SESSIONS KV binding.
+    // A token can carry a valid, unexpired signature and still be denied
+    // if its `cust` (Stripe customer ID) shows up there — that's how a
+    // canceled subscription gets shut off before the 180-day token would
+    // otherwise expire on its own. See /api/stripe-webhook below, which
+    // is what writes to that store. Tokens with no `cust` (e.g. access-
+    // code redemptions) skip this check entirely — there's no Stripe
+    // subscription behind them to cancel.
+    async function verifySession(token, secret, revokedKV) {
       if (typeof token !== 'string' || !secret) return null;
       const parts = token.split('.');
       if (parts.length !== 2) return null;
@@ -104,6 +113,17 @@ export default {
       if (mismatch !== 0) return null;
       if (!payload || typeof payload.exp !== 'number' || Date.now() > payload.exp) return null;
       if (!payload.tier) return null;
+      if (payload.cust && revokedKV) {
+        try {
+          const revoked = await revokedKV.get(payload.cust);
+          if (revoked) return null;
+        } catch (e) {
+          // KV outage shouldn't be an outright fail-open on a paid
+          // feature, but it also shouldn't take the whole site down —
+          // treat as not-revoked and let the signature/expiry checks
+          // above stand as the primary gate.
+        }
+      }
       return payload;
     }
 
@@ -181,12 +201,178 @@ export default {
           { status: 500, headers: { ...cors, 'Content-Type': 'application/json' } });
       }
 
-      const payload = await verifySession(token, env.SESSION_SIGNING_KEY);
+      const payload = await verifySession(token, env.SESSION_SIGNING_KEY, env.REVOKED_SESSIONS);
       return new Response(JSON.stringify({ ok: !!payload, tier: payload ? payload.tier : null }),
         {
           status: payload ? 200 : 401,
           headers: { ...cors, 'Content-Type': 'application/json' },
         });
+    }
+
+    // ── /api/verify-stripe-session — closes the pricing.html bypass ─────
+    // Added 2026-08-24. pricing.html previously trusted a bare
+    // "?success=true&tier=..." URL parameter to grant premium access —
+    // anyone could type that URL by hand and unlock every app with no
+    // payment at all. Stripe Payment Links now append the real, opaque,
+    // Stripe-generated `session_id` ({CHECKOUT_SESSION_ID}) to the
+    // success URL. This route takes that session_id, asks Stripe
+    // directly (server-to-server, using the STRIPE_SECRET_KEY secret —
+    // never exposed to the browser) whether that session is real and
+    // actually paid, and only then issues a signed kcm_session_token —
+    // the same token type /api/verify-code issues, so my-apps.html and
+    // kcm-app-gate.js need no changes to trust it.
+    if (url.pathname === '/api/verify-stripe-session') {
+      let body;
+      try {
+        body = await request.json();
+      } catch (e) {
+        return new Response(JSON.stringify({ ok: false, error: 'Invalid JSON' }),
+          { status: 400, headers: { ...cors, 'Content-Type': 'application/json' } });
+      }
+
+      const sessionId = typeof body.session_id === 'string' ? body.session_id.trim() : '';
+      const requestedTier = typeof body.tier === 'string' ? body.tier.trim() : '';
+
+      // Stripe Checkout Session IDs always look like cs_test_... or
+      // cs_live_...  — reject anything else before ever calling Stripe.
+      if (!/^cs_[A-Za-z0-9_]+$/.test(sessionId)) {
+        return new Response(JSON.stringify({ ok: false, error: 'Invalid session' }),
+          { status: 400, headers: { ...cors, 'Content-Type': 'application/json' } });
+      }
+
+      if (!env.STRIPE_SECRET_KEY || !env.SESSION_SIGNING_KEY) {
+        // Fail closed — a misconfigured secret should never silently
+        // grant access.
+        return new Response(JSON.stringify({ ok: false, error: 'Payment verification not configured' }),
+          { status: 500, headers: { ...cors, 'Content-Type': 'application/json' } });
+      }
+
+      let stripeRes;
+      try {
+        stripeRes = await fetch(
+          `https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(sessionId)}`,
+          { headers: { 'Authorization': `Bearer ${env.STRIPE_SECRET_KEY}` } }
+        );
+      } catch (e) {
+        return new Response(JSON.stringify({ ok: false, error: 'Upstream request failed' }),
+          { status: 502, headers: { ...cors, 'Content-Type': 'application/json' } });
+      }
+
+      if (!stripeRes.ok) {
+        // Includes the case where the session ID doesn't exist at all —
+        // i.e. someone hand-typed or guessed a session_id.
+        return new Response(JSON.stringify({ ok: false, error: 'Session not found' }),
+          { status: 401, headers: { ...cors, 'Content-Type': 'application/json' } });
+      }
+
+      const session = await stripeRes.json().catch(() => ({}));
+
+      if (session.payment_status !== 'paid') {
+        return new Response(JSON.stringify({ ok: false, error: 'Payment not completed' }),
+          { status: 401, headers: { ...cors, 'Content-Type': 'application/json' } });
+      }
+
+      // The tier label only decides which token/display name they get —
+      // access itself is already gated on the payment_status check above.
+      // Restricted to a known allow-list so it can't be used to inject
+      // arbitrary values into the signed token payload.
+      const VALID_TIERS = [
+        'student_monthly', 'student_yearly',
+        'professional_monthly', 'professional_yearly',
+        'founders_circle',
+      ];
+      const tier = VALID_TIERS.includes(requestedTier) ? requestedTier : 'professional_monthly';
+
+      // Carrying the Stripe customer ID inside the token (not secret —
+      // it's meaningless without the signature) is what lets
+      // /api/stripe-webhook shut off access early if this person cancels,
+      // instead of waiting out the full 180-day token lifetime.
+      const sessionToken = await signSession(
+        { tier, exp: Date.now() + SESSION_TTL_MS, cust: session.customer || null },
+        env.SESSION_SIGNING_KEY
+      );
+
+      return new Response(JSON.stringify({ ok: true, tier, token: sessionToken }),
+        { status: 200, headers: { ...cors, 'Content-Type': 'application/json' } });
+    }
+
+    // ── /api/stripe-webhook — subscription canceled → revoke access ─────
+    // Added 2026-08-24. The signed session token above is normally valid
+    // for 180 days regardless of what happens to the subscription behind
+    // it. This route is what Stripe calls the moment a subscription is
+    // actually canceled (or a renewal payment fails outright), so access
+    // can be cut off immediately instead of silently continuing until
+    // the token's own expiry. Requires the STRIPE_WEBHOOK_SECRET Worker
+    // secret (from the webhook endpoint's "Signing secret" in the Stripe
+    // dashboard) to confirm the call really came from Stripe and wasn't
+    // forged by a third party trying to revoke someone else's access.
+    if (url.pathname === '/api/stripe-webhook') {
+      if (!env.STRIPE_WEBHOOK_SECRET) {
+        return new Response('Webhook not configured', { status: 500, headers: cors });
+      }
+
+      const rawBody = await request.text();
+      const sigHeader = request.headers.get('Stripe-Signature') || '';
+      const sigParts = {};
+      sigHeader.split(',').forEach(part => {
+        const eq = part.indexOf('=');
+        if (eq > 0) sigParts[part.slice(0, eq)] = part.slice(eq + 1);
+      });
+
+      if (!sigParts.t || !sigParts.v1) {
+        return new Response('Invalid signature header', { status: 400, headers: cors });
+      }
+
+      // Standard Stripe replay guard — reject anything claiming to be
+      // more than 5 minutes old.
+      const ageSeconds = Math.abs(Date.now() / 1000 - Number(sigParts.t));
+      if (!Number.isFinite(ageSeconds) || ageSeconds > 300) {
+        return new Response('Signature too old', { status: 400, headers: cors });
+      }
+
+      const key = await hmacKey(env.STRIPE_WEBHOOK_SECRET);
+      const sigBuf = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(`${sigParts.t}.${rawBody}`));
+      const expectedHex = Array.from(new Uint8Array(sigBuf)).map(b => b.toString(16).padStart(2, '0')).join('');
+
+      if (expectedHex.length !== sigParts.v1.length) {
+        return new Response('Signature mismatch', { status: 400, headers: cors });
+      }
+      let mismatch = 0;
+      for (let i = 0; i < expectedHex.length; i++) {
+        mismatch |= expectedHex.charCodeAt(i) ^ sigParts.v1.charCodeAt(i);
+      }
+      if (mismatch !== 0) {
+        return new Response('Signature mismatch', { status: 400, headers: cors });
+      }
+
+      let event;
+      try {
+        event = JSON.parse(rawBody);
+      } catch (e) {
+        return new Response('Invalid JSON', { status: 400, headers: cors });
+      }
+
+      // subscription.deleted = the subscription is actually gone.
+      // subscription.updated is also watched so a failed-renewal state
+      // (unpaid / incomplete_expired) cuts access without waiting for
+      // Stripe to fully delete the subscription later. Ordinary updates
+      // (e.g. an upgrade) don't match these statuses, so they're ignored.
+      if (event.type === 'customer.subscription.deleted' || event.type === 'customer.subscription.updated') {
+        const sub = event.data && event.data.object;
+        const status = sub && sub.status;
+        const customerId = sub && sub.customer;
+        const shouldRevoke = event.type === 'customer.subscription.deleted'
+          || status === 'canceled' || status === 'unpaid' || status === 'incomplete_expired';
+
+        if (customerId && shouldRevoke && env.REVOKED_SESSIONS) {
+          await env.REVOKED_SESSIONS.put(String(customerId), String(Date.now()), {
+            expirationTtl: Math.ceil(SESSION_TTL_MS / 1000),
+          });
+        }
+      }
+
+      return new Response(JSON.stringify({ received: true }),
+        { status: 200, headers: { ...cors, 'Content-Type': 'application/json' } });
     }
 
     // ── /ai — secure proxy to the Anthropic Messages API ────────────────
