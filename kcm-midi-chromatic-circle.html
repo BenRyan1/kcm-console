@@ -1008,6 +1008,7 @@ function start(sound){
 }
 function stop(){
   playing = false;
+  withSound = false; // silence the idle preview loop below — it only flashes visuals until Play is pressed again
   clearTimeout(timeoutId);
   playBtn.disabled = false;
   pauseBtn.disabled = true;
