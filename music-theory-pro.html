@@ -2675,18 +2675,30 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                 <button class="level-btn" id="playChromaticBtn" style="background:linear-gradient(135deg, var(--primary-teal) 0%, #006666 100%); border-color:var(--primary-teal); color:#fff; width:100%; font-size:0.85rem; letter-spacing:1px; box-shadow:var(--teal-glow);">🎹 CHROMATIC SCALE</button>
             </div>
 
-            <!-- ── KEY PICKER — moved here: below Chromatic Scale, above
-                 the level selector (Single Note etc.). Same ids/onclick
-                 wiring (toggleKeyPicker()) as before — position only. ── -->
-            <div style="display:flex; justify-content:center; margin-bottom:0.5rem;">
-                <button class="view-btn key-selector-btn" id="keyPickerBtn" onclick="toggleKeyPicker()" aria-haspopup="true" aria-expanded="false" style="width:100%;">🎵 Key: <span id="keyPickerLabel">C</span></button>
-            </div>
-            <div id="keyPickerPanel" style="display:none; margin:0 0 0.5rem; width:100%; box-sizing:border-box;
-                 background:rgba(10,10,25,0.97); border:2px solid var(--primary-teal);
-                 border-radius:14px; padding:0.75rem 1rem; box-shadow:0 8px 32px rgba(0,128,128,0.35);">
-                <div style="font-size:0.65rem; font-weight:700; letter-spacing:1px; color:var(--primary-teal);
-                     text-align:center; margin-bottom:0.6rem; font-family:var(--font-display);">SELECT KEY</div>
-                <div style="display:flex; flex-wrap:wrap; gap:5px; justify-content:center;" id="keyPickerBtns"></div>
+            <!-- ── KEY PICKER — plain <select> dropdown (replaces the old
+                 pill-grid popup, which opened but never reliably rendered
+                 its buttons). Same screen position; wired to the same
+                 window._setKeyGlobal() setter everything else uses. ── -->
+            <div style="width:100%; margin-bottom:0.5rem; box-sizing:border-box;">
+                <div style="font-size:0.65rem; font-weight:700; letter-spacing:1.5px; color:var(--primary-teal);
+                     text-align:center; margin-bottom:0.35rem; font-family:var(--font-display); text-transform:uppercase;">🎵 Key</div>
+                <select id="keyPickerSelect" aria-label="Select key"
+                     style="width:100%; background:rgba(244,208,63,0.12); border:2px solid var(--primary-gold);
+                     border-radius:10px; padding:0.6rem 0.5rem; color:#f4d03f; font-family:var(--font-display);
+                     font-weight:800; font-size:0.9rem; text-align:center; text-align-last:center; outline:none; cursor:pointer;">
+                    <option value="0">C — no ♯/♭</option>
+                    <option value="7">G — 1♯</option>
+                    <option value="2">D — 2♯</option>
+                    <option value="9">A — 3♯</option>
+                    <option value="4">E — 4♯</option>
+                    <option value="11">B — 5♯</option>
+                    <option value="6">F♯ — 6♯</option>
+                    <option value="5">F — 1♭</option>
+                    <option value="10">B♭ — 2♭</option>
+                    <option value="3">E♭ — 3♭</option>
+                    <option value="8">A♭ — 4♭</option>
+                    <option value="1">D♭ — 5♭</option>
+                </select>
             </div>
 
             <div class="level-selector kcm-hover-nav" role="group" aria-label="Learning mode selector" style="flex-direction:column; align-items:stretch; max-width:none;">
@@ -3284,9 +3296,15 @@ window.addEventListener('unhandledrejection', function(event) {
                 });
                 const closeEarBtn = document.getElementById('closeEarBtn');
                 if (closeEarBtn) closeEarBtn.onclick = () => { earTrainingOpen = false; updateEarOverlay(); };
-                // Key picker button is also .view-btn but has no data-view — wire it separately
-                const _kpb = document.getElementById('keyPickerBtn');
-                if (_kpb) _kpb.onclick = () => { if (typeof toggleKeyPicker === 'function') toggleKeyPicker(); };
+                // Key dropdown — plain <select>, replaces the old pill-grid popup
+                const _kps = document.getElementById('keyPickerSelect');
+                if (_kps) {
+                    const rn0 = (typeof window._rootNote === 'number') ? window._rootNote : 0;
+                    _kps.value = String(rn0);
+                    _kps.onchange = () => {
+                        if (typeof window._setKeyGlobal === 'function') window._setKeyGlobal(parseInt(_kps.value, 10));
+                    };
+                }
 
                 document.querySelectorAll('.level-btn[data-level]').forEach(btn => {
                     btn.onclick = function() {
@@ -9573,6 +9591,9 @@ function setKeyFromPicker(pc, name) {
 function syncKeyPickerLabel() {
     const displayNames = ['C','D♭','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
     const rn = (typeof window._rootNote === 'number') ? window._rootNote : 0;
+    // Key dropdown
+    const sel = document.getElementById('keyPickerSelect');
+    if (sel && sel.value !== String(rn)) sel.value = String(rn);
     // Panel button label
     const lbl = document.getElementById('keyPickerLabel');
     if (lbl) lbl.textContent = displayNames[rn];
