@@ -283,28 +283,17 @@
     margin-top:4px; letter-spacing:0.5px;
   }
 
-  /* ---------- Staff (Melody Explorer) ---------- */
+  /* ---------- Staff (Melody Explorer) — canvas-drawn, matching the
+     KCM Sound Observatory's Staff Notation card (hand-drawn treble clef,
+     glowing KCM-colored noteheads, color-matched note name below) ---------- */
   .staff-wrap{
     margin-top:14px;
-    max-width:100%;
-    overflow-x:auto;
-    overflow-y:hidden;
     border:1px solid var(--border);
     border-radius:10px;
-    background:rgba(255,255,255,0.03);
-    padding:4px 0;
+    overflow:hidden;
+    background:#080C14;
   }
-  .staff-wrap svg{ display:block; }
-  .staff-line{ stroke:rgba(232,232,248,0.5); stroke-width:1.3; }
-  .staff-ledger{ stroke:rgba(232,232,248,0.4); stroke-width:1.3; }
-  .staff-clef{ fill:var(--text-secondary); font-family:'Cinzel',serif; }
-  .staff-note{
-    stroke:rgba(255,255,255,0.35); stroke-width:1;
-    transition:transform .12s ease, filter .12s ease, stroke .12s ease, stroke-width .12s ease;
-    transform-box:fill-box; transform-origin:center;
-  }
-  .staff-note.active{ stroke:#fff; stroke-width:2; filter:brightness(1.5) saturate(1.5); transform:scale(1.4); }
-  .staff-accidental{ font-size:12px; font-weight:700; }
+  #staffCanvas{ display:block; width:100%; height:150px; }
   .staff-caption{ font-size:11px; color:var(--text-secondary); text-align:center; margin:4px 0 0; }
 
   /* ---------- Fretboard ---------- */
@@ -385,7 +374,7 @@
 
     <h2 style="margin-top:10px;">Melody Explorer — Staff</h2>
     <div class="staff-wrap">
-      <svg id="staffSvg" viewBox="0 0 900 130" preserveAspectRatio="xMinYMid meet"></svg>
+      <canvas id="staffCanvas"></canvas>
     </div>
     <div class="staff-caption">Follows playback in sync with the circle, keyboard, and fretboard</div>
 
@@ -813,108 +802,117 @@ function buildStrip(song){
   }
 }
 
-/* ---------------- Staff — Melody Explorer (rebuilt per song, underneath
-   the circle). A simplified/schematic treble staff: sharps are spelled on
-   their natural-letter line/space with a ♯ glyph (matching the 12-Color
-   Chromatic Spectrum's sharps-only naming), not fully engraved notation.
-   Lead note of each step only, same convention the arrows/lyrics use. ---------------- */
-const SVG_NS = 'http://www.w3.org/2000/svg';
-const STAFF_LINE_GAP = 10;
-const STAFF_TOP_Y = 38;
-const STAFF_BOTTOM_Y = STAFF_TOP_Y + 4 * STAFF_LINE_GAP;
-const STAFF_NOTE_SPACING = 26;
-const STAFF_LEFT_MARGIN = 56;
-const DIATONIC_STEP = { C:0, D:1, E:2, F:3, G:4, A:5, B:6 };
-const STAFF_REF = 4 * 7 + DIATONIC_STEP.E; // E4 = bottom line of the treble staff (rel 0)
-function diatonicStepFor(midi){
-  const name = noteNameFromMidi(midi);
-  const octave = Math.floor(midi / 12) - 1;
-  return { rel: (octave * 7 + DIATONIC_STEP[name[0]]) - STAFF_REF, sharp: name.length > 1, note: name };
+/* ---------------- Staff — Melody Explorer (underneath the circle).
+   Canvas-drawn treble staff, ported from the KCM Sound Observatory's
+   "Staff Notation" card (drawStaff/drawClef): hand-drawn bezier clef,
+   glowing KCM-colored noteheads, stems, and a color-matched note name
+   below each head. Shows whichever note(s) are sounding RIGHT NOW (the
+   current step's chord, like the Observatory shows whatever's currently
+   detected) so it reads as a live instrument in sync with the circle,
+   keyboard, fretboard, and strip — not a scrolling piano-roll. ---------------- */
+const SEMI_DIA = [0,0,1,1,2,3,3,4,4,5,5,6]; // semitone -> diatonic step within the octave
+function staffPos(midi){
+  // Position 0 = middle C (C4). Each unit = one diatonic degree, + = higher.
+  const oct = Math.floor(midi / 12) - 1;
+  const semi = ((midi % 12) + 12) % 12;
+  return (oct - 4) * 7 + SEMI_DIA[semi];
 }
-function staffY(rel){ return STAFF_BOTTOM_Y - rel * (STAFF_LINE_GAP / 2); }
+function resizeCanvasToParent(c){
+  if (!c || !c.parentElement) return;
+  const r = c.parentElement.getBoundingClientRect();
+  const w = Math.max(1, Math.floor(r.width)), h = Math.max(1, Math.floor(r.height));
+  if (c.width !== w || c.height !== h){ c.width = w; c.height = h; }
+}
+const staffCanvas = document.getElementById('staffCanvas');
+const staffCtx = staffCanvas.getContext('2d');
+let _lastStaffNotes = [];
+function drawStaff(notes){
+  _lastStaffNotes = notes || [];
+  resizeCanvasToParent(staffCanvas);
+  const x = staffCtx, W = staffCanvas.width, H = staffCanvas.height;
+  x.fillStyle = '#080C14'; x.fillRect(0, 0, W, H);
 
-const staffSvg = document.getElementById('staffSvg');
-const staffWrapEl = staffSvg.closest('.staff-wrap');
-// Follow-scroll that ONLY moves this one container's own scrollLeft —
-// never document.scrollIntoView(), which walks every scrollable ancestor
-// (including the console page this panel is embedded in) and was making
-// the whole page jump/scroll during playback. Fixes the "scroll" bug.
-function followScrollWithin(container, el){
-  if (!container || !el) return;
-  const cRect = container.getBoundingClientRect();
-  const eRect = el.getBoundingClientRect();
-  const margin = 24;
-  if (eRect.left < cRect.left + margin){
-    container.scrollLeft += (eRect.left - cRect.left - margin);
-  } else if (eRect.right > cRect.right - margin){
-    container.scrollLeft += (eRect.right - cRect.right + margin);
-  }
-}
-let staffNoteEls = [];
-function buildStaff(song){
-  staffSvg.innerHTML = '';
-  staffNoteEls = [];
-  const showCount = Math.min(song.steps.length, MAX_STRIP_STEPS);
-  const width = Math.max(300, STAFF_LEFT_MARGIN + showCount * STAFF_NOTE_SPACING + 24);
-  staffSvg.setAttribute('viewBox', `0 0 ${width} 130`);
+  const marginL = W * 0.16, marginR = W * 0.04;
+  const staffCY = H * 0.46;
+  const ls = Math.max(7, Math.min(H * 0.082, 20)); // line spacing — same ratio as the Observatory's original
+  const spToY = sp => staffCY - (sp - 6) * (ls / 2);
+  const line1Y = spToY(2), line5Y = spToY(10); // E4 .. F5
+  const staffLeft = marginL * 0.55, staffRight = W - marginR;
 
   for (let i = 0; i < 5; i++){
-    const line = document.createElementNS(SVG_NS, 'line');
-    const y = STAFF_TOP_Y + i * STAFF_LINE_GAP;
-    line.setAttribute('x1', 8); line.setAttribute('x2', width - 8);
-    line.setAttribute('y1', y); line.setAttribute('y2', y);
-    line.setAttribute('class', 'staff-line');
-    staffSvg.appendChild(line);
+    const ly = spToY(2 + i * 2);
+    x.beginPath(); x.moveTo(staffLeft, ly); x.lineTo(staffRight, ly);
+    x.strokeStyle = 'rgba(255,255,255,.42)'; x.lineWidth = 0.8; x.stroke();
   }
-  const clef = document.createElementNS(SVG_NS, 'text');
-  clef.setAttribute('x', 10); clef.setAttribute('y', STAFF_TOP_Y + 33);
-  clef.setAttribute('font-size', 40);
-  clef.setAttribute('class', 'staff-clef');
-  clef.textContent = '𝄞'; // treble clef 𝄞
-  staffSvg.appendChild(clef);
+  x.strokeStyle = 'rgba(255,255,255,.5)'; x.lineWidth = 1;
+  x.beginPath(); x.moveTo(staffLeft, line1Y); x.lineTo(staffLeft, line5Y); x.stroke();
+  x.beginPath(); x.moveTo(staffRight, line1Y); x.lineTo(staffRight, line5Y); x.stroke();
+  drawClef(x, staffLeft - ls * 0.12, staffCY, ls);
 
-  for (let i = 0; i < showCount; i++){
-    const step = song.steps[i];
-    const midi = step.notes[0].midi;
-    const { rel, sharp, note } = diatonicStepFor(midi);
-    const x = STAFF_LEFT_MARGIN + i * STAFF_NOTE_SPACING;
-    const y = staffY(rel);
+  const valid = (notes || []).filter(n => n.midi >= 28 && n.midi <= 100).slice(0, 6);
+  if (!valid.length) return;
+  const sorted = [...valid].sort((a, b) => a.midi - b.midi);
 
-    if (rel < 0){
-      for (let r = -2; r >= rel; r -= 2){
-        const l = document.createElementNS(SVG_NS, 'line');
-        l.setAttribute('x1', x - 8); l.setAttribute('x2', x + 8);
-        l.setAttribute('y1', staffY(r)); l.setAttribute('y2', staffY(r));
-        l.setAttribute('class', 'staff-ledger');
-        staffSvg.appendChild(l);
+  const noteAreaX0 = marginL * 1.1, noteAreaX1 = W - marginR * 2.2;
+  const noteR = Math.max(4, ls * 0.44);
+
+  sorted.forEach((n, idx) => {
+    let dm = n.midi, sp = staffPos(dm);
+    while (sp < -4 && dm < 108){ dm += 12; sp = staffPos(dm); }
+    while (sp > 14 && dm > 12){ dm -= 12; sp = staffPos(dm); }
+    const name = noteNameFromMidi(dm);
+    const color = COLOR[name];
+    const noteY = spToY(sp);
+    const noteX = sorted.length === 1 ? W / 2 : noteAreaX0 + idx * (noteAreaX1 - noteAreaX0) / Math.max(1, sorted.length - 1);
+
+    const ledgerW = noteR * 1.8;
+    x.strokeStyle = hexRgba(color, 0.75); x.lineWidth = 1.1;
+    if (sp <= 1){
+      for (let lsp = 0; lsp >= sp; lsp -= 2){
+        const lY = spToY(lsp);
+        x.beginPath(); x.moveTo(noteX - ledgerW, lY); x.lineTo(noteX + ledgerW, lY); x.stroke();
       }
-    } else if (rel > 8){
-      for (let r = 10; r <= rel; r += 2){
-        const l = document.createElementNS(SVG_NS, 'line');
-        l.setAttribute('x1', x - 8); l.setAttribute('x2', x + 8);
-        l.setAttribute('y1', staffY(r)); l.setAttribute('y2', staffY(r));
-        l.setAttribute('class', 'staff-ledger');
-        staffSvg.appendChild(l);
+    } else if (sp >= 11){
+      for (let lsp = 12; lsp <= sp; lsp += 2){
+        const lY = spToY(lsp);
+        x.beginPath(); x.moveTo(noteX - ledgerW, lY); x.lineTo(noteX + ledgerW, lY); x.stroke();
       }
     }
 
-    if (sharp){
-      const acc = document.createElementNS(SVG_NS, 'text');
-      acc.setAttribute('x', x - 11); acc.setAttribute('y', y + 4);
-      acc.setAttribute('class', 'staff-accidental');
-      acc.setAttribute('fill', COLOR[note]);
-      acc.textContent = '♯';
-      staffSvg.appendChild(acc);
-    }
+    x.beginPath(); x.ellipse(noteX, noteY, noteR, noteR * 0.68, -0.2, 0, Math.PI * 2);
+    x.fillStyle = color; x.shadowColor = color; x.shadowBlur = 10;
+    x.fill(); x.shadowBlur = 0;
 
-    const head = document.createElementNS(SVG_NS, 'circle');
-    head.setAttribute('cx', x); head.setAttribute('cy', y); head.setAttribute('r', 5.5);
-    head.setAttribute('fill', COLOR[note]);
-    head.setAttribute('class', 'staff-note');
-    staffSvg.appendChild(head);
-    staffNoteEls.push(head);
-  }
+    const stemDir = sp >= 6 ? -1 : 1;
+    const stemLen = ls * 3.2;
+    const stemX = noteX + noteR * 0.85 * stemDir;
+    x.beginPath(); x.moveTo(stemX, noteY); x.lineTo(stemX, noteY - stemLen * stemDir);
+    x.strokeStyle = hexRgba(color, 0.8); x.lineWidth = 1.1; x.stroke();
+
+    const fz = Math.max(6, Math.min(11, ls * 0.52));
+    x.font = `bold ${fz}px 'Montserrat', sans-serif`;
+    x.fillStyle = color; x.textAlign = 'center'; x.textBaseline = 'top';
+    x.fillText(name.replace('#', '♯'), noteX, noteY + noteR * 2.1);
+  });
 }
+function drawClef(x, cx, cy, ls){
+  x.save(); x.translate(cx, cy); const s = ls * .28;
+  x.strokeStyle = 'rgba(255,255,255,.55)'; x.lineWidth = s * .2;
+  x.lineCap = 'round'; x.lineJoin = 'round';
+  x.beginPath();
+  x.moveTo(0, -s * 5.2); x.bezierCurveTo(s * 1.6, -s * 5.2, s * 2.1, -s * 3.4, s * .5, -s * 2.3);
+  x.bezierCurveTo(-s, -s * 1.3, -s * 1.4, s * .6, 0, s * 1.6);
+  x.bezierCurveTo(s * 1.5, s * 2.6, s * 1.4, s * 1.1, 0, s * .9);
+  x.moveTo(0, -s * 5.2); x.lineTo(0, s * 3.4);
+  x.moveTo(0, s * 2.6); x.bezierCurveTo(-s * 1.6, s * 2.6, -s * 2, s * 4.2, -s * .4, s * 4.6);
+  x.stroke(); x.restore();
+}
+function hexRgba(h, a){
+  const r = parseInt(h.slice(1, 3), 16), g = parseInt(h.slice(3, 5), 16), b = parseInt(h.slice(5, 7), 16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+function buildStaff(song){ drawStaff([]); } // new song loaded: reset to an empty staff
+window.addEventListener('resize', () => drawStaff(_lastStaffNotes));
 
 /* ---------------- Piano (2 registers / 2 real octaves: C4–B5. The
    circle/fretboard stay pitch-class based per the KCM visual standard,
@@ -1140,7 +1138,7 @@ function clearHighlights(){
   });
   Object.values(cellEls).flat().forEach(el => el.classList.remove('active'));
   stepEls.forEach(el => el.classList.remove('active'));
-  staffNoteEls.forEach(el => el.classList.remove('active'));
+  drawStaff([]);
 }
 
 function highlightStep(i){
@@ -1177,10 +1175,7 @@ function highlightStep(i){
   if (stepEls[i]){
     stepEls[i].classList.add('active');
   }
-  if (staffNoteEls[i]){
-    staffNoteEls[i].classList.add('active');
-    followScrollWithin(staffWrapEl, staffNoteEls[i]);
-  }
+  drawStaff(step.notes); // live "currently sounding" chord, same as the Sound Observatory's staff
 
   nowNoteEl.textContent = step.noteNames.map(n => n.replace('#','♯')).join(' + ');
   nowNoteEl.style.color = COLOR[step.noteNames[0]];
