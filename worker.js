@@ -35,6 +35,78 @@ export default {
         }[c]));
     }
 
+    // ── Signed session tokens ────────────────────────────────────────────
+    // Added 2026-08-24. my-apps.html and every /apps/*.html page (via
+    // js/kcm-app-gate.js) were already written to expect a signed
+    // kcm_session_token from /api/verify-code, verified server-side by
+    // POSTing it to /api/verify-session — but neither the signing nor the
+    // /api/verify-session route was ever actually implemented here, so
+    // every real premium unlock was silently failing closed. This closes
+    // that gap. Token = base64url(JSON payload) + '.' + base64url(HMAC-
+    // SHA256 signature of the payload, keyed by the SESSION_SIGNING_KEY
+    // Worker secret). The payload itself (tier + expiry) is not secret —
+    // only the signature proves it wasn't forged from devtools.
+    const SESSION_TTL_MS = 180 * 24 * 60 * 60 * 1000; // 180 days
+
+    function b64urlEncode(bytes) {
+      let bin = '';
+      for (const b of bytes) bin += String.fromCharCode(b);
+      return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    }
+    function b64urlDecode(str) {
+      const pad = str.length % 4 === 0 ? '' : '='.repeat(4 - (str.length % 4));
+      const bin = atob(str.replace(/-/g, '+').replace(/_/g, '/') + pad);
+      const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      return bytes;
+    }
+    async function hmacKey(secret) {
+      return crypto.subtle.importKey(
+        'raw', new TextEncoder().encode(secret),
+        { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
+      );
+    }
+    async function signSession(payload, secret) {
+      const payloadB64 = b64urlEncode(new TextEncoder().encode(JSON.stringify(payload)));
+      const key = await hmacKey(secret);
+      const sigBuf = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(payloadB64));
+      const sigB64 = b64urlEncode(new Uint8Array(sigBuf));
+      return `${payloadB64}.${sigB64}`;
+    }
+    // Returns the verified payload ({tier, exp, ...}) or null — never
+    // throws, so callers can treat any falsy return as "not premium."
+    async function verifySession(token, secret) {
+      if (typeof token !== 'string' || !secret) return null;
+      const parts = token.split('.');
+      if (parts.length !== 2) return null;
+      const [payloadB64, sigB64] = parts;
+      let payload;
+      try {
+        payload = JSON.parse(new TextDecoder().decode(b64urlDecode(payloadB64)));
+      } catch (e) {
+        return null;
+      }
+      let expectedSigBuf;
+      try {
+        const key = await hmacKey(secret);
+        expectedSigBuf = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(payloadB64));
+      } catch (e) {
+        return null;
+      }
+      const expectedSigB64 = b64urlEncode(new Uint8Array(expectedSigBuf));
+      // Fixed-length base64url HMAC output — safe to compare directly;
+      // still walk the whole string rather than short-circuit-return.
+      if (expectedSigB64.length !== sigB64.length) return null;
+      let mismatch = 0;
+      for (let i = 0; i < expectedSigB64.length; i++) {
+        mismatch |= expectedSigB64.charCodeAt(i) ^ sigB64.charCodeAt(i);
+      }
+      if (mismatch !== 0) return null;
+      if (!payload || typeof payload.exp !== 'number' || Date.now() > payload.exp) return null;
+      if (!payload.tier) return null;
+      return payload;
+    }
+
     const url = new URL(request.url);
 
     if (url.pathname === '/api/verify-code') {
@@ -71,9 +143,48 @@ export default {
         }
       }
 
-      return new Response(JSON.stringify({ ok: matchedTier !== null, tier: matchedTier }),
+      // Added 2026-08-24: issue the signed session token that
+      // access-code-entry.html, my-apps.html, and kcm-app-gate.js were
+      // already written to expect back from this endpoint. Requires the
+      // SESSION_SIGNING_KEY secret; if it isn't configured yet, tier is
+      // still returned for backward-compatible display, just without a
+      // token — callers already handle a missing token gracefully.
+      let sessionToken = null;
+      if (matchedTier !== null && env.SESSION_SIGNING_KEY) {
+        sessionToken = await signSession(
+          { tier: matchedTier, exp: Date.now() + SESSION_TTL_MS },
+          env.SESSION_SIGNING_KEY
+        );
+      }
+
+      return new Response(JSON.stringify({ ok: matchedTier !== null, tier: matchedTier, token: sessionToken }),
         {
           status: matchedTier !== null ? 200 : 401,
+          headers: { ...cors, 'Content-Type': 'application/json' },
+        });
+    }
+
+    if (url.pathname === '/api/verify-session') {
+      let token = '';
+      try {
+        const body = await request.json();
+        token = body.token || '';
+      } catch (e) {
+        return new Response(JSON.stringify({ ok: false, error: 'Invalid JSON' }),
+          { status: 400, headers: { ...cors, 'Content-Type': 'application/json' } });
+      }
+
+      if (!env.SESSION_SIGNING_KEY) {
+        // Fail closed, not open — a misconfigured secret should never
+        // silently grant access.
+        return new Response(JSON.stringify({ ok: false, error: 'Session verification not configured' }),
+          { status: 500, headers: { ...cors, 'Content-Type': 'application/json' } });
+      }
+
+      const payload = await verifySession(token, env.SESSION_SIGNING_KEY);
+      return new Response(JSON.stringify({ ok: !!payload, tier: payload ? payload.tier : null }),
+        {
+          status: payload ? 200 : 401,
           headers: { ...cors, 'Content-Type': 'application/json' },
         });
     }
