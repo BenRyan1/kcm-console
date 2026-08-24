@@ -253,8 +253,8 @@
   }
   .file-btn:hover{ filter:brightness(1.2); box-shadow:0 0 10px rgba(139,107,163,0.6); }
 
-  /* ---------- Piano ---------- */
-  .piano{ position:relative; height:130px; margin:14px auto 0; display:flex; width:100%; max-width:340px; }
+  /* ---------- Piano (2 registers / 2 octaves) ---------- */
+  .piano{ position:relative; height:130px; margin:14px auto 0; display:flex; width:100%; max-width:520px; }
   .white-key{
     position:relative;
     flex:1;
@@ -263,12 +263,13 @@
     border-radius:0 0 6px 6px;
     display:flex; align-items:flex-end; justify-content:center;
     padding-bottom:6px;
-    font-size:10px; color:#333; font-weight:700;
+    font-size:9px; color:#333; font-weight:700;
     transition:background .12s ease, box-shadow .12s ease;
   }
+  .white-key.octave-start{ border-left:2px solid var(--teal); }
   .black-key{
     position:absolute;
-    top:0; width:9%; height:62%;
+    top:0; width:5.2%; height:62%;
     background:#1a1a2e;
     border:1px solid #000;
     border-radius:0 0 4px 4px;
@@ -277,6 +278,34 @@
   }
   .white-key.active{ box-shadow:0 0 16px 4px var(--dot-color,#fff), 0 0 16px 4px var(--dot-color,#fff) inset; color:#0a0a15; }
   .black-key.active{ box-shadow:0 0 14px 4px var(--dot-color,#fff); }
+  .register-caption{
+    text-align:center; font-size:10px; color:var(--text-secondary);
+    margin-top:4px; letter-spacing:0.5px;
+  }
+
+  /* ---------- Staff (Melody Explorer) ---------- */
+  .staff-wrap{
+    margin-top:14px;
+    max-width:100%;
+    overflow-x:auto;
+    overflow-y:hidden;
+    border:1px solid var(--border);
+    border-radius:10px;
+    background:rgba(255,255,255,0.03);
+    padding:4px 0;
+  }
+  .staff-wrap svg{ display:block; }
+  .staff-line{ stroke:rgba(232,232,248,0.5); stroke-width:1.3; }
+  .staff-ledger{ stroke:rgba(232,232,248,0.4); stroke-width:1.3; }
+  .staff-clef{ fill:var(--text-secondary); font-family:'Cinzel',serif; }
+  .staff-note{
+    stroke:rgba(255,255,255,0.35); stroke-width:1;
+    transition:transform .12s ease, filter .12s ease, stroke .12s ease, stroke-width .12s ease;
+    transform-box:fill-box; transform-origin:center;
+  }
+  .staff-note.active{ stroke:#fff; stroke-width:2; filter:brightness(1.5) saturate(1.5); transform:scale(1.4); }
+  .staff-accidental{ font-size:12px; font-weight:700; }
+  .staff-caption{ font-size:11px; color:var(--text-secondary); text-align:center; margin:4px 0 0; }
 
   /* ---------- Fretboard ---------- */
   .fret-table{ width:100%; border-collapse:collapse; margin-top:14px; font-size:11px; }
@@ -354,6 +383,12 @@
       <text x="200" y="99" class="start-end-label">here</text>
     </svg>
 
+    <h2 style="margin-top:10px;">Melody Explorer — Staff</h2>
+    <div class="staff-wrap">
+      <svg id="staffSvg" viewBox="0 0 900 130" preserveAspectRatio="xMinYMid meet"></svg>
+    </div>
+    <div class="staff-caption">Follows playback in sync with the circle, keyboard, and fretboard</div>
+
     <div class="now-playing">
       <div class="now-note" id="nowNote">—</div>
       <div class="now-lyric" id="nowLyric">Press Play to begin</div>
@@ -363,8 +398,9 @@
   </section>
 
   <section class="panel">
-    <h2>Piano Keyboard</h2>
+    <h2>Piano Keyboard — 2 Octaves</h2>
     <div class="piano" id="piano"></div>
+    <div class="register-caption">Register 1 (C4–B4) · Register 2 (C5–B5)</div>
 
     <h2 style="margin-top:22px;">Guitar Fretboard</h2>
     <div id="fretboardWrap"></div>
@@ -777,45 +813,170 @@ function buildStrip(song){
   }
 }
 
-/* ---------------- Piano (one octave — the circle is pitch-class based
-   per the KCM visual standard, so a single octave represents all 12
-   pitch classes regardless of which real octave a MIDI note is in) ---------------- */
+/* ---------------- Staff — Melody Explorer (rebuilt per song, underneath
+   the circle). A simplified/schematic treble staff: sharps are spelled on
+   their natural-letter line/space with a ♯ glyph (matching the 12-Color
+   Chromatic Spectrum's sharps-only naming), not fully engraved notation.
+   Lead note of each step only, same convention the arrows/lyrics use. ---------------- */
+const SVG_NS = 'http://www.w3.org/2000/svg';
+const STAFF_LINE_GAP = 10;
+const STAFF_TOP_Y = 38;
+const STAFF_BOTTOM_Y = STAFF_TOP_Y + 4 * STAFF_LINE_GAP;
+const STAFF_NOTE_SPACING = 26;
+const STAFF_LEFT_MARGIN = 56;
+const DIATONIC_STEP = { C:0, D:1, E:2, F:3, G:4, A:5, B:6 };
+const STAFF_REF = 4 * 7 + DIATONIC_STEP.E; // E4 = bottom line of the treble staff (rel 0)
+function diatonicStepFor(midi){
+  const name = noteNameFromMidi(midi);
+  const octave = Math.floor(midi / 12) - 1;
+  return { rel: (octave * 7 + DIATONIC_STEP[name[0]]) - STAFF_REF, sharp: name.length > 1, note: name };
+}
+function staffY(rel){ return STAFF_BOTTOM_Y - rel * (STAFF_LINE_GAP / 2); }
+
+const staffSvg = document.getElementById('staffSvg');
+const staffWrapEl = staffSvg.closest('.staff-wrap');
+// Follow-scroll that ONLY moves this one container's own scrollLeft —
+// never document.scrollIntoView(), which walks every scrollable ancestor
+// (including the console page this panel is embedded in) and was making
+// the whole page jump/scroll during playback. Fixes the "scroll" bug.
+function followScrollWithin(container, el){
+  if (!container || !el) return;
+  const cRect = container.getBoundingClientRect();
+  const eRect = el.getBoundingClientRect();
+  const margin = 24;
+  if (eRect.left < cRect.left + margin){
+    container.scrollLeft += (eRect.left - cRect.left - margin);
+  } else if (eRect.right > cRect.right - margin){
+    container.scrollLeft += (eRect.right - cRect.right + margin);
+  }
+}
+let staffNoteEls = [];
+function buildStaff(song){
+  staffSvg.innerHTML = '';
+  staffNoteEls = [];
+  const showCount = Math.min(song.steps.length, MAX_STRIP_STEPS);
+  const width = Math.max(300, STAFF_LEFT_MARGIN + showCount * STAFF_NOTE_SPACING + 24);
+  staffSvg.setAttribute('viewBox', `0 0 ${width} 130`);
+
+  for (let i = 0; i < 5; i++){
+    const line = document.createElementNS(SVG_NS, 'line');
+    const y = STAFF_TOP_Y + i * STAFF_LINE_GAP;
+    line.setAttribute('x1', 8); line.setAttribute('x2', width - 8);
+    line.setAttribute('y1', y); line.setAttribute('y2', y);
+    line.setAttribute('class', 'staff-line');
+    staffSvg.appendChild(line);
+  }
+  const clef = document.createElementNS(SVG_NS, 'text');
+  clef.setAttribute('x', 10); clef.setAttribute('y', STAFF_TOP_Y + 33);
+  clef.setAttribute('font-size', 40);
+  clef.setAttribute('class', 'staff-clef');
+  clef.textContent = '𝄞'; // treble clef 𝄞
+  staffSvg.appendChild(clef);
+
+  for (let i = 0; i < showCount; i++){
+    const step = song.steps[i];
+    const midi = step.notes[0].midi;
+    const { rel, sharp, note } = diatonicStepFor(midi);
+    const x = STAFF_LEFT_MARGIN + i * STAFF_NOTE_SPACING;
+    const y = staffY(rel);
+
+    if (rel < 0){
+      for (let r = -2; r >= rel; r -= 2){
+        const l = document.createElementNS(SVG_NS, 'line');
+        l.setAttribute('x1', x - 8); l.setAttribute('x2', x + 8);
+        l.setAttribute('y1', staffY(r)); l.setAttribute('y2', staffY(r));
+        l.setAttribute('class', 'staff-ledger');
+        staffSvg.appendChild(l);
+      }
+    } else if (rel > 8){
+      for (let r = 10; r <= rel; r += 2){
+        const l = document.createElementNS(SVG_NS, 'line');
+        l.setAttribute('x1', x - 8); l.setAttribute('x2', x + 8);
+        l.setAttribute('y1', staffY(r)); l.setAttribute('y2', staffY(r));
+        l.setAttribute('class', 'staff-ledger');
+        staffSvg.appendChild(l);
+      }
+    }
+
+    if (sharp){
+      const acc = document.createElementNS(SVG_NS, 'text');
+      acc.setAttribute('x', x - 11); acc.setAttribute('y', y + 4);
+      acc.setAttribute('class', 'staff-accidental');
+      acc.setAttribute('fill', COLOR[note]);
+      acc.textContent = '♯';
+      staffSvg.appendChild(acc);
+    }
+
+    const head = document.createElementNS(SVG_NS, 'circle');
+    head.setAttribute('cx', x); head.setAttribute('cy', y); head.setAttribute('r', 5.5);
+    head.setAttribute('fill', COLOR[note]);
+    head.setAttribute('class', 'staff-note');
+    staffSvg.appendChild(head);
+    staffNoteEls.push(head);
+  }
+}
+
+/* ---------------- Piano (2 registers / 2 real octaves: C4–B5. The
+   circle/fretboard stay pitch-class based per the KCM visual standard,
+   but a real keyboard reads wrong with only 7 white keys, so this one
+   draws two full octaves back to back and highlights the exact octave
+   a played MIDI note actually falls in — see displayMidiFor()) ---------------- */
 const WHITES = ['C','D','E','F','G','A','B'];
 const BLACKS = [
   {note:'C#', after:0}, {note:'D#', after:1},
   {note:'F#', after:3}, {note:'G#', after:4}, {note:'A#', after:5}
 ];
+const REGISTERS = [4, 5]; // octave numbers shown, low register then high register
+const TOTAL_WHITE_KEYS = WHITES.length * REGISTERS.length;
 const pianoEl = document.getElementById('piano');
-const whiteKeyEls = {};
-WHITES.forEach(n => {
-  const k = document.createElement('div');
-  k.className = 'white-key';
-  k.textContent = n;
-  k.style.color = COLOR[n];
-  k.style.cursor = 'pointer';
-  k.addEventListener('click', () => triggerNoteInteractive(n));
-  pianoEl.appendChild(k);
-  whiteKeyEls[n] = k;
+const whiteKeyEls = {};   // note name -> [key els] (one per register, for pitch-class-only triggers)
+const blackKeyEls = {};   // note name -> [key els]
+const keyElsByMidi = {};  // exact midi -> key el (for register-accurate playback highlighting)
+const keyIsBlackByMidi = {};
+
+REGISTERS.forEach((octave, regIdx) => {
+  WHITES.forEach((n, wi) => {
+    const midi = 12 * (octave + 1) + CHROMA.indexOf(n);
+    const k = document.createElement('div');
+    k.className = 'white-key' + (wi === 0 ? ' octave-start' : '');
+    k.textContent = n + octave;
+    k.style.color = COLOR[n];
+    k.style.cursor = 'pointer';
+    k.addEventListener('click', () => triggerKeyInteractive(midi));
+    pianoEl.appendChild(k);
+    (whiteKeyEls[n] = whiteKeyEls[n] || []).push(k);
+    keyElsByMidi[midi] = k;
+    keyIsBlackByMidi[midi] = false;
+  });
+  BLACKS.forEach(b => {
+    const midi = 12 * (octave + 1) + CHROMA.indexOf(b.note);
+    const k = document.createElement('div');
+    k.className = 'black-key';
+    k.style.color = COLOR[b.note];
+    const whiteIndexInRow = regIdx * WHITES.length + b.after;
+    const leftPct = ((whiteIndexInRow + 1) / TOTAL_WHITE_KEYS) * 100 - (5.2/2);
+    k.style.left = leftPct + '%';
+    k.style.cursor = 'pointer';
+    k.addEventListener('click', () => triggerKeyInteractive(midi));
+    pianoEl.appendChild(k);
+    (blackKeyEls[b.note] = blackKeyEls[b.note] || []).push(k);
+    keyElsByMidi[midi] = k;
+    keyIsBlackByMidi[midi] = true;
+  });
 });
-const blackKeyEls = {};
-BLACKS.forEach(b => {
-  const k = document.createElement('div');
-  k.className = 'black-key';
-  k.style.color = COLOR[b.note];
-  const leftPct = ((b.after + 1) / WHITES.length) * 100 - (9/2);
-  k.style.left = leftPct + '%';
-  k.style.cursor = 'pointer';
-  k.addEventListener('click', () => triggerNoteInteractive(b.note));
-  pianoEl.appendChild(k);
-  blackKeyEls[b.note] = k;
-});
+// Wrap any real MIDI note into the displayed 2-octave window (60..83)
+// while preserving which of the two registers it actually belongs to.
+function displayMidiFor(realMidi){
+  const base = 60, range = 12 * REGISTERS.length;
+  return base + (((realMidi - base) % range) + range) % range;
+}
 
 /* ---------------- Fretboard (KCM standard: frets=rows, strings=columns) ---------------- */
 const STRINGS = [
   {label:'E', chroma:4}, {label:'A', chroma:9}, {label:'D', chroma:2},
   {label:'G', chroma:7}, {label:'B', chroma:11}, {label:'e', chroma:4}
 ];
-const NUM_FRETS = 5;
+const NUM_FRETS = 4;
 function noteAt(openChroma, fret){ return CHROMA[(openChroma + fret) % 12]; }
 
 const fretWrap = document.getElementById('fretboardWrap');
@@ -853,6 +1014,7 @@ fretWrap.appendChild(table);
 
 /* ---------------- Audio ---------------- */
 let audioCtx = null;
+const activeTones = new Set(); // {osc, gain} currently ringing — tracked so Stop can silence them instantly
 function ensureAudio(){
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   return audioCtx;
@@ -872,6 +1034,24 @@ function playTone(freq, durationSec, velScale){
   osc.connect(gain).connect(audioCtx.destination);
   osc.start(now);
   osc.stop(now + durationSec + 0.02);
+  const handle = { osc, gain };
+  activeTones.add(handle);
+  osc.onended = () => activeTones.delete(handle);
+}
+// STOP MEANS STOP: silence every currently-ringing oscillator right now,
+// not just cancel the ones that haven't started yet.
+function stopAllTones(){
+  if (!audioCtx) return;
+  const now = audioCtx.currentTime;
+  activeTones.forEach(({ osc, gain }) => {
+    try {
+      gain.gain.cancelScheduledValues(now);
+      gain.gain.setValueAtTime(gain.gain.value, now);
+      gain.gain.linearRampToValueAtTime(0, now + 0.015);
+      osc.stop(now + 0.02);
+    } catch (e) { /* already stopped */ }
+  });
+  activeTones.clear();
 }
 
 /* ---------------- Interactive click-to-play (KCM standard: sound plays
@@ -896,6 +1076,8 @@ function flashKey(el, note, isBlack, holdMs){
   }, holdMs);
 }
 function triggerNoteInteractive(note){
+  // Clicked from the circle or fretboard — no real octave, so play the
+  // low register and light BOTH keyboard registers of this pitch class.
   ensureAudio();
   const idx = CHROMA.indexOf(note);
   const midi = 60 + idx;
@@ -903,8 +1085,21 @@ function triggerNoteInteractive(note){
 
   const holdMs = 550;
   if (dotEls[note]) flashEl(dotEls[note], 'playing', holdMs);
-  if (whiteKeyEls[note]) flashKey(whiteKeyEls[note], note, false, holdMs);
-  if (blackKeyEls[note]) flashKey(blackKeyEls[note], note, true, holdMs);
+  (whiteKeyEls[note] || []).forEach(el => flashKey(el, note, false, holdMs));
+  (blackKeyEls[note] || []).forEach(el => flashKey(el, note, true, holdMs));
+  (cellEls[note] || []).forEach(el => flashEl(el, 'active', holdMs));
+}
+function triggerKeyInteractive(midi){
+  // Clicked directly on a specific piano key — play that exact register
+  // and light only that key, plus the matching circle dot / fret cells.
+  ensureAudio();
+  const note = noteNameFromMidi(midi);
+  playTone(freqForMidi(midi), 0.5, 1);
+
+  const holdMs = 550;
+  const isBlack = !!keyIsBlackByMidi[midi];
+  if (dotEls[note]) flashEl(dotEls[note], 'playing', holdMs);
+  if (keyElsByMidi[midi]) flashKey(keyElsByMidi[midi], note, isBlack, holdMs);
   (cellEls[note] || []).forEach(el => flashEl(el, 'active', holdMs));
 }
 
@@ -937,10 +1132,15 @@ function speedScale(){
 
 function clearHighlights(){
   Object.values(dotEls).forEach(el => el.classList.remove('playing'));
-  Object.values(whiteKeyEls).forEach(el => { el.classList.remove('active'); el.style.background = ''; el.style.color = ''; });
-  Object.values(blackKeyEls).forEach(el => { el.classList.remove('active'); el.style.background = '#1a1a2e'; });
+  Object.entries(keyElsByMidi).forEach(([midi, el]) => {
+    const isBlack = keyIsBlackByMidi[midi];
+    el.classList.remove('active');
+    el.style.background = isBlack ? '#1a1a2e' : '';
+    el.style.color = isBlack ? '' : '';
+  });
   Object.values(cellEls).flat().forEach(el => el.classList.remove('active'));
   stepEls.forEach(el => el.classList.remove('active'));
+  staffNoteEls.forEach(el => el.classList.remove('active'));
 }
 
 function highlightStep(i){
@@ -954,14 +1154,32 @@ function highlightStep(i){
 
   step.noteNames.forEach(note => {
     if (dotEls[note]) dotEls[note].classList.add('playing');
-    if (whiteKeyEls[note]){ const k = whiteKeyEls[note]; k.classList.add('active'); k.style.background = COLOR[note]; k.style.setProperty('--dot-color', COLOR[note]); }
-    if (blackKeyEls[note]){ const k = blackKeyEls[note]; k.classList.add('active'); k.style.background = COLOR[note]; k.style.setProperty('--dot-color', COLOR[note]); }
     (cellEls[note] || []).forEach(el => el.classList.add('active'));
+  });
+
+  // Keyboard lights the ACTUAL register each note falls in (wrapped into
+  // the 2-octave display range), so a melody moving up an octave visibly
+  // moves to the second register instead of just re-flashing the same key.
+  const litMidis = new Set();
+  step.notes.forEach(n => {
+    const dMidi = displayMidiFor(n.midi);
+    if (litMidis.has(dMidi)) return;
+    litMidis.add(dMidi);
+    const k = keyElsByMidi[dMidi];
+    if (!k) return;
+    const dName = noteNameFromMidi(dMidi);
+    k.classList.add('active');
+    k.style.background = COLOR[dName];
+    k.style.setProperty('--dot-color', COLOR[dName]);
+    if (!keyIsBlackByMidi[dMidi]) k.style.color = '#0a0a15';
   });
 
   if (stepEls[i]){
     stepEls[i].classList.add('active');
-    stepEls[i].scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
+  }
+  if (staffNoteEls[i]){
+    staffNoteEls[i].classList.add('active');
+    followScrollWithin(staffWrapEl, staffNoteEls[i]);
   }
 
   nowNoteEl.textContent = step.noteNames.map(n => n.replace('#','♯')).join(' + ');
@@ -1008,8 +1226,12 @@ function start(sound){
 }
 function stop(){
   playing = false;
-  withSound = false; // silence the idle preview loop below — it only flashes visuals until Play is pressed again
+  withSound = false;
+  idlePreviewOn = false; // STOP MEANS STOP: the ambient idle-preview loop below must NOT pick back up
+                          // and keep auto-flashing notes the instant Stop/Pause is pressed — only a
+                          // freshly loaded song re-arms it (see setSong)
   clearTimeout(timeoutId);
+  stopAllTones(); // cut any currently-ringing note immediately, don't let it fade out
   playBtn.disabled = false;
   pauseBtn.disabled = true;
 }
@@ -1034,14 +1256,21 @@ function setSong(song){
   currentSong = song;
   restart();
   buildStrip(song);
+  buildStaff(song);
   songTitleEl.textContent = song.title;
   previewIndex = 0;
+  idlePreviewOn = true; // a freshly loaded song is allowed to show its ambient preview again
 }
 
-/* Silent visual preview loop until the user presses Play (browsers block audio autoplay) */
+/* Silent visual preview loop, ONLY while idlePreviewOn (a song was just loaded and
+   Stop/Pause hasn't been pressed since) — browsers block audio autoplay, so this is
+   how a newly loaded song shows itself off before Play is pressed. Once the user
+   presses Stop or Pause, idlePreviewOn goes false and this loop goes fully silent —
+   dots/keyboard/fretboard/staff freeze exactly where they were, full stop. */
 let previewIndex = 0;
+let idlePreviewOn = true;
 setInterval(() => {
-  if (playing || !currentSong) return;
+  if (playing || !currentSong || !idlePreviewOn) return;
   if (previewIndex === 0){ lastLeadNote = null; clearArrows(); }
   highlightStep(previewIndex);
   previewIndex = (previewIndex + 1) % currentSong.steps.length;
