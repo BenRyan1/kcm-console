@@ -488,6 +488,16 @@ nav a.active { color: var(--primary-teal); }
     background: var(--primary-teal);
     border-color: var(--primary-teal);
 }
+/* Chord Extension panel: chase-glow applied by playExtChordAscending() to
+   whichever tier button (7th/9th/11th/13th) matches the note currently
+   sounding, so the row visibly tracks the arpeggio as it climbs the stack.
+   Layers on top of .active (the tier you actually picked) as well as on
+   the plain unselected buttons it passes through on the way there. */
+.ext-degree-btn.ext-chasing {
+    border-color: #F4D03F;
+    box-shadow: 0 0 16px rgba(244,208,63,0.9), 0 0 30px rgba(244,208,63,0.5);
+    transform: scale(1.06);
+}
 .key-pill {
     padding: 6px 10px;
     font-size: 0.72rem;
@@ -7039,39 +7049,158 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         //    to-play note handler (level '4') and switchExtDegree() below,
         //    so choosing 9th/11th/13th from the dropdown plays immediately
         //    without requiring a separate note click first.
+        //
+        //    Rewritten to build the chord up note-by-note IN SYNC WITH THE
+        //    SOUND, matching the same accumulate/chase pattern already used
+        //    everywhere else on the site (playHarmChordAscending, and
+        //    playSelection's schedSeq for scale Up/Down): previously this
+        //    function lit the ENTIRE chord across Circle/Guitar/Piano the
+        //    instant a degree was picked, then just played the notes
+        //    underneath that already-finished picture — so the sound
+        //    arpeggiated but nothing visual ever moved with it. Now each
+        //    note lights (and the matching 7th/9th/11th/13th button on the
+        //    Chord Extension panel chase-glows) at the exact moment it
+        //    sounds, same as the rest of the app.
         function playExtChordAscending() {
-            // Cancel any still-running arpeggio from a previous degree/quality
-            // click first — these were scheduled with plain setTimeout before,
-            // which meant switching 7th -> 9th -> 13th quickly left old,
-            // uncancelable single-note callbacks firing after the new chord's
-            // display was drawn, stomping it back to a stale note.
-            _cancelAllPlay();
-            updatePattern();
-            revealedNotes = new Set(selectedNotes);
-            updateControls(); updateNoteList(); updateSphereDisplay();
-            const intervals = getExtChordIntervals();
-            const beat = 60000 / currentBPM;
-            let prevMidi = -1, oct = currentOctave;
-            intervals.forEach((semis, i) => {
-                const pc   = (rootNote + semis) % 12;
-                let midi   = oct * 12 + pc;
-                while (midi <= prevMidi) { oct++; midi = oct * 12 + pc; }
-                prevMidi   = midi;
-                const _o   = oct;
+            try {
+                if (!audioReady) return;
+                // Cancel any still-running arpeggio from a previous degree/
+                // quality click first — these used to be scheduled with plain
+                // setTimeout, which meant switching 7th -> 9th -> 13th
+                // quickly left old, uncancelable single-note callbacks firing
+                // after the new chord's display was drawn, stomping it back
+                // to a stale note.
+                _cancelAllPlay();
+                if (audioContext && audioContext.state === 'suspended') audioContext.resume();
+
+                updatePattern();
+                updateControls(); updateNoteList();
+
+                const intervals = getExtChordIntervals();
+                const beat      = 60000 / currentBPM;
+                const noteDur   = beat * 0.80 / 1000;
+                const now       = audioContext ? audioContext.currentTime : 0;
+
+                // Which Chord Extension tier button (7th/9th/11th/13th) a
+                // given semitone offset from the root belongs to — true
+                // regardless of chord quality (major7/dominant7/minor7/
+                // diminished7/etc all keep their four base tones inside
+                // 0-11 semitones; 14/17/21 are ONLY ever added by the 9th/
+                // 11th/13th extension tiers — see extensionAdd above).
+                function extTierForSemis(semis) {
+                    if (semis === 14) return '9';
+                    if (semis === 17) return '11';
+                    if (semis === 21) return '13';
+                    return '7';
+                }
+
+                // Build the strictly-ascending note sequence up front (the
+                // same "KCM Arpeggio Law" every other Ascending function
+                // uses: each note must land on a higher pitch than the one
+                // before it).
+                const notes = [];
+                let prevMidi = -1, oct = currentOctave;
+                intervals.forEach(semis => {
+                    const pc = (rootNote + semis) % 12;
+                    let midi = oct * 12 + pc;
+                    while (midi <= prevMidi) { oct++; midi = oct * 12 + pc; }
+                    prevMidi = midi;
+                    notes.push({ pc, oct, tier: extTierForSemis(semis) });
+                });
+
+                // Start from a blank slate — Circle + Guitar accumulate the
+                // chord tone-by-tone as it plays (same as everywhere else
+                // on the site), Piano chases a single lit key at a time.
+                revealedNotes = new Set();
+                updateSphereDisplay(); updateGuitarDisplay();
+
+                notes.forEach(({ pc, oct: _o, tier }, i) => {
+                    const offsetMs = i * beat;
+                    _playAt(pc, _o, now + offsetMs / 1000, noteDur, 0.28);
+
+                    _schedPlay(() => {
+                        revealedNotes.add(pc);
+                        updateStaffNotation([{ pc, oct: _o }]);
+                        updateGuitarDisplay();
+
+                        // Guitar: pop the exact fret dot(s) for this note
+                        document.querySelectorAll(`.fb-cell[data-note="${pc}"]`).forEach(cell => {
+                            const dot = cell.querySelector('.fb-dot');
+                            if (dot) {
+                                dot.style.borderColor = '#fff';
+                                dot.style.borderWidth = '3px';
+                                dot.style.boxShadow   = `0 0 20px ${colors[pc]}, 0 0 40px ${colors[pc]}`;
+                                dot.style.transform   = 'scale(1.3)';
+                            }
+                        });
+
+                        // Circle: bright pulse for the note actually sounding
+                        const sp = document.querySelector(`.sphere[data-note="${pc}"]`);
+                        if (sp) { sp.classList.remove('excluded','included','active'); sp.classList.add('playing'); }
+
+                        // Piano: chase — dim every key, then light only this one
+                        document.querySelectorAll('.white-key,.black-key').forEach(k => {
+                            k.classList.remove('playing');
+                            k.style.background=''; k.style.boxShadow=''; k.style.borderColor=''; k.style.borderWidth='';
+                        });
+                        document.querySelectorAll(
+                            `.white-key[data-note="${pc}"][data-octave="${_o}"],` +
+                            `.black-key[data-note="${pc}"][data-octave="${_o}"]`
+                        ).forEach(k => {
+                            k.classList.add('playing');
+                            k.style.setProperty('--key-color', colors[pc]);
+                            k.style.background   = colors[pc];
+                            k.style.borderColor  = colors[pc];
+                            k.style.boxShadow    = `0 0 24px ${colors[pc]}, 0 0 48px ${colors[pc]}88`;
+                            k.style.opacity      = '1';
+                        });
+
+                        // Stencil overlay dot, if a stencil is currently up
+                        pulseStencilDot(pc);
+
+                        // Chord Extension panel: chase-light whichever tier
+                        // this exact note belongs to, so the button row
+                        // visibly tracks the sound as it climbs the stack —
+                        // not just the tier you clicked.
+                        document.querySelectorAll('.ext-degree-btn').forEach(b => {
+                            b.classList.toggle('ext-chasing', b.dataset.extDegree === tier);
+                        });
+                    }, offsetMs);
+
+                    _schedPlay(() => {
+                        // Piano: settle this key back off before the next one lights
+                        document.querySelectorAll(
+                            `.white-key[data-note="${pc}"][data-octave="${_o}"],` +
+                            `.black-key[data-note="${pc}"][data-octave="${_o}"]`
+                        ).forEach(k => { k.classList.remove('playing'); k.style.background=''; k.style.boxShadow=''; k.style.borderColor=''; k.style.borderWidth=''; });
+                        // Circle: settle to a steady "included" dot (chord tones accumulate)
+                        const sp = document.querySelector(`.sphere[data-note="${pc}"]`);
+                        if (sp) {
+                            sp.classList.remove('playing');
+                            sp.classList.add(revealedNotes.has(pc) ? 'included' : 'excluded');
+                            if (pc === rootNote) sp.classList.add('active');
+                            sp.style.border=''; sp.style.boxShadow=''; sp.style.opacity=''; sp.style.filter=''; sp.style.transform='';
+                        }
+                        // Guitar: reset dot glow (updateGuitarDisplay already keeps it lit via revealedNotes)
+                        document.querySelectorAll(`.fb-cell[data-note="${pc}"]`).forEach(cell => {
+                            const dot = cell.querySelector('.fb-dot');
+                            if (dot) { dot.style.borderColor=''; dot.style.borderWidth=''; dot.style.boxShadow=''; dot.style.transform=''; }
+                        });
+                        settleStencilDot(pc);
+                    }, offsetMs + beat * 0.82);
+                });
+
+                // Once the arpeggio finishes, restore + re-highlight the FULL
+                // chord across every panel instead of leaving it stuck on
+                // whichever single note played last, and drop the chase-glow
+                // so only the actually-selected tier's normal .active style remains.
                 _schedPlay(() => {
-                    playNote(pc, _o, 0.7);
-                    updateStaffNotation([{ pc, oct: _o }]);
-                }, i * beat);
-            });
-            updateStaffNotation(Array.from(selectedNotes));
-            // Once the arpeggio finishes, restore + re-highlight the FULL
-            // chord across every panel instead of leaving it stuck on
-            // whichever single note played last.
-            _schedPlay(() => {
-                revealedNotes = new Set(selectedNotes);
-                updateGuitarDisplay(); updatePianoDisplay(); updateSphereDisplay();
-                clearStaffHighlights();
-            }, intervals.length * beat + 200);
+                    revealedNotes = new Set(selectedNotes);
+                    updateGuitarDisplay(); updatePianoDisplay(); updateSphereDisplay();
+                    clearStaffHighlights();
+                    document.querySelectorAll('.ext-degree-btn').forEach(b => b.classList.remove('ext-chasing'));
+                }, notes.length * beat + 200);
+            } catch(e) { console.error('playExtChordAscending error:', e); }
         }
         window.playExtChordAscending = playExtChordAscending;
 
