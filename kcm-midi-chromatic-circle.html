@@ -1462,7 +1462,17 @@ setSong(buildDemoSong());
 (function(){
   if (window.self === window.top) return; // opened directly, not embedded
   function reportHeight(){
-    var h = document.documentElement.scrollHeight;
+    // document.documentElement.scrollHeight is NOT safe to use here: with 375
+    // built-in songs in #builtinSelect (a native <select size="8"> listbox),
+    // Chromium reports a phantom scrollHeight that grows a little more every
+    // time this iframe gets resized — each resize triggers this ResizeObserver,
+    // which reports a bigger number, which resizes the iframe again, forever.
+    // That's the giant empty gap Ben saw below the Melody Library panel: the
+    // iframe kept ratcheting itself taller than its real content, unbounded.
+    // The page's true bottom is reliably the <footer> below everything else,
+    // so anchor on that instead of the unreliable scrollHeight figure.
+    var anchor = document.querySelector('footer') || document.body;
+    var h = Math.ceil(anchor.getBoundingClientRect().bottom);
     try { window.parent.postMessage({ type: 'KCM_PANEL_HEIGHT', panel: 'kcm-midi-chromatic-circle', height: h }, '*'); } catch(e) {}
   }
   window.addEventListener('load', reportHeight);
