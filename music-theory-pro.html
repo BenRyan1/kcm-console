@@ -1494,7 +1494,7 @@ select option { background: #1a1a2e; color: white; }
     margin-top: 1.25rem;
     border: 1px solid rgba(0,128,128,0.2);
 }
-.shortcuts-panel h5 {
+.shortcuts-panel h4 {
     margin: 0 0 0.6rem 0;
     font-size: 0.78rem;
     text-transform: uppercase;
@@ -2171,6 +2171,14 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
     </div>
 </header>
 
+<!-- id="main-content"/role="main" moved up to wrap the title banner too
+     (was only on .app-container below) — the banner, including the
+     Start Audio button, previously sat between <header> and the main
+     landmark, contained by neither (axe: region / WCAG best practice
+     that all content live inside a landmark). Skip-nav link above still
+     targets #main-content, now landing here instead. -->
+<div id="main-content" role="main">
+
 <!-- ============================================================
      APP TITLE BANNER
      ============================================================ -->
@@ -2184,7 +2192,7 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
 <!-- ============================================================
      MAIN APP
      ============================================================ -->
-<div class="app-container" id="main-content" role="main">
+<div class="app-container">
 
     <!-- MAIN CONTROLS PANEL -->
     <div class="info-panel" style="max-width:1040px;">
@@ -2517,7 +2525,15 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
             </div><!-- end panelSwapZone -->
 
             <!-- ── STAFF NOTATION — always visible below swap zone ── -->
-            <div id="staffNotation" aria-label="Staff notation showing selected notes — switchable between staff, fretboard and keyboard views" role="img">
+            <!-- role="group", not role="img": this container holds real
+                 interactive tab buttons (STAFF/FRETBOARD/KEYBOARD/TIMELINE)
+                 below, and role="img" tells assistive tech to treat the
+                 whole subtree as one flat, non-interactive image — which
+                 hid those buttons from screen readers entirely (axe:
+                 nested-interactive / WCAG 4.1.2). The actual notation
+                 graphics (the SVGs) are separately marked aria-hidden and
+                 decorative, so nothing is lost by moving the label here. -->
+            <div id="staffNotation" aria-label="Staff notation showing selected notes — switchable between staff, fretboard and keyboard views" role="group">
                 <div style="display:flex;gap:2px;margin:-12px -15px 6px -15px;border-radius:8px 8px 0 0;overflow:hidden;">
                     <button type="button" class="staff-tab-btn active" data-stafftab="staff" onclick="switchStaffTab('staff')">🎼 STAFF</button>
                     <button type="button" class="staff-tab-btn" data-stafftab="fretboard" onclick="switchStaffTab('fretboard')">🎸 FRETBOARD</button>
@@ -2630,7 +2646,11 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
 
             <!-- ROOT NOTE / status line — moved into Recording Studio's old
                  spot (right above the remaining controls), per swap. -->
-            <h3 id="status" role="status" aria-live="polite" style="margin-top:1rem;">Click START AUDIO ENGINE to begin!</h3>
+            <!-- role="status" is not an allowed ARIA role on a heading
+                 element (axe: aria-allowed-role); aria-live="polite" alone
+                 already gives screen readers the same live-region
+                 announcement, so dropping the role loses nothing. -->
+            <h3 id="status" aria-live="polite" style="margin-top:1rem;">Click START AUDIO ENGINE to begin!</h3>
 
             <!-- CHORD PROGRESSIONS -- moved to the left column, below
                  Select Instrument (see #progressionControls /
@@ -3007,8 +3027,15 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
         </div>
 
         <!-- KEYBOARD SHORTCUTS -->
+        <!-- h4, not h5: this panel is always present, and the nearest
+             visible heading before it (in the default/Circle view) is the
+             h3 "Root Note" status line — jumping straight to h5 skipped a
+             level for screen-reader users navigating by heading (axe:
+             heading-order). In Harmonized mode the "Chord Progressions"
+             h4 sits alongside this one, which is a same-level sibling,
+             not a skip, so h4 is correct in both cases. -->
         <div class="shortcuts-panel">
-            <h5>⌨️ Keyboard Shortcuts</h5>
+            <h4>⌨️ Keyboard Shortcuts</h4>
             <div class="shortcuts-list">
                 <div class="shortcut-item"><span class="shortcut-key">Space</span> Play Chord</div>
                 <div class="shortcut-item"><span class="shortcut-key">Esc</span> Stop Playback</div>
@@ -3022,6 +3049,7 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
     </div>
 
 </div><!-- end app-container -->
+</div><!-- end main-content -->
 
 <!-- ============================================================
      SITE FOOTER
@@ -4423,6 +4451,12 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                     k.setAttribute('role','button'); k.setAttribute('tabindex','0');
                     k.setAttribute('aria-label', `${noteNames[pc]} ${oct}`);
                     k.onclick = () => handleNoteClick(pc, oct);
+                    // role="button" on a <div> doesn't get free Enter/Space
+                    // activation the way a real <button> does — without this,
+                    // a keyboard user can Tab to a key but never actually
+                    // play it (WCAG 2.1.1 Keyboard). Matches the same
+                    // handler already wired on Circle spheres.
+                    k.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleNoteClick(pc, oct); } };
                     k.style.setProperty('--key-color', colors[pc]);
                     // NO background set here — CSS keeps it white until .playing
                     const l = document.createElement('span');
@@ -4442,6 +4476,8 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                     k.setAttribute('role','button'); k.setAttribute('tabindex','0');
                     k.setAttribute('aria-label', `${noteNames[pc]} ${oct}`);
                     k.onclick = () => handleNoteClick(pc, oct);
+                    // See matching comment on the white-key branch above.
+                    k.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleNoteClick(pc, oct); } };
                     k.style.setProperty('--key-color', colors[pc]);
                     // NO background set here — CSS keeps it black until .playing
                     const l = document.createElement('span');
@@ -4500,7 +4536,14 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 lbl.dataset.note = tuning[s];
                 lbl.dataset.stringIdx = s;
                 lbl.setAttribute('aria-label', `${names[s]} string`);
+                // Guitar cells previously had no role/tabindex/keyboard
+                // handler at all — click-only, invisible to keyboard and
+                // screen-reader users, unlike Circle spheres and Piano keys
+                // which already had this treatment (WCAG 2.1.1 Keyboard,
+                // 4.1.2 Name/Role/Value).
+                lbl.setAttribute('role', 'button'); lbl.setAttribute('tabindex', '0');
                 lbl.onclick = () => handleNoteClick(tuning[s], octs[s]); // wired into the shared note-click flow (same as Circle/Piano) so it updates selection state and every other panel, not just audio
+                lbl.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleNoteClick(tuning[s], octs[s]); } };
                 headerRow.appendChild(lbl);
             }
             table.appendChild(headerRow);
@@ -4542,7 +4585,11 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 dot.textContent = noteNamesShort[tuning[s]];
                 cell.appendChild(dot);
 
+                // See comment on the string-label loop above re: keyboard access.
+                cell.setAttribute('role', 'button'); cell.setAttribute('tabindex', '0');
+                cell.setAttribute('aria-label', `${names[s]} string, open, ${noteNames[tuning[s]]}`);
                 cell.onclick = () => handleNoteClick(tuning[s], octs[s]); // wired into the shared note-click flow, matching Circle/Piano
+                cell.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleNoteClick(tuning[s], octs[s]); } };
                 nutRow.appendChild(cell);
             }
             table.appendChild(nutRow);
@@ -4592,7 +4639,11 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                     dot.textContent = noteNamesShort[pc];
                     cell.appendChild(dot);
 
+                    // See comment on the string-label loop above re: keyboard access.
+                    cell.setAttribute('role', 'button'); cell.setAttribute('tabindex', '0');
+                    cell.setAttribute('aria-label', `${names[s]} string, fret ${f}, ${noteNames[pc]}`);
                     cell.onclick = () => handleNoteClick(pc, oct); // wired into the shared note-click flow, matching Circle/Piano
+                    cell.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleNoteClick(pc, oct); } };
                     row.appendChild(cell);
                 }
                 table.appendChild(row);
@@ -9123,7 +9174,11 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
 <!-- ============================================================
      FLOATING CONTROL DOCK
      ============================================================ -->
-<div id="floatingDock" class="collapsed">
+<!-- role="region": a persistent, substantive control panel that lives
+     as its own body-level sibling (position:fixed overlay), outside the
+     <main> landmark above — giving it its own landmark satisfies "content
+     should be contained by landmarks" without moving/restyling it. -->
+<div id="floatingDock" class="collapsed" role="region" aria-label="KCM Control Dock">
     <div id="dockHandle" onclick="toggleDock()">
         <span class="dock-title">🎛 KCM Control Dock</span>
         <span id="kcmBridgeDot"
@@ -10870,6 +10925,10 @@ async function kcmAIAsk(type) {
         if (!tip) {
             tip = document.createElement('div');
             tip.className = 'kcm-tooltip';
+            // role="tooltip": correct semantics for a transient hover hint,
+            // and (unlike a landmark) tooltips are legitimately exempt from
+            // the "content must live inside a landmark" rule (axe: region).
+            tip.setAttribute('role', 'tooltip');
             document.body.appendChild(tip);
         }
         return tip;
