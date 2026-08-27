@@ -3118,7 +3118,48 @@ window.addEventListener('unhandledrejection', function(event) {
         const _noteOffTimers = {};
         const _playTimers = [];  // all active sequence/progression setTimeout IDs
         function _schedPlay(fn, ms) { const id = setTimeout(fn, ms); _playTimers.push(id); return id; }
-        function _cancelAllPlay() { while (_playTimers.length) clearTimeout(_playTimers.pop()); }
+
+        // FIX (Aug 27, 2026): every Stop button in the app used to only clear
+        // *pending* setTimeouts (_playTimers) — it never touched a note that
+        // had ALREADY been scheduled onto the Web Audio clock via
+        // osc.start()/osc.stop(). Since every playback path (scale/chord
+        // sequencer, chord button, chromatic-scale button, Melody Library,
+        // Stencil, Song Builder) schedules its oscillators/sample sources up
+        // front with a precise stop time, clicking Stop cancelled the NEXT
+        // notes but let whatever was already sounding ring out to its full
+        // written duration — reads exactly like "Stop doesn't work" on
+        // anything mid-playback. _kcmActiveVoices is a shared registry every
+        // oscillator/sample-source now pushes itself into the moment it's
+        // created (see _kcmTrackVoice, used from every osc.start() site);
+        // each self-removes on its own natural 'ended' event.
+        // _kcmKillAllVoices force-fades and stops everything still in the
+        // registry immediately, and now runs from every Stop path.
+        window._kcmActiveVoices = window._kcmActiveVoices || [];
+        function _kcmTrackVoice(node, gainNode) {
+            const voice = { node, gain: gainNode };
+            window._kcmActiveVoices.push(voice);
+            try {
+                node.onended = () => {
+                    const i = window._kcmActiveVoices.indexOf(voice);
+                    if (i !== -1) window._kcmActiveVoices.splice(i, 1);
+                };
+            } catch (e) {}
+        }
+        function _kcmKillAllVoices() {
+            const voices = window._kcmActiveVoices.splice(0);
+            voices.forEach(v => {
+                try {
+                    if (v.gain && v.gain.gain && audioContext) {
+                        const now = audioContext.currentTime;
+                        v.gain.gain.cancelScheduledValues(now);
+                        v.gain.gain.setValueAtTime(v.gain.gain.value, now);
+                        v.gain.gain.linearRampToValueAtTime(0.0001, now + 0.03);
+                    }
+                } catch (e) {}
+                try { v.node.stop(audioContext ? audioContext.currentTime + 0.04 : 0); } catch (e) {}
+            });
+        }
+        function _cancelAllPlay() { while (_playTimers.length) clearTimeout(_playTimers.pop()); _kcmKillAllVoices(); }
         let rootNote = 0;
         let selectedNotes = new Set([0]), multiSelectNotes = new Set(), currentOctave = 4;
         // revealedNotes: what's currently LIT on fretboard/piano/circle during scale playback.
@@ -3520,6 +3561,7 @@ window.addEventListener('unhandledrejection', function(event) {
                             gain.gain.linearRampToValueAtTime(0.3, startSec + 0.012);
                             gain.gain.exponentialRampToValueAtTime(0.01, startSec + noteDur);
                             osc.start(startSec); osc.stop(startSec + noteDur);
+                            _kcmTrackVoice(osc, gain);
 
                             _schedPlay(() => { highlightNote(pc, true); updateStaffNotation([{ pc, oct }]); pulseStencilDot(pc); }, i * beatMs);
                             _schedPlay(() => { highlightNote(pc, false); settleStencilDot(pc); }, i * beatMs + offDelay);
@@ -4252,6 +4294,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
             _mtpMelody.playing = false;
             _mtpMelody.timers.forEach(t => clearTimeout(t));
             _mtpMelody.timers = [];
+            if (typeof _kcmKillAllVoices === 'function') _kcmKillAllVoices();
         }
         window.stopLibraryMelody = stopLibraryMelody;
 
@@ -5096,6 +5139,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
             }
             src.start(t);
             try { src.stop(t + dur + 1.0); } catch(e) {}
+            _kcmTrackVoice(src, gain);
             return true;
         }
 
@@ -5117,6 +5161,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                     g.gain.linearRampToValueAtTime(hVol, t + 0.008);
                     g.gain.exponentialRampToValueAtTime(0.001, t + (currentInstrument === 'marimba' ? dur * 0.8 : dur * 1.5));
                     osc.start(t); osc.stop(t + dur * 2 + 0.01);
+                    _kcmTrackVoice(osc, g);
                 });
             } else if (currentInstrument === 'guitar') {
                 // Plucked-string voice (used before the real acoustic_guitar_steel
@@ -5141,6 +5186,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                     g.gain.linearRampToValueAtTime(hVol, t + 0.002);
                     g.gain.exponentialRampToValueAtTime(0.001, t + Math.max(dur * harmonicDecay[idx], 0.05));
                     osc.start(t); osc.stop(t + dur * 2 + 0.05);
+                    _kcmTrackVoice(osc, g);
                 });
                 // Short pick/finger attack transient — filtered noise burst.
                 const noiseDur = 0.02;
@@ -5171,6 +5217,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 g.gain.linearRampToValueAtTime(0, t + dur + 0.15);
                 osc.start(t); vib.start(t);
                 osc.stop(t + dur + 0.25); vib.stop(t + dur + 0.25);
+                _kcmTrackVoice(osc, g); _kcmTrackVoice(vib, null);
             } else {
                 const osc = audioContext.createOscillator();
                 const g   = audioContext.createGain();
@@ -5182,6 +5229,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 g.gain.setValueAtTime(vol, t + 0.04);
                 g.gain.linearRampToValueAtTime(0, t + dur);
                 osc.start(t); osc.stop(t + dur + 0.005);
+                _kcmTrackVoice(osc, g);
             }
         }
 
@@ -5628,6 +5676,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                     gain.gain.linearRampToValueAtTime(0.25, now + 0.015);
                     gain.gain.exponentialRampToValueAtTime(0.01, now + duration);
                     osc.start(now); osc.stop(now + duration);
+                    _kcmTrackVoice(osc, gain);
                 });
                 _schedPlay(() => {
                     notesToPlay.forEach(({ note }) => highlightNote(note, false));
@@ -8208,6 +8257,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                     osc.frequency.value = freq; osc.type = currentWaveform;
                     gain.gain.setValueAtTime(0, now); gain.gain.linearRampToValueAtTime(0.25, now+0.015); gain.gain.exponentialRampToValueAtTime(0.01, now+duration);
                     osc.start(now); osc.stop(now+duration);
+                    _kcmTrackVoice(osc, gain);
                 });
                 _schedPlay(() => unique.forEach(n => highlightNote(n, false)), duration*1000);
             } catch(e) { console.error('Play chord with intervals error:', e); }
@@ -10545,6 +10595,7 @@ function _sbPlayNoteAt(pc, oct, startSec, dur, vol, ctx) {
         gain.gain.exponentialRampToValueAtTime(0.001, startSec + dur - 0.01);
         osc.start(startSec);
         osc.stop(startSec + dur);
+        if (typeof _kcmTrackVoice === 'function') _kcmTrackVoice(osc, gain);
     } catch(e) {}
 }
 
@@ -11989,6 +12040,7 @@ async function kcmAIAsk(type) {
     const _stencilTimers = [];
     function _stencilCancelAll() {
         while (_stencilTimers.length) clearTimeout(_stencilTimers.pop());
+        if (typeof _kcmKillAllVoices === 'function') _kcmKillAllVoices();
         if (typeof clearStencilLabelHighlight === 'function') clearStencilLabelHighlight();
         // Stop can interrupt melody playback before its own tEnd timer
         // (which normally clears the active chip) ever fires — without
