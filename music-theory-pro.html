@@ -3798,8 +3798,17 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                     audioReady = true;
                     // Set up master bus for WAV recording capture
                     window._kcmMasterBus = audioContext.createGain();
-                    window._kcmMasterBus.gain.value = 1.0;
-                    window._kcmMasterBus.connect(audioContext.destination);
+                    window._kcmMasterBus.gain.value = 1.6; // boosted overall instrument volume (was 1.0) -- Aug 29 2026, Ben reported instruments too quiet
+                    if (!window._kcmLimiter) {
+                        window._kcmLimiter = audioContext.createDynamicsCompressor();
+                        window._kcmLimiter.threshold.value = -6;
+                        window._kcmLimiter.knee.value = 12;
+                        window._kcmLimiter.ratio.value = 4;
+                        window._kcmLimiter.attack.value = 0.003;
+                        window._kcmLimiter.release.value = 0.15;
+                        window._kcmLimiter.connect(audioContext.destination);
+                    }
+                    window._kcmMasterBus.connect(window._kcmLimiter);
                     // Auto-load samples if a non-synth instrument is already selected
                     if (currentInstrument !== 'synth') setTimeout(() => _loadSoundFont(currentInstrument), 200);
                     const btn = document.getElementById('startAudio');
@@ -5278,8 +5287,17 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 if (!window._kcmMasterBus) {
                     try {
                         window._kcmMasterBus = audioContext.createGain();
-                        window._kcmMasterBus.gain.value = 1.0;
-                        window._kcmMasterBus.connect(audioContext.destination);
+                        window._kcmMasterBus.gain.value = 1.6; // boosted overall instrument volume (was 1.0) -- Aug 29 2026, Ben reported instruments too quiet
+                        if (!window._kcmLimiter) {
+                            window._kcmLimiter = audioContext.createDynamicsCompressor();
+                            window._kcmLimiter.threshold.value = -6;
+                            window._kcmLimiter.knee.value = 12;
+                            window._kcmLimiter.ratio.value = 4;
+                            window._kcmLimiter.attack.value = 0.003;
+                            window._kcmLimiter.release.value = 0.15;
+                            window._kcmLimiter.connect(audioContext.destination);
+                        }
+                        window._kcmMasterBus.connect(window._kcmLimiter);
                     } catch(eBus) { console.error('Master bus rebuild failed:', eBus); }
                 }
                 // Recording capture now happens centrally inside _playAt()
@@ -8524,8 +8542,17 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                         await audioContext.resume();
                         audioReady = true;
                         window._kcmMasterBus = audioContext.createGain();
-                        window._kcmMasterBus.gain.value = 1.0;
-                        window._kcmMasterBus.connect(audioContext.destination);
+                        window._kcmMasterBus.gain.value = 1.6; // boosted overall instrument volume (was 1.0) -- Aug 29 2026, Ben reported instruments too quiet
+                        if (!window._kcmLimiter) {
+                            window._kcmLimiter = audioContext.createDynamicsCompressor();
+                            window._kcmLimiter.threshold.value = -6;
+                            window._kcmLimiter.knee.value = 12;
+                            window._kcmLimiter.ratio.value = 4;
+                            window._kcmLimiter.attack.value = 0.003;
+                            window._kcmLimiter.release.value = 0.15;
+                            window._kcmLimiter.connect(audioContext.destination);
+                        }
+                        window._kcmMasterBus.connect(window._kcmLimiter);
                     } catch(e) { console.warn('[SING] audio init:', e); }
                 } else if (audioContext.state === 'suspended') {
                     await audioContext.resume();
@@ -8834,8 +8861,17 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                     await audioContext.resume();
                     audioReady = true;
                     window._kcmMasterBus = audioContext.createGain();
-                    window._kcmMasterBus.gain.value = 1.0;
-                    window._kcmMasterBus.connect(audioContext.destination);
+                    window._kcmMasterBus.gain.value = 1.6; // boosted overall instrument volume (was 1.0) -- Aug 29 2026, Ben reported instruments too quiet
+                    if (!window._kcmLimiter) {
+                        window._kcmLimiter = audioContext.createDynamicsCompressor();
+                        window._kcmLimiter.threshold.value = -6;
+                        window._kcmLimiter.knee.value = 12;
+                        window._kcmLimiter.ratio.value = 4;
+                        window._kcmLimiter.attack.value = 0.003;
+                        window._kcmLimiter.release.value = 0.15;
+                        window._kcmLimiter.connect(audioContext.destination);
+                    }
+                    window._kcmMasterBus.connect(window._kcmLimiter);
                 } catch(e) { console.warn('[SING] singPlayback audio init:', e); return; }
             } else if (audioContext.state === 'suspended') {
                 await audioContext.resume();
