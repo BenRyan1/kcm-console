@@ -3798,14 +3798,14 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                     audioReady = true;
                     // Set up master bus for WAV recording capture
                     window._kcmMasterBus = audioContext.createGain();
-                    window._kcmMasterBus.gain.value = 1.6; // boosted overall instrument volume (was 1.0) -- Aug 29 2026, Ben reported instruments too quiet
+                    window._kcmMasterBus.gain.value = 3.2; // boosted further (1.0 -> 1.6 -> 3.2) -- Aug 29 2026, Ben said still too quiet
                     if (!window._kcmLimiter) {
                         window._kcmLimiter = audioContext.createDynamicsCompressor();
-                        window._kcmLimiter.threshold.value = -6;
-                        window._kcmLimiter.knee.value = 12;
-                        window._kcmLimiter.ratio.value = 4;
-                        window._kcmLimiter.attack.value = 0.003;
-                        window._kcmLimiter.release.value = 0.15;
+                        window._kcmLimiter.threshold.value = -16;
+                        window._kcmLimiter.knee.value = 6;
+                        window._kcmLimiter.ratio.value = 20;
+                        window._kcmLimiter.attack.value = 0.001;
+                        window._kcmLimiter.release.value = 0.08;
                         window._kcmLimiter.connect(audioContext.destination);
                     }
                     window._kcmMasterBus.connect(window._kcmLimiter);
@@ -5287,14 +5287,14 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 if (!window._kcmMasterBus) {
                     try {
                         window._kcmMasterBus = audioContext.createGain();
-                        window._kcmMasterBus.gain.value = 1.6; // boosted overall instrument volume (was 1.0) -- Aug 29 2026, Ben reported instruments too quiet
+                        window._kcmMasterBus.gain.value = 3.2; // boosted further (1.0 -> 1.6 -> 3.2) -- Aug 29 2026, Ben said still too quiet
                         if (!window._kcmLimiter) {
                             window._kcmLimiter = audioContext.createDynamicsCompressor();
-                            window._kcmLimiter.threshold.value = -6;
-                            window._kcmLimiter.knee.value = 12;
-                            window._kcmLimiter.ratio.value = 4;
-                            window._kcmLimiter.attack.value = 0.003;
-                            window._kcmLimiter.release.value = 0.15;
+                            window._kcmLimiter.threshold.value = -16;
+                            window._kcmLimiter.knee.value = 6;
+                            window._kcmLimiter.ratio.value = 20;
+                            window._kcmLimiter.attack.value = 0.001;
+                            window._kcmLimiter.release.value = 0.08;
                             window._kcmLimiter.connect(audioContext.destination);
                         }
                         window._kcmMasterBus.connect(window._kcmLimiter);
@@ -8542,14 +8542,14 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                         await audioContext.resume();
                         audioReady = true;
                         window._kcmMasterBus = audioContext.createGain();
-                        window._kcmMasterBus.gain.value = 1.6; // boosted overall instrument volume (was 1.0) -- Aug 29 2026, Ben reported instruments too quiet
+                        window._kcmMasterBus.gain.value = 3.2; // boosted further (1.0 -> 1.6 -> 3.2) -- Aug 29 2026, Ben said still too quiet
                         if (!window._kcmLimiter) {
                             window._kcmLimiter = audioContext.createDynamicsCompressor();
-                            window._kcmLimiter.threshold.value = -6;
-                            window._kcmLimiter.knee.value = 12;
-                            window._kcmLimiter.ratio.value = 4;
-                            window._kcmLimiter.attack.value = 0.003;
-                            window._kcmLimiter.release.value = 0.15;
+                            window._kcmLimiter.threshold.value = -16;
+                            window._kcmLimiter.knee.value = 6;
+                            window._kcmLimiter.ratio.value = 20;
+                            window._kcmLimiter.attack.value = 0.001;
+                            window._kcmLimiter.release.value = 0.08;
                             window._kcmLimiter.connect(audioContext.destination);
                         }
                         window._kcmMasterBus.connect(window._kcmLimiter);
@@ -8861,14 +8861,14 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                     await audioContext.resume();
                     audioReady = true;
                     window._kcmMasterBus = audioContext.createGain();
-                    window._kcmMasterBus.gain.value = 1.6; // boosted overall instrument volume (was 1.0) -- Aug 29 2026, Ben reported instruments too quiet
+                    window._kcmMasterBus.gain.value = 3.2; // boosted further (1.0 -> 1.6 -> 3.2) -- Aug 29 2026, Ben said still too quiet
                     if (!window._kcmLimiter) {
                         window._kcmLimiter = audioContext.createDynamicsCompressor();
-                        window._kcmLimiter.threshold.value = -6;
-                        window._kcmLimiter.knee.value = 12;
-                        window._kcmLimiter.ratio.value = 4;
-                        window._kcmLimiter.attack.value = 0.003;
-                        window._kcmLimiter.release.value = 0.15;
+                        window._kcmLimiter.threshold.value = -16;
+                        window._kcmLimiter.knee.value = 6;
+                        window._kcmLimiter.ratio.value = 20;
+                        window._kcmLimiter.attack.value = 0.001;
+                        window._kcmLimiter.release.value = 0.08;
                         window._kcmLimiter.connect(audioContext.destination);
                     }
                     window._kcmMasterBus.connect(window._kcmLimiter);
