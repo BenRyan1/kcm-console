@@ -5369,6 +5369,17 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                     ? [...allPcs.slice(rIdx), ...allPcs.slice(0, rIdx)]
                     : [...allPcs];
 
+                // KCM Scale Law: every scale (Pentatonic, Whole Tone, Major,
+                // Minor, the unified Scales picker, and Modes) plays root to
+                // root -- append the octave-completing root here so the
+                // ascending run reaches the true octave above instead of
+                // turning around at the 7th degree. Chords, arpeggios, and
+                // Free Play/Interval picks are untouched (not scale levels).
+                const SCALE_LEVELS = new Set(['5','6','7','minor','scales','modes']);
+                if (SCALE_LEVELS.has(currentLevel) && ordered.length > 0) {
+                    ordered.push(rootNote);
+                }
+
                 const upSeq = [];
                 let oct = 4, prevMidi = -1;
                 ordered.forEach(pc => {
