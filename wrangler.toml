@@ -11,3 +11,7 @@ zone_name = "keyscodesandmodes.com"
 [[kv_namespaces]]
 binding = "REVOKED_SESSIONS"
 id = "158e3ba3ffb2474b97c7be753039bf9a"
+
+[[kv_namespaces]]
+binding = "RATE_LIMIT"
+id = "74334a688fd348d282eeba7e100c74b1"

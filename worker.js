@@ -127,6 +127,51 @@ export default {
       return payload;
     }
 
+    // ── Brute-force protection for /api/verify-code (added 2026-08-27) ──
+    // The 8 access codes are short, human-memorable strings handed out by
+    // email, not long random tokens, and this endpoint previously had no
+    // limit on attempts at all — scriptable to guess for free with zero
+    // friction. This tracks FAILED attempts per client IP in the
+    // RATE_LIMIT KV namespace with a sliding window; a correct code never
+    // gets penalized, so a legit visitor who mistypes once or twice is
+    // unaffected. Fails OPEN if the KV binding is missing/misconfigured
+    // or a KV read/write errors — availability of code redemption matters
+    // more than this secondary defense, and the primary defense (the
+    // actual code values, server-side only) is unaffected either way.
+    const RATE_LIMIT_MAX_ATTEMPTS = 8;
+    const RATE_LIMIT_WINDOW_SECONDS = 600; // 10 minutes
+    async function checkRateLimit(ip, kv) {
+      if (!kv || !ip) return { limited: false };
+      try {
+        const record = await kv.get(`verify-code:${ip}`, { type: 'json' });
+        const now = Date.now();
+        if (record && record.resetAt > now && record.count >= RATE_LIMIT_MAX_ATTEMPTS) {
+          return { limited: true, retryAfter: Math.ceil((record.resetAt - now) / 1000) };
+        }
+      } catch (e) {
+        // KV read failed — fail open, see header note above.
+      }
+      return { limited: false };
+    }
+    async function recordFailedAttempt(ip, kv) {
+      if (!kv || !ip) return;
+      try {
+        const now = Date.now();
+        const record = await kv.get(`verify-code:${ip}`, { type: 'json' });
+        let count = 1;
+        let resetAt = now + RATE_LIMIT_WINDOW_SECONDS * 1000;
+        if (record && record.resetAt > now) {
+          count = record.count + 1;
+          resetAt = record.resetAt;
+        }
+        await kv.put(`verify-code:${ip}`, JSON.stringify({ count, resetAt }), {
+          expirationTtl: RATE_LIMIT_WINDOW_SECONDS,
+        });
+      } catch (e) {
+        // KV write failed — fail open, see header note above.
+      }
+    }
+
     const url = new URL(request.url);
 
     if (url.pathname === '/api/verify-code') {
@@ -137,6 +182,16 @@ export default {
       } catch (e) {
         return new Response(JSON.stringify({ ok: false, error: 'Invalid JSON' }),
           { status: 400, headers: { ...cors, 'Content-Type': 'application/json' } });
+      }
+
+      const clientIP = request.headers.get('CF-Connecting-IP') || '';
+      const rl = await checkRateLimit(clientIP, env.RATE_LIMIT);
+      if (rl.limited) {
+        return new Response(JSON.stringify({ ok: false, error: 'Too many attempts — try again later' }),
+          {
+            status: 429,
+            headers: { ...cors, 'Content-Type': 'application/json', 'Retry-After': String(rl.retryAfter) },
+          });
       }
 
       // Added 2026-07-12: named by tier (not just a flat Set) so callers
@@ -161,6 +216,10 @@ export default {
         for (const [tier, value] of Object.entries(codesByTier)) {
           if (value && code === value) { matchedTier = tier; break; }
         }
+      }
+
+      if (matchedTier === null) {
+        await recordFailedAttempt(clientIP, env.RATE_LIMIT);
       }
 
       // Added 2026-08-24: issue the signed session token that
