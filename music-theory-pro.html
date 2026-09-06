@@ -3620,7 +3620,15 @@ window.addEventListener('unhandledrejection', function(event) {
                         // not the unrelated classic selectedNotes state.
                         const bpm    = typeof currentBPM !== 'undefined' ? currentBPM : 100;
                         const beatMs = 60000 / bpm;
-                        const len    = window.currentStencil.intervals.length;
+                        const baseLen = window.currentStencil.intervals.length;
+                        const activeCat = document.querySelector('.kcm-stencil-tab.active')?.dataset.cat;
+                        // KCM Scale Law: Scales/Modes stencils get an extra
+                        // octave-completing root appended inside stencilPlay()
+                        // (Sep 6 root-to-root fix) -- this timer has to count
+                        // that same extra beat, or Descend fires one beat
+                        // early and steps on the ascending top root while
+                        // it's still ringing.
+                        const len = (activeCat === 'scales' || activeCat === 'modes') ? baseLen + 1 : baseLen;
                         window._stencilPlayUp();
                         setTimeout(() => window._stencilPlayDownNoCancel(), len * beatMs + 300);
                     } else {
@@ -3633,7 +3641,15 @@ window.addEventListener('unhandledrejection', function(event) {
                         // Stencil shape active — use stencil sequencer
                         const bpm    = typeof currentBPM !== 'undefined' ? currentBPM : 100;
                         const beatMs = 60000 / bpm;
-                        const len    = window.currentStencil.intervals.length;
+                        const baseLen = window.currentStencil.intervals.length;
+                        const activeCat = document.querySelector('.kcm-stencil-tab.active')?.dataset.cat;
+                        // KCM Scale Law: Scales/Modes stencils get an extra
+                        // octave-completing root appended inside stencilPlay()
+                        // (Sep 6 root-to-root fix) -- this timer has to count
+                        // that same extra beat, or Descend fires one beat
+                        // early and steps on the ascending top root while
+                        // it's still ringing.
+                        const len = (activeCat === 'scales' || activeCat === 'modes') ? baseLen + 1 : baseLen;
                         window._stencilPlayUp();
                         setTimeout(() => window._stencilPlayDownNoCancel(), len * beatMs + 300);
                     } else {
