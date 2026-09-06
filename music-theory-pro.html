@@ -12104,7 +12104,16 @@ async function kcmAIAsk(type) {
         if (!noCancel) _stencilCancelAll();
 
         const rootPc   = currentStencilRoot;
-        const intervals = currentStencil.intervals;
+        // KCM Scale Law: Scales and Modes stencils play root to root --
+        // append the octave-completing root (interval 12) so Ascend/
+        // Descend reach the true octave above instead of turning around
+        // at the top scale degree, matching the same fix already applied
+        // to the main MTP playSelection() sequencer (Sep 5, 2026). Chords/
+        // 13ths stencils are untouched -- governed by KCM Arpeggio Law
+        // (1-3-5 ascending, no octave-doubled root).
+        const intervals = (currentCat === 'scales' || currentCat === 'modes')
+            ? [...currentStencil.intervals, 12]
+            : currentStencil.intervals;
 
         // Build ascending pitch sequence with proper octaves
         const upSeq = [];
