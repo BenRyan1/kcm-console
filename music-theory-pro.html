@@ -2395,6 +2395,19 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                     <h2 style="font-family:var(--font-display);font-size:1.2rem;font-weight:900;color:var(--primary-gold);margin-bottom:0.4rem;text-align:center;">🎤 SING OR PLAY — Watch Your Music Come Alive</h2>
                     <p style="text-align:center;font-size:0.75rem;color:#b0b0cc;margin-bottom:0.75rem;">Sing, hum, or play any note — lights up on circle, keyboard, guitar & staff in real time</p>
 
+                    <!-- Input device picker + live level meter (Sep 6 2026) -->
+                    <div style="display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap;margin-bottom:0.4rem;">
+                        <label for="singDeviceSelect" style="font-size:0.6rem;font-weight:700;letter-spacing:1px;color:#009999;text-transform:uppercase;">Input</label>
+                        <select id="singDeviceSelect" style="max-width:210px;padding:0.3rem 0.55rem;font-size:0.7rem;background:rgba(0,0,0,0.35);color:#e8e8f8;border:1px solid rgba(0,128,128,0.4);border-radius:8px;">
+                            <option value="">System Default</option>
+                        </select>
+                        <span style="font-size:0.58rem;color:#666;letter-spacing:0.5px;">LEVEL</span>
+                        <div style="width:90px;height:10px;background:rgba(255,255,255,0.08);border:1px solid rgba(0,128,128,0.3);border-radius:5px;overflow:hidden;">
+                            <div id="singLevelMeterFill" style="width:0%;height:100%;background:linear-gradient(90deg,#00FF80,#F4D03F,#e74c3c);"></div>
+                        </div>
+                    </div>
+                    <div id="singDeviceNote" style="display:none;text-align:center;font-size:0.65rem;color:#F4D03F;margin:-0.15rem 0 0.6rem;"></div>
+
                     <!-- Live readout row -->
                     <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:0.75rem;">
                         <div style="background:rgba(0,128,128,0.15);border:2px solid rgba(0,128,128,0.4);border-radius:12px;padding:0.5rem 1rem;text-align:center;min-width:72px;">
@@ -8351,7 +8364,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         // No ScriptProcessor — uses AnalyserNode + requestAnimationFrame
         // Same engine as KCM Sound Observatory v29
         // ══════════════════════════════════════════════════════════════
-        let _singStream = null, _singAudioCtx = null, _singAnalyser = null;
+        let _singStream = null, _singAudioCtx = null, _singAnalyser = null, _singSourceNode = null;
         let _singRaf = null, _singActive = false, _singRecording = false;
         let _singTdb = null, _singFdb = null;
         let _singLastNote = -1, _singLastDetect = 0;
@@ -8377,6 +8390,75 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         const _SING_STRENGTH_MIN = 0.035;
         const _SING_LOCK_FRAMES  = 3;
 
+        // Input device picker + live level meter (Sep 6 2026)
+        const _SING_DEVICE_STORAGE_KEY = 'kcm_sing_input_device_id';
+        function _singGetPreferredDeviceId() {
+            try { return localStorage.getItem(_SING_DEVICE_STORAGE_KEY) || ''; } catch(e) { return ''; }
+        }
+        function _singSetPreferredDeviceId(id) {
+            try { if (id) localStorage.setItem(_SING_DEVICE_STORAGE_KEY, id); else localStorage.removeItem(_SING_DEVICE_STORAGE_KEY); } catch(e) {}
+        }
+        async function _singPopulateDeviceList() {
+            const sel = document.getElementById('singDeviceSelect');
+            if (!sel || !navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return;
+            try {
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const inputs  = devices.filter(d => d.kind === 'audioinput');
+                const wanted  = _singGetPreferredDeviceId();
+                sel.innerHTML = '<option value="">System Default</option>';
+                inputs.forEach((d, i) => {
+                    const opt = document.createElement('option');
+                    opt.value = d.deviceId;
+                    opt.textContent = d.label || ('Microphone ' + (i + 1));
+                    sel.appendChild(opt);
+                });
+                const stillPresent = !!wanted && inputs.some(d => d.deviceId === wanted);
+                const note = document.getElementById('singDeviceNote');
+                if (wanted && !stillPresent) {
+                    sel.value = '';
+                    if (note) { note.style.display = 'block'; note.textContent = 'Previously selected input is unavailable, using System Default'; }
+                } else {
+                    sel.value = stillPresent ? wanted : '';
+                    if (note) note.style.display = 'none';
+                }
+            } catch(e) { /* enumerateDevices needs permission/secure context -- non-fatal */ }
+        }
+        async function _singOnDeviceSelectChange() {
+            const sel = document.getElementById('singDeviceSelect');
+            if (!sel) return;
+            _singSetPreferredDeviceId(sel.value);
+            if (_singActive) await _singSwitchInputDevice(sel.value);
+        }
+        async function _singSwitchInputDevice(deviceId) {
+            if (!_singActive || !_singAudioCtx || !_singAnalyser) return;
+            const status = document.getElementById('singStatus');
+            try {
+                const constraints = { echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 1 };
+                if (deviceId) constraints.deviceId = { exact: deviceId };
+                const newStream = await navigator.mediaDevices.getUserMedia({ audio: constraints, video: false });
+                if (_singStream) _singStream.getTracks().forEach(t => t.stop());
+                _singStream = newStream;
+                if (_singSourceNode) { try { _singSourceNode.disconnect(); } catch(e){} }
+                _singSourceNode = _singAudioCtx.createMediaStreamSource(_singStream);
+                _singSourceNode.connect(_singAnalyser);
+                if (status) { status.textContent = 'Switched input -- listening...'; status.style.color = '#00FF80'; }
+            } catch(e) {
+                if (status) { status.textContent = 'Could not switch input: ' + e.message; status.style.color = '#e74c3c'; }
+                _singSetPreferredDeviceId('');
+                if (typeof _singPopulateDeviceList === 'function') _singPopulateDeviceList();
+            }
+        }
+        if (navigator.mediaDevices && navigator.mediaDevices.addEventListener) {
+            navigator.mediaDevices.addEventListener('devicechange', () => { if (typeof _singPopulateDeviceList === 'function') _singPopulateDeviceList(); });
+        }
+        function _singUpdateLevelMeter(rms) {
+            const fill = document.getElementById('singLevelMeterFill');
+            if (!fill) return;
+            const db  = rms > 0 ? 20 * Math.log10(rms) : -100;
+            const pct = Math.max(0, Math.min(100, (db + 60) / 60 * 100));
+            fill.style.width = pct.toFixed(0) + '%';
+        }
+
         // KCM colors + note names for SING display
         const _SING_COLORS     = ['#FFFF00','#FFC400','#FF8000','#FF4000','#FF0000','#C4007F','#8000FF','#4000FF','#0000FF','#007FFF','#00FF80','#80FF00'];
         const _SING_NOTE_NAMES = ['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
@@ -8390,8 +8472,8 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
             const midi  = Math.round(_singFreqToMidi(freq));
             const pc    = ((midi % 12) + 12) % 12;
             let   oct   = Math.floor(midi / 12) - 1;
-            if (oct < 3) oct = 3;  // guitar floor — kills all oct1/oct2 false reads
-            if (oct > 6) oct = 6;
+            if (oct < 0) oct = 0;  // piano floor (was guitar-only oct 3) -- A0 is octave 0
+            if (oct > 8) oct = 8;  // piano ceiling (was guitar-only oct 6) -- C8 is octave 8
             const corrMidi = (oct + 1) * 12 + pc;
             const cents = Math.round((_singFreqToMidi(freq) - Math.round(_singFreqToMidi(freq))) * 100);
             return { pc, oct, midiNote: corrMidi, cents };
@@ -8401,7 +8483,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         function _singCommitHeld(endTs) {
             if (!_singHeldNote) return;
             const durMs = endTs - _singHeldNote.startTs;
-            if (durMs >= _SING_MIN_DUR && _singHeldNote.midiNote >= 40) { // 40=E2, absolute guitar floor
+            if (durMs >= _SING_MIN_DUR && _singHeldNote.midiNote >= 21) { // 21=A0, piano floor (was 40=E2, guitar-only)
                 _singEvents.push({ ..._singHeldNote, endTs, durMs });
                 _singRefreshHistory();
                 _singDrawRoll();
@@ -8589,10 +8671,22 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 if (_singStream) _singStream.getTracks().forEach(t => t.stop());
 
                 // Observatory-grade: raw instrument signal
-                _singStream = await navigator.mediaDevices.getUserMedia({
-                    audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 1 },
-                    video: false
-                });
+                const _singWantedDeviceId = (typeof _singGetPreferredDeviceId === 'function') ? _singGetPreferredDeviceId() : '';
+                const _singBaseAudioConstraints = { echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 1 };
+                try {
+                    _singStream = await navigator.mediaDevices.getUserMedia({
+                        audio: _singWantedDeviceId ? { ..._singBaseAudioConstraints, deviceId: { exact: _singWantedDeviceId } } : _singBaseAudioConstraints,
+                        video: false
+                    });
+                } catch (deviceErr) {
+                    if (_singWantedDeviceId) {
+                        _singStream = await navigator.mediaDevices.getUserMedia({ audio: _singBaseAudioConstraints, video: false });
+                        if (status) { status.textContent = 'Saved input device unavailable -- using system default'; status.style.color = '#F4D03F'; }
+                        if (typeof _singSetPreferredDeviceId === 'function') _singSetPreferredDeviceId('');
+                    } else {
+                        throw deviceErr;
+                    }
+                }
 
                 _singAudioCtx = new (window.AudioContext||window.webkitAudioContext)();
                 if (_singAudioCtx.state === 'suspended') await _singAudioCtx.resume();
@@ -8601,12 +8695,14 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 _singAnalyser.fftSize = _SING_FFT;
                 _singAnalyser.smoothingTimeConstant = 0.0; // we do our own smoothing
 
-                const src    = _singAudioCtx.createMediaStreamSource(_singStream);
+                _singSourceNode = _singAudioCtx.createMediaStreamSource(_singStream);
                 const silent = _singAudioCtx.createGain();
                 silent.gain.value = 0;
-                src.connect(_singAnalyser);
+                _singSourceNode.connect(_singAnalyser);
                 _singAnalyser.connect(silent);
                 silent.connect(_singAudioCtx.destination);
+
+                if (typeof _singPopulateDeviceList === 'function') _singPopulateDeviceList();
 
                 _singTdb    = new Float32Array(_SING_FFT);
                 _singFdb    = new Float32Array(_singAnalyser.frequencyBinCount);
@@ -8641,6 +8737,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                     let sq = 0;
                     for (let i = 0; i < _singTdb.length; i++) sq += _singTdb[i] ** 2;
                     const rms = Math.sqrt(sq / _singTdb.length);
+                    _singUpdateLevelMeter(rms);
                     if (rms < _SING_SILENCE_GATE) {
                         for (let i = 0; i < 12; i++) _singSmooth[i] *= 0.4;
                         if (_singLastNote !== -1) { _singClearDisplays(); _singLastNote = -1; }
@@ -8651,12 +8748,11 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                         return;
                     }
 
-                    // ── FIX 3: Guitar-valid MIDI note set ─────────────────
-                    // Standard tuning: E2=40 A2=45 D3=50 G3=55 B3=59 e4=64
-                    // Valid frets 0-22 per string — only these MIDI notes are possible
-                    const GUITAR_MIDI = new Set();
-                    const OPEN = [40,45,50,55,59,64];
-                    OPEN.forEach(o => { for (let f=0; f<=22; f++) GUITAR_MIDI.add(o+f); });
+                    // FIX 3: Valid MIDI note range (widened Sep 6 2026 from a
+                    // guitar-only whitelist to the full 88-key piano range;
+                    // harmonic ghosts are still caught separately below)
+                    const SING_MIDI_MIN = 21;  // A0
+                    const SING_MIDI_MAX = 108; // C8
 
                     // ── Dynamic noise floor ────────────────────────────────
                     let specSum = 0, specCount = 0;
@@ -8673,16 +8769,36 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                     // Also track full MIDI candidates for harmonic suppression
                     const midiEnergy = {}; // midi → energy
 
-                    for (let i = 3; i < _singFdb.length - 3; i++) {
-                        const freq = i * binHz;
-                        if (freq < 80 || freq > 1233) continue;  // guitar range: E2(82Hz)–fret22(1175Hz) ±3%
+                    // FIX 4 (Sep 6 2026): loop bound widened from i=3 to i=2 (the
+                    // 5-point local-max window's true minimum safe index, since
+                    // i-2 must stay >=0) so the lowest usable bin is reachable, and
+                    // parabolic interpolation on the log-magnitude spectrum refines
+                    // each peak to a sub-bin frequency estimate. At this FFT size
+                    // (4096) and typical mic sample rates (44.1-48kHz), raw bin
+                    // spacing is ~10-12Hz while semitone spacing near the bottom of
+                    // the piano is under 2Hz (A0→A#0 is 1.64Hz) — without this,
+                    // low notes (A0-B0 especially) snap to the wrong bin's pitch
+                    // class entirely rather than just being imprecise.
+                    for (let i = 2; i < _singFdb.length - 2; i++) {
                         const db = _singFdb[i];
                         if (db < peakThresh) continue;
                         if (db > _singFdb[i-1] && db > _singFdb[i-2] && db > _singFdb[i+1] && db > _singFdb[i+2]) {
+                            // Parabolic (quadratic) interpolation using the peak bin
+                            // and its immediate neighbors gives a sub-bin frequency
+                            // estimate — standard technique for FFT-based pitch
+                            // detection, meaningfully more accurate than reporting
+                            // the raw bin-center frequency everywhere, not just at
+                            // the low end.
+                            const a = _singFdb[i-1], b = db, c = _singFdb[i+1];
+                            const denom = (a - 2*b + c);
+                            let delta = denom !== 0 ? 0.5 * (a - c) / denom : 0;
+                            if (delta > 0.5) delta = 0.5; else if (delta < -0.5) delta = -0.5;
+                            const freq = (i + delta) * binHz;
+                            if (freq < 26 || freq > 4300) continue;  // full piano range: A0-C8 with margin (was guitar-only 80-1233Hz)
                             const midi = Math.round(_singFreqToMidi(freq));
 
-                            // FIX 3: skip if not a valid guitar note
-                            if (!GUITAR_MIDI.has(midi)) continue;
+                            // FIX 3: skip if outside the supported piano range
+                            if (midi < SING_MIDI_MIN || midi > SING_MIDI_MAX) continue;
 
                             const ni  = ((midi % 12) + 12) % 12;
                             const str = Math.max(0, (db - peakThresh) / 40);
@@ -8812,6 +8928,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
             if (_singRecording) { _singCommitHeld(Date.now()); _singRecording = false; }
             if (_singWavRecording) _singStopWAV();
             if (_singAnalyser)  { try { _singAnalyser.disconnect();  } catch(e){} _singAnalyser = null; }
+            if (_singSourceNode){ try { _singSourceNode.disconnect(); } catch(e){} _singSourceNode = null; }
             if (_singStream)    { _singStream.getTracks().forEach(t => t.stop()); _singStream = null; }
             if (_singAudioCtx)  { try { _singAudioCtx.close(); } catch(e){} _singAudioCtx = null; }
             _singSmooth = new Array(12).fill(0);
@@ -9055,12 +9172,15 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
             const wavBtn   = document.getElementById('singWavBtn');
             const pbBtn    = document.getElementById('singPlaybackBtn');
             const clBtn    = document.getElementById('singClearBtn');
+            const devSel   = document.getElementById('singDeviceSelect');
             if (startBtn) startBtn.onclick = startSingMode;
             if (recBtn)   recBtn.onclick   = toggleSingRecord;
             if (midiBtn)  midiBtn.onclick  = downloadSingMIDI;
             if (wavBtn)   wavBtn.onclick   = _singStartWAV;
             if (pbBtn)    pbBtn.onclick    = singPlayback;
             if (clBtn)    clBtn.onclick    = singClear;
+            if (devSel)   devSel.onchange  = _singOnDeviceSelectChange;
+            if (typeof _singPopulateDeviceList === 'function') _singPopulateDeviceList();
         }
 
 
