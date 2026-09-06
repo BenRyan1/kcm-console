@@ -1305,6 +1305,67 @@ select option { background: #1a1a2e; color: white; }
 .quiz-btn:disabled:not(.correct):not(.incorrect) { opacity: 0.45; }
 
 /* ============================================================
+   KCM ARCADE — mode tabs, rank/streak header, Play It Back chips
+   ============================================================ */
+.arcade-mode-btn {
+    padding: 0.55rem 1rem;
+    background: rgba(0,128,128,0.15);
+    border: 2px solid rgba(0,128,128,0.35);
+    border-radius: 10px;
+    cursor: pointer;
+    color: #ccc;
+    font-weight: 700;
+    font-family: var(--font-body);
+    font-size: 0.72rem;
+    letter-spacing: 0.5px;
+    transition: all 0.2s;
+    touch-action: manipulation;
+}
+.arcade-mode-btn:hover { background: rgba(0,128,128,0.3); }
+.arcade-mode-btn.active {
+    background: linear-gradient(135deg, var(--primary-teal) 0%, #006666 100%);
+    border-color: var(--primary-teal);
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(0,128,128,0.5);
+}
+.pib-chip {
+    padding: 0.55rem 0.9rem;
+    border-radius: 10px;
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 0.9rem;
+    background: rgba(255,255,255,0.08);
+    border: 2px solid rgba(255,255,255,0.15);
+    color: #ccc;
+    transition: all 0.25s;
+}
+.pib-chip.pib-next {
+    border-color: var(--primary-gold);
+    color: var(--primary-gold);
+    box-shadow: 0 0 14px rgba(244,208,63,0.5);
+    transform: scale(1.08);
+}
+.pib-chip.pib-done {
+    background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+    border-color: #27ae60;
+    color: #fff;
+}
+.pib-chip.pib-wrong {
+    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important;
+    border-color: #e74c3c !important;
+    color: #fff !important;
+}
+#pibStartBtn.listening {
+    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important;
+    border-color: #e74c3c !important;
+    animation: pibPulse 1.2s ease-in-out infinite;
+}
+@keyframes pibPulse {
+    0%, 100% { box-shadow: 0 0 0 rgba(231,76,60,0.6); }
+    50% { box-shadow: 0 0 18px rgba(231,76,60,0.9); }
+}
+
+/* ============================================================
    SPHERES (chromatic circle notes)
    ============================================================ */
 .sphere {
@@ -2237,7 +2298,7 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                 <button class="view-btn" data-view="keyboard">🎹 Piano</button>
                 <button class="view-btn" data-view="stencil">✦ Stencil</button>
                 <button class="view-btn" id="stencilOverlayBtn" onclick="toggleStencilOverlay()" title="Keep a mini Stencil wheel visible over any view, synced live with the Harmonized progression panel" aria-pressed="false">🗗 Stencil Overlay</button>
-                <button class="view-btn" data-view="ear">👂 Ear</button>
+                <button class="view-btn" data-view="ear">🎮 Arcade</button>
                 <button class="view-btn" data-view="sing">🎤 Sing</button>
                 <button class="view-btn" data-view="circleType">⭕ Type-to-Play</button>
                 <button class="view-btn" id="instrumentBtn" onclick="toggleInstrumentPicker()" aria-haspopup="true" aria-expanded="false">🎸 Instrument: <span id="instrumentBtnLabel">Synth</span></button>
@@ -2575,18 +2636,41 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                  toggled open. Not part of panelSwapZone: the active view
                  (Circle/Piano/Guitar/Sing/Stencil) and the staff above stay
                  fully visible and keep lighting up while quizzing. ── -->
-            <div id="earTraining" role="region" aria-label="Ear training quiz">
+            <div id="earTraining" role="region" aria-label="KCM Arcade — ear training and instrument games">
                 <div class="ear-overlay-hdr">
-                    <span>👂 Ear Training</span>
-                    <button id="closeEarBtn" aria-label="Close ear training">✕</button>
+                    <span>🎮 KCM Arcade</span>
+                    <button id="closeEarBtn" aria-label="Close arcade">✕</button>
                 </div>
-                <h3 id="quizQuestion" style="font-family:var(--font-display); font-size:1.15rem; font-weight:800; color:var(--primary-gold); margin-bottom:1rem;">Click "New Question" to start</h3>
-                <div class="quiz-options" id="quizOptions" role="group" aria-label="Answer options"></div>
-                <p id="quizFeedback" aria-live="assertive" style="min-height:1.6rem; margin:0.6rem 0 0; font-family:var(--font-display); font-size:1.05rem; font-weight:800;"></p>
-                <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin:0.75rem 0;">
-                    <button class="play-btn" id="playQuizBtn">🔊 Replay Sound</button>
-                    <button class="play-btn" id="newQuizBtn" style="background:linear-gradient(135deg, var(--primary-purple) 0%, #6a4f8c 100%);">🔄 New Question</button>
+                <div style="display:flex;gap:14px;justify-content:center;align-items:center;flex-wrap:wrap;margin-bottom:0.6rem;font-family:var(--font-display);font-size:0.75rem;font-weight:800;">
+                    <span id="arcadeRank" style="letter-spacing:1px;color:#cd7f32;">🥉 BRONZE</span>
+                    <span id="arcadeStreak" style="color:#F4D03F;">—</span>
+                    <span id="arcadeBest" style="color:#888;font-size:0.68rem;font-weight:700;">Best streak: 0</span>
                 </div>
+                <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:0.85rem;">
+                    <button class="arcade-mode-btn active" data-mode="interval" onclick="_arcadeSwitchMode('interval')">👂 Ear ID</button>
+                    <button class="arcade-mode-btn" data-mode="chord" onclick="_arcadeSwitchMode('chord')">🎵 Chord ID</button>
+                    <button class="arcade-mode-btn" data-mode="playback" onclick="_arcadeSwitchMode('playback')">🎤 Play It Back</button>
+                </div>
+                <div id="arcadeQuizPanel">
+                    <h3 id="quizQuestion" style="font-family:var(--font-display); font-size:1.15rem; font-weight:800; color:var(--primary-gold); margin-bottom:1rem;">Click "New Question" to start</h3>
+                    <div class="quiz-options" id="quizOptions" role="group" aria-label="Answer options"></div>
+                    <p id="quizFeedback" aria-live="assertive" style="min-height:1.6rem; margin:0.6rem 0 0; font-family:var(--font-display); font-size:1.05rem; font-weight:800;"></p>
+                    <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin:0.75rem 0;">
+                        <button class="play-btn" id="playQuizBtn">🔊 Replay Sound</button>
+                        <button class="play-btn" id="newQuizBtn" style="background:linear-gradient(135deg, var(--primary-purple) 0%, #6a4f8c 100%);">🔄 New Question</button>
+                    </div>
+                    <p id="quizScore" style="margin-top:1.25rem; font-family:var(--font-display); font-size:1.2rem; font-weight:700; color:var(--primary-gold);" aria-live="polite">Score: 0/0</p>
+                </div>
+                <div id="arcadePlaybackPanel" style="display:none;">
+                    <p id="pibStatus" aria-live="assertive" style="min-height:1.6rem; margin:0 0 0.6rem; font-family:var(--font-display); font-size:0.95rem; font-weight:800; color:var(--primary-gold); text-align:center;">Tap ▶ Hear It, then play the notes back on your instrument!</p>
+                    <div id="pibChips" style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:0.75rem 0;"></div>
+                    <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin:0.75rem 0;">
+                        <button class="play-btn" id="pibHearBtn" onclick="_pibHearIt()">▶ Hear It</button>
+                        <button class="play-btn" id="pibStartBtn" onclick="_pibToggle()" style="background:linear-gradient(135deg,#008080,#005555);">🎤 Start Listening</button>
+                        <button class="play-btn" id="pibNewBtn" onclick="_pibNewRound()" style="background:linear-gradient(135deg, var(--primary-purple) 0%, #6a4f8c 100%);">🔄 New Sequence</button>
+                    </div>
+                </div>
+            </div>
                 <p id="quizScore" style="margin-top:1.25rem; font-family:var(--font-display); font-size:1.2rem; font-weight:700; color:var(--primary-gold);" aria-live="polite">Score: 0/0</p>
             </div>
 
@@ -3369,7 +3453,7 @@ window.addEventListener('unhandledrejection', function(event) {
                             earTrainingOpen = !earTrainingOpen;
                             updateEarOverlay();
                             if (earTrainingOpen) {
-                                if (!currentQuiz) generateQuiz(); else playQuizSound();
+                                _arcadeOnOpen();
                             }
                             try { trackEvent('ear_training_toggle', {open: earTrainingOpen}); } catch(e) {}
                             return;
@@ -3387,7 +3471,7 @@ window.addEventListener('unhandledrejection', function(event) {
                     };
                 });
                 const closeEarBtn = document.getElementById('closeEarBtn');
-                if (closeEarBtn) closeEarBtn.onclick = () => { earTrainingOpen = false; updateEarOverlay(); };
+                if (closeEarBtn) closeEarBtn.onclick = () => { earTrainingOpen = false; updateEarOverlay(); _pibStop(); };
                 // Key dropdown — plain <select>, replaces the old pill-grid popup
                 const _kps = document.getElementById('keyPickerSelect');
                 if (_kps) {
@@ -3998,6 +4082,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                     highlightNote(pc, true);
                     midiSingleNoteFeedback(pc);
                     evaluateMidiChord();
+                    if (typeof _kcmGameNoteHeard === 'function') _kcmGameNoteHeard(pc);
                 } else if (cmd === 8 || (cmd === 9 && vel === 0)) {
                     midiHeldNotes.delete(note);
                     highlightNote(pc, false);
@@ -6195,61 +6280,249 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         }
 
         // ── Ear training ──────────────────────────────────────────
+        // ── KCM ARCADE (Sep 6 2026) ──────────────────────────────
+        // Turns the old single-mode Ear Training quiz into a 3-mode arcade:
+        // Ear ID (the original interval quiz, unchanged behavior), Chord ID
+        // (new — chord quality by ear), and Play It Back (new — the app
+        // shows/plays a short note sequence and the player plays it back on
+        // a REAL instrument, using the same mic/MIDI note-detection this
+        // session widened to full piano range). A small persistent
+        // streak/rank system (localStorage) spans all three modes.
+        let _arcadeMode = 'interval';
+        const ARCADE_CHORD_QUALITIES = [
+            {name:'Major',        ivals: triads.major},
+            {name:'Minor',        ivals: triads.minor},
+            {name:'Diminished',   ivals: triads.diminished},
+            {name:'Augmented',    ivals: triads.augmented},
+            {name:'Dominant 7th', ivals: extended.dominant7},
+        ];
+        const ARCADE_MODES = {
+            interval: {
+                question: 'What interval do you hear?',
+                labels: intervalNames,
+                makeQuestion() {
+                    const correct = Math.floor(Math.random() * 12);
+                    return { correct, notes: [0, correct], playTogether: false };
+                },
+            },
+            chord: {
+                question: 'What chord quality do you hear?',
+                labels: ARCADE_CHORD_QUALITIES.map(c => c.name),
+                makeQuestion() {
+                    const rootPc = Math.floor(Math.random() * 12);
+                    const qi = Math.floor(Math.random() * ARCADE_CHORD_QUALITIES.length);
+                    const notes = ARCADE_CHORD_QUALITIES[qi].ivals.map(iv => (rootPc + iv) % 12);
+                    return { correct: qi, notes, playTogether: true };
+                },
+            },
+        };
+
+        // ── Persistent stats: streak + rank, shared across all 3 modes ──
+        const KCM_ARCADE_STATS_KEY = 'kcm_arcade_stats_v1';
+        let _arcadeStats = { totalCorrect: 0, totalAnswered: 0, bestStreak: 0, currentStreak: 0 };
+        (function _arcadeLoadStats() {
+            try {
+                const raw = localStorage.getItem(KCM_ARCADE_STATS_KEY);
+                if (raw) Object.assign(_arcadeStats, JSON.parse(raw));
+            } catch(e) {}
+        })();
+        function _arcadeSaveStats() {
+            try { localStorage.setItem(KCM_ARCADE_STATS_KEY, JSON.stringify(_arcadeStats)); } catch(e) {}
+        }
+        function _arcadeRank(totalCorrect) {
+            if (totalCorrect >= 150) return { name: 'PLATINUM', emoji: '💎', color: '#b9f2ff' };
+            if (totalCorrect >= 75)  return { name: 'GOLD',     emoji: '🥇', color: '#F4D03F' };
+            if (totalCorrect >= 25)  return { name: 'SILVER',   emoji: '🥈', color: '#dfe6ec' };
+            return                       { name: 'BRONZE',   emoji: '🥉', color: '#cd7f32' };
+        }
+        function _arcadeUpdateHeaderUI() {
+            const streakEl = document.getElementById('arcadeStreak');
+            const bestEl   = document.getElementById('arcadeBest');
+            const rankEl   = document.getElementById('arcadeRank');
+            const rank = _arcadeRank(_arcadeStats.totalCorrect);
+            if (streakEl) streakEl.textContent = _arcadeStats.currentStreak > 0 ? `🔥 ${_arcadeStats.currentStreak}` : '—';
+            if (bestEl)   bestEl.textContent = `Best streak: ${_arcadeStats.bestStreak}`;
+            if (rankEl)   { rankEl.textContent = `${rank.emoji} ${rank.name}`; rankEl.style.color = rank.color; }
+        }
+        function _arcadeRecordResult(isRight) {
+            const prevRank = _arcadeRank(_arcadeStats.totalCorrect).name;
+            _arcadeStats.totalAnswered++;
+            if (isRight) {
+                _arcadeStats.totalCorrect++;
+                _arcadeStats.currentStreak++;
+                if (_arcadeStats.currentStreak > _arcadeStats.bestStreak) _arcadeStats.bestStreak = _arcadeStats.currentStreak;
+            } else {
+                _arcadeStats.currentStreak = 0;
+            }
+            _arcadeSaveStats();
+            _arcadeUpdateHeaderUI();
+            const newRank = _arcadeRank(_arcadeStats.totalCorrect).name;
+            if (newRank !== prevRank) {
+                const fbEl = document.getElementById('quizFeedback') || document.getElementById('pibStatus');
+                if (fbEl) { const r = _arcadeRank(_arcadeStats.totalCorrect); fbEl.textContent = `🎉 RANK UP! You're now ${r.emoji} ${r.name}!`; fbEl.style.color = r.color; }
+            }
+        }
+        function _arcadeSwitchMode(mode) {
+            _arcadeMode = mode;
+            document.querySelectorAll('.arcade-mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+            const quizPanel = document.getElementById('arcadeQuizPanel');
+            const pibPanel  = document.getElementById('arcadePlaybackPanel');
+            if (quizPanel) quizPanel.style.display = mode === 'playback' ? 'none' : 'block';
+            if (pibPanel)  pibPanel.style.display  = mode === 'playback' ? 'block' : 'none';
+            if (mode === 'playback') { _pibStop(); _pibNewRound(); }
+            else generateQuiz();
+            try { trackEvent('arcade_mode_switch', { mode }); } catch(e) {}
+        }
+        function _arcadeOnOpen() {
+            _arcadeUpdateHeaderUI();
+            if (_arcadeMode === 'playback') { if (_pibTarget.length === 0) _pibNewRound(); }
+            else if (!currentQuiz) generateQuiz();
+            else playQuizSound();
+        }
+
         function generateQuiz() {
             try {
-                const int = Math.floor(Math.random() * 12);
-                currentQuiz = {type:'interval', correct:int, notes:[0, int]};
+                const cfg = ARCADE_MODES[_arcadeMode] || ARCADE_MODES.interval;
+                const q = cfg.makeQuestion();
+                currentQuiz = { type: _arcadeMode, correct: q.correct, notes: q.notes, playTogether: q.playTogether, labels: cfg.labels, answered: false };
                 const qEl = document.getElementById('quizQuestion');
-                if (qEl) qEl.textContent = 'What interval do you hear?';
+                if (qEl) qEl.textContent = cfg.question;
                 const fbEl = document.getElementById('quizFeedback');
                 if (fbEl) { fbEl.textContent = ''; fbEl.style.color = ''; }
                 updateStaffNotation([]); // clear previous reveal so the new answer isn't given away
                 const opts = document.getElementById('quizOptions');
                 if (!opts) return;
                 opts.innerHTML = '';
-                const allIntervals = [0,1,2,3,4,5,6,7,8,9,10,11].sort(() => Math.random() - 0.5);
-                const options = allIntervals.slice(0, 4);
-                if (!options.includes(int)) options[Math.floor(Math.random()*4)] = int;
+                const labelCount = Object.keys(cfg.labels).length;
+                const allIdx = Array.from({length: labelCount}, (_, i) => i).sort(() => Math.random() - 0.5);
+                const options = allIdx.slice(0, Math.min(4, labelCount));
+                if (!options.includes(q.correct)) options[Math.floor(Math.random() * options.length)] = q.correct;
                 options.forEach(i => {
                     const btn = document.createElement('button');
-                    btn.className = 'quiz-btn'; btn.textContent = intervalNames[i];
+                    btn.className = 'quiz-btn'; btn.textContent = cfg.labels[i];
                     btn.disabled = false;
                     btn.onclick = () => checkAnswer(i); opts.appendChild(btn);
                 });
                 playQuizSound();
-                try { trackEvent('quiz_question', {}); } catch(e) {}
+                try { trackEvent('quiz_question', { mode: _arcadeMode }); } catch(e) {}
             } catch(e) { console.error('Generate quiz error:', e); }
         }
 
         function playQuizSound() {
             if (!currentQuiz) return;
             if (!audioReady) { alert('Click START AUDIO ENGINE first!'); return; }
-            currentQuiz.notes.forEach((n, i) => setTimeout(() => playNote(n, 4, 0.8), i * 600));
+            if (currentQuiz.playTogether) currentQuiz.notes.forEach(n => playNote(n, 4, 1.0));
+            else currentQuiz.notes.forEach((n, i) => setTimeout(() => playNote(n, 4, 0.8), i * 600));
         }
 
         function checkAnswer(ans) {
             try {
                 if (!currentQuiz || currentQuiz.answered) return; // one answer per question
                 currentQuiz.answered = true;
+                const labels = currentQuiz.labels;
                 const btns = document.querySelectorAll('.quiz-btn');
                 const isRight = ans === currentQuiz.correct;
                 quizTotal++;
-                if (isRight) { quizCorrect++; btns.forEach(btn => { if (btn.textContent === intervalNames[ans]) btn.classList.add('correct'); }); }
-                else { btns.forEach(btn => { if (btn.textContent === intervalNames[ans]) btn.classList.add('incorrect'); if (btn.textContent === intervalNames[currentQuiz.correct]) btn.classList.add('correct'); }); }
+                if (isRight) { quizCorrect++; btns.forEach(btn => { if (btn.textContent === labels[ans]) btn.classList.add('correct'); }); }
+                else { btns.forEach(btn => { if (btn.textContent === labels[ans]) btn.classList.add('incorrect'); if (btn.textContent === labels[currentQuiz.correct]) btn.classList.add('correct'); }); }
                 btns.forEach(btn => btn.disabled = true); // lock in the answer
                 const scoreEl = document.getElementById('quizScore');
                 if (scoreEl) scoreEl.textContent = `Score: ${quizCorrect}/${quizTotal} (${Math.round(quizCorrect/quizTotal*100)}%)`;
                 const fbEl = document.getElementById('quizFeedback');
                 if (fbEl) {
                     if (isRight) { fbEl.textContent = '✅ CORRECT!'; fbEl.style.color = '#2ecc71'; }
-                    else { fbEl.textContent = `❌ NOT QUITE — it was ${intervalNames[currentQuiz.correct]}`; fbEl.style.color = '#e74c3c'; }
+                    else { fbEl.textContent = `❌ NOT QUITE — it was ${labels[currentQuiz.correct]}`; fbEl.style.color = '#e74c3c'; }
                 }
-                try { trackEvent('quiz_answer', {correct: isRight}); } catch(e) {}
-                // Reveal both interval notes together on staff
+                _arcadeRecordResult(isRight);
+                try { trackEvent('quiz_answer', {correct: isRight, mode: currentQuiz.type}); } catch(e) {}
+                // Reveal all quiz notes together on staff
                 updateStaffNotation(currentQuiz.notes.map(n => ({pc: n, oct: 4})));
                 setTimeout(() => generateQuiz(), 2200);
             } catch(e) { console.error('Check answer error:', e); }
         }
+
+        // ── Play It Back: app plays/shows a short sequence, player plays it
+        // back on a real instrument (mic via SING mode, or MIDI) — matched
+        // note-by-note via the shared _kcmGameNoteHeard() hook below, fed by
+        // both _singCommitHeld() (mic) and handleMidiMessage() (MIDI). ──
+        let _pibTarget = [], _pibProgress = 0, _pibActive = false, _pibLength = 3;
+        function _pibNewRound() {
+            try {
+                const pool = (selectedNotes && selectedNotes.size >= 3)
+                    ? Array.from(selectedNotes)
+                    : [0,2,4,5,7,9,11].map(iv => (rootNote + iv) % 12);
+                const root = pool.includes(rootNote) ? rootNote : pool[0];
+                const rest = pool.filter(n => n !== root).sort(() => Math.random() - 0.5).slice(0, Math.max(0, _pibLength - 1));
+                _pibTarget = [root, ...rest];
+                _pibProgress = 0;
+                _renderPibChips();
+                const status = document.getElementById('pibStatus');
+                if (status) status.textContent = 'Tap ▶ Hear It, then play the notes back on your instrument!';
+            } catch(e) { console.error('Play It Back round error:', e); }
+        }
+        function _renderPibChips() {
+            const wrap = document.getElementById('pibChips');
+            if (!wrap) return;
+            wrap.innerHTML = _pibTarget.map((pc, i) => {
+                const state = i < _pibProgress ? 'pib-done' : (i === _pibProgress ? 'pib-next' : '');
+                return `<span class="pib-chip ${state}">${getNoteName(pc)}</span>`;
+            }).join('');
+        }
+        function _pibHearIt() {
+            if (!audioReady) { alert('Click START AUDIO ENGINE first!'); return; }
+            _pibTarget.forEach((pc, i) => setTimeout(() => playNote(pc, 4, 0.6), i * 550));
+        }
+        function _pibToggle() { _pibActive ? _pibStop() : _pibStart(); }
+        function _pibStart() {
+            _pibActive = true;
+            const btn = document.getElementById('pibStartBtn');
+            if (btn) { btn.textContent = '⏹ Stop Listening'; btn.classList.add('listening'); }
+            const status = document.getElementById('pibStatus');
+            if (status) status.textContent = `Listening — play note ${_pibProgress + 1} of ${_pibTarget.length}`;
+            if (typeof startSingMode === 'function' && typeof _singActive !== 'undefined' && !_singActive) {
+                try { startSingMode(); } catch(e) {}
+            }
+        }
+        function _pibStop() {
+            _pibActive = false;
+            const btn = document.getElementById('pibStartBtn');
+            if (btn) { btn.textContent = '🎤 Start Listening'; btn.classList.remove('listening'); }
+        }
+        // Called from _singCommitHeld() (mic) and handleMidiMessage() (MIDI)
+        // whenever a distinct note is heard — only acts while Play It Back
+        // is the active mode AND the player has pressed Start Listening.
+        function _kcmGameNoteHeard(pc) {
+            if (!_pibActive || _arcadeMode !== 'playback' || _pibTarget.length === 0) return;
+            const expected = _pibTarget[_pibProgress];
+            if (pc === expected) {
+                _pibProgress++;
+                _renderPibChips();
+                const status = document.getElementById('pibStatus');
+                if (_pibProgress >= _pibTarget.length) {
+                    _pibStop();
+                    _arcadeRecordResult(true);
+                    if (status) status.textContent = '🎉 NICE! Sequence complete!';
+                    if (_arcadeStats.currentStreak > 0 && _arcadeStats.currentStreak % 3 === 0 && _pibLength < 6) _pibLength++;
+                    setTimeout(() => _pibNewRound(), 1600);
+                } else if (status) {
+                    status.textContent = `Nice! Now play note ${_pibProgress + 1} of ${_pibTarget.length}`;
+                }
+            } else {
+                const wrap = document.getElementById('pibChips');
+                const chip = wrap && wrap.children[_pibProgress];
+                if (chip) { chip.classList.add('pib-wrong'); setTimeout(() => chip.classList.remove('pib-wrong'), 350); }
+            }
+        }
+        window._kcmGameNoteHeard = _kcmGameNoteHeard;
+        // Inline onclick="" attributes in the Arcade HTML execute against the
+        // global scope, not this IIFE's closure — these four are invoked
+        // that way (mode-tab buttons, Hear It / Start Listening / New
+        // Sequence), so they must be explicitly exposed on window, same
+        // pattern as window.playSelection etc. further up this file.
+        window._arcadeSwitchMode = _arcadeSwitchMode;
+        window._pibHearIt = _pibHearIt;
+        window._pibToggle = _pibToggle;
+        window._pibNewRound = _pibNewRound;
 
         // ── Recording ─────────────────────────────────────────────
         function startRecording() {
@@ -8487,6 +8760,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 _singEvents.push({ ..._singHeldNote, endTs, durMs });
                 _singRefreshHistory();
                 _singDrawRoll();
+                if (typeof _kcmGameNoteHeard === 'function') _kcmGameNoteHeard(_singHeldNote.pc);
             }
             _singHeldNote = null;
         }
