@@ -3,3 +3,7 @@ canonical-snippets.html
 cloudflare-steps-for-ben.txt
 pending-changes.patch
 qa/node_modules
+
+# One-off dev scratch (bak snapshots, one-time patch/diagnostic scripts) -- tidied Sep 12 2026
+_dev_scratch/
+*.bak-before-*
