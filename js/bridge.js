@@ -438,6 +438,13 @@
     // Circle of Fifths
     var cofIframe = document.getElementById('iframe-cof');
     if (cofIframe) {
+      // Defensive: this iframe is small and near the top of the page, so with
+      // loading="lazy" its 'load' event can fire and be missed before this
+      // listener attaches (confirmed race, Sep 12 2026). Catch that case here.
+      if (cofIframe.contentDocument && cofIframe.contentDocument.readyState === 'complete') {
+        bridge.register(cofIframe);
+        console.log('[KCM.bridge] Circle of Fifths panel registered (was already loaded).');
+      }
       cofIframe.addEventListener('load', function () {
         bridge.register(cofIframe);
         console.log('[KCM.bridge] Circle of Fifths panel registered.');
