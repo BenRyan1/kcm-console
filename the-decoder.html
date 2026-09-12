@@ -969,9 +969,18 @@ dropzone.addEventListener('click', () => fileInput.click());
 fileInput.addEventListener('change', e => {
   if (e.target.files[0]) handleFile(e.target.files[0]);
 });
-dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('dragover'); });
-dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
-dropzone.addEventListener('drop', e => {
+// Catch a drop ANYWHERE on the page, not just inside the small dropzone
+// box -- without this, a drop that lands a few pixels outside it falls
+// through to the browser's default action (navigate to the local file
+// and show it as raw text), which is exactly the trap that bit the
+// first live test. The dropzone-only listeners are replaced by these
+// document-level ones so there's no double-handling on drops that do
+// land inside the box.
+document.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('dragover'); });
+document.addEventListener('dragleave', e => {
+  if (!e.relatedTarget || e.relatedTarget.nodeName === 'HTML') dropzone.classList.remove('dragover');
+});
+document.addEventListener('drop', e => {
   e.preventDefault();
   dropzone.classList.remove('dragover');
   if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
