@@ -4790,6 +4790,7 @@ function etRestart() {
   }
 
   /* ── Message listener ─────────────────────────────────────────────  */
+  var _lastBusActiveMidiSet = {};
   window.addEventListener('message', function (e) {
     if (!e.data || e.data.type !== 'KCM_STATE') return;
     var p = e.data.payload;
@@ -4814,6 +4815,22 @@ function etRestart() {
     // 4. Active MIDI notes → highlight on clock
     if (p.activeNotes !== undefined) {
       setActiveNotes(p.activeNotes);
+      // Feed the Performance Recorder's timeline too, so notes played
+      // elsewhere on the bus (The Decoder, or any other panel) get
+      // captured onto a running recording the same way notes played
+      // inside this panel already are -- via the same window._recMelodicHit
+      // hook the Rhythm Lab's own melodic hits use (only logs anything
+      // while the user has actually pressed Record here). activeNotes is
+      // a snapshot, not individual on/off events, so only notes that are
+      // newly present since the last message are logged as a hit.
+      if (typeof window._recMelodicHit === 'function') {
+        var _busSet = {};
+        (p.activeNotes || []).forEach(function (m) { _busSet[m] = true; });
+        for (var _m in _busSet) {
+          if (!_lastBusActiveMidiSet[_m]) window._recMelodicHit(Number(_m));
+        }
+        _lastBusActiveMidiSet = _busSet;
+      }
     }
   });
 
