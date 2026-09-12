@@ -5717,11 +5717,32 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         }
 
         // ── Highlight note ────────────────────────────────────────
-        function highlightNote(n, on) {
+        function highlightNote(n, on, opts) {
             try {
+                // ── KCM octave-aware piano touch ──────────────────────
+                // When called with {oct: N}, this is a precise, single-register
+                // piano-key touch driven by real MIDI octave data (from the bus).
+                // It intentionally skips sphere/fretboard (a paired skipPiano
+                // call already handles those) so the piano never lights up
+                // both octave-4 and octave-5 copies of the same pitch class
+                // at once when only one register is actually sounding.
+                if (opts && opts.oct !== undefined) {
+                    const wKey = document.querySelector(`.white-key[data-note="${n}"][data-octave="${opts.oct}"]`);
+                    const bKey = document.querySelector(`.black-key[data-note="${n}"][data-octave="${opts.oct}"]`);
+                    if (on) {
+                        if (wKey) { wKey.classList.add('playing'); wKey.style.boxShadow=`0 0 22px ${colors[n]}, inset 0 4px 8px rgba(0,0,0,0.2)`; }
+                        if (bKey) { bKey.classList.add('playing'); bKey.style.boxShadow=`0 0 24px ${colors[n]}, inset 0 3px 6px rgba(0,0,0,0.7)`; }
+                    } else {
+                        if (wKey) { wKey.classList.remove('playing'); wKey.style.boxShadow=''; wKey.style.borderColor=''; }
+                        if (bKey) { bKey.classList.remove('playing'); bKey.style.boxShadow=''; bKey.style.borderColor=''; bKey.style.borderWidth=''; }
+                    }
+                    return;
+                }
+
                 const sphere   = document.querySelector(`.sphere[data-note="${n}"]`);
-                const whiteKey = document.querySelector(`.white-key[data-note="${n}"]`);
-                const blackKey = document.querySelector(`.black-key[data-note="${n}"]`);
+                const skipPiano = !!(opts && opts.skipPiano);
+                const whiteKey = skipPiano ? null : document.querySelector(`.white-key[data-note="${n}"]`);
+                const blackKey = skipPiano ? null : document.querySelector(`.black-key[data-note="${n}"]`);
                 const fretCells  = document.querySelectorAll(`.fb-cell[data-note="${n}"]`);
                 const strLabels  = document.querySelectorAll(`.fb-str-label-cell[data-note="${n}"]`);
 
@@ -6012,8 +6033,55 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
 
             let x = Math.max(70, sigX + 12);
             const available = W - x - 20;
-            const noteSpacing = Math.min(28, available / (noteObjs.length || 1));
 
+            // ── KCM Staff Notation Law ──────────────────────────────────
+            // A CHORD (notes sounding together — this "static display" path,
+            // used for every simultaneous note set: Play Chord, the live
+            // Console bus's activeNotes from real MIDI/mic/Decoder input,
+            // etc.) renders as a perfectly vertical stack: every notehead at
+            // the SAME x, one shared stem. A MELODY or ARPEGGIO (the
+            // "sequence" path below, notes carrying an explicit order)
+            // renders left-to-right in that order instead, one column per
+            // note, in correct time order. Previously both paths advanced x
+            // per note identically, so a real chord drew as a staggered
+            // little arpeggio instead of a stack — this is the fix, applied
+            // here once so both this compact staff AND the larger fbStaffSVG
+            // pane (same function, just a wider viewBox) can never diverge.
+            if (!isSequence && noteObjs.length > 1) {
+                let minY = Infinity, maxY = -Infinity;
+                noteObjs.forEach(({pc, oct}) => {
+                    const y = noteY(pc, oct);
+                    minY = Math.min(minY, y); maxY = Math.max(maxY, y);
+                    if (y >= 70) { for (let ly = 70; ly <= y; ly += 10) {
+                        const led = document.createElementNS('http://www.w3.org/2000/svg','line');
+                        led.setAttribute('x1',x-8); led.setAttribute('y1',ly); led.setAttribute('x2',x+8); led.setAttribute('y2',ly);
+                        led.setAttribute('stroke','#000'); led.setAttribute('stroke-width','1.2'); svg.appendChild(led);
+                    } }
+                    if (y <= 10) { for (let ly = 10; ly >= y; ly -= 10) {
+                        const led = document.createElementNS('http://www.w3.org/2000/svg','line');
+                        led.setAttribute('x1',x-8); led.setAttribute('y1',ly); led.setAttribute('x2',x+8); led.setAttribute('y2',ly);
+                        led.setAttribute('stroke','#000'); led.setAttribute('stroke-width','1.2'); svg.appendChild(led);
+                    } }
+                    const nh = document.createElementNS('http://www.w3.org/2000/svg','ellipse');
+                    nh.setAttribute('cx',x); nh.setAttribute('cy',y); nh.setAttribute('rx','6'); nh.setAttribute('ry','5');
+                    nh.setAttribute('fill',colors[pc]); nh.setAttribute('stroke','#000'); nh.setAttribute('stroke-width','1'); svg.appendChild(nh);
+                });
+                // One shared stem spanning the whole stack — same up/down
+                // rule a single note uses (below the middle line stems up on
+                // the right; above it stems down on the left).
+                const stem = document.createElementNS('http://www.w3.org/2000/svg','line');
+                if (maxY > 42) { stem.setAttribute('x1',x+5.5); stem.setAttribute('y1',maxY); stem.setAttribute('x2',x+5.5); stem.setAttribute('y2',minY-28); }
+                else           { stem.setAttribute('x1',x-5.5); stem.setAttribute('y1',minY); stem.setAttribute('x2',x-5.5); stem.setAttribute('y2',maxY+28); }
+                stem.setAttribute('stroke','#000'); stem.setAttribute('stroke-width','1.8'); svg.appendChild(stem);
+                const lbl = document.createElementNS('http://www.w3.org/2000/svg','text');
+                lbl.setAttribute('x',x); lbl.setAttribute('y','90'); lbl.setAttribute('font-size','10'); lbl.setAttribute('font-weight','bold');
+                lbl.setAttribute('text-anchor','middle'); lbl.setAttribute('fill','#000');
+                lbl.textContent = noteObjs.map(({pc}) => getNoteName(pc)).join('+');
+                svg.appendChild(lbl);
+                return;
+            }
+
+            const noteSpacing = Math.min(28, available / (noteObjs.length || 1));
             noteObjs.forEach(({pc, oct}) => {
                 const n = pc;
                 const y = noteY(pc, oct);
@@ -9593,10 +9661,44 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                         for (var pcI = 0; pcI < 12; pcI++) {
                             var wasOn = !!prevPcCounts[pcI];
                             var isOn  = !!newPcCounts[pcI];
-                            if (isOn && !wasOn) highlightNote(pcI, true);
-                            else if (!isOn && wasOn) highlightNote(pcI, false);
+                            // skipPiano: true -- the piano keys are driven separately
+                            // below by the octave-aware loop, which knows exactly which
+                            // register (octave 4 vs 5, etc.) each note is actually
+                            // sounding in. This call still handles sphere + fretboard.
+                            if (isOn && !wasOn) highlightNote(pcI, true, { skipPiano: true });
+                            else if (!isOn && wasOn) highlightNote(pcI, false, { skipPiano: true });
                         }
                         window._kcmBusPcCounts = newPcCounts;
+
+                        // ── KCM octave-aware piano sync ───────────────────
+                        // The piano keyboard shows 2+ registers of the same 12 pitch
+                        // classes. The pc-level loop above can't tell them apart, so
+                        // it used to hit whichever DOM element querySelector found
+                        // first -- sometimes lighting the wrong register, or both at
+                        // once. This tracks exact (pitch class, octave) pairs from the
+                        // real MIDI note numbers so only the register actually
+                        // sounding gets highlighted.
+                        var newPcOctCounts = {};
+                        (payload.activeNotes || []).forEach(function(m) {
+                            var pc  = ((m % 12) + 12) % 12;
+                            var oct = Math.floor(m / 12) - 1;
+                            var key = pc + '_' + oct;
+                            newPcOctCounts[key] = (newPcOctCounts[key] || 0) + 1;
+                        });
+                        var prevPcOctCounts = window._kcmBusPcOctCounts || {};
+                        var allKeys = {};
+                        Object.keys(prevPcOctCounts).forEach(function(k){ allKeys[k] = true; });
+                        Object.keys(newPcOctCounts).forEach(function(k){ allKeys[k] = true; });
+                        Object.keys(allKeys).forEach(function(key) {
+                            var wasOn = !!prevPcOctCounts[key];
+                            var isOn  = !!newPcOctCounts[key];
+                            if (isOn === wasOn) return;
+                            var parts = key.split('_');
+                            var pc = parseInt(parts[0], 10);
+                            var oct = parseInt(parts[1], 10);
+                            highlightNote(pc, isOn, { oct: oct });
+                        });
+                        window._kcmBusPcOctCounts = newPcOctCounts;
 
                         // Mirror the same live pitch classes onto the compact STAFF
                         // NOTATION panel (its Staff / Fretboard / Keyboard mini-tabs) —
