@@ -24,6 +24,10 @@
      Console → iframe : { type: 'KCM_STATE',       payload: {root,mode,scale,activeNotes:[...]} }
      iframe → Console : { type: 'KCM_STATE_PATCH',  payload: {root?,mode?,scale?,activeNotes?:[...]} }
      iframe → Console : { type: 'KCM_PANEL_READY',  panel: <string> }
+     iframe → Console : { type: 'KCM_DECODER_ACTIVE', active: <boolean> }
+                         (added for the ambient Twinkle demo, see below —
+                         The Decoder sends this to hand the bus sync source
+                         back and forth between itself and the ambient loop)
 
    Note: activeNotes is always serialised as Array (Sets are not
    JSON-serialisable) and deserialised back to Set on receipt.
@@ -183,6 +187,22 @@
       return;
     }
 
+    // ── Decoder activation handoff (ambient Twinkle demo) ────────────
+    // The Decoder is the one panel that can "activate" and take over the
+    // bus for real playback. true = pause the ambient loop and let the
+    // Decoder drive; false = hand sync back to the ambient loop (after a
+    // short grace delay, so back-to-back plays don't cause a visible
+    // flicker of ambient Twinkle sneaking in between them).
+    if (data.type === 'KCM_DECODER_ACTIVE') {
+      if (data.active) {
+        stopAmbientDemo();
+      } else {
+        clearTimeout(ambientResumeTimer);
+        ambientResumeTimer = setTimeout(startAmbientDemo, 900);
+      }
+      return;
+    }
+
     if (data.type !== 'KCM_STATE_PATCH') return;
     if (!data.payload || typeof data.payload !== 'object') return;
 
@@ -278,6 +298,74 @@
       try { if (iframe.contentWindow) iframe.contentWindow.postMessage(msg, '*'); } catch(e) {}
     });
     console.log('[KCM.bridge] clock stopped.');
+  }
+
+  // ── Ambient Twinkle demo ──────────────────────────────────────────────
+  // The Console shows itself "alive" the instant it loads: a silent,
+  // visual-only "Twinkle, Twinkle Little Star" loop drives window.KCM.bus
+  // directly (no Web Audio involved, so no autoplay-gesture restriction
+  // applies), which the existing bus→bridge→broadcast pipeline fans out
+  // to every ready panel exactly like any other bus change. The moment
+  // The Decoder is actually used (KCM_DECODER_ACTIVE, above) this loop
+  // steps aside and the real playback becomes the sync source; it resumes
+  // automatically once Decoder playback stops. Same melody data as
+  // the-decoder.html's built-in Twinkle demo, expressed directly as
+  // [midiNote, beats] pairs so no parsing step is needed here.
+  var AMBIENT_BPM     = 96;
+  var AMBIENT_BEAT_MS = 60000 / AMBIENT_BPM;
+  var AMBIENT_MELODY  = [
+    [60,1],[60,1],[67,1],[67,1],[69,1],[69,1],[67,2],
+    [65,1],[65,1],[64,1],[64,1],[62,1],[62,1],[60,2],
+    [67,1],[67,1],[65,1],[65,1],[64,1],[64,1],[62,2],
+    [67,1],[67,1],[65,1],[65,1],[64,1],[64,1],[62,2],
+    [60,1],[60,1],[67,1],[67,1],[69,1],[69,1],[67,2],
+    [65,1],[65,1],[64,1],[64,1],[62,1],[62,1],[60,2]
+  ];
+  var ambientEnabled    = false;
+  var ambientIndex      = 0;
+  var ambientStepTimer  = null;
+  var ambientOffTimer   = null;
+  var ambientResumeTimer = null;
+
+  function ambientSetNotes(midiArray) {
+    if (window.KCM && window.KCM.bus) {
+      window.KCM.bus.set({ activeNotes: new Set(midiArray) });
+    }
+  }
+
+  function scheduleAmbientStep() {
+    if (!ambientEnabled) return;
+    var pair = AMBIENT_MELODY[ambientIndex];
+    var midi = pair[0], beats = pair[1];
+    var durationMs = beats * AMBIENT_BEAT_MS;
+
+    ambientSetNotes([midi]);
+    ambientOffTimer = setTimeout(function () {
+      if (ambientEnabled) ambientSetNotes([]);
+    }, durationMs * 0.82);
+
+    ambientIndex = (ambientIndex + 1) % AMBIENT_MELODY.length;
+    ambientStepTimer = setTimeout(scheduleAmbientStep, durationMs);
+  }
+
+  function startAmbientDemo() {
+    if (ambientEnabled) return; // already running
+    ambientEnabled = true;
+    ambientIndex = 0;
+    scheduleAmbientStep();
+  }
+
+  function stopAmbientDemo() {
+    ambientEnabled = false;
+    clearTimeout(ambientResumeTimer); ambientResumeTimer = null;
+    clearTimeout(ambientStepTimer);   ambientStepTimer   = null;
+    clearTimeout(ambientOffTimer);    ambientOffTimer    = null;
+    ambientSetNotes([]); // don't leave a note lit behind when a real source takes over
+  }
+
+  function isDevModeLocal() {
+    try { return new URLSearchParams(window.location.search).get('dev') === '1'; }
+    catch (e) { return false; }
   }
 
   // ── Public API ───────────────────────────────────────────────────────
@@ -532,14 +620,21 @@
   }
 
   // ── Init ─────────────────────────────────────────────────────────────
+  function initAmbientDemo() {
+    if (isDevModeLocal()) return; // keep the bus quiet for manual dev-panel testing
+    setTimeout(startAmbientDemo, 1200); // brief settle-in before the first note
+  }
+
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function () {
       initPanels();
       mountBridgeTestHarness();
+      initAmbientDemo();
     });
   } else {
     initPanels();
     mountBridgeTestHarness();
+    initAmbientDemo();
   }
 
 

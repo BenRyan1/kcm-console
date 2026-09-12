@@ -797,6 +797,20 @@ function sendBridgeState(payload){
   window.parent.postMessage({ type: 'KCM_STATE_PATCH', payload: payload }, '*');
 }
 
+// ---------- Ambient-demo handoff ----------
+// The Console runs a silent "Twinkle, Twinkle" ambient demo across every
+// panel by default (see js/bridge.js) so the app is visibly alive before
+// anyone touches anything. The Decoder is what "activates" real playback:
+// the instant Play is pressed here (on the built-in Twinkle or a real
+// loaded file, doesn't matter which), the ambient loop steps aside and
+// every panel follows THIS playback instead. The instant playback stops
+// (Stop pressed, or it finishes on its own), the ambient loop resumes --
+// this is the "both ways" handoff Ben asked for.
+function notifyDecoderActive(active){
+  if (window.parent === window) return; // standalone, no Console to talk to
+  window.parent.postMessage({ type: 'KCM_DECODER_ACTIVE', active: active }, '*');
+}
+
 function populateTrackSelect(){
   if (lastParsed.tracks.length > 1){
     trackSelect.innerHTML = '';
@@ -855,12 +869,16 @@ function stopPlayback(){
   }
   playBtn.disabled = false;
   stopBtn.disabled = true;
+  notifyDecoderActive(false); // hand sync back to the ambient Twinkle loop
 }
 
 function playNotes(){
   const { notes } = getActiveNoteSet();
   if (!lastParsed || !notes.length) return;
-  stopPlayback();
+  stopPlayback(); // also sends notifyDecoderActive(false) -- immediately
+                   // superseded by the notifyDecoderActive(true) below, since
+                   // postMessage delivery preserves send order at the Console.
+  notifyDecoderActive(true); // The Decoder is now the sync source
 
   const ctx = getAudioCtx();
   if (ctx.state === 'suspended') ctx.resume();
@@ -918,6 +936,7 @@ function playNotes(){
   const endId = setTimeout(() => {
     playBtn.disabled = false;
     stopBtn.disabled = true;
+    notifyDecoderActive(false); // playback finished on its own -- hand sync back
   }, totalDurationMs);
   scheduledTimeouts.push(endId);
 }
