@@ -798,14 +798,13 @@ function sendBridgeState(payload){
 }
 
 // ---------- Ambient-demo handoff ----------
-// The Console runs a silent "Twinkle, Twinkle" ambient demo across every
-// panel by default (see js/bridge.js) so the app is visibly alive before
-// anyone touches anything. The Decoder is what "activates" real playback:
-// the instant Play is pressed here (on the built-in Twinkle or a real
-// loaded file, doesn't matter which), the ambient loop steps aside and
-// every panel follows THIS playback instead. The instant playback stops
-// (Stop pressed, or it finishes on its own), the ambient loop resumes --
-// this is the "both ways" handoff Ben asked for.
+// js/bridge.js can run a silent ambient demo loop across every panel (kept
+// in place but disabled by default per Ben, Sep 12 2026 -- Twinkle just
+// sits loaded here as the default song and nothing plays anywhere until
+// Play is pressed). This still tells the Console when The Decoder itself
+// is actively playing, so anything that DOES listen for it (the ambient
+// loop, if manually re-enabled later, or anything else) knows to step
+// aside while real playback -- Twinkle or a loaded file -- is the source.
 function notifyDecoderActive(active){
   if (window.parent === window) return; // standalone, no Console to talk to
   window.parent.postMessage({ type: 'KCM_DECODER_ACTIVE', active: active }, '*');
@@ -869,7 +868,7 @@ function stopPlayback(){
   }
   playBtn.disabled = false;
   stopBtn.disabled = true;
-  notifyDecoderActive(false); // hand sync back to the ambient Twinkle loop
+  notifyDecoderActive(false); // real playback has stopped
 }
 
 function playNotes(){
@@ -936,7 +935,7 @@ function playNotes(){
   const endId = setTimeout(() => {
     playBtn.disabled = false;
     stopBtn.disabled = true;
-    notifyDecoderActive(false); // playback finished on its own -- hand sync back
+    notifyDecoderActive(false); // playback finished on its own
   }, totalDurationMs);
   scheduledTimeouts.push(endId);
 }
