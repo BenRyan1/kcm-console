@@ -992,6 +992,40 @@ document.getElementById('demoMidi').addEventListener('click', () => {
 document.getElementById('demoXml').addEventListener('click', () => {
   setStatus('Use the dropzone above and choose kcm_test_song.musicxml', 'active');
 });
+
+// ---------- Built-in "Twinkle, Twinkle, Little Star" default ----------
+// Loaded automatically below so the Decoder always has something to see
+// and play the instant it opens -- no file to find or drop first. Built
+// with the exact same { notes, groups, tracks, ticksPerQuarter, bpm }
+// shape buildParsedResult() already produces for a real dropped MIDI/
+// MusicXML file, so rendering, key detection, playback, and the Console
+// bridge (sendBridgeState -> KCM_STATE_PATCH) all work identically --
+// dropping a real file, or using the file picker, replaces it exactly as
+// if this demo had never been loaded.
+const TWINKLE_MELODY = [
+  ['C',4,1],['C',4,1],['G',4,1],['G',4,1],['A',4,1],['A',4,1],['G',4,2],
+  ['F',4,1],['F',4,1],['E',4,1],['E',4,1],['D',4,1],['D',4,1],['C',4,2],
+  ['G',4,1],['G',4,1],['F',4,1],['F',4,1],['E',4,1],['E',4,1],['D',4,2],
+  ['G',4,1],['G',4,1],['F',4,1],['F',4,1],['E',4,1],['E',4,1],['D',4,2],
+  ['C',4,1],['C',4,1],['G',4,1],['G',4,1],['A',4,1],['A',4,1],['G',4,2],
+  ['F',4,1],['F',4,1],['E',4,1],['E',4,1],['D',4,1],['D',4,1],['C',4,2],
+];
+const PC_BY_LETTER = { C:0, D:2, E:4, F:5, G:7, A:9, B:11 };
+function loadTwinkleDemo(){
+  const ticksPerQuarter = 480;
+  let tick = 0;
+  const rawNotes = TWINKLE_MELODY.map(([letter, octave, beats]) => {
+    const n = { pc: PC_BY_LETTER[letter], octave, startTick: tick, durationTicks: beats * ticksPerQuarter };
+    tick += beats * ticksPerQuarter;
+    return n;
+  });
+  lastParsed = buildParsedResult([rawNotes], ['Melody'], ticksPerQuarter, 120);
+  tempoOut.textContent = Math.round(lastParsed.bpm) + ' BPM';
+  setStatus('Twinkle, Twinkle, Little Star — built-in demo, ready to play', 'ok');
+  populateTrackSelect();
+  renderNotes();
+}
+loadTwinkleDemo();
 </script>
 
 </body>
