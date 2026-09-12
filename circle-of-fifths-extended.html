@@ -1005,8 +1005,9 @@ const startLoop = async() => {
       const note=notes[i];
       const triad=isMinor?getMinorTriad(note):getTriad(note);
       S.loopActive={note,type:isMinor?'inner':'outer'}; render();
-      playNotes(triad,4,0.65);
-      await sleep(720);
+      const _stepMs = 60000/_cofLoopBpm;
+      playNotes(triad,4,Math.max(0.15,(_stepMs/1000)*0.9));
+      await sleep(_stepMs);
       if(S.loopStop||!S.loopRunning)break;
     }
   }
@@ -1057,6 +1058,15 @@ const cyclePillLevel = i => {
 };
 
 const sleep = ms => new Promise(r=>setTimeout(r,ms));
+
+// Tempo-sync build (Sep 2026): the CW/CCW loop used to run at a fixed
+// 720ms-per-triad pace no matter what. It now follows the shared bpm
+// published on the bus (Music Theory Pro's tempo slider is the master;
+// see the KCM_STATE handler below) -- one triad step per beat, same
+// relationship the fixed 720ms/0.65s pair already had (720ms ~ 83bpm,
+// 0.65s was 90% of that beat). 120 matches the bus default so nothing
+// jumps before the first KCM_STATE arrives.
+let _cofLoopBpm = 120;
 
 // ── Extended rings — toggle / play / compare ─────────
 // Extension dots are a persistent toggle (unlike the momentary major/minor
@@ -1913,6 +1923,9 @@ window.addEventListener('message',ev=>{
       if(ev.data.payload?.root){
         const root=S2F[ev.data.payload.root]||ev.data.payload.root;
         if(NOTE_ORDER.includes(root)){setMajKey(root);}
+      }
+      if(typeof ev.data.payload?.bpm==='number' && ev.data.payload.bpm>0){
+        _cofLoopBpm = ev.data.payload.bpm;
       }
       // The Circle only shows one highlighted note at a time (S.active is a
       // single value, used throughout this file for chord/progression

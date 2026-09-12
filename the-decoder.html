@@ -371,6 +371,13 @@ const trackSelect = document.getElementById('trackSelect');
 
 let lastParsed = null; // { notes, groups, tracks, ticksPerQuarter, bpm }
 let selectedTrackIndex = 'all'; // 'all' or a track index
+// Tempo-sync build (Sep 2026): playback now follows this shared bpm
+// (Music Theory Pro's tempo slider is the master) instead of always using
+// the imported song's own tempo -- set from incoming KCM_STATE below.
+// 120 matches the bus default so a Play before the first KCM_STATE
+// arrives (there is a same-tick catch-up send on register, so this is
+// mostly a defensive default) still sounds right.
+let _kcmMasterBpm = 120;
 let activeVoices = [];  // { osc, gain } pairs currently sounding
 let scheduledTimeouts = []; // visual-highlight timeouts, cleared on Stop
 let activeMidiNotes = new Set(); // raw MIDI notes currently sounding, mirrored to the Console via KCM_STATE_PATCH
@@ -810,6 +817,27 @@ function notifyDecoderActive(active){
   window.parent.postMessage({ type: 'KCM_DECODER_ACTIVE', active: active }, '*');
 }
 
+// ---------- Console bridge: incoming state ----------
+// The Decoder previously only ever SENT to the Console (sendBridgeState,
+// notifyDecoderActive) and never listened for anything back. Tempo-sync
+// (Sep 2026) needs it to track the shared bpm published from Music Theory
+// Pro's tempo slider, so this adds the same KCM_STATE listener + readiness
+// handshake every other panel already has.
+if (window.parent !== window) {
+  window.addEventListener('message', function(ev){
+    try {
+      if (!ev.data || ev.data.type !== 'KCM_STATE') return;
+      var payload = ev.data.payload;
+      if (payload && typeof payload.bpm === 'number' && payload.bpm > 0) {
+        _kcmMasterBpm = payload.bpm;
+      }
+    } catch (e) { /* ignore malformed messages */ }
+  });
+  // Announce readiness so the bridge sends the current bus state (incl.
+  // bpm) right away instead of waiting on its ~2s fallback timer.
+  try { window.parent.postMessage({ type: 'KCM_PANEL_READY', panel: 'the-decoder' }, '*'); } catch(e) {}
+}
+
 function populateTrackSelect(){
   if (lastParsed.tracks.length > 1){
     trackSelect.innerHTML = '';
@@ -883,7 +911,8 @@ function playNotes(){
   if (ctx.state === 'suspended') ctx.resume();
 
   const { ticksPerQuarter, bpm } = lastParsed;
-  const secondsPerTick = (60 / bpm) / ticksPerQuarter;
+  const effectiveBpm = _kcmMasterBpm || bpm; // shared tempo, falling back to the song's own
+  const secondsPerTick = (60 / effectiveBpm) / ticksPerQuarter;
   const startTime = ctx.currentTime + 0.08;
 
   playBtn.disabled = true;

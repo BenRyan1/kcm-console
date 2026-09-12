@@ -181,7 +181,8 @@
         mode:        state.mode,
         scale:       state.scale.slice(),
         activeNotes: new Set(state.activeNotes),
-        history:     state.history.slice()
+        history:     state.history.slice(),
+        bpm:         state.bpm
       };
     }
 
@@ -236,7 +237,12 @@
     mode:        'ionian',
     scale:       MODES.ionian.slice(),
     activeNotes: new Set(),
-    history:     []
+    history:     [],
+    // Shared tempo (Claim: tempo-sync build, Sep 2026). Music Theory Pro's
+    // tempo slider is the master — moving it publishes {bpm} onto the bus,
+    // which fans out to every panel exactly like root/mode/scale changes.
+    // 120 matches Music Theory Pro's own default so nothing jumps on first load.
+    bpm:         120
   });
 
   // ── Dev panel (gated by ?dev=1) ──────────────────────────────────────

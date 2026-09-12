@@ -21,8 +21,12 @@
      5. Readiness    — KCM_PANEL_READY handshake gates first delivery.
 
    Message envelope (locked in Session 3, do not drift):
-     Console → iframe : { type: 'KCM_STATE',       payload: {root,mode,scale,activeNotes:[...]} }
-     iframe → Console : { type: 'KCM_STATE_PATCH',  payload: {root?,mode?,scale?,activeNotes?:[...]} }
+     Console → iframe : { type: 'KCM_STATE',       payload: {root,mode,scale,activeNotes:[...],bpm} }
+     iframe → Console : { type: 'KCM_STATE_PATCH',  payload: {root?,mode?,scale?,activeNotes?:[...],bpm?} }
+                         (bpm added Sep 2026 for the shared-tempo build —
+                         Music Theory Pro's tempo slider publishes it, every
+                         other panel treats an incoming bpm the same way it
+                         already treats an incoming root/mode: adopt it.)
      iframe → Console : { type: 'KCM_PANEL_READY',  panel: <string> }
      iframe → Console : { type: 'KCM_DECODER_ACTIVE', active: <boolean> }
                          (added for the ambient Twinkle demo, see below —
@@ -106,7 +110,8 @@
       root:        state.root,
       mode:        state.mode,
       scale:       state.scale.slice(),
-      activeNotes: Array.from(state.activeNotes).sort(function (a, b) { return a - b; })
+      activeNotes: Array.from(state.activeNotes).sort(function (a, b) { return a - b; }),
+      bpm:         state.bpm
     };
   }
 
@@ -119,6 +124,9 @@
     if (payload.scale !== undefined) patch.scale = payload.scale.slice();
     if (payload.activeNotes !== undefined) {
       patch.activeNotes = new Set(payload.activeNotes);
+    }
+    if (payload.bpm !== undefined && typeof payload.bpm === 'number' && payload.bpm > 0) {
+      patch.bpm = payload.bpm;
     }
     return patch;
   }

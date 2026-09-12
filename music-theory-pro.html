@@ -3774,7 +3774,15 @@ window.addEventListener('unhandledrejection', function(event) {
                 if (el('downloadRecBtn')) el('downloadRecBtn').onclick = downloadMIDI;
                 if (el('downloadWAVBtn')) el('downloadWAVBtn').onclick = downloadWAV;
                 const tempoSlider = el('tempoSlider');
-                if (tempoSlider) tempoSlider.oninput = function() { currentBPM = parseInt(this.value); const d = el('bpmDisplay'); if (d) d.textContent = currentBPM; };
+                if (tempoSlider) tempoSlider.oninput = function() {
+                    currentBPM = parseInt(this.value);
+                    const d = el('bpmDisplay'); if (d) d.textContent = currentBPM;
+                    // Tempo-sync build (Sep 2026): Music Theory Pro's slider is the
+                    // shared-tempo master. Publish it onto the bus so Circle of
+                    // Fifths and The Decoder pick it up the same way they already
+                    // adopt root/mode changes from here.
+                    try { window.parent.postMessage({ type: 'KCM_STATE_PATCH', payload: { bpm: currentBPM } }, '*'); } catch(_) {}
+                };
                 if (el('fret4Btn')) el('fret4Btn').onclick = () => { guitarFretCount = 4; el('fret4Btn').classList.add('active'); el('fret5Btn').classList.remove('active'); el('fret12Btn').classList.remove('active'); createGuitar(); setTimeout(() => updateSphereDisplay(), 50); };
                 if (el('fret5Btn')) el('fret5Btn').onclick = () => { guitarFretCount = 5; el('fret5Btn').classList.add('active'); el('fret4Btn').classList.remove('active'); el('fret12Btn').classList.remove('active'); createGuitar(); setTimeout(() => updateSphereDisplay(), 50); };
                 if (el('fret12Btn')) el('fret12Btn').onclick = () => { guitarFretCount = 12; el('fret12Btn').classList.add('active'); el('fret4Btn').classList.remove('active'); el('fret5Btn').classList.remove('active'); createGuitar(); setTimeout(() => updateSphereDisplay(), 50); };
@@ -9715,6 +9723,18 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                         // Timeline was already following bus playback.
                         if (typeof updateStaffNotation === 'function') {
                             updateStaffNotation(Object.keys(newPcCounts).map(Number));
+                        }
+                    }
+                    // ── Shared tempo ───────────────────────────────────
+                    // Adopt an incoming bpm the same way root/mode are adopted
+                    // above. Doesn't re-publish -- only the slider's own oninput
+                    // (user-driven) does that, so there's no bounce-back loop.
+                    if (payload.bpm !== undefined && payload.bpm !== null && payload.bpm !== currentBPM) {
+                        var incomingBpm = parseInt(payload.bpm, 10);
+                        if (!isNaN(incomingBpm) && incomingBpm > 0) {
+                            currentBPM = incomingBpm;
+                            var bpmD = el('bpmDisplay'); if (bpmD) bpmD.textContent = currentBPM;
+                            var tSlider = el('tempoSlider'); if (tSlider) tSlider.value = currentBPM;
                         }
                     }
                     console.log('[KCM→MTP] state received root=' + (payload.root||'?'));
