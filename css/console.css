@@ -588,6 +588,24 @@ body.bridge-test-mode #bridge-test-panel {
 .kcm-cof-toggle__btn.is-active { background: var(--primary-purple); color: var(--bg-deep); }
 .kcm-cof-toggle__btn:focus-visible { outline: 2px solid var(--primary-gold); outline-offset: -2px; }
 
+/* Circle of Fifths panel only: put the Standard/Extended toggle on its
+   own centered row underneath the title, instead of crammed inline next
+   to it -- title + minimize stay together on row 1, toggle drops to a
+   full-width row 2 between the title and the panel body. */
+#panel-cof .kcm-panel__header {
+  flex-wrap: wrap;
+  row-gap: 0.45rem;
+}
+#panel-cof .kcm-panel__accent { order: 1; }
+#panel-cof .kcm-panel__title { order: 2; }
+#panel-cof .kcm-panel__controls { order: 3; }
+#panel-cof .kcm-cof-toggle {
+  order: 4;
+  flex-basis: 100%;
+  justify-content: center;
+}
+
+
 /* ─── Stop All button (always visible in header) ────────────────────────── */
 .kcm-stop-btn {
   padding: 0.4rem 1rem;
