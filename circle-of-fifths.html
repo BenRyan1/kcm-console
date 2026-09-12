@@ -1669,13 +1669,30 @@ window.addEventListener('message',ev=>{
   try{
     if(!ev.data) return;
     const S2F={'C#':'Db','D#':'Eb','F#':'Gb','G#':'Ab','A#':'Bb'};
+    const PC2NAME=['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
     if(ev.data.type==='KCM_TICK'){
-      const n=['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'][ev.data.payload?.notePC];
+      const n=PC2NAME[ev.data.payload?.notePC];
       if(!n)return; S.active={note:n,type:'tick'}; render();
       setTimeout(()=>{if(S.active?.type==='tick'){S.active=null;render();}},Math.max(ev.data.payload?.beatMs*.7,120));
-    } else if(ev.data.type==='KCM_STATE'&&ev.data.payload?.root){
-      const root=S2F[ev.data.payload.root]||ev.data.payload.root;
-      if(NOTE_ORDER.includes(root)){setMajKey(root);}
+    } else if(ev.data.type==='KCM_STATE'){
+      if(ev.data.payload?.root){
+        const root=S2F[ev.data.payload.root]||ev.data.payload.root;
+        if(NOTE_ORDER.includes(root)){setMajKey(root);}
+      }
+      // The Circle only shows one highlighted note at a time (S.active is a
+      // single value, used throughout this file for chord/progression
+      // preview) -- it wasn't built for true polyphony. As an honest
+      // approximation for real-time playback (e.g. The Decoder), show
+      // whichever note most recently turned on; clear when nothing's active.
+      const an = ev.data.payload?.activeNotes;
+      if(an){
+        if(an.length){
+          const lastPc=((an[an.length-1]%12)+12)%12;
+          S.active={note:PC2NAME[lastPc],type:'bus'}; render();
+        } else if(S.active?.type==='bus'){
+          S.active=null; render();
+        }
+      }
     }
   }catch(e){}
 });

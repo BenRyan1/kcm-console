@@ -9576,6 +9576,28 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                             if (typeof updateDisplay === 'function') updateDisplay();
                         }
                     }
+                    // Real-time note highlighting from the bus (e.g. The Decoder
+                    // playing a song). activeNotes is always the FULL current set
+                    // of raw MIDI notes sounding, not a delta -- diff it against
+                    // what we last highlighted and toggle only what changed.
+                    // Pitch-class COUNTS, not a plain Set, so two octaves of the
+                    // same note (a bass and melody both on C, say) don't turn
+                    // each other's highlight off early when one ends first.
+                    if (typeof highlightNote === 'function') {
+                        var newPcCounts = {};
+                        (payload.activeNotes || []).forEach(function(m) {
+                            var pc = ((m % 12) + 12) % 12;
+                            newPcCounts[pc] = (newPcCounts[pc] || 0) + 1;
+                        });
+                        var prevPcCounts = window._kcmBusPcCounts || {};
+                        for (var pcI = 0; pcI < 12; pcI++) {
+                            var wasOn = !!prevPcCounts[pcI];
+                            var isOn  = !!newPcCounts[pcI];
+                            if (isOn && !wasOn) highlightNote(pcI, true);
+                            else if (!isOn && wasOn) highlightNote(pcI, false);
+                        }
+                        window._kcmBusPcCounts = newPcCounts;
+                    }
                     console.log('[KCM→MTP] state received root=' + (payload.root||'?'));
                 } catch(e) { console.error('[KCM→MTP] listener error:', e); }
             });
