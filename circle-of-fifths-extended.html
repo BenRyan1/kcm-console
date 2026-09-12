@@ -850,6 +850,7 @@ const S = {
   minKey:      'A',
   active:      null,    // circle highlight {note, type}
   loopActive:  null,    // circle highlight from loop {note, type}
+  busActive:   { pcs: new Set(), bassPc: null }, // ALL pitch classes currently sounding from the Console bus (MIDI/mic/The Decoder, etc.) — true polyphony, independent of active/loopActive above (which only ever track ONE note, for solo/loop playback preview)
   soloPlaying: false,   // solo (triad, arp, progression) is running
   loopRunning: false,   // loop sequence is running
   loopDir:     'majCW', // which direction loop plays
@@ -1257,6 +1258,66 @@ const EXT_RING_CFG = {
 // legend under the Extended Tones panel.
 const RING_PASTEL = { 7:'#AEDFF7', 9:'#C9F2C7', 11:'#E3C9F2', 13:'#F7D9C4' };
 
+// ── Live chord detection (Console bus polyphony) ──────
+// Best-effort chord namer over whatever pitch classes are currently
+// sounding from the bus (real MIDI/mic input, The Decoder, etc.) — drives
+// the wheel's center hub label only. Dot highlighting doesn't need this;
+// it reads S.busActive.pcs directly inside renderCircle.
+const CHORD_TEMPLATES = [
+  {suffix:'',      offs:[0,4,7]},
+  {suffix:'m',     offs:[0,3,7]},
+  {suffix:'dim',   offs:[0,3,6]},
+  {suffix:'aug',   offs:[0,4,8]},
+  {suffix:'sus2',  offs:[0,2,7]},
+  {suffix:'sus4',  offs:[0,5,7]},
+  {suffix:'6',     offs:[0,4,7,9]},
+  {suffix:'m6',    offs:[0,3,7,9]},
+  {suffix:'7',     offs:[0,4,7,10]},
+  {suffix:'maj7',  offs:[0,4,7,11]},
+  {suffix:'m7',    offs:[0,3,7,10]},
+  {suffix:'m7b5',  offs:[0,3,6,10]},
+  {suffix:'dim7',  offs:[0,3,6,9]},
+  {suffix:'mMaj7', offs:[0,3,7,11]},
+  {suffix:'add9',  offs:[0,2,4,7]},
+  {suffix:'9',     offs:[0,2,4,7,10]},
+  {suffix:'maj9',  offs:[0,2,4,7,11]},
+  {suffix:'m9',    offs:[0,2,3,7,10]},
+  {suffix:'7sus4', offs:[0,5,7,10]},
+];
+function detectChord(pcSet,bassPc){
+  const pcs=[...pcSet];
+  if(pcs.length<3) return null; // dyads/singles are handled by the caller
+  let best=null;
+  pcs.forEach(root=>{
+    const intervals=new Set(pcs.map(pc=>((pc-root)%12+12)%12));
+    CHORD_TEMPLATES.forEach(tpl=>{
+      const tplSet=new Set(tpl.offs);
+      let missing=0,extra=0;
+      tplSet.forEach(o=>{ if(!intervals.has(o)) missing++; });
+      intervals.forEach(o=>{ if(!tplSet.has(o)) extra++; });
+      const diff=missing+extra;
+      const better = !best || diff<best.diff ||
+        (diff===best.diff && tpl.offs.length<best.tpl.offs.length) || // tie: prefer the simpler chord
+        (diff===best.diff && tpl.offs.length===best.tpl.offs.length && root===bassPc && best.root!==bassPc); // then prefer the bass note as root
+      if(better) best={root,tpl,diff};
+    });
+  });
+  if(!best) return null;
+  return {root:best.root, label:dn(CHROMATIC[best.root])+best.tpl.suffix, diff:best.diff};
+}
+function getBusHubLabel(){
+  const busSet = S.busActive && S.busActive.pcs;
+  if(!busSet || busSet.size===0) return null;
+  const pcs=[...busSet];
+  if(pcs.length===1) return {top:dn(CHROMATIC[pcs[0]]), bottom:'live note'};
+  if(pcs.length===2) return {top:pcs.map(pc=>dn(CHROMATIC[pc])).join(' + '), bottom:'live interval'};
+  const chord=detectChord(busSet,S.busActive.bassPc);
+  if(chord && chord.diff<=1){
+    return {top:chord.label+(chord.diff?'?':''), bottom:'live chord'};
+  }
+  return {top:pcs.map(pc=>dn(CHROMATIC[pc])).join(' · '), bottom:'live notes'};
+}
+
 const renderCircle = () => {
   const svg = document.getElementById('circleSvg');
   svg.innerHTML='';
@@ -1282,19 +1343,30 @@ const renderCircle = () => {
     const t=svgEl('text',{'x':x,'y':y,'text-anchor':'middle','font-size':fs,'fill':fill,'font-weight':fw,'font-family':ff,'pointer-events':'none','user-select':'none'});
     t.textContent=txt; svg.appendChild(t);
   };
-  if (S.hubLabel) {
+  // A live chord/note from the Console bus (real MIDI/mic input, The
+  // Decoder, etc.) takes over the hub the same way a clicked dot does,
+  // tinted teal instead of gold so it reads as "live" rather than a
+  // manual pick — and yields back to whatever was there before the
+  // instant the bus goes quiet again.
+  const liveHub = getBusHubLabel();
+  const hub = liveHub || S.hubLabel;
+  if (hub) {
     // Broadcast the chord/degree just chosen on the extension rings, as
     // three separate lines: the actuated note, the ring/chord symbol, and
     // the key context — was two lines with the symbol and context crammed
     // together, which read as one cluttered line instead of two clean
     // ones. Plain major/minor dot clicks only ever set top+bottom (no
     // mid), so that case collapses back to two lines automatically.
-    addTxt(cx,cy-15,S.hubLabel.top,'22','#F4D03F');
-    if (S.hubLabel.mid) {
-      addTxt(cx,cy+8,S.hubLabel.mid,'11','rgba(244,208,63,0.85)','700','Arial,sans-serif');
-      addTxt(cx,cy+21,S.hubLabel.bottom,'10','rgba(244,208,63,0.65)','700','Arial,sans-serif');
+    const topCol    = liveHub ? '#00e0e0' : '#F4D03F';
+    const midCol     = liveHub ? 'rgba(0,224,224,0.85)' : 'rgba(244,208,63,0.85)';
+    const botColMid  = liveHub ? 'rgba(0,224,224,0.65)' : 'rgba(244,208,63,0.65)';
+    const botColSolo = liveHub ? 'rgba(0,224,224,0.75)' : 'rgba(244,208,63,0.75)';
+    addTxt(cx,cy-15,hub.top,'22',topCol);
+    if (hub.mid) {
+      addTxt(cx,cy+8,hub.mid,'11',midCol,'700','Arial,sans-serif');
+      addTxt(cx,cy+21,hub.bottom,'10',botColMid,'700','Arial,sans-serif');
     } else {
-      addTxt(cx,cy+14,S.hubLabel.bottom,'11','rgba(244,208,63,0.75)','700','Arial,sans-serif');
+      addTxt(cx,cy+14,hub.bottom,'11',botColSolo,'700','Arial,sans-serif');
     }
   } else {
     addTxt(cx,cy-8,'Circle of','13','#F4D03F');
@@ -1324,8 +1396,14 @@ const renderCircle = () => {
     const rmCol=NOTE_COLORS[relMin]||'#888';
 
     const activeN = getActiveNote();
-    const isOA = activeN?.note===note && (activeN.type==='outer'||activeN.type==='tick');
-    const isIA = activeN?.note===relMin && (activeN.type==='inner'||activeN.type==='tick');
+    // True polyphony: independent of the single-note solo/loop preview
+    // above, ANY circle whose own pitch class is currently sounding on the
+    // Console bus (real MIDI/mic input, The Decoder, etc.) highlights —
+    // outer and inner dots are checked separately since they're different
+    // pitch classes at the same angular position.
+    const busHas = pc => S.busActive && S.busActive.pcs && S.busActive.pcs.has(pc);
+    const isOA = (activeN?.note===note && (activeN.type==='outer'||activeN.type==='tick')) || busHas(NOTE_CHROMA[note]);
+    const isIA = (activeN?.note===relMin && (activeN.type==='inner'||activeN.type==='tick')) || busHas(NOTE_CHROMA[relMin]);
 
     // Sector wedge — spans from just outside the hub to the major ring, so
     // every ring (minor, 7th, 9th, 11th, 13th) sits inside the same tinted
@@ -1747,12 +1825,21 @@ window.addEventListener('message',ev=>{
       // whichever note most recently turned on; clear when nothing's active.
       const an = ev.data.payload?.activeNotes;
       if(an){
+        // True polyphony for the wheel's dots + center chord label: every
+        // pitch class currently sounding gets tracked here (S.busActive),
+        // independent of the single-note approximation right below (kept
+        // as-is for the Explorer mirror section, which was only ever built
+        // to show one triad at a time).
+        S.busActive = an.length
+          ? { pcs: new Set(an.map(m=>((m%12)+12)%12)), bassPc: ((Math.min(...an)%12)+12)%12 }
+          : { pcs: new Set(), bassPc: null };
         if(an.length){
           const lastPc=((an[an.length-1]%12)+12)%12;
-          S.active={note:PC2NAME[lastPc],type:'bus'}; render();
+          S.active={note:PC2NAME[lastPc],type:'bus'};
         } else if(S.active?.type==='bus'){
-          S.active=null; render();
+          S.active=null;
         }
+        render();
       }
     }
   }catch(e){}
