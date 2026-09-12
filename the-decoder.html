@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Decoder — Keys, Codes & Modes</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0f0f1e;
+    --teal:#008080;
+    --teal-text:#009999;
+    --gold:#F4D03F;
+    --purple:#8B6BA3;
+    --coral:#CF7A5A;
+    --text-primary:#e8e8f8;
+    --text-secondary:#b0b0cc;
+    --border:rgba(0,128,128,0.2);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text-primary);
+    font-family:'Montserrat',sans-serif;
+    min-height:100vh;
+  }
+  header{
+    position:sticky; top:0; z-index:10;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 24px;
+    background:rgba(15,15,30,0.85);
+    backdrop-filter:blur(10px);
+    border-bottom:3px solid var(--teal);
+  }
+  .brand{
+    font-family:'Cinzel',serif;
+    font-weight:700;
+    font-size:1.15rem;
+    background:linear-gradient(135deg,#F4D03F,#008080);
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+    letter-spacing:0.02em;
+  }
+  .brand .sub{
+    display:block;
+    font-family:'Montserrat',sans-serif;
+    font-weight:500;
+    font-size:0.7rem;
+    color:var(--text-secondary);
+    background:none;
+    -webkit-text-fill-color:var(--text-secondary);
+    letter-spacing:0.03em;
+    margin-top:2px;
+  }
+  header nav a{
+    color:var(--text-secondary);
+    text-decoration:none;
+    font-size:0.85rem;
+    margin-left:18px;
+  }
+  header nav a:hover{ color:var(--teal-text); }
+
+  .layout{
+    display:flex;
+    min-height:calc(100vh - 68px);
+  }
+  @media (max-width:768px){
+    .layout{ flex-direction:column; }
+  }
+  .visual-pane{
+    flex:2;
+    padding:28px;
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+  }
+  .control-pane{
+    flex:1;
+    padding:28px;
+    border-left:1px solid var(--border);
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+  }
+  @media (max-width:768px){
+    .control-pane{ border-left:none; border-top:1px solid var(--border); }
+  }
+
+  .pane-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+  h2{
+    font-family:'Cinzel',serif;
+    font-size:1rem;
+    color:#00c0c0;
+    margin:0 0 4px 0;
+    font-weight:600;
+  }
+  p.hint{
+    color:var(--text-secondary);
+    font-size:0.85rem;
+    margin:0 0 8px 0;
+    line-height:1.5;
+  }
+
+  .transport{
+    display:flex;
+    gap:8px;
+  }
+  .transport button{
+    font-family:'Montserrat',sans-serif;
+    font-weight:600;
+    font-size:0.85rem;
+    padding:9px 18px;
+    border-radius:8px;
+    border:1px solid var(--border);
+    background:rgba(0,128,128,0.1);
+    color:var(--text-primary);
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    gap:6px;
+    transition:background 0.15s, border-color 0.15s;
+  }
+  .transport button:hover:not(:disabled){
+    border-color:var(--teal);
+    background:rgba(0,128,128,0.2);
+  }
+  .transport button:disabled{
+    opacity:0.4;
+    cursor:not-allowed;
+  }
+  .transport button.play{ border-color:var(--gold); color:var(--gold); }
+  .transport button.play:hover:not(:disabled){ background:rgba(244,208,63,0.15); }
+  .transport button.stop{ border-color:var(--coral); color:var(--coral); }
+  .transport button.stop:hover:not(:disabled){ background:rgba(207,122,90,0.15); }
+
+  .track-select{
+    font-family:'Montserrat',sans-serif;
+    font-size:0.82rem;
+    padding:8px 10px;
+    border-radius:8px;
+    border:1px solid var(--border);
+    background:#12122a;
+    color:var(--text-primary);
+  }
+
+  .voice-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:8px 0;
+  }
+  .voice-row + .voice-row{
+    border-top:1px solid var(--border);
+  }
+  .voice-label{
+    width:76px;
+    flex-shrink:0;
+    font-size:0.75rem;
+    color:var(--text-secondary);
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+  }
+  .voice-chips{
+    display:flex;
+    flex-wrap:wrap;
+    gap:5px;
+    flex:1;
+  }
+
+  .dropzone{
+    border:2px dashed var(--border);
+    border-radius:10px;
+    padding:28px 16px;
+    text-align:center;
+    cursor:pointer;
+    transition:border-color 0.15s, background 0.15s;
+  }
+  .dropzone:hover, .dropzone.dragover{
+    border-color:var(--teal);
+    background:rgba(0,128,128,0.06);
+  }
+  .dropzone .label{
+    font-size:0.95rem;
+    color:var(--text-primary);
+    margin-bottom:4px;
+  }
+  .dropzone .formats{
+    font-size:0.75rem;
+    color:var(--text-secondary);
+  }
+  input[type=file]{ display:none; }
+
+  .status{
+    font-size:0.85rem;
+    color:var(--text-secondary);
+    min-height:1.2em;
+  }
+  .status.active{ color:var(--gold); }
+  .status.error{ color:var(--coral); }
+  .status.ok{ color:var(--teal-text); }
+
+  .info-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    font-size:0.82rem;
+  }
+  .info-grid .k{ color:var(--text-secondary); }
+  .info-grid .v{ color:var(--text-primary); font-weight:600; }
+
+  .reel{
+    flex:1;
+    display:flex;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:6px;
+    padding:20px;
+    background:rgba(255,255,255,0.02);
+    border:1px solid var(--border);
+    border-radius:10px;
+    min-height:220px;
+    align-content:flex-start;
+  }
+  .note-chip{
+    width:34px; height:34px;
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:0.68rem; font-weight:600;
+    color:#0a0a15;
+    box-shadow:0 0 0 rgba(244,208,63,0);
+    transition:transform 0.1s, box-shadow 0.1s;
+  }
+  .note-chip.root{
+    outline:2px solid #fff;
+    outline-offset:2px;
+  }
+  .note-chip.playing{
+    transform:scale(1.35);
+    box-shadow:0 0 14px 4px rgba(244,208,63,0.85);
+  }
+  .empty-state{
+    color:var(--text-secondary);
+    font-size:0.9rem;
+    text-align:center;
+    width:100%;
+  }
+
+  .demo-btn{
+    background:none;
+    border:1px solid var(--border);
+    color:var(--text-secondary);
+    font-size:0.78rem;
+    padding:6px 10px;
+    border-radius:6px;
+    cursor:pointer;
+    font-family:'Montserrat',sans-serif;
+  }
+  .demo-btn:hover{ border-color:var(--teal); color:var(--teal-text); }
+
+  footer{
+    text-align:center;
+    padding:16px;
+    font-size:0.7rem;
+    color:var(--text-secondary);
+    border-top:1px solid var(--border);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    KEYS, CODES &amp; MODES
+    <span class="sub">The Decoder — Any song, decoded.</span>
+  </div>
+  <nav>
+    <a href="#" onclick="return false;">Control Panel</a>
+    <a href="#" onclick="return false;">Upgrade</a>
+  </nav>
+</header>
+
+<div class="layout">
+
+  <div class="visual-pane">
+    <div class="pane-header">
+      <div>
+        <h2>Decoded Pattern</h2>
+        <p class="hint">Each note appears in its Chromatic Spectrum color, in the order it was played. The outlined chip is the detected root.</p>
+      </div>
+      <div class="transport">
+        <select id="trackSelect" class="track-select" style="display:none;"></select>
+        <button class="play" id="playBtn" disabled>▶ Play</button>
+        <button class="stop" id="stopBtn" disabled>■ Stop</button>
+      </div>
+    </div>
+    <div class="reel" id="reel">
+      <div class="empty-state">Drop a MIDI or MusicXML file to see it decoded.</div>
+    </div>
+  </div>
+
+  <div class="control-pane">
+    <div>
+      <h2>Import a Song</h2>
+      <div class="dropzone" id="dropzone">
+        <div class="label">Drop a file here, or click to choose</div>
+        <div class="formats">.mid · .midi · .musicxml · .xml</div>
+        <input type="file" id="fileInput" accept=".mid,.midi,.musicxml,.xml">
+      </div>
+      <div style="margin-top:8px; display:flex; gap:8px;">
+        <button class="demo-btn" id="demoMidi">Try a MIDI example</button>
+        <button class="demo-btn" id="demoXml">Try a MusicXML example</button>
+      </div>
+      <div class="status" id="status"></div>
+    </div>
+
+    <div>
+      <h2>Detected</h2>
+      <div class="info-grid">
+        <div class="k">Format</div><div class="v" id="fmtOut">—</div>
+        <div class="k">Notes found</div><div class="v" id="countOut">—</div>
+        <div class="k">Tempo</div><div class="v" id="tempoOut">—</div>
+        <div class="k">Likely key/mode</div><div class="v" id="keyOut">—</div>
+        <div class="k">Root pitch</div><div class="v" id="rootOut">—</div>
+      </div>
+      <p class="hint" style="margin-top:10px;">Key/mode detection compares the piece against all 7 diatonic modes in all 12 roots and picks the closest match. It's a best fit, not a certainty — short or ambiguous passages can still be misread.</p>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  © 2026 Keys, Codes &amp; Modes™ · Created by Benjamin Ryan · The Decoder module
+</footer>
+
+<script>
+/* ============================================================
+   THE DECODER — standalone import + playback module
+   Parses MIDI (SMF) and MusicXML client-side, no server round
+   trip, no external library dependency. Emits parsed notes on
+   window.postMessage under the 'KCM.bus' channel name used by
+   the other KCM Console panels. Includes its own Web Audio
+   playback so the decoded song can actually be heard, per the
+   KCM Interaction Standard (sound plays instantly, no delay).
+   ============================================================ */
+
+const KCM_COLORS = ['#FFFF00','#FFC400','#FF8000','#FF4000','#FF0000','#C4007F',
+                     '#8000FF','#4000FF','#0000FF','#007FFF','#00FF80','#80FF00'];
+const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+
+const reel = document.getElementById('reel');
+const statusEl = document.getElementById('status');
+const fmtOut = document.getElementById('fmtOut');
+const countOut = document.getElementById('countOut');
+const tempoOut = document.getElementById('tempoOut');
+const keyOut = document.getElementById('keyOut');
+const rootOut = document.getElementById('rootOut');
+const dropzone = document.getElementById('dropzone');
+const fileInput = document.getElementById('fileInput');
+const playBtn = document.getElementById('playBtn');
+const stopBtn = document.getElementById('stopBtn');
+const trackSelect = document.getElementById('trackSelect');
+
+let lastParsed = null; // { notes, groups, tracks, ticksPerQuarter, bpm }
+let selectedTrackIndex = 'all'; // 'all' or a track index
+let activeVoices = [];  // { osc, gain } pairs currently sounding
+let scheduledTimeouts = []; // visual-highlight timeouts, cleared on Stop
+let activeMidiNotes = new Set(); // raw MIDI notes currently sounding, mirrored to the Console via KCM_STATE_PATCH
+let audioCtx = null;
+let masterGain = null;
+
+function setStatus(msg, cls){
+  statusEl.textContent = msg;
+  statusEl.className = 'status' + (cls ? ' ' + cls : '');
+}
+
+function getAudioCtx(){
+  if (!audioCtx){
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    masterGain = audioCtx.createGain();
+    masterGain.gain.value = 0.5;
+    const compressor = audioCtx.createDynamicsCompressor();
+    compressor.threshold.value = -6;
+    compressor.ratio.value = 4;
+    masterGain.connect(compressor);
+    compressor.connect(audioCtx.destination);
+  }
+  return audioCtx;
+}
+
+// ---------- MIDI (Standard MIDI File) parser ----------
+// Notes are tagged with which track they came from, and a global
+// `notes[].id` is assigned to every note so playback and rendering
+// can always find the exact same chip regardless of layout (flat
+// single-voice row, or stacked multi-voice rows).
+function parseMidi(buffer){
+  const data = new DataView(buffer);
+  let pos = 0;
+
+  function readUint32(){ const v = data.getUint32(pos); pos += 4; return v; }
+  function readUint16(){ const v = data.getUint16(pos); pos += 2; return v; }
+  function readUint8(){ const v = data.getUint8(pos); pos += 1; return v; }
+  function readVarLen(){
+    let value = 0, byte;
+    do { byte = readUint8(); value = (value << 7) | (byte & 0x7f); } while (byte & 0x80);
+    return value;
+  }
+  function readString(len){ let s=''; for (let i=0;i<len;i++) s += String.fromCharCode(readUint8()); return s; }
+
+  if (readString(4) !== 'MThd') throw new Error('Not a valid MIDI file (missing MThd header)');
+  readUint32();
+  readUint16();
+  const numTracks = readUint16();
+  const division = readUint16(); // ticks per quarter note
+  let bpm = 120; // MIDI default tempo if no Set Tempo meta event is found
+
+  const rawTracks = []; // one array of raw note events per MIDI track
+  const trackNames = [];
+
+  for (let t = 0; t < numTracks; t++){
+    if (readString(4) !== 'MTrk') throw new Error('Malformed MIDI: missing MTrk chunk');
+    const trackLen = readUint32();
+    const trackEnd = pos + trackLen;
+    let tick = 0;
+    let runningStatus = null;
+    const activeNotes = {};
+    const trackNotes = [];
+    let name = null;
+    let sawNote = false;
+
+    while (pos < trackEnd){
+      const delta = readVarLen();
+      tick += delta;
+
+      let statusByte = readUint8();
+      if (statusByte < 0x80){
+        pos -= 1;
+        statusByte = runningStatus;
+      } else {
+        runningStatus = statusByte;
+      }
+
+      const eventType = statusByte & 0xf0;
+
+      if (statusByte === 0xff){
+        const metaType = readUint8();
+        const len = readVarLen();
+        if (metaType === 0x51 && len === 3){
+          const b1 = readUint8(), b2 = readUint8(), b3 = readUint8();
+          const usPerQuarter = (b1 << 16) | (b2 << 8) | b3;
+          bpm = 60000000 / usPerQuarter;
+        } else if (metaType === 0x03){ // Track Name
+          name = readString(len);
+        } else {
+          pos += len;
+        }
+      } else if (statusByte === 0xf0 || statusByte === 0xf7){
+        const len = readVarLen();
+        pos += len;
+      } else if (eventType === 0x90){
+        const pitch = readUint8();
+        const velocity = readUint8();
+        if (velocity > 0){
+          activeNotes[pitch] = tick;
+          sawNote = true;
+        } else {
+          const startTick = activeNotes[pitch];
+          if (startTick !== undefined){
+            trackNotes.push({ pitch, startTick, durationTicks: tick - startTick });
+            delete activeNotes[pitch];
+          }
+        }
+      } else if (eventType === 0x80){
+        const pitch = readUint8();
+        readUint8();
+        const startTick = activeNotes[pitch];
+        if (startTick !== undefined){
+          trackNotes.push({ pitch, startTick, durationTicks: tick - startTick });
+          delete activeNotes[pitch];
+        }
+      } else if (eventType === 0xc0 || eventType === 0xd0){
+        readUint8();
+      } else {
+        readUint8(); readUint8();
+      }
+    }
+    pos = trackEnd;
+
+    if (sawNote){
+      rawTracks.push(trackNotes.sort((a,b) => a.startTick - b.startTick));
+      trackNames.push(name);
+    }
+  }
+
+  return buildParsedResult(rawTracks, trackNames, division, bpm);
+}
+
+// Shared by both parsers: takes note-bearing tracks (each an array of
+// {pitch OR pc/octave, startTick, durationTicks}) and builds the final
+// { notes, groups, tracks, ticksPerQuarter, bpm } structure, assigning
+// a unique id to every note.
+function buildParsedResult(rawTracks, trackNames, ticksPerQuarter, bpm){
+  const tracks = [];
+  const allNotes = [];
+
+  rawTracks.forEach((trackNotes, trackIdx) => {
+    const mapped = trackNotes.map((n, i) => {
+      const pc = n.pc !== undefined ? n.pc : n.pitch % 12;
+      const octave = n.octave !== undefined ? n.octave : Math.floor(n.pitch / 12) - 1;
+      return {
+        pc, octave,
+        startTick: n.startTick,
+        durationTicks: n.durationTicks,
+        track: trackIdx,
+        id: 't' + trackIdx + '_n' + i
+      };
+    });
+
+    const groups = [];
+    mapped.forEach(n => {
+      const last = groups[groups.length - 1];
+      if (last && last[0].startTick === n.startTick){
+        last.push(n);
+      } else {
+        groups.push([n]);
+      }
+    });
+
+    const defaultName = tracks.length === 0 && rawTracks.length === 1 ? 'Melody'
+      : ['Melody','Harmony','Bass','Voice 4','Voice 5','Voice 6'][trackIdx] || ('Voice ' + (trackIdx + 1));
+
+    tracks.push({
+      index: trackIdx,
+      name: (trackNames[trackIdx] && trackNames[trackIdx].trim()) || defaultName,
+      notes: mapped,
+      groups
+    });
+    allNotes.push(...mapped);
+  });
+
+  allNotes.sort((a,b) => a.startTick - b.startTick);
+  const allGroups = [];
+  allNotes.forEach(n => {
+    const last = allGroups[allGroups.length - 1];
+    if (last && last[0].startTick === n.startTick){
+      last.push(n);
+    } else {
+      allGroups.push([n]);
+    }
+  });
+
+  return { notes: allNotes, groups: allGroups, tracks, ticksPerQuarter, bpm };
+}
+
+// ---------- MusicXML parser ----------
+// Handles multiple <part> elements as separate voices/tracks (a lead
+// sheet with just melody has one part; a full score with melody,
+// harmony, and bass has several — each becomes its own track, same
+// as separate MIDI tracks).
+function parseMusicXml(text){
+  const xml = new DOMParser().parseFromString(text, 'application/xml');
+  const parseError = xml.querySelector('parsererror');
+  if (parseError) throw new Error('Could not parse this file as MusicXML');
+
+  const divisionsEl = xml.getElementsByTagName('divisions')[0];
+  const divisions = divisionsEl ? parseInt(divisionsEl.textContent, 10) : 4; // ticks per quarter note
+
+  const soundEl = Array.from(xml.getElementsByTagName('sound')).find(el => el.getAttribute('tempo'));
+  const bpm = soundEl ? parseFloat(soundEl.getAttribute('tempo')) : 120;
+
+  const stepToPc = { C:0, D:2, E:4, F:5, G:7, A:9, B:11 };
+
+  // Map part id -> display name from <part-list><score-part id="..."><part-name>
+  const partNameById = {};
+  Array.from(xml.getElementsByTagName('score-part')).forEach(sp => {
+    const id = sp.getAttribute('id');
+    const nameEl = sp.getElementsByTagName('part-name')[0];
+    if (id) partNameById[id] = nameEl ? nameEl.textContent : null;
+  });
+
+  const partEls = Array.from(xml.getElementsByTagName('part'));
+  const rawTracks = [];
+  const trackNames = [];
+
+  partEls.forEach(partEl => {
+    const noteEls = Array.from(partEl.getElementsByTagName('note'));
+    const trackNotes = [];
+    let time = 0;
+    let chordStartTime = 0; // the moment the current chord's root note began
+
+    noteEls.forEach(noteEl => {
+      const isChordNote = !!noteEl.getElementsByTagName('chord')[0];
+      const isRest = !!noteEl.getElementsByTagName('rest')[0];
+      const durationEl = noteEl.getElementsByTagName('duration')[0];
+      const duration = durationEl ? parseInt(durationEl.textContent, 10) : 0;
+
+      if (isRest){
+        if (!isChordNote) time += duration;
+        return;
+      }
+
+      const pitchEl = noteEl.getElementsByTagName('pitch')[0];
+      if (!pitchEl) return;
+
+      const step = pitchEl.getElementsByTagName('step')[0].textContent;
+      const alterEl = pitchEl.getElementsByTagName('alter')[0];
+      const alter = alterEl ? parseInt(alterEl.textContent, 10) : 0;
+      const octave = parseInt(pitchEl.getElementsByTagName('octave')[0].textContent, 10);
+
+      const pc = ((stepToPc[step] + alter) % 12 + 12) % 12;
+
+      if (isChordNote){
+        // Chord tones share the start time of the chord's root note —
+        // the time cursor must NOT advance again for them, and their
+        // startTick must NOT be the (already-advanced) running cursor.
+        trackNotes.push({ pc, octave, startTick: chordStartTime, durationTicks: duration });
+      } else {
+        chordStartTime = time;
+        trackNotes.push({ pc, octave, startTick: time, durationTicks: duration });
+        time += duration;
+      }
+    });
+
+    if (trackNotes.length){
+      rawTracks.push(trackNotes);
+      const partId = partEl.getAttribute('id');
+      trackNames.push(partId ? partNameById[partId] : null);
+    }
+  });
+
+  return buildParsedResult(rawTracks, trackNames, divisions, bpm);
+}
+
+// ---------- Key / mode detection across all 7 diatonic modes ----------
+// Rotations of the major scale template give the 7 modes for free:
+// Ionian (major), Dorian, Phrygian, Lydian, Mixolydian, Aeolian (natural minor), Locrian.
+const MAJOR_TEMPLATE = [1,0,1,0,1,1,0,1,0,1,0,1]; // W W H W W W H, Ionian
+const MODE_NAMES = ['Ionian (Major)','Dorian','Phrygian','Lydian','Mixolydian','Aeolian (Minor)','Locrian'];
+const MODE_KEYS = ['ionian','dorian','phrygian','lydian','mixolydian','aeolian','locrian']; // matches js/console.js's MODES object keys exactly
+
+function rotateTemplate(template, steps){
+  const out = new Array(12).fill(0);
+  for (let i = 0; i < 12; i++){
+    out[(i + steps) % 12] = template[i];
+  }
+  return out;
+}
+
+function guessKey(notes, groups){
+  const hist = new Array(12).fill(0);
+  notes.forEach(n => hist[n.pc]++);
+
+  // A pure "which notes are present" template can never distinguish
+  // relative modes (e.g. C Ionian and D Dorian use the identical 7
+  // notes) — any two modes built on the same parent scale collection
+  // will always score identically on note content alone. The signal
+  // that actually breaks the tie is where the piece starts/ends: real
+  // cadences resolve to the tonic in the bass, so we check whether a
+  // candidate root matches the bass note of the first and last chord.
+  let firstBass = null, lastBass = null;
+  if (groups && groups.length){
+    const bassOf = g => g.reduce((min,n) => n.octave < min.octave ? n : min, g[0]).pc;
+    firstBass = bassOf(groups[0]);
+    lastBass = bassOf(groups[groups.length - 1]);
+  }
+
+  const modeDegreeOffsets = [0, 2, 4, 5, 7, 9, 11]; // where each mode's root falls within a major scale
+
+  let best = { root: 0, modeIndex: 0, score: -Infinity };
+  for (let root = 0; root < 12; root++){
+    let tonicBonus = 0;
+    if (root === firstBass) tonicBonus += 3;
+    if (root === lastBass) tonicBonus += 5;
+
+    for (let m = 0; m < 7; m++){
+      const parentMajorRoot = (root - modeDegreeOffsets[m] + 12) % 12;
+      const modeTemplate = rotateTemplate(MAJOR_TEMPLATE, parentMajorRoot);
+      let score = tonicBonus;
+      for (let i = 0; i < 12; i++){
+        score += hist[i] * modeTemplate[i];
+      }
+      if (score > best.score){
+        best = { root, modeIndex: m, score };
+      }
+    }
+  }
+  return best;
+}
+
+// ---------- Choosing which notes are "in play" right now ----------
+// When a file has one voice, there's nothing to choose. When it has
+// several, "All Voices" needs one track picked for key detection,
+// since running the detector on every voice blended together produces
+// nonsense (independently-moving bass/harmony/melody lines destroy the
+// tonic signal — confirmed by testing against a real 3-voice piece).
+// The standard convention: melody is usually the highest-sounding
+// voice, so default to whichever track has the highest average pitch.
+function pickMelodyTrackIndex(tracks){
+  let best = 0, bestAvg = -Infinity;
+  tracks.forEach((t, i) => {
+    if (!t.notes.length) return;
+    const avg = t.notes.reduce((sum, n) => sum + (n.octave * 12 + n.pc), 0) / t.notes.length;
+    if (avg > bestAvg){ bestAvg = avg; best = i; }
+  });
+  return best;
+}
+
+function getActiveNoteSet(){
+  if (!lastParsed) return { notes: [], groups: [] };
+  if (selectedTrackIndex === 'all') return { notes: lastParsed.notes, groups: lastParsed.groups };
+  const t = lastParsed.tracks[selectedTrackIndex];
+  return { notes: t.notes, groups: t.groups };
+}
+
+function getKeyDetectionNoteSet(){
+  if (!lastParsed) return { notes: [], groups: [] };
+  if (selectedTrackIndex !== 'all'){
+    const t = lastParsed.tracks[selectedTrackIndex];
+    return { notes: t.notes, groups: t.groups };
+  }
+  if (lastParsed.tracks.length > 1){
+    const melodyIdx = pickMelodyTrackIndex(lastParsed.tracks);
+    const t = lastParsed.tracks[melodyIdx];
+    return { notes: t.notes, groups: t.groups };
+  }
+  return { notes: lastParsed.notes, groups: lastParsed.groups };
+}
+
+// ---------- Render into the visual reel ----------
+function makeChip(n, rootPc){
+  const chip = document.createElement('div');
+  chip.className = 'note-chip' + (n.pc === rootPc ? ' root' : '');
+  chip.style.background = KCM_COLORS[n.pc];
+  chip.textContent = NOTE_NAMES[n.pc];
+  chip.title = NOTE_NAMES[n.pc] + (n.octave !== undefined ? n.octave : '');
+  chip.dataset.id = n.id;
+  return chip;
+}
+
+function renderNotes(){
+  reel.innerHTML = '';
+  const { notes: keyNotes, groups: keyGroups } = getKeyDetectionNoteSet();
+  const keyGuess = guessKey(keyNotes, keyGroups);
+
+  if (selectedTrackIndex === 'all' && lastParsed.tracks.length > 1){
+    // Stacked view: one row per voice, each in its own colored chips.
+    lastParsed.tracks.forEach(t => {
+      const row = document.createElement('div');
+      row.className = 'voice-row';
+      const label = document.createElement('div');
+      label.className = 'voice-label';
+      label.textContent = t.name;
+      const chips = document.createElement('div');
+      chips.className = 'voice-chips';
+      t.notes.forEach(n => chips.appendChild(makeChip(n, keyGuess.root)));
+      row.appendChild(label);
+      row.appendChild(chips);
+      reel.appendChild(row);
+    });
+  } else {
+    const { notes } = getActiveNoteSet();
+    if (!notes.length){
+      reel.innerHTML = '<div class="empty-state">No notes found in this voice.</div>';
+      playBtn.disabled = true;
+      return;
+    }
+    notes.forEach(n => reel.appendChild(makeChip(n, keyGuess.root)));
+  }
+
+  const { notes: activeNotes } = getActiveNoteSet();
+  fmtOut.textContent = 'Parsed';
+  countOut.textContent = activeNotes.length + (lastParsed.tracks.length > 1 ? ' (' + lastParsed.tracks.length + ' voices)' : '');
+  keyOut.textContent = NOTE_NAMES[keyGuess.root] + ' ' + MODE_NAMES[keyGuess.modeIndex];
+  rootOut.textContent = NOTE_NAMES[keyGuess.root];
+
+  playBtn.disabled = !activeNotes.length;
+
+  // Tell the real Console (our parent frame) what key we detected, using
+  // the ACTUAL locked envelope js/bridge.js listens for. Sent to
+  // window.parent -- this iframe has no Console of its own; plain
+  // window.postMessage(...) would just loop the message back to itself.
+  sendBridgeState({ root: NOTE_NAMES[keyGuess.root], mode: MODE_KEYS[keyGuess.modeIndex] });
+}
+
+// ---------- Bridge to the Console (js/bridge.js's locked envelope) ----------
+// iframe -> Console: { type: 'KCM_STATE_PATCH', payload: {root?, mode?, scale?, activeNotes?} }
+function sendBridgeState(payload){
+  if (window.parent === window) return; // running standalone, no Console to talk to
+  window.parent.postMessage({ type: 'KCM_STATE_PATCH', payload: payload }, '*');
+}
+
+function populateTrackSelect(){
+  if (lastParsed.tracks.length > 1){
+    trackSelect.innerHTML = '';
+    const allOpt = document.createElement('option');
+    allOpt.value = 'all';
+    allOpt.textContent = 'All Voices';
+    trackSelect.appendChild(allOpt);
+    lastParsed.tracks.forEach(t => {
+      const opt = document.createElement('option');
+      opt.value = t.index;
+      opt.textContent = t.name;
+      trackSelect.appendChild(opt);
+    });
+    trackSelect.style.display = '';
+    selectedTrackIndex = 'all';
+    trackSelect.value = 'all';
+  } else {
+    trackSelect.style.display = 'none';
+    selectedTrackIndex = 'all';
+  }
+}
+
+trackSelect.addEventListener('change', () => {
+  selectedTrackIndex = trackSelect.value === 'all' ? 'all' : parseInt(trackSelect.value, 10);
+  stopPlayback();
+  renderNotes();
+});
+
+// ---------- Playback ----------
+function midiNoteNumber(n){
+  return (n.octave + 1) * 12 + n.pc;
+}
+function midiToFreq(midiNum){
+  return 440 * Math.pow(2, (midiNum - 69) / 12);
+}
+
+function stopPlayback(){
+  if (audioCtx){
+    const now = audioCtx.currentTime;
+    activeVoices.forEach(({ osc, gain }) => {
+      try {
+        gain.gain.cancelScheduledValues(now);
+        gain.gain.setValueAtTime(gain.gain.value, now);
+        gain.gain.linearRampToValueAtTime(0, now + 0.03);
+        osc.stop(now + 0.04);
+      } catch (e) { /* already stopped */ }
+    });
+  }
+  activeVoices = [];
+  scheduledTimeouts.forEach(id => clearTimeout(id));
+  scheduledTimeouts = [];
+  document.querySelectorAll('.note-chip.playing').forEach(el => el.classList.remove('playing'));
+  if (activeMidiNotes.size){
+    activeMidiNotes.clear();
+    sendBridgeState({ activeNotes: [] }); // let Chromatic Universe clear its highlights
+  }
+  playBtn.disabled = false;
+  stopBtn.disabled = true;
+}
+
+function playNotes(){
+  const { notes } = getActiveNoteSet();
+  if (!lastParsed || !notes.length) return;
+  stopPlayback();
+
+  const ctx = getAudioCtx();
+  if (ctx.state === 'suspended') ctx.resume();
+
+  const { ticksPerQuarter, bpm } = lastParsed;
+  const secondsPerTick = (60 / bpm) / ticksPerQuarter;
+  const startTime = ctx.currentTime + 0.08;
+
+  playBtn.disabled = true;
+  stopBtn.disabled = false;
+
+  notes.forEach(n => {
+    const t0 = startTime + n.startTick * secondsPerTick;
+    const dur = Math.max(0.08, n.durationTicks * secondsPerTick * 0.92); // slight gap between notes
+    const freq = midiToFreq(midiNoteNumber(n));
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.value = freq;
+    osc.connect(gain);
+    gain.connect(masterGain);
+
+    gain.gain.setValueAtTime(0, t0);
+    gain.gain.linearRampToValueAtTime(0.35, t0 + 0.015);
+    gain.gain.setValueAtTime(0.35, t0 + Math.max(0.02, dur - 0.04));
+    gain.gain.linearRampToValueAtTime(0, t0 + dur);
+
+    osc.start(t0);
+    osc.stop(t0 + dur + 0.02);
+
+    const voiceEntry = { osc, gain };
+    activeVoices.push(voiceEntry);
+    osc.addEventListener('ended', () => {
+      activeVoices = activeVoices.filter(v => v !== voiceEntry);
+    });
+
+    const delayMs = (t0 - ctx.currentTime) * 1000;
+    const chip = reel.querySelector('[data-id="' + n.id + '"]');
+    const midiNum = midiNoteNumber(n);
+    const onId = setTimeout(() => {
+      if (chip) chip.classList.add('playing');
+      activeMidiNotes.add(midiNum);
+      sendBridgeState({ activeNotes: Array.from(activeMidiNotes) });
+    }, Math.max(0, delayMs));
+    const offId = setTimeout(() => {
+      if (chip) chip.classList.remove('playing');
+      activeMidiNotes.delete(midiNum);
+      sendBridgeState({ activeNotes: Array.from(activeMidiNotes) });
+    }, Math.max(0, delayMs) + dur * 1000);
+    scheduledTimeouts.push(onId, offId);
+  });
+
+  const totalDurationMs = (notes.reduce((max, n) => Math.max(max, (n.startTick + n.durationTicks) * secondsPerTick), 0)) * 1000 + 200;
+  const endId = setTimeout(() => {
+    playBtn.disabled = false;
+    stopBtn.disabled = true;
+  }, totalDurationMs);
+  scheduledTimeouts.push(endId);
+}
+
+playBtn.addEventListener('click', playNotes);
+stopBtn.addEventListener('click', stopPlayback);
+
+// ---------- File handling ----------
+function handleFile(file){
+  setStatus('Reading ' + file.name + ' …', 'active');
+  stopPlayback();
+  const isXml = /\.(musicxml|xml)$/i.test(file.name);
+
+  const reader = new FileReader();
+  reader.onerror = () => setStatus('Could not read that file.', 'error');
+
+  if (isXml){
+    reader.onload = () => {
+      try {
+        const parsed = parseMusicXml(reader.result);
+        lastParsed = parsed;
+        tempoOut.textContent = Math.round(parsed.bpm) + ' BPM';
+        setStatus('Decoded ' + file.name, 'ok');
+        populateTrackSelect();
+        renderNotes();
+      } catch (err){
+        setStatus('Error: ' + err.message, 'error');
+      }
+    };
+    reader.readAsText(file);
+  } else {
+    reader.onload = () => {
+      try {
+        const parsed = parseMidi(reader.result);
+        lastParsed = parsed;
+        tempoOut.textContent = Math.round(parsed.bpm) + ' BPM';
+        setStatus('Decoded ' + file.name, 'ok');
+        populateTrackSelect();
+        renderNotes();
+      } catch (err){
+        setStatus('Error: ' + err.message, 'error');
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+}
+
+dropzone.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', e => {
+  if (e.target.files[0]) handleFile(e.target.files[0]);
+});
+dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('dragover'); });
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+dropzone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropzone.classList.remove('dragover');
+  if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+});
+
+document.getElementById('demoMidi').addEventListener('click', () => {
+  setStatus('Use the dropzone above and choose kcm_test_song.mid', 'active');
+});
+document.getElementById('demoXml').addEventListener('click', () => {
+  setStatus('Use the dropzone above and choose kcm_test_song.musicxml', 'active');
+});
+</script>
+
+</body>
+</html>
