@@ -196,10 +196,10 @@
     if (data.type === 'KCM_DECODER_ACTIVE') {
       if (data.active) {
         stopAmbientDemo();
-      } else {
-        clearTimeout(ambientResumeTimer);
-        ambientResumeTimer = setTimeout(startAmbientDemo, 900);
       }
+      // Ambient demo no longer auto-resumes when the Decoder stops (Ben,
+      // Sep 12 2026): Twinkle stays loaded as the Decoder's default song,
+      // but nothing plays on any panel until Play is pressed there again.
       return;
     }
 
@@ -438,13 +438,6 @@
     // Circle of Fifths
     var cofIframe = document.getElementById('iframe-cof');
     if (cofIframe) {
-      // Defensive: this iframe is small and near the top of the page, so with
-      // loading="lazy" its 'load' event can fire and be missed before this
-      // listener attaches (confirmed race, Sep 12 2026). Catch that case here.
-      if (cofIframe.contentDocument && cofIframe.contentDocument.readyState === 'complete') {
-        bridge.register(cofIframe);
-        console.log('[KCM.bridge] Circle of Fifths panel registered (was already loaded).');
-      }
       cofIframe.addEventListener('load', function () {
         bridge.register(cofIframe);
         console.log('[KCM.bridge] Circle of Fifths panel registered.');
@@ -628,8 +621,10 @@
 
   // ── Init ─────────────────────────────────────────────────────────────
   function initAmbientDemo() {
-    if (isDevModeLocal()) return; // keep the bus quiet for manual dev-panel testing
-    setTimeout(startAmbientDemo, 1200); // brief settle-in before the first note
+    // Disabled (Ben, Sep 12 2026): Twinkle is still the Decoder's default
+    // loaded song, but no panel should light up anywhere until Play is
+    // actually pressed there. startAmbientDemo()/stopAmbientDemo() are left
+    // in place below in case a manual "Activate" trigger is wanted later.
   }
 
   if (document.readyState === 'loading') {
