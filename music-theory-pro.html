@@ -9597,6 +9597,23 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                             else if (!isOn && wasOn) highlightNote(pcI, false);
                         }
                         window._kcmBusPcCounts = newPcCounts;
+
+                        // Mirror the same live pitch classes onto the compact STAFF
+                        // NOTATION panel (its Staff / Fretboard / Keyboard mini-tabs) —
+                        // previously only the big sphere/piano/fretboard above reacted
+                        // to bus playback (The Decoder, real MIDI/mic input); this panel
+                        // just sat still no matter what played. updateStaffNotation()
+                        // is the same single choke point the KCM_TICK handler above
+                        // already uses for the identical purpose, so this follows that
+                        // established pattern rather than inventing a new one. No
+                        // equivalent change is needed for the TIMELINE tab: it already
+                        // watches the sphere's 'playing' class via its own
+                        // MutationObserver (see the KCM Timeline module further down),
+                        // and highlightNote() above already toggles that class, so
+                        // Timeline was already following bus playback.
+                        if (typeof updateStaffNotation === 'function') {
+                            updateStaffNotation(Object.keys(newPcCounts).map(Number));
+                        }
                     }
                     console.log('[KCM→MTP] state received root=' + (payload.root||'?'));
                 } catch(e) { console.error('[KCM→MTP] listener error:', e); }
