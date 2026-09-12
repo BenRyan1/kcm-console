@@ -12,14 +12,14 @@
 
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Circle of Fifths Extended | Keys, Codes & Modes™</title>
-<meta name="description" content="Circle of Fifths Extended — the classic wheel plus interior rings for 7th, 9th, 11th and 13th chord extensions off each relative minor. Toggle tones, compare intervals, and hear best-sound presets. By Benjamin Ryan.">
+<title>Circle of Fifths | Keys, Codes & Modes™</title>
+<meta name="description" content="The classic Circle of Fifths wheel — major keys and their relative minors, with progressions, arpeggios, and substitutions. By Benjamin Ryan.">
 <meta name="author" content="Benjamin Ryan">
 <meta name="robots" content="index, follow">
-<link rel="canonical" href="https://keyscodesandmodes.com/circle-of-fifths-extended.html">
-<meta property="og:title" content="Circle of Fifths Extended | Keys, Codes & Modes™">
-<meta property="og:description" content="The Circle of Fifths, extended inward with 7th/9th/11th/13th rings off each relative minor — click to toggle tones and hear how extensions sound together.">
-<meta property="og:url" content="https://keyscodesandmodes.com/circle-of-fifths-extended.html">
+<link rel="canonical" href="https://keyscodesandmodes.com/circle-of-fifths.html">
+<meta property="og:title" content="Circle of Fifths | Keys, Codes & Modes™">
+<meta property="og:description" content="The classic Circle of Fifths wheel — major keys and their relative minors, with progressions, arpeggios, and substitutions.">
+<meta property="og:url" content="https://keyscodesandmodes.com/circle-of-fifths.html">
 <meta property="og:image" content="https://keyscodesandmodes.com/images/kcm-social-share.jpg">
 <meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
 <!-- NO external JS dependencies — fully self-contained, works from file:// -->
@@ -215,8 +215,8 @@ body{font-family:var(--font-b);background:radial-gradient(ellipse at 30% 20%,#1e
 <main id="main-content" role="main">
 <div id="app">
   <div class="page-hero">
-    <h1>Circle of Fifths — Extended</h1>
-    <p>⬤ Major keys &nbsp;·&nbsp; ◉ Relative Minor &nbsp;·&nbsp; then four new interior rings — <strong style="color:#F4D03F;">7th · 9th · 11th · 13th</strong> — built from each minor. Toggle rings on/off below the wheel to hear extensions alone or stacked together.</p>
+    <h1>Circle of Fifths</h1>
+    <p>⬤ Major keys &nbsp;·&nbsp; ◉ Relative Minor &nbsp;·&nbsp; click a dot to hear the triad, or use the panels alongside for progressions, arpeggios, and substitutions.</p>
   </div>
 
   <div class="three-col">
@@ -258,13 +258,13 @@ body{font-family:var(--font-b);background:radial-gradient(ellipse at 30% 20%,#1e
     <!-- CENTER — Circle + loop -->
     <div class="center-col">
       <div class="circle-wrap">
-        <svg id="circleSvg" viewBox="0 0 700 700" class="circle-svg" role="img" aria-label="Interactive Circle of Fifths Extended — C at 12 o'clock, clockwise ascending, with 7th/9th/11th/13th rings toward the center">
+        <svg id="circleSvg" viewBox="0 0 700 700" class="circle-svg" role="img" aria-label="Interactive Circle of Fifths — C at 12 o'clock, clockwise ascending">
           <!-- drawn by JS -->
         </svg>
       </div>
 
       <!-- ── Extended Tones: 7th/9th/11th/13th rings off the relative minor ── -->
-      <div class="ext-block" id="extBlock">
+      <div class="ext-block" id="extBlock" style="display:none;">
         <div class="ext-title">🎹 Extended Tones — 7ths, 9ths, 11ths &amp; 13ths</div>
         <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:8px;font-size:.62rem;font-weight:700;color:rgba(232,232,248,.7);">
           <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#AEDFF7;margin-right:4px;vertical-align:middle;"></span>7th</span>
@@ -535,7 +535,7 @@ const EXT_MODES = {
   harmonic: { label:'Harmonic Minor',  base:'minor',    offsets:{7:11,9:2,11:5,13:8} },
   dominant: { label:'Dominant V7–13',  base:'dominant', offsets:{7:10,9:2,11:5,13:9} },
 };
-const EXT_RINGS  = ['7','9','11','13'];
+const EXT_RINGS  = [];  // Standard build: outer 2 rings only (major + relative minor) -- no 7th/9th/11th/13th extension rings. See circle-of-fifths-extended.html for the full build.
 const EXT_OCTAVE = {7:4, 9:5, 11:5, 13:5};
 const extRootFor = (majorNote, base) => {
   if (base==='minor') return REL_MINOR[majorNote] || majorNote;
