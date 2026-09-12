@@ -374,6 +374,15 @@
         console.log('[KCM.bridge] Chromatic Universe panel registered.');
       });
     }
+    // The Decoder (song import panel)
+    var decoderIframe = document.getElementById('iframe-decoder');
+    if (decoderIframe) {
+      decoderIframe.addEventListener('load', function () {
+        bridge.register(decoderIframe);
+        console.log('[KCM.bridge] The Decoder panel registered.');
+      });
+    }
+
 
     // Modal Neck (Panel 5 — added after initPanels() was last touched)
     var neckIframe = document.getElementById('iframe-neck');
