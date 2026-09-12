@@ -889,8 +889,15 @@ function populateTrackSelect(){
       trackSelect.appendChild(opt);
     });
     trackSelect.style.display = '';
-    selectedTrackIndex = 'all';
-    trackSelect.value = 'all';
+    // Default to the melody line (same highest-average-pitch heuristic
+    // key detection already uses via pickMelodyTrackIndex), not "All
+    // Voices" -- merging every voice together (e.g. all 16 real parts of
+    // a full arrangement) produces a dense, glitchy-sounding cluster both
+    // in The Decoder's own Play button and in Melody Explorer's playback.
+    // "All Voices" is still one click away in the dropdown.
+    const melodyIdx = pickMelodyTrackIndex(lastParsed.tracks);
+    selectedTrackIndex = melodyIdx;
+    trackSelect.value = String(melodyIdx);
   } else {
     trackSelect.style.display = 'none';
     selectedTrackIndex = 'all';
