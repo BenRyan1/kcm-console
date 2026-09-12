@@ -88,6 +88,32 @@ body{font-family:var(--font-b);background:radial-gradient(ellipse at 30% 20%,#1e
 .prog-lbl{font-size:.6rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;font-family:var(--font-d);margin-bottom:6px;text-align:center;}
 .prog-lbl.maj{color:#a0e8e8;} .prog-lbl.min{color:#c8a8e8;}
 .prog-list{display:flex;flex-direction:column;gap:4px;}
+
+/* ── Progression picker: styled dropdown (replaces the old stacked
+   button list) ─────────────────────────────────────────────── */
+.prog-dd{position:relative;}
+.prog-dd-trigger{width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;text-align:left;cursor:pointer;border-radius:10px;padding:8px 10px;border:1.5px solid;background:linear-gradient(135deg,rgba(10,10,21,.85),rgba(10,10,21,.55));transition:border-color .18s,box-shadow .18s;font-family:inherit;}
+.prog-dd-trigger.maj{border-color:rgba(0,192,192,.4);}
+.prog-dd-trigger.min{border-color:rgba(139,107,163,.45);}
+.prog-dd-trigger.maj:hover:not(:disabled){border-color:#a0e8e8;}
+.prog-dd-trigger.min:hover:not(:disabled){border-color:#c8a8e8;}
+.prog-dd-trigger:disabled{opacity:.5;cursor:not-allowed;}
+.prog-dd.open .prog-dd-trigger.maj{border-color:#a0e8e8;box-shadow:0 0 10px rgba(0,192,192,.3);}
+.prog-dd.open .prog-dd-trigger.min{border-color:#c8a8e8;box-shadow:0 0 10px rgba(139,107,163,.4);}
+.prog-dd-trigger-main{display:flex;flex-direction:column;overflow:hidden;flex:1;min-width:0;}
+.prog-dd-trigger-name{font-family:var(--font-d);font-size:.68rem;font-weight:800;color:rgba(232,232,248,.92);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.prog-dd-trigger-meta{font-size:.56rem;color:rgba(232,232,248,.5);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;}
+.prog-dd-chevron{font-size:.65rem;color:rgba(232,232,248,.55);transition:transform .2s;flex-shrink:0;}
+.prog-dd.maj .prog-dd-chevron{color:#a0e8e8;}
+.prog-dd.min .prog-dd-chevron{color:#c8a8e8;}
+.prog-dd.open .prog-dd-chevron{transform:rotate(180deg);}
+.prog-dd-menu{position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:60;max-height:0;overflow:hidden;opacity:0;transform:translateY(-4px);pointer-events:none;transition:max-height .22s ease,opacity .18s ease,transform .18s ease;background:linear-gradient(160deg,#141425,#0a0a15);border-radius:12px;border:1.5px solid rgba(0,192,192,.3);box-shadow:0 14px 30px rgba(0,0,0,.6);padding:6px;}
+.prog-dd.min .prog-dd-menu{border-color:rgba(139,107,163,.35);}
+.prog-dd.open .prog-dd-menu{max-height:300px;overflow-y:auto;opacity:1;transform:translateY(0);pointer-events:auto;}
+.prog-dd-menu::-webkit-scrollbar{width:6px;}
+.prog-dd-menu::-webkit-scrollbar-track{background:transparent;}
+.prog-dd-menu::-webkit-scrollbar-thumb{background:rgba(0,192,192,.35);border-radius:3px;}
+.prog-dd.min .prog-dd-menu::-webkit-scrollbar-thumb{background:rgba(139,107,163,.4);}
 .prog-btn{width:100%;text-align:left;cursor:pointer;border-radius:9px;padding:6px 8px;transition:all .15s;border:1.5px solid;}
 .prog-btn.maj{border-color:rgba(0,192,192,.3);background:linear-gradient(135deg,rgba(0,128,128,.1),rgba(10,10,21,.3));color:rgba(232,232,248,.85);}
 .prog-btn.min{border-color:rgba(139,107,163,.35);background:linear-gradient(135deg,rgba(139,107,163,.1),rgba(10,10,21,.3));color:rgba(232,232,248,.85);}
@@ -260,7 +286,16 @@ body{font-family:var(--font-b);background:radial-gradient(ellipse at 30% 20%,#1e
         </div>
         <div class="ext-level-cap">Auto adds diatonic 9/11/13 per chord, skipping clashing tones. Tap a chord pill below to cycle just that one.</div>
         <div class="prog-lbl maj" id="majProgLbl">Major Progressions — C</div>
-        <div class="prog-list" id="majProgList"></div>
+        <div class="prog-dd maj" id="majProgDD">
+          <button type="button" class="prog-dd-trigger maj" id="majProgTrigger" aria-haspopup="listbox" aria-expanded="false">
+            <span class="prog-dd-trigger-main">
+              <span class="prog-dd-trigger-name">Choose a progression…</span>
+              <span class="prog-dd-trigger-meta"></span>
+            </span>
+            <span class="prog-dd-chevron" aria-hidden="true">▾</span>
+          </button>
+          <div class="prog-list prog-dd-menu" id="majProgList" role="listbox" aria-label="Major progressions"></div>
+        </div>
         <div class="chord-pills" id="majPills"></div>
       </div>
     </div>
@@ -442,7 +477,16 @@ body{font-family:var(--font-b);background:radial-gradient(ellipse at 30% 20%,#1e
         </div>
         <div class="ext-level-cap">Auto adds diatonic 9/11/13 per chord, skipping clashing tones. Tap a chord pill below to cycle just that one.</div>
         <div class="prog-lbl min" id="minProgLbl">Minor Progressions — Am</div>
-        <div class="prog-list" id="minProgList"></div>
+        <div class="prog-dd min" id="minProgDD">
+          <button type="button" class="prog-dd-trigger min" id="minProgTrigger" aria-haspopup="listbox" aria-expanded="false">
+            <span class="prog-dd-trigger-main">
+              <span class="prog-dd-trigger-name">Choose a progression…</span>
+              <span class="prog-dd-trigger-meta"></span>
+            </span>
+            <span class="prog-dd-chevron" aria-hidden="true">▾</span>
+          </button>
+          <div class="prog-list prog-dd-menu" id="minProgList" role="listbox" aria-label="Minor progressions"></div>
+        </div>
         <div class="chord-pills" id="minPills"></div>
       </div>
     </div>
@@ -1573,19 +1617,67 @@ const renderExtLevelRow = side => {
   });
 };
 
+// ── Progression dropdown open/close ───────────────────
+// Was a stacked column of ~8-10 full-width buttons per side; now a single
+// trigger that opens a floating, scrollable menu — same rows, same click
+// behavior, far less vertical space when closed.
+const closeProgDD = side => {
+  document.getElementById(side+'ProgDD')?.classList.remove('open');
+  document.getElementById(side+'ProgTrigger')?.setAttribute('aria-expanded','false');
+};
+const toggleProgDD = side => {
+  const dd = document.getElementById(side+'ProgDD');
+  if(!dd || dd.querySelector('.prog-dd-trigger').disabled) return;
+  const wasOpen = dd.classList.contains('open');
+  closeProgDD('maj'); closeProgDD('min');
+  if(!wasOpen){
+    dd.classList.add('open');
+    document.getElementById(side+'ProgTrigger').setAttribute('aria-expanded','true');
+  }
+};
+const wireProgDropdowns = () => {
+  ['maj','min'].forEach(side=>{
+    document.getElementById(side+'ProgTrigger').addEventListener('click', ()=>toggleProgDD(side));
+  });
+  // Outside click / Escape closes whichever is open — same convention as
+  // any other floating menu on the page.
+  document.addEventListener('click', e=>{
+    ['maj','min'].forEach(side=>{
+      const dd=document.getElementById(side+'ProgDD');
+      if(dd && dd.classList.contains('open') && !dd.contains(e.target)) closeProgDD(side);
+    });
+  });
+  document.addEventListener('keydown', e=>{
+    if(e.key==='Escape'){ closeProgDD('maj'); closeProgDD('min'); }
+  });
+};
+
 const renderProgList = (side, progs, isMinor, root) => {
+  const trigger = document.getElementById(side+'ProgTrigger');
   const list = document.getElementById(side+'ProgList');
-  // Only rebuild if key changed or first render
+  const activeIdx = (S.progIdx && S.progIdx.isMin===isMinor) ? S.progIdx.idx : -1;
+  const isPlayingActive = activeIdx>=0 && S.progChordIdx>=0 && S.progChords[S.progChordIdx];
+
+  // Trigger label mirrors whatever's picked — or invites a pick — and the
+  // dropdown auto-closes once a choice fires playback, so the trigger is
+  // the only thing showing while a progression plays.
+  trigger.querySelector('.prog-dd-trigger-name').textContent =
+    activeIdx>=0 ? progs[activeIdx].name+(isPlayingActive?' ♩':'') : 'Choose a progression…';
+  trigger.querySelector('.prog-dd-trigger-meta').textContent =
+    activeIdx>=0 ? `${progs[activeIdx].desc} · ${progs[activeIdx].tag}` : `${progs.length} to choose from`;
+  trigger.disabled = S.soloPlaying;
+
+  // Only rebuild the menu rows if the key changed or first render
   const currentKey = list.dataset.key;
   if(currentKey===root && list.children.length===progs.length) {
-    // just update active states
+    // just update active/disabled states
     [...list.children].forEach((btn,i)=>{
-      const isActive=S.progIdx&&S.progIdx.isMin===isMinor&&S.progIdx.idx===i;
+      const isActive=i===activeIdx;
       btn.className=`prog-btn ${side}${isActive?' active':''}`;
+      btn.setAttribute('aria-selected', isActive?'true':'false');
       btn.disabled=S.soloPlaying&&!isActive;
       const nm=btn.querySelector('.prog-name');
-      if(nm&&isActive&&S.progChordIdx>=0&&S.progChords[S.progChordIdx])
-        nm.textContent=progs[i].name+' ♩';
+      if(nm&&isActive&&isPlayingActive) nm.textContent=progs[i].name+' ♩';
       else if(nm) nm.textContent=progs[i].name;
     });
     return;
@@ -1594,15 +1686,18 @@ const renderProgList = (side, progs, isMinor, root) => {
   list.innerHTML='';
   progs.forEach((prog,i)=>{
     const btn=document.createElement('button');
-    const isActive=S.progIdx&&S.progIdx.isMin===isMinor&&S.progIdx.idx===i;
+    const isActive=i===activeIdx;
+    btn.type='button';
+    btn.setAttribute('role','option');
+    btn.setAttribute('aria-selected', isActive?'true':'false');
     btn.className=`prog-btn ${side}${isActive?' active':''}`;
     btn.disabled=S.soloPlaying&&!isActive;
     btn.title=prog.desc;
     btn.innerHTML=`<div class="prog-name">${prog.name}</div><div class="prog-meta"><span>${prog.desc}</span><span>${prog.tag}</span></div>`;
     btn.addEventListener('click',()=>{
-      
       S.progIdx={isMin:isMinor,idx:i};
       S.progChords=[]; S.progChordIdx=-1;
+      closeProgDD(side);
       render();
       playProgression(prog,isMinor,root);
     });
@@ -1801,6 +1896,7 @@ buildDropdown('minSelect', INNER_ORDER, 'A');
 wireButtons();
 wireExtControls();
 wireProgLevels();
+wireProgDropdowns();
 render();
 
 // KCM Console bridge
