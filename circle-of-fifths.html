@@ -58,6 +58,12 @@ body{font-family:var(--font-b);background:radial-gradient(ellipse at 30% 20%,#1e
 .page-hero{text-align:center;padding:.75rem 0 .5rem;}
 .page-hero h1{font-family:var(--font-d);font-size:clamp(1.5rem,4vw,2.4rem);font-weight:900;background:linear-gradient(135deg,#F4D03F,#00c0c0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:2px;margin-bottom:.25rem;}
 .page-hero p{color:var(--muted);font-size:.82rem;letter-spacing:.5px;}
+.cof-variant-toggle{display:flex;justify-content:center;gap:0;margin-top:.65rem;}
+.cof-variant-btn{font-family:var(--font-b);font-size:.72rem;font-weight:700;letter-spacing:.04em;color:rgba(232,232,248,.75);background:rgba(0,40,40,.35);border:1.5px solid rgba(0,192,192,.3);padding:6px 18px;cursor:pointer;transition:all .15s;}
+.cof-variant-btn:first-child{border-radius:9px 0 0 9px;border-right:none;}
+.cof-variant-btn:last-child{border-radius:0 9px 9px 0;}
+.cof-variant-btn:hover{border-color:rgba(0,192,192,.6);color:#e0ffff;}
+.cof-variant-btn.is-active{background:linear-gradient(135deg,#5a3a80,#2a1a48);border-color:#c8a8e8;color:#ecd8ff;box-shadow:0 0 10px rgba(139,107,163,.35);cursor:default;}
 .three-col{display:grid;grid-template-columns:270px 1fr 270px;gap:.9rem;align-items:start;margin-top:.75rem;}
 
 /* ── Panels ──────────────────────────────────────── */
@@ -217,6 +223,10 @@ body{font-family:var(--font-b);background:radial-gradient(ellipse at 30% 20%,#1e
   <div class="page-hero">
     <h1>Circle of Fifths</h1>
     <p>⬤ Major keys &nbsp;·&nbsp; ◉ Relative Minor &nbsp;·&nbsp; click a dot to hear the triad, or use the panels alongside for progressions, arpeggios, and substitutions.</p>
+    <div class="cof-variant-toggle" role="group" aria-label="Circle of Fifths view">
+      <button type="button" class="cof-variant-btn is-active" aria-pressed="true" onclick="kcmCofSetVariant('standard')">Standard</button>
+      <button type="button" class="cof-variant-btn" aria-pressed="false" onclick="kcmCofSetVariant('extended')">Extended</button>
+    </div>
   </div>
 
   <div class="three-col">
@@ -459,6 +469,23 @@ body{font-family:var(--font-b);background:radial-gradient(ellipse at 30% 20%,#1e
      (e.g. opened straight from file://), the app quietly falls back to its
      built-in oscillator synth, so nothing breaks either way. -->
 <script src="https://cdn.jsdelivr.net/npm/soundfont-player@0.12.0/dist/soundfont-player.min.js" defer></script>
+<script>
+// Standard/Extended lives as two physical pages (circle-of-fifths.html and
+// circle-of-fifths-extended.html) so each is a genuinely simpler or fuller
+// build, not one file hiding half its DOM. This button pair, placed under
+// the title/subtitle on both pages, switches between them: inside the
+// Console it asks the parent frame to swap the panel's iframe (so the
+// saved preference stays in sync); opened standalone (no parent frame) it
+// just navigates directly.
+function kcmCofSetVariant(variant){
+  var target = (variant === 'extended') ? 'circle-of-fifths-extended.html' : 'circle-of-fifths.html';
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage({ type: 'KCM_COF_SET_VARIANT', variant: variant }, '*');
+  } else if (!location.pathname.endsWith(target)) {
+    window.location.href = target;
+  }
+}
+</script>
 
 <script>
 // ══════════════════════════════════════════════════════
