@@ -151,6 +151,10 @@
         .degree-cell:active{transform:scale(0.96);}
         .degree-cell.active{transform:scale(1.14);box-shadow:0 0 28px currentColor,0 0 50px currentColor;filter:brightness(1.4);border-color:rgba(255,255,255,0.5);z-index:10;}
         .degree-cell.playing{animation:note-pulse 0.3s ease-out;}
+        /* Live from the Console bus (e.g. The Decoder playing back a file) --
+           a distinct gold glow so it never collides with .active (this panel's
+           own step-sequencer playhead) or .playing (its own click/step pulse). */
+        .degree-cell.bus-live{outline:2.5px solid #F4D03F;box-shadow:0 0 16px rgba(244,208,63,0.6),0 0 30px rgba(244,208,63,0.3);filter:brightness(1.25);}
         @keyframes note-pulse{0%{transform:scale(1);}50%{transform:scale(1.18);box-shadow:0 0 36px currentColor;}100%{transform:scale(1.07);}}
         .degree-number{font-size:9px;font-weight:700;color:rgba(0,0,0,0.6);min-width:14px;}
         .note-name{font-size:15px;font-weight:900;color:#000;flex:1;text-align:center;font-family:var(--font-display);}
@@ -884,6 +888,25 @@
                 if(p.root&&p.root!==currentTonic){currentTonic=p.root;var sel=document.getElementById('tonicSelect');if(sel)sel.value=currentTonic;changed=true;}
                 if(p.mode&&VM.indexOf(p.mode)!==-1&&p.mode!==playingMode){if(isPlaying)stopPlaying();playingMode=p.mode;changed=true;}
                 if(changed){renderTabs();renderActivePanel();}
+                // Live note-by-note highlighting (e.g. The Decoder playing a
+                // file) -- independent of root/mode above, so it works even
+                // when nothing else about the stencil changed. Pitch-class
+                // reference counting (not a plain on/off flag) so two
+                // overlapping notes of the same pitch class don't have one
+                // note's release wipe out the other's highlight early.
+                if(p.activeNotes){
+                    var newPcs={};
+                    p.activeNotes.forEach(function(m){var pc=((m%12)+12)%12;newPcs[pc]=(newPcs[pc]||0)+1;});
+                    var prevPcs=window._mspBusPcCounts||{};
+                    for(var pcI=0;pcI<12;pcI++){
+                        var was=!!prevPcs[pcI],isOn=!!newPcs[pcI];
+                        if(was!==isOn){
+                            var noteName=NOTES[pcI];
+                            document.querySelectorAll('.degree-cell[data-note="'+noteName+'"]').forEach(function(c){c.classList.toggle('bus-live',isOn);});
+                        }
+                    }
+                    window._mspBusPcCounts=newPcs;
+                }
                 }catch(e){console.error('[KCM→MSP] listener error:',e);}
             });
             console.log('[KCM→MSP] bridge listener ready.');
