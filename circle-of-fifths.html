@@ -712,6 +712,23 @@ const MINOR_PROGS = [
 
 // ── Audio engine ──────────────────────────────────────
 let audioCtx = null, masterGain = null;
+// ── Bridge: broadcast this panel's own playback to the Console bus ──
+// (see the comment inside playNotes for why this lives here.)
+let _cofActiveMidiCounts = {};
+function sendBridgeState(payload){
+  if (window.parent === window) return;
+  window.parent.postMessage({ type: 'KCM_STATE_PATCH', payload: payload }, '*');
+}
+function _cofNoteOn(midi){
+  _cofActiveMidiCounts[midi] = (_cofActiveMidiCounts[midi]||0) + 1;
+  sendBridgeState({ activeNotes: Object.keys(_cofActiveMidiCounts).map(Number) });
+}
+function _cofNoteOff(midi){
+  if (!_cofActiveMidiCounts[midi]) return;
+  _cofActiveMidiCounts[midi] -= 1;
+  if (_cofActiveMidiCounts[midi] <= 0) delete _cofActiveMidiCounts[midi];
+  sendBridgeState({ activeNotes: Object.keys(_cofActiveMidiCounts).map(Number) });
+}
 const getAudio = () => {
   if(!audioCtx || audioCtx.state==='closed') {
     audioCtx = new(window.AudioContext||window.webkitAudioContext)();
@@ -761,6 +778,22 @@ window.addEventListener('load', () => {
 
 const playNotes = (notes,oct=4,dur=0.9,delay=0) => {
   const ctx=getAudio();
+  // Bridge: tell the Console bus what's actually sounding here, so
+  // Music Theory Pro's keyboard/fretboard, Chromatic Universe, and the
+  // Modal Stencil Player light up too -- this panel has always RECEIVED
+  // root/activeNotes from the bus but never sent its own played notes
+  // back out. playNotes is the single choke point every triad click,
+  // arpeggio, CW/CCW sequence, and Extended Tones chord/arpeggio/compare
+  // funnels through, so wiring it here alone covers all of them,
+  // independent of which audio path below actually renders the sound.
+  // Reference-counted by exact MIDI number (not just pitch class) so two
+  // overlapping calls on the same note don't have one's release wipe out
+  // the other's highlight early.
+  notes.forEach(n=>{
+    const midi=Math.round((oct+1)*12+(NOTE_CHROMA[n]!==undefined?NOTE_CHROMA[n]:0));
+    setTimeout(()=>_cofNoteOn(midi), Math.max(0,delay*1000));
+    setTimeout(()=>_cofNoteOff(midi), Math.max(0,delay*1000)+dur*1000);
+  });
   if (!_sfLoadStarted) _explLoadSamples();
   const sampledInst = _explTimbre === 'piano' ? _sfPiano : _explTimbre === 'guitar' ? _sfGuitar : null;
   if (sampledInst) {
@@ -847,6 +880,7 @@ const stopAll = () => {
   S.loopRunning=false; S.soloPlaying=false;
   S.active=null; S.loopActive=null;
   S.progIdx=null; S.progChords=[]; S.progChordIdx=-1; S.progOverrides={};
+  _cofActiveMidiCounts={}; sendBridgeState({activeNotes:[]});
   render();
   setTimeout(()=>{ S.loopStop=false; S.soloStop=false; },150);
 };
