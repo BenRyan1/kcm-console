@@ -32,6 +32,14 @@
                          (added for the ambient Twinkle demo, see below —
                          The Decoder sends this to hand the bus sync source
                          back and forth between itself and the ambient loop)
+     iframe → iframe  : { type: 'KCM_DECODER_MELODY', payload: {title, notes:[{midi,velocity,tStart,tEnd}...]} }
+                         (added Sep 2026 so a decoded song can actually PLAY
+                         in the Melody Explorer panel, not just highlight there —
+                         The Decoder sends this on every decode/track-selection
+                         change; the Console forwards it untouched, straight
+                         through to iframe-neck. tStart/tEnd are milliseconds,
+                         matching kcm-midi-chromatic-circle.html's own
+                         buildStepsFromNotes()/setSong() input shape exactly)
 
    Note: activeNotes is always serialised as Array (Sets are not
    JSON-serialisable) and deserialised back to Set on receipt.
@@ -86,6 +94,22 @@
   var readyPanels   = new Set();
   var fallbackTimers = new Map();
   var FALLBACK_MS = 2000;
+
+  // ── Decoder → Melody Explorer song hand-off buffer ───────────────────
+  // Holds the most recent { type:'KCM_DECODER_MELODY', payload } so the
+  // Melody Explorer panel (iframe-neck) can be caught up the moment its
+  // own 'load' event fires, even if The Decoder sent it earlier while
+  // iframe-neck's much larger file was still loading/parsing.
+  var lastDecoderMelody = null;
+  function forwardDecoderMelodyToNeck() {
+    if (!lastDecoderMelody) return;
+    var neckIframe = document.getElementById('iframe-neck');
+    try {
+      if (neckIframe && neckIframe.contentWindow) {
+        neckIframe.contentWindow.postMessage(lastDecoderMelody, '*');
+      }
+    } catch (e) { /* ignore */ }
+  }
 
   function markReady(iframeEl) {
     if (!iframeEl || readyPanels.has(iframeEl)) return;
@@ -192,6 +216,24 @@
     }
     if (data.type === 'KCM_CLOCK_STOP') {
       stopClock();
+      return;
+    }
+
+    // ── Decoder → Melody Explorer song hand-off ──────────────────
+    // The Decoder isn't broadcasting bus state here -- it's handing a
+    // whole decoded song to ONE specific panel (iframe-neck / Melody
+    // Explorer) so that panel's own player can load and play it, exactly
+    // as if it were picked from its 375-song library. Forwarded untouched
+    // (same envelope, same payload) rather than re-broadcast to everyone,
+    // since no other panel understands this shape.
+    if (data.type === 'KCM_DECODER_MELODY') {
+      lastDecoderMelody = data; // remembered so a late-loading Melody Explorer
+                                // can be caught up (see neckIframe 'load' below --
+                                // The Decoder's tiny file loads and can post this
+                                // well before the ~1.4MB Melody Explorer file has
+                                // finished parsing and mounted its own listener,
+                                // so a same-tick forward alone can be lost)
+      forwardDecoderMelodyToNeck();
       return;
     }
 
@@ -485,6 +527,7 @@
     if (neckIframe) {
       neckIframe.addEventListener('load', function () {
         bridge.register(neckIframe);
+        forwardDecoderMelodyToNeck(); // catch up a decode that arrived before this file finished loading
         console.log('[KCM.bridge] Modal Neck panel registered.');
       });
     }

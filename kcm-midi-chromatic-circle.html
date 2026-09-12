@@ -1257,6 +1257,31 @@ function setSong(song){
   idlePreviewOn = true; // a freshly loaded song is allowed to show its ambient preview again
 }
 
+/* ==================================================================
+   Console bridge: load a song handed off by The Decoder
+   ==================================================================
+   js/bridge.js forwards { type:'KCM_DECODER_MELODY', payload:{title,
+   notes:[{midi,velocity,tStart,tEnd}...]} } here untouched whenever The
+   Decoder decodes a file, switches its track/voice dropdown, or loads
+   its own built-in Twinkle demo. notes are already in the exact
+   {midi,tStart,tEnd} (ms) shape buildStepsFromNotes() expects -- same
+   pipeline a library pick or an upload here already goes through -- so
+   the decoded song plays with real sound and drives the circle arrows,
+   staff, keyboard, and fretboard exactly like any of the 375 built-in
+   songs, replacing whatever was previously loaded (including the demo). */
+window.addEventListener('message', function (ev) {
+  try {
+    if (!ev.data || ev.data.type !== 'KCM_DECODER_MELODY') return;
+    var payload = ev.data.payload;
+    if (!payload || !Array.isArray(payload.notes) || !payload.notes.length) return;
+    setSong({
+      title: payload.title || 'Decoded song',
+      steps: buildStepsFromNotes(payload.notes),
+      source: 'decoder'
+    });
+  } catch (e) { /* ignore malformed messages */ }
+});
+
 /* Silent visual preview loop, ONLY while idlePreviewOn (a song was just loaded and
    Stop/Pause hasn't been pressed since) — browsers block audio autoplay, so this is
    how a newly loaded song shows itself off before Play is pressed. Once the user
