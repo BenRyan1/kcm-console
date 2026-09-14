@@ -40,6 +40,14 @@
                          through to iframe-neck. tStart/tEnd are milliseconds,
                          matching kcm-midi-chromatic-circle.html's own
                          buildStepsFromNotes()/setSong() input shape exactly)
+     iframe → iframe  : { type: 'KCM_DECODER_PLAY' }  /  { type: 'KCM_DECODER_STOP' }
+                         (added Sep 2026 — The Decoder's own Play/Stop buttons no
+                         longer run a second, independent audio engine when embedded.
+                         They forward here instead, and the Console relays straight
+                         through to iframe-neck, which is now the ONE clock driving
+                         both sound and highlighting for a decoded song — eliminates
+                         the "two clocks" drift between the Decoder's old local
+                         playback and the Melody Explorer's own playback loop)
 
    Note: activeNotes is always serialised as Array (Sets are not
    JSON-serialisable) and deserialised back to Set on receipt.
@@ -234,6 +242,21 @@
                                 // finished parsing and mounted its own listener,
                                 // so a same-tick forward alone can be lost)
       forwardDecoderMelodyToNeck();
+      return;
+    }
+
+    // Decoder -> Melody Explorer remote play/stop -- simple pass-through,
+    // same target as KCM_DECODER_MELODY above. No buffering needed here
+    // (unlike the melody payload) -- if iframe-neck hasn't loaded yet there's
+    // nothing loaded to play, and the Decoder's own Play button stays
+    // disabled until a song has actually been sent.
+    if (data.type === 'KCM_DECODER_PLAY' || data.type === 'KCM_DECODER_STOP') {
+      var neckIframeRT = document.getElementById('iframe-neck');
+      try {
+        if (neckIframeRT && neckIframeRT.contentWindow) {
+          neckIframeRT.contentWindow.postMessage(data, '*');
+        }
+      } catch (e) { /* ignore */ }
       return;
     }
 

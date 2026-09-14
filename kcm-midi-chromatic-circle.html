@@ -1281,14 +1281,37 @@ function setSong(song){
    songs, replacing whatever was previously loaded (including the demo). */
 window.addEventListener('message', function (ev) {
   try {
-    if (!ev.data || ev.data.type !== 'KCM_DECODER_MELODY') return;
-    var payload = ev.data.payload;
-    if (!payload || !Array.isArray(payload.notes) || !payload.notes.length) return;
-    setSong({
-      title: payload.title || 'Decoded song',
-      steps: buildStepsFromNotes(payload.notes),
-      source: 'decoder'
-    });
+    if (!ev.data) return;
+
+    if (ev.data.type === 'KCM_DECODER_MELODY') {
+      var payload = ev.data.payload;
+      if (!payload || !Array.isArray(payload.notes) || !payload.notes.length) return;
+      setSong({
+        title: payload.title || 'Decoded song',
+        steps: buildStepsFromNotes(payload.notes),
+        source: 'decoder'
+      });
+      return;
+    }
+
+    // Sep 2026: The Decoder's own Play/Stop buttons no longer run their own
+    // separate audio engine -- they remote-control THIS panel's player
+    // instead, so there is exactly one clock driving both the sound and the
+    // circle/keyboard/staff/fretboard highlighting, never two that can drift
+    // apart. Play always starts the currently loaded song from the top
+    // (mirrors the Restart button) so a press from the Decoder always gives
+    // a clean, fully in-sync playthrough regardless of whatever state this
+    // panel was left in.
+    if (ev.data.type === 'KCM_DECODER_PLAY') {
+      if (!currentSong) return;
+      restart();
+      start(true);
+      return;
+    }
+    if (ev.data.type === 'KCM_DECODER_STOP') {
+      restart();
+      return;
+    }
   } catch (e) { /* ignore malformed messages */ }
 });
 

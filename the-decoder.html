@@ -919,6 +919,18 @@ function midiToFreq(midiNum){
 }
 
 function stopPlayback(){
+  // Sep 2026: when embedded in the Console, playback lives in ONE place --
+  // the Melody Explorer (Twinkle) panel -- instead of a second, independent
+  // audio engine running here too. Forwarding Stop keeps that single clock
+  // the only source of both sound and highlighting, so they can't drift
+  // apart into the "two clocks out of sync" problem this replaces.
+  if (window.parent !== window) {
+    window.parent.postMessage({ type: 'KCM_DECODER_STOP' }, '*');
+    playBtn.disabled = false;
+    stopBtn.disabled = true;
+    notifyDecoderActive(false);
+    return;
+  }
   if (audioCtx){
     const now = audioCtx.currentTime;
     activeVoices.forEach(({ osc, gain }) => {
@@ -946,6 +958,17 @@ function stopPlayback(){
 function playNotes(){
   const { notes } = getActiveNoteSet();
   if (!lastParsed || !notes.length) return;
+
+  // Remote-control the Melody Explorer's own player (see stopPlayback above)
+  // instead of running a second local Web Audio engine here.
+  if (window.parent !== window) {
+    window.parent.postMessage({ type: 'KCM_DECODER_PLAY' }, '*');
+    playBtn.disabled = true;
+    stopBtn.disabled = false;
+    notifyDecoderActive(true); // The Decoder is now the sync source
+    return;
+  }
+
   stopPlayback(); // also sends notifyDecoderActive(false) -- immediately
                    // superseded by the notifyDecoderActive(true) below, since
                    // postMessage delivery preserves send order at the Console.
