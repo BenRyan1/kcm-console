@@ -1124,6 +1124,16 @@ let timeoutId = null;
 let lastLeadNote = null;
 
 function speedScale(){
+  // Decoder-sourced songs (source:'decoder') already carry real, accurate
+  // millisecond timing -- The Decoder computes each note's tStart/tEnd against
+  // the shared master bpm (see the-decoder.html's sendMelodyToExplorer) before
+  // handing them off. Re-scaling that by this panel's own local preview-speed
+  // slider was throwing the clock off (Sep 2026 bug report: decoded songs not
+  // timed correctly), since the slider's position is unrelated to the song's
+  // real tempo. So decoder songs always play at their true 1x pace; the local
+  // slider still applies to the built-in demo, library picks, and direct
+  // uploads here, which use nominal per-beat durations it's meant to adjust.
+  if (currentSong && currentSong.source === 'decoder') return 1;
   // slider baseline 550 == 1x; lower (toward "Fast") shortens delays, higher (toward "Slow") lengthens them
   return (+tempoSlider.value) / DEMO_BASE_BEAT_MS;
 }
