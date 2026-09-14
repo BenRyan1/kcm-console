@@ -716,9 +716,46 @@ function guessKey(notes, groups){
 // The standard convention: melody is usually the highest-sounding
 // voice, so default to whichever track has the highest average pitch.
 function pickMelodyTrackIndex(tracks){
-  let best = 0, bestAvg = -Infinity;
+  // "Highest average pitch wins" alone is unreliable on real multi-voice
+  // files: a sparse ornamental/cued voice with only a handful of very
+  // high notes can out-score the actual continuous melody line even
+  // though it barely plays. Confirmed on a real 16-voice file where a
+  // 66-note voice beat a 152-note melody line this way, leaving a ~25
+  // SECOND gap after the first picked note -- since Melody Explorer
+  // shows each note until the next one starts, that gap looked/sounded
+  // like playback "hanging" on one note. So first narrow to tracks that
+  // plausibly ARE a melody line (enough notes, spread across most of
+  // the piece), and only rank by average pitch within that pool.
+  let songFirstTick = Infinity, songLastTick = -Infinity;
+  tracks.forEach(t => {
+    t.notes.forEach(n => {
+      if (n.startTick < songFirstTick) songFirstTick = n.startTick;
+      const endTick = n.startTick + n.durationTicks;
+      if (endTick > songLastTick) songLastTick = endTick;
+    });
+  });
+  const songSpan = songLastTick - songFirstTick;
+
+  const MIN_NOTES = 8;
+  const MIN_COVERAGE = 0.5;
+  const candidates = [];
   tracks.forEach((t, i) => {
-    if (!t.notes.length) return;
+    if (t.notes.length < MIN_NOTES) return;
+    let firstTick = Infinity, lastTick = -Infinity;
+    t.notes.forEach(n => {
+      if (n.startTick < firstTick) firstTick = n.startTick;
+      const endTick = n.startTick + n.durationTicks;
+      if (endTick > lastTick) lastTick = endTick;
+    });
+    const coverage = songSpan > 0 ? (lastTick - firstTick) / songSpan : 1;
+    if (coverage >= MIN_COVERAGE) candidates.push(i);
+  });
+
+  const pool = candidates.length ? candidates : tracks.map((t, i) => i).filter(i => tracks[i].notes.length);
+
+  let best = pool.length ? pool[0] : 0, bestAvg = -Infinity;
+  pool.forEach(i => {
+    const t = tracks[i];
     const avg = t.notes.reduce((sum, n) => sum + (n.octave * 12 + n.pc), 0) / t.notes.length;
     if (avg > bestAvg){ bestAvg = avg; best = i; }
   });

@@ -475,6 +475,14 @@ const MELODY = [
   ['F',1,'How'],['F',1,'I'],['E',1,'won'],['E',1,'der'],['D',1,'what'],['D',1,'you'],['C',2,'are!'],
 ];
 const DEMO_BASE_BEAT_MS = 550; // matches the tempo slider's default value
+// A real gap before the next note (a rest, an instrumental break) should
+// still be waited out accurately -- that's the song's real tempo. But a
+// single note's SOUND and VISUAL highlight should not sit there literally
+// unchanged for the whole gap: on a real multi-voice file this produced a
+// note that visibly/audibly sustained for ~25 real seconds and read as
+// playback being "hung" (Sep 2026 bug report). This caps how long one
+// note is held on screen/in the synth, independent of the real timing
+// used to advance to the next step.
 
 function buildDemoSong(){
   let t = 0;
@@ -1122,6 +1130,8 @@ let playing = false;
 let withSound = false;
 let timeoutId = null;
 let lastLeadNote = null;
+let holdClearTimer = null;
+const MAX_HELD_DISPLAY_MS = 2200; // natural max sustain/highlight time for a single note, regardless of how long the real gap to the next note is
 
 function speedScale(){
   // Decoder-sourced songs (source:'decoder') already carry real, accurate
@@ -1170,6 +1180,7 @@ function broadcastActiveNotesToConsole(midiList){
 function highlightStep(i){
   if (!currentSong) return;
   clearHighlights();
+  if (holdClearTimer){ clearTimeout(holdClearTimer); holdClearTimer = null; }
   const step = currentSong.steps[i];
   const leadNote = step.noteNames[0];
 
@@ -1208,11 +1219,26 @@ function highlightStep(i){
   nowLyricEl.textContent = step.lyric || (i === 0 ? currentSong.title : '');
 
   if (withSound){
-    const durSec = Math.max(0.12, (step.durationMs * speedScale()) / 1000);
+    const durSec = Math.max(0.12, (Math.min(step.durationMs, MAX_HELD_DISPLAY_MS) * speedScale()) / 1000);
     step.notes.forEach(n => playTone(freqForMidi(n.midi), durSec, (n.velocity || 100) / 127));
   }
 
   broadcastActiveNotesToConsole(step.notes.map(n => n.midi));
+
+  // The real advance to the next step (scheduleNext) still waits the full,
+  // accurate gap to the next note -- that IS the song's real tempo and
+  // must stay untouched. This only settles the highlight/sound back down
+  // early when that gap is much longer than a note would naturally be
+  // held, so the display (and the cross-panel note grid) reads as
+  // "waiting for the next note" instead of "frozen on this one."
+  const heldMs = Math.min(step.durationMs, MAX_HELD_DISPLAY_MS) * speedScale();
+  const realDelayMs = step.durationMs * speedScale();
+  if (realDelayMs > heldMs + 50){
+    holdClearTimer = setTimeout(() => {
+      clearHighlights();
+      broadcastActiveNotesToConsole([]);
+    }, heldMs);
+  }
 }
 
 function scheduleNext(){
@@ -1254,6 +1280,7 @@ function stop(){
                           // and keep auto-flashing notes the instant Stop/Pause is pressed — only a
                           // freshly loaded song re-arms it (see setSong)
   clearTimeout(timeoutId);
+  if (holdClearTimer){ clearTimeout(holdClearTimer); holdClearTimer = null; }
   stopAllTones(); // cut any currently-ringing note immediately, don't let it fade out
   broadcastActiveNotesToConsole([]); // release any notes this panel lit up on the shared bus
   playBtn.disabled = false;
