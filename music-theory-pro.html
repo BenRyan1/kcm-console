@@ -9729,12 +9729,23 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                     // Adopt an incoming bpm the same way root/mode are adopted
                     // above. Doesn't re-publish -- only the slider's own oninput
                     // (user-driven) does that, so there's no bounce-back loop.
-                    if (payload.bpm !== undefined && payload.bpm !== null && payload.bpm !== currentBPM) {
+                    if (payload.bpm !== undefined && payload.bpm !== null && parseInt(payload.bpm, 10) !== currentBPM) {
                         var incomingBpm = parseInt(payload.bpm, 10);
                         if (!isNaN(incomingBpm) && incomingBpm > 0) {
                             currentBPM = incomingBpm;
-                            var bpmD = el('bpmDisplay'); if (bpmD) bpmD.textContent = currentBPM;
-                            var tSlider = el('tempoSlider'); if (tSlider) tSlider.value = currentBPM;
+                            // Sep 2026 fix: this block referenced `el(...)`, a local
+                            // document.getElementById shorthand defined in OTHER,
+                            // unrelated closures elsewhere in this file -- not in scope
+                            // here, so every incoming bpm threw "el is not defined"
+                            // (caught by the try/catch around this whole listener, so
+                            // silent-ish, but it spammed the console and skipped the
+                            // rest of this handler on every single message). Never
+                            // triggered before because nothing on the bus ever actually
+                            // sent a bpm patch until The Decoder's real-tempo fix did.
+                            // Using document.getElementById directly instead of the
+                            // out-of-scope helper.
+                            var bpmD = document.getElementById('bpmDisplay'); if (bpmD) bpmD.textContent = currentBPM;
+                            var tSlider = document.getElementById('tempoSlider'); if (tSlider) tSlider.value = currentBPM;
                         }
                     }
                     console.log('[KCM→MTP] state received root=' + (payload.root||'?'));
