@@ -40,6 +40,14 @@
                          through to iframe-neck. tStart/tEnd are milliseconds,
                          matching kcm-midi-chromatic-circle.html's own
                          buildStepsFromNotes()/setSong() input shape exactly)
+     Console → iframe : { type: 'KCM_EXTERNAL_FILE_DROP', file: File }
+                         (added Sep 2026 -- a song file dropped anywhere on
+                         the Console page outside The Decoder's own iframe is
+                         forwarded here with the real dropped File object
+                         (structured-cloneable across frames), so The Decoder
+                         can decode it exactly as if it had been dropped
+                         directly inside it. See the whole-page drag-and-drop
+                         listener in initPanels() below.)
      iframe → iframe  : { type: 'KCM_DECODER_PLAY' }  /  { type: 'KCM_DECODER_STOP' }
                          (added Sep 2026 — The Decoder's own Play/Stop buttons no
                          longer run a second, independent audio engine when embedded.
@@ -554,6 +562,39 @@
         console.log('[KCM.bridge] Modal Neck panel registered.');
       });
     }
+
+    // ── Whole-page drag-and-drop -> The Decoder ──────────────────────
+    // Sep 2026: dropping a song file only worked if the OS drag landed
+    // with pixel precision inside The Decoder's own iframe -- miss by even
+    // a little (its header, a border, the gap between panels, anywhere
+    // else on this page) and the browser fell back to its default action:
+    // navigating the whole tab away to show the raw file, since nothing on
+    // this page ever called preventDefault() on a stray dragover/drop.
+    // That's the "won't let me drag-and-drop" report. Fix: the WHOLE page
+    // is now a drop target for a .mid/.midi/.musicxml/.xml file, always
+    // prevented from navigating away, and always routed into The Decoder --
+    // a File object is structured-cloneable, so the real dropped File can
+    // be handed straight across the iframe boundary via postMessage. This
+    // is on top of (not instead of) The Decoder's own existing drop
+    // handling for drops that land precisely inside it, which already
+    // works correctly on its own.
+    document.addEventListener('dragover', function (e) {
+      e.preventDefault();
+    });
+    document.addEventListener('drop', function (e) {
+      e.preventDefault();
+      var file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+      if (!file) return;
+      if (!/\.(mid|midi|musicxml|xml)$/i.test(file.name)) return; // not a song file -- ignore quietly
+      var decIframeForDrop = document.getElementById('iframe-decoder');
+      if (decIframeForDrop && decIframeForDrop.contentWindow) {
+        try {
+          decIframeForDrop.contentWindow.postMessage({ type: 'KCM_EXTERNAL_FILE_DROP', file: file }, '*');
+        } catch (err) {
+          console.warn('[KCM.bridge] could not forward dropped file to The Decoder:', err);
+        }
+      }
+    });
 
     // ── Save .gcis button ──────────────────────────────────────────────
     var saveBtn = document.getElementById('kcm-save');

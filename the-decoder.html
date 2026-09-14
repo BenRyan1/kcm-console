@@ -1102,6 +1102,20 @@ dropzone.addEventListener('click', () => fileInput.click());
 fileInput.addEventListener('change', e => {
   if (e.target.files[0]) handleFile(e.target.files[0]);
 });
+
+// Sep 2026: a file dropped anywhere else on the Console page (outside this
+// iframe's own boundary -- the case the comment below already warns about)
+// is now caught at the page level by js/bridge.js and forwarded here as a
+// real File object, so it decodes exactly the same way a precise drop
+// directly into this panel always has.
+if (window.parent !== window) {
+  window.addEventListener('message', function (ev) {
+    try {
+      if (!ev.data || ev.data.type !== 'KCM_EXTERNAL_FILE_DROP') return;
+      if (ev.data.file) handleFile(ev.data.file);
+    } catch (e) { /* ignore malformed messages */ }
+  });
+}
 // Catch a drop ANYWHERE on the page, not just inside the small dropzone
 // box -- without this, a drop that lands a few pixels outside it falls
 // through to the browser's default action (navigate to the local file
