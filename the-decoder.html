@@ -372,12 +372,16 @@ const trackSelect = document.getElementById('trackSelect');
 let lastParsed = null; // { notes, groups, tracks, ticksPerQuarter, bpm }
 let selectedTrackIndex = 'all'; // 'all' or a track index
 let lastSongTitle = 'Twinkle, Twinkle, Little Star (demo)'; // shown as the Melody Explorer's song title once sent over
-// Tempo-sync build (Sep 2026): playback now follows this shared bpm
-// (Music Theory Pro's tempo slider is the master) instead of always using
-// the imported song's own tempo -- set from incoming KCM_STATE below.
-// 120 matches the bus default so a Play before the first KCM_STATE
-// arrives (there is a same-tick catch-up send on register, so this is
-// mostly a defensive default) still sounds right.
+// Tempo-sync build (Sep 2026): playback follows this shared bpm instead of
+// blindly using the imported song's own tempo constant. Two ways it gets
+// set: (1) incoming KCM_STATE from the Console, e.g. Music Theory Pro's
+// tempo slider -- see the listener below; (2) decoding a real song sets
+// THIS as the new master and broadcasts it out (see handleFile()/
+// loadTwinkleDemo()), since a freshly decoded file's own detected tempo is
+// the correct one to play it at -- fixed Sep 2026 after decoded songs kept
+// playing at whatever unrelated master bpm the Console already had instead
+// of the song's real tempo. 120 matches the bus default so a Play before
+// any of the above has happened still sounds reasonable.
 let _kcmMasterBpm = 120;
 let activeVoices = [];  // { osc, gain } pairs currently sounding
 let scheduledTimeouts = []; // visual-highlight timeouts, cleared on Stop
@@ -1055,6 +1059,16 @@ function handleFile(file){
         lastParsed = parsed;
         lastSongTitle = file.name.replace(/\.(musicxml|xml)$/i, '');
         tempoOut.textContent = Math.round(parsed.bpm) + ' BPM';
+        // Sep 2026 (real-tempo fix): a freshly decoded song's OWN detected
+        // tempo becomes the Console's shared master bpm -- previously the
+        // reverse happened (whatever master bpm the Console already had,
+        // often just its 120 default, silently overrode this song's real
+        // tempo for actual playback), which is exactly why playback sounded
+        // "off" / sped-up compared to the song's real speed. Set locally
+        // first so THIS render/send below already uses the correct tempo,
+        // then broadcast so every other panel follows this song's real bpm.
+        _kcmMasterBpm = parsed.bpm;
+        sendBridgeState({ bpm: parsed.bpm });
         setStatus('Decoded ' + file.name, 'ok');
         populateTrackSelect();
         renderNotes();
@@ -1070,6 +1084,9 @@ function handleFile(file){
         lastParsed = parsed;
         lastSongTitle = file.name.replace(/\.(midi?|mid)$/i, '');
         tempoOut.textContent = Math.round(parsed.bpm) + ' BPM';
+        // Real-tempo fix -- see the matching comment in the MusicXML branch above.
+        _kcmMasterBpm = parsed.bpm;
+        sendBridgeState({ bpm: parsed.bpm });
         setStatus('Decoded ' + file.name, 'ok');
         populateTrackSelect();
         renderNotes();
@@ -1138,6 +1155,9 @@ function loadTwinkleDemo(){
   });
   lastParsed = buildParsedResult([rawNotes], ['Melody'], ticksPerQuarter, 120);
   tempoOut.textContent = Math.round(lastParsed.bpm) + ' BPM';
+  // Real-tempo fix -- see the matching comment in handleFile()'s MusicXML branch.
+  _kcmMasterBpm = lastParsed.bpm;
+  sendBridgeState({ bpm: lastParsed.bpm });
   setStatus('Twinkle, Twinkle, Little Star — built-in demo, ready to play', 'ok');
   populateTrackSelect();
   renderNotes();

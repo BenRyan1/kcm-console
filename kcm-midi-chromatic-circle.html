@@ -1151,6 +1151,22 @@ function clearHighlights(){
   drawStaff([]);
 }
 
+// Sep 2026: when this panel is playing a song handed off by The Decoder
+// (source:'decoder') and driven by its remote Play/Stop buttons -- see the
+// KCM_DECODER_PLAY/STOP listener below -- it is now the ONE clock actually
+// producing sound and movement. Before that change, The Decoder's own local
+// playback loop broadcast activeNotes to the Console bus on every note, which
+// is what made the Circle of Fifths' colored dots (and anything else reading
+// the shared bus) move along with it. Making Decoder Play/Stop remote-control
+// this panel silently dropped that broadcast -- restoring it here instead
+// keeps it coming from the single real clock rather than reintroducing a
+// second one in The Decoder.
+function broadcastActiveNotesToConsole(midiList){
+  if (window.parent === window) return; // standalone, no Console to talk to
+  if (!currentSong || currentSong.source !== 'decoder') return; // scoped to Decoder-driven playback only
+  window.parent.postMessage({ type: 'KCM_STATE_PATCH', payload: { activeNotes: midiList } }, '*');
+}
+
 function highlightStep(i){
   if (!currentSong) return;
   clearHighlights();
@@ -1195,6 +1211,8 @@ function highlightStep(i){
     const durSec = Math.max(0.12, (step.durationMs * speedScale()) / 1000);
     step.notes.forEach(n => playTone(freqForMidi(n.midi), durSec, (n.velocity || 100) / 127));
   }
+
+  broadcastActiveNotesToConsole(step.notes.map(n => n.midi));
 }
 
 function scheduleNext(){
@@ -1237,6 +1255,7 @@ function stop(){
                           // freshly loaded song re-arms it (see setSong)
   clearTimeout(timeoutId);
   stopAllTones(); // cut any currently-ringing note immediately, don't let it fade out
+  broadcastActiveNotesToConsole([]); // release any notes this panel lit up on the shared bus
   playBtn.disabled = false;
   pauseBtn.disabled = true;
 }
