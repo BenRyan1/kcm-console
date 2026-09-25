@@ -162,7 +162,7 @@ body {
   .kcm-suno__prompt {
     font-size: .78rem;
     padding: .7rem .8rem 2rem;
-    rows: 6;
+    min-height: 9rem;
   }
 
   .kcm-suno__btn {
