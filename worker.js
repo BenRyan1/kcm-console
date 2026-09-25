@@ -209,6 +209,11 @@ export default {
         demo:    env.CODE_DEMO,
         supt:    env.CODE_SUPT,
         yms:     env.CODE_YMS,
+        // Added 2026-09-21 per privacy audit Finding 1: a code dedicated to
+        // school pilots, kept separate from demo/friend codes so a class's
+        // access can be revoked/rotated without affecting other audiences.
+        school:  env.CODE_SCHOOL,
+        focusrite: env.CODE_FOCUSRITE,
       };
 
       let matchedTier = null;

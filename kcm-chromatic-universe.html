@@ -4723,8 +4723,21 @@ function etRestart() {
      Highlights an array of MIDI note numbers on the clock face by
      passing them into drawClock as the highlightNotes argument.     */
   function setActiveNotes(midiArr) {
-    // drawClock accepts an array of MIDI numbers as highlightNotes
-    drawClock(Array.isArray(midiArr) ? midiArr : []);
+    // drawClock's highlightNotes param expects {s,r} SPOKE/RING position
+    // objects (that's what a click on the wheel or Auto-Play passes it,
+    // e.g. drawClock(n) where n comes from notePositions) -- passing it a
+    // bare array of MIDI numbers here meant hiArr.some(h => h.s===s &&
+    // h.r===r) could never match (h.s/h.r are undefined on a plain
+    // number), so notes broadcast from The Decoder/Melody Explorer never
+    // actually lit up on the clock face even though this function WAS
+    // being called correctly (confirmed via testing, Sep 2026 bug report:
+    // "connecting notes" don't show/highlight). drawClock already has a
+    // working MIDI-number-based highlight path used for live MIDI
+    // keyboard input -- activeMidiNotes, matched by each cell's own
+    // computed `midi` value -- so route the bus's activeNotes through
+    // that same, already-correct path instead.
+    activeMidiNotes = new Set(Array.isArray(midiArr) ? midiArr : []);
+    drawClock();
   }
 
   /* ── applyPatternByName ───────────────────────────────────────────

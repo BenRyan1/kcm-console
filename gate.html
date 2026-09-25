@@ -354,26 +354,30 @@
     <!-- FORM STATE -->
     <div id="formState">
 
-      <h1 class="card-heading">Enter the Console</h1>
-      <p class="card-sub">Free access — enter your name and email<br>to begin exploring.</p>
+      <h1 class="card-heading" id="cardHeading">Enter the Console</h1>
+      <p class="card-sub" id="cardSub">Free access — enter your name and email<br>to begin exploring.</p>
 
-      <div class="field">
-        <label for="fname">Your Name</label>
-        <input type="text" id="fname" placeholder="First name" autocomplete="given-name">
+      <!-- Name/email signup — hidden entirely in school mode (?school=1) so no
+           student name or email is ever collected or sent to MailerLite. -->
+      <div id="nameEmailBlock">
+        <div class="field">
+          <label for="fname">Your Name</label>
+          <input type="text" id="fname" placeholder="First name" autocomplete="given-name">
+        </div>
+        <div class="field">
+          <label for="femail">Email Address</label>
+          <input type="email" id="femail" placeholder="you@example.com" autocomplete="email">
+        </div>
+
+        <button class="btn-primary" id="enterBtn" onclick="handleSignup()">
+          Enter the Console →
+        </button>
+
+        <div class="msg" id="signupMsg"></div>
+
+        <!-- Access code fallback -->
+        <div class="divider" id="codeDivider"><span>or use an access code</span></div>
       </div>
-      <div class="field">
-        <label for="femail">Email Address</label>
-        <input type="email" id="femail" placeholder="you@example.com" autocomplete="email">
-      </div>
-
-      <button class="btn-primary" id="enterBtn" onclick="handleSignup()">
-        Enter the Console →
-      </button>
-
-      <div class="msg" id="signupMsg"></div>
-
-      <!-- Access code fallback -->
-      <div class="divider"><span>or use an access code</span></div>
 
       <div class="code-section">
         <div class="code-row">
@@ -383,8 +387,9 @@
         <div class="msg" id="codeMsg"></div>
       </div>
 
-      <!-- Get Access link -->
-      <div class="get-access">
+      <!-- Get Access link — hidden in school mode; it points at consumer
+           pricing, not relevant once a class code has been issued. -->
+      <div class="get-access" id="getAccessBlock">
         <p>Need premium or school district access?</p>
         <a href="https://keyscodesandmodes.com/insights.html" target="_blank">View Plans &amp; Pricing →</a>
       </div>
@@ -414,6 +419,14 @@
 
   const CONSOLE_URL = '/index.html';
 
+  // School mode: console.keyscodesandmodes.com/gate.html?school=1
+  // Added per privacy audit Finding 1 (2026-09-20) — a school link must
+  // never show the name/email signup, since that data goes to MailerLite
+  // (a marketing tool) and a student should never be asked for it. In
+  // this mode only the access-code box is shown; there is no fallback
+  // route back to the name/email form.
+  const IS_SCHOOL_MODE = new URLSearchParams(window.location.search).get('school') === '1';
+
   // ── Check if already authenticated ────────────────────────────
   (function() {
     const token = localStorage.getItem('kcm_access');
@@ -421,6 +434,17 @@
     if (token && granted === 'true') {
       window.location.replace(CONSOLE_URL);
     }
+  })();
+
+  // ── Apply school mode (hide name/email signup entirely) ────────
+  (function() {
+    if (!IS_SCHOOL_MODE) return;
+    document.getElementById('nameEmailBlock').style.display = 'none';
+    document.getElementById('getAccessBlock').style.display = 'none';
+    document.getElementById('cardHeading').textContent = 'Class Access';
+    document.getElementById('cardSub').innerHTML = 'Enter the access code your teacher gave you.';
+    const codeInput = document.getElementById('codeInput');
+    if (codeInput) codeInput.focus();
   })();
 
   // ── Signup flow ────────────────────────────────────────────────
