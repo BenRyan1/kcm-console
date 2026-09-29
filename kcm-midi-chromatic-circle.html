@@ -293,7 +293,11 @@
     overflow:hidden;
     background:#080C14;
   }
-  #staffCanvas{ display:block; width:100%; height:150px; }
+  /* Timeline staff (Sep 29 2026) — same look as Music Theory Pro's TIMELINE tab:
+     light panel, black staff, treble clef, bar lines, KCM-colored noteheads,
+     red playhead. Replaces the old single-note canvas staff. */
+  .staff-wrap.tl-wrap{ background:#cfcfcf; border:2px solid #2f7f7a; }
+  #timelineSVG{ display:block; width:100%; height:auto; }
   .staff-caption{ font-size:11px; color:var(--text-secondary); text-align:center; margin:4px 0 0; }
 
   /* ---------- Fretboard ---------- */
@@ -372,11 +376,11 @@
       <text x="200" y="99" class="start-end-label">here</text>
     </svg>
 
-    <h2 style="margin-top:10px;">Melody Explorer — Staff</h2>
-    <div class="staff-wrap">
-      <canvas id="staffCanvas"></canvas>
+    <h2 style="margin-top:10px;">Melody Explorer — Timeline</h2>
+    <div class="staff-wrap tl-wrap">
+      <svg id="timelineSVG" viewBox="0 0 278 112" preserveAspectRatio="xMidYMid meet" aria-label="Melody timeline staff"></svg>
     </div>
-    <div class="staff-caption">Follows playback in sync with the circle, keyboard, and fretboard</div>
+    <div class="staff-caption" id="tlCaption">Notes in time, 2 bars at a time. Follows playback in sync with the circle, keyboard, and fretboard</div>
 
     <div class="now-playing">
       <div class="now-note" id="nowNote">—</div>
@@ -731,7 +735,7 @@ function songFromParsedMidi(parsed, title){
     g.lyric = best;
   });
 
-  return { title: title || parsed.trackName || 'Untitled MIDI', steps, source: 'midi' };
+  return { title: title || parsed.trackName || 'Untitled MIDI', steps, source: 'midi', beatMs: (tempoMap[0] && tempoMap[0].usPerQuarter ? tempoMap[0].usPerQuarter / 1000 : 500) };
 }
 
 /* ==================================================================
@@ -843,77 +847,117 @@ function resizeCanvasToParent(c){
   const w = Math.max(1, Math.floor(r.width)), h = Math.max(1, Math.floor(r.height));
   if (c.width !== w || c.height !== h){ c.width = w; c.height = h; }
 }
-const staffCanvas = document.getElementById('staffCanvas');
-const staffCtx = staffCanvas.getContext('2d');
-let _lastStaffNotes = [];
-function drawStaff(notes){
-  _lastStaffNotes = notes || [];
-  resizeCanvasToParent(staffCanvas);
-  const x = staffCtx, W = staffCanvas.width, H = staffCanvas.height;
-  x.fillStyle = '#080C14'; x.fillRect(0, 0, W, H);
+/* ---- Timeline staff (Sep 29 2026) ----------------------------------
+   Ported from Music Theory Pro's TIMELINE tab (drawTimelineStaff): the
+   whole song laid out as notes in time on a treble staff, 4 bars (16
+   beats) per page, bar lines every 4 beats, KCM-colored noteheads, and a
+   red playhead on the note sounding right now. Chords stack vertically on
+   one x position (KCM Staff Notation Law); melodies run left to right.
+   Upcoming notes on the page are shown faded so the eye can read ahead.
+   Public API is unchanged: drawStaff(notes[, stepIndex]) and buildStaff(song).
+   ------------------------------------------------------------------- */
+const TL_SVG_NS = 'http://www.w3.org/2000/svg';
+const TL_BEATS_PER_BAR = 4, TL_BARS_PER_PAGE = 2;
+const TL_PAGE_BEATS = TL_BEATS_PER_BAR * TL_BARS_PER_PAGE;
+const TL_MARGIN_X = 40, TL_PX_PER_BEAT = 28, TL_W = TL_MARGIN_X + TL_PAGE_BEATS * TL_PX_PER_BEAT + 14, TL_H = 112;
+const timelineSVG = document.getElementById('timelineSVG');
+const tlCaption = document.getElementById('tlCaption');
+let _tl = { song: null, beats: [], page: 0, activeIdx: -1 };
 
-  const marginL = W * 0.16, marginR = W * 0.04;
-  const staffCY = H * 0.46;
-  const ls = Math.max(7, Math.min(H * 0.082, 20)); // line spacing — same ratio as the Observatory's original
-  const spToY = sp => staffCY - (sp - 6) * (ls / 2);
-  const line1Y = spToY(2), line5Y = spToY(10); // E4 .. F5
-  const staffLeft = marginL * 0.55, staffRight = W - marginR;
-
-  for (let i = 0; i < 5; i++){
-    const ly = spToY(2 + i * 2);
-    x.beginPath(); x.moveTo(staffLeft, ly); x.lineTo(staffRight, ly);
-    x.strokeStyle = 'rgba(255,255,255,.42)'; x.lineWidth = 0.8; x.stroke();
+function tlEstimateBeatMs(song){
+  if (song.beatMs) return song.beatMs;
+  if (song.source === 'demo') return DEMO_BASE_BEAT_MS;
+  // No tempo info (e.g. a Decoder hand-off): use the most common gap between
+  // note onsets as one beat, folded into a sensible 300-900ms range.
+  const gaps = [];
+  for (let i = 1; i < song.steps.length; i++){
+    const g = song.steps[i].tStart - song.steps[i - 1].tStart;
+    if (g > 60) gaps.push(Math.round(g / 20) * 20);
   }
-  x.strokeStyle = 'rgba(255,255,255,.5)'; x.lineWidth = 1;
-  x.beginPath(); x.moveTo(staffLeft, line1Y); x.lineTo(staffLeft, line5Y); x.stroke();
-  x.beginPath(); x.moveTo(staffRight, line1Y); x.lineTo(staffRight, line5Y); x.stroke();
-  drawClef(x, staffLeft - ls * 0.12, staffCY, ls);
-
-  const valid = (notes || []).filter(n => n.midi >= 28 && n.midi <= 100).slice(0, 6);
-  if (!valid.length) return;
-  const sorted = [...valid].sort((a, b) => a.midi - b.midi);
-
-  const noteAreaX0 = marginL * 1.1, noteAreaX1 = W - marginR * 2.2;
-  const noteR = Math.max(4, ls * 0.44);
-
-  sorted.forEach((n, idx) => {
-    let dm = n.midi, sp = staffPos(dm);
-    while (sp < -4 && dm < 108){ dm += 12; sp = staffPos(dm); }
-    while (sp > 14 && dm > 12){ dm -= 12; sp = staffPos(dm); }
-    const name = noteNameFromMidi(dm);
-    const color = COLOR[name];
-    const noteY = spToY(sp);
-    const noteX = sorted.length === 1 ? W / 2 : noteAreaX0 + idx * (noteAreaX1 - noteAreaX0) / Math.max(1, sorted.length - 1);
-
-    const ledgerW = noteR * 1.8;
-    x.strokeStyle = hexRgba(color, 0.75); x.lineWidth = 1.1;
-    if (sp <= 1){
-      for (let lsp = 0; lsp >= sp; lsp -= 2){
-        const lY = spToY(lsp);
-        x.beginPath(); x.moveTo(noteX - ledgerW, lY); x.lineTo(noteX + ledgerW, lY); x.stroke();
-      }
-    } else if (sp >= 11){
-      for (let lsp = 12; lsp <= sp; lsp += 2){
-        const lY = spToY(lsp);
-        x.beginPath(); x.moveTo(noteX - ledgerW, lY); x.lineTo(noteX + ledgerW, lY); x.stroke();
-      }
+  if (!gaps.length) return 500;
+  const counts = {}; let best = gaps[0];
+  gaps.forEach(g => { counts[g] = (counts[g] || 0) + 1; if (counts[g] > counts[best]) best = g; });
+  let b = best;
+  while (b < 300) b *= 2;
+  while (b > 900) b /= 2;
+  return b;
+}
+function tlStaffY(sp){ return 80 - sp * 5; } // sp 2 (E4) = bottom line y70, sp 10 (F5) = top line y30
+function tlEl(tag, attrs, parent){
+  const e = document.createElementNS(TL_SVG_NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  (parent || timelineSVG).appendChild(e);
+  return e;
+}
+function tlRender(){
+  const svg = timelineSVG;
+  if (!svg) return;
+  svg.innerHTML = '';
+  svg.setAttribute('viewBox', `0 0 ${TL_W} ${TL_H}`);
+  for (let i = 0; i < 5; i++) tlEl('line', { x1: 34, y1: 30 + i * 10, x2: TL_W - 6, y2: 30 + i * 10, stroke: '#000', 'stroke-width': 1 });
+  const clef = tlEl('text', { x: 3, y: 64, 'font-size': 40, 'font-family': 'serif', fill: '#000' });
+  clef.textContent = '\u{1D11E}';
+  const song = _tl.song;
+  const pageStart = _tl.page * TL_PAGE_BEATS;
+  for (let bar = 0; bar <= TL_BARS_PER_PAGE; bar++){
+    const x = TL_MARGIN_X + bar * TL_BEATS_PER_BAR * TL_PX_PER_BEAT;
+    tlEl('line', { x1: x, y1: 29, x2: x, y2: 71, stroke: bar === 0 ? '#555' : '#777', 'stroke-width': bar === 0 ? 1.6 : 0.8 });
+    if (bar < TL_BARS_PER_PAGE){
+      const n = tlEl('text', { x: x + 2, y: 24, 'font-size': 7, 'font-family': 'Montserrat, sans-serif', fill: '#555' });
+      n.textContent = String(_tl.page * TL_BARS_PER_PAGE + bar + 1);
     }
-
-    x.beginPath(); x.ellipse(noteX, noteY, noteR, noteR * 0.68, -0.2, 0, Math.PI * 2);
-    x.fillStyle = color; x.shadowColor = color; x.shadowBlur = 10;
-    x.fill(); x.shadowBlur = 0;
-
-    const stemDir = sp >= 6 ? -1 : 1;
-    const stemLen = ls * 3.2;
-    const stemX = noteX + noteR * 0.85 * stemDir;
-    x.beginPath(); x.moveTo(stemX, noteY); x.lineTo(stemX, noteY - stemLen * stemDir);
-    x.strokeStyle = hexRgba(color, 0.8); x.lineWidth = 1.1; x.stroke();
-
-    const fz = Math.max(6, Math.min(11, ls * 0.52));
-    x.font = `bold ${fz}px 'Montserrat', sans-serif`;
-    x.fillStyle = color; x.textAlign = 'center'; x.textBaseline = 'top';
-    x.fillText(name.replace('#', '♯'), noteX, noteY + noteR * 2.1);
+  }
+  if (!song || !song.steps.length) return;
+  let playheadX = null;
+  song.steps.forEach((step, i) => {
+    const beat = _tl.beats[i];
+    if (beat < pageStart - 0.001 || beat >= pageStart + TL_PAGE_BEATS - 0.001) return;
+    const x = TL_MARGIN_X + (beat - pageStart) * TL_PX_PER_BEAT + 9;
+    const isActive = i === _tl.activeIdx;
+    const isFuture = _tl.activeIdx >= 0 && i > _tl.activeIdx;
+    if (isActive) playheadX = x;
+    const g = tlEl('g', { opacity: isFuture ? 0.45 : 1, 'data-step': i });
+    (step.notes || []).filter(n => n.midi >= 21 && n.midi <= 108).slice(0, 6).forEach(n => {
+      let dm = n.midi, sp = staffPos(dm);
+      while (sp < -4 && dm < 108){ dm += 12; sp = staffPos(dm); }
+      while (sp > 14 && dm > 12){ dm -= 12; sp = staffPos(dm); }
+      const y = tlStaffY(sp);
+      if (sp <= 0) for (let l = 0; l >= sp; l -= 2) tlEl('line', { x1: x - 7, y1: tlStaffY(l), x2: x + 7, y2: tlStaffY(l), stroke: '#000', 'stroke-width': 1 }, g);
+      if (sp >= 12) for (let l = 12; l <= sp; l += 2) tlEl('line', { x1: x - 7, y1: tlStaffY(l), x2: x + 7, y2: tlStaffY(l), stroke: '#000', 'stroke-width': 1 }, g);
+      const name = noteNameFromMidi(dm);
+      if (name.includes('#')){
+        const acc = tlEl('text', { x: x - 13, y: y + 3.5, 'font-size': 10, 'font-family': 'serif', fill: '#000' }, g);
+        acc.textContent = '♯';
+      }
+      tlEl('ellipse', { cx: x, cy: y, rx: isActive ? 6.2 : 5, ry: isActive ? 5 : 4, fill: COLOR[name], stroke: '#000', 'stroke-width': isActive ? 1.4 : 0.8, class: 'tl-note-head' }, g);
+    });
   });
+  if (playheadX !== null){
+    tlEl('line', { x1: playheadX, y1: 20, x2: playheadX, y2: 90, stroke: '#e74c3c', 'stroke-width': 1.5, opacity: 0.85 });
+  }
+}
+function buildStaff(song){
+  _tl.song = song;
+  _tl.page = 0;
+  _tl.activeIdx = -1;
+  _tl.beats = [];
+  if (song && song.steps && song.steps.length){
+    const beatMs = tlEstimateBeatMs(song);
+    const t0 = song.steps[0].tStart || 0;
+    _tl.beats = song.steps.map(st => Math.round(((st.tStart - t0) / beatMs) * 4) / 4); // quantize to 16ths
+    const bars = Math.ceil((_tl.beats[_tl.beats.length - 1] + 1) / TL_BEATS_PER_BAR);
+    if (tlCaption) tlCaption.textContent = `${bars} bar${bars === 1 ? '' : 's'} · 2 bars at a time · follows playback in sync with the circle, keyboard, and fretboard`;
+  }
+  tlRender();
+}
+function drawStaff(notes, stepIdx){
+  if (typeof stepIdx === 'number' && _tl.song === currentSong && _tl.beats.length){
+    _tl.activeIdx = stepIdx;
+    _tl.page = Math.floor(_tl.beats[stepIdx] / TL_PAGE_BEATS);
+  } else if (typeof stepIdx !== 'number' && !(notes && notes.length)){
+    _tl.activeIdx = -1; // cleared between steps / on stop: keep the page, drop the playhead
+  }
+  tlRender();
 }
 function drawClef(x, cx, cy, ls){
   x.save(); x.translate(cx, cy); const s = ls * .28;
@@ -931,8 +975,6 @@ function hexRgba(h, a){
   const r = parseInt(h.slice(1, 3), 16), g = parseInt(h.slice(3, 5), 16), b = parseInt(h.slice(5, 7), 16);
   return `rgba(${r},${g},${b},${a})`;
 }
-function buildStaff(song){ drawStaff([]); } // new song loaded: reset to an empty staff
-window.addEventListener('resize', () => drawStaff(_lastStaffNotes));
 
 /* ---------------- Piano (2 registers / 2 real octaves: C4–B5. The
    circle/fretboard stay pitch-class based per the KCM visual standard,
@@ -1243,7 +1285,7 @@ function highlightStep(i){
   if (stepEls[i]){
     stepEls[i].classList.add('active');
   }
-  drawStaff(step.notes); // live "currently sounding" chord, same as the Sound Observatory's staff
+  drawStaff(step.notes, i); // timeline staff: page to this step, playhead on it
 
   nowNoteEl.textContent = step.noteNames.map(n => n.replace('#','♯')).join(' + ');
   nowNoteEl.style.color = COLOR[step.noteNames[0]];
