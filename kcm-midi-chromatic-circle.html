@@ -1023,10 +1023,29 @@ let audioCtx = null;
 const activeTones = new Set(); // {osc, gain} currently ringing — tracked so Stop can silence them instantly
 function ensureAudio(){
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  // Route through the same shared master bus + limiter every other KCM
+  // panel uses (music-theory-pro.html), so this panel isn't quieter than
+  // the rest of the Console. Matches the Aug 29 2026 loudness fix: gain
+  // boosted 1.0 -> 1.6 -> 3.2, plus a compressor as a clip-safety net.
+  if (!window._kcmMasterBus){
+    window._kcmMasterBus = audioCtx.createGain();
+    window._kcmMasterBus.gain.value = 3.2;
+    if (!window._kcmLimiter){
+      window._kcmLimiter = audioCtx.createDynamicsCompressor();
+      window._kcmLimiter.threshold.value = -16;
+      window._kcmLimiter.knee.value = 6;
+      window._kcmLimiter.ratio.value = 20;
+      window._kcmLimiter.attack.value = 0.001;
+      window._kcmLimiter.release.value = 0.08;
+      window._kcmLimiter.connect(audioCtx.destination);
+    }
+    window._kcmMasterBus.connect(window._kcmLimiter);
+  }
   return audioCtx;
 }
 function playTone(freq, durationSec, velScale){
   if (!audioCtx) return;
+  const outBus = window._kcmMasterBus || audioCtx.destination;
   const osc = audioCtx.createOscillator();
   const gain = audioCtx.createGain();
   osc.type = 'triangle';
@@ -1037,7 +1056,7 @@ function playTone(freq, durationSec, velScale){
   gain.gain.linearRampToValueAtTime(peak, now + 0.02);
   gain.gain.linearRampToValueAtTime(peak * 0.75, now + durationSec * 0.6);
   gain.gain.linearRampToValueAtTime(0, now + durationSec);
-  osc.connect(gain).connect(audioCtx.destination);
+  osc.connect(gain).connect(outBus);
   osc.start(now);
   osc.stop(now + durationSec + 0.02);
   const handle = { osc, gain };
