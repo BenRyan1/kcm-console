@@ -1377,6 +1377,17 @@ window.addEventListener('message', function (ev) {
       restart();
       return;
     }
+
+    // Console-wide "Stop All" button (js/bridge.js #kcm-stop-all) broadcasts
+    // KCM_STOP to every panel iframe. This panel never listened for it, so
+    // playing a song here and hitting the Console's master Stop button left
+    // it running right through the click -- still sounding, still ticking.
+    // KCM_TICK_STOP included for parity with how music-theory-pro.html treats
+    // the two messages identically.
+    if (ev.data.type === 'KCM_STOP' || ev.data.type === 'KCM_TICK_STOP') {
+      restart();
+      return;
+    }
   } catch (e) { /* ignore malformed messages */ }
 });
 
