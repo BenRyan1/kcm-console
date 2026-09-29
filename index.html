@@ -228,13 +228,19 @@
       </div>
       <script>
       (function(){
-        // The Standard/Extended toggle itself now lives INSIDE the page
+        // The Standard/Extended toggle itself lives INSIDE the page
         // (circle-of-fifths.html / circle-of-fifths-extended.html, under
         // the title and subtitle) rather than up here in the panel's
-        // chrome. This script just keeps listening for a request from
-        // whichever variant is loaded and swaps the iframe accordingly,
-        // persisting the choice the same way it always did.
-        var KEY = 'kcm_cof_variant';
+        // chrome. This script just listens for a request from whichever
+        // variant is loaded and swaps the iframe accordingly.
+        //
+        // Sep 29, 2026: no longer persisted across visits (was
+        // localStorage-backed, which meant one Extended click silently
+        // became "the default" for that browser forever after -- Ben's
+        // call was that Standard should always be what loads, every time,
+        // for everyone, with Extended available as an in-session choice
+        // only). Do not reintroduce localStorage here without checking
+        // with Ben first.
         var SRCS = { standard: 'circle-of-fifths.html', extended: 'circle-of-fifths-extended.html' };
         var iframe = document.getElementById('iframe-cof');
         function apply(variant){
@@ -242,16 +248,13 @@
           if (iframe && iframe.getAttribute('src') !== SRCS[variant]) {
             iframe.src = SRCS[variant];
           }
-          try { localStorage.setItem(KEY, variant); } catch (e) {}
         }
         window.addEventListener('message', function(ev){
           if (ev.data && ev.data.type === 'KCM_COF_SET_VARIANT' && SRCS[ev.data.variant]) {
             apply(ev.data.variant);
           }
         });
-        var saved = 'standard';
-        try { saved = localStorage.getItem(KEY) || 'standard'; } catch (e) {}
-        apply(saved);
+        apply('standard');
       })();
       </script>
 
