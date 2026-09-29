@@ -421,19 +421,31 @@
       <div class="lib-status" id="builtinLibStatus"></div>
     </div>
 
-    <h2 style="margin-top:22px;">More From GitHub <span style="font-size:10px;color:var(--text-secondary);text-transform:none;letter-spacing:0;">(optional)</span></h2>
+    <h2 style="margin-top:22px;">Full KCM Melody Library — Songs + Sections <span style="font-size:10px;color:var(--text-secondary);text-transform:none;letter-spacing:0;">(online)</span></h2>
     <div class="controls">
+      <div class="lib-status">All 375 full melodies plus 1,163 song sections (verse, chorus, bridge…) from the KCM Melody Library on GitHub. Connects automatically.</div>
       <div class="btn-row">
-        <input type="text" id="repoInput" class="field-input" value="BenRyan1/KCM_Melody_Library" placeholder="owner/repo">
-        <button id="browseLibBtn">🔎 Browse</button>
+        <input type="text" id="repoSearch" class="field-input" placeholder="Search by title, artist, year, or verse/chorus…">
+        <select id="repoKind" class="lib-select" style="width:auto;flex:0 0 auto;">
+          <option value="all">All</option>
+          <option value="full">Full songs</option>
+          <option value="section">Sections</option>
+        </select>
       </div>
-      <select id="librarySelect" class="lib-select" disabled>
-        <option>— browse a public repo to list its MIDI files —</option>
+      <select id="librarySelect" class="lib-select" size="8" disabled>
+        <option>— connecting to the KCM Melody Library… —</option>
       </select>
       <div class="btn-row">
-        <button id="loadLibBtn" disabled>Load Selected Song</button>
+        <button id="loadLibBtn" disabled>▶ Load Selected Song</button>
       </div>
-      <div class="lib-status" id="libStatus">Only works if that repo is public on GitHub — the built-in library above always works.</div>
+      <div class="lib-status" id="libStatus">Connecting…</div>
+      <details style="margin-top:6px;">
+        <summary style="font-size:11px;color:var(--text-secondary);cursor:pointer;">Use a different GitHub repo</summary>
+        <div class="btn-row" style="margin-top:8px;">
+          <input type="text" id="repoInput" class="field-input" value="BenRyan1/KCM_Melody_Library" placeholder="owner/repo">
+          <button id="browseLibBtn">🔎 Browse</button>
+        </div>
+      </details>
       <div class="btn-row">
         <label for="midiFileInput" class="file-btn">📁 Upload Any MIDI File</label>
         <input type="file" id="midiFileInput" accept=".mid,.midi,audio/midi,audio/x-midi" style="display:none;">
@@ -1443,7 +1455,7 @@ function ghRawFallback(owner, repo, branch, path){
 }
 
 async function fetchGithubTree(owner, repo, branch, path, depth, acc){
-  if (depth > 6 || acc.length > 200) return acc;
+  if (depth > 6 || acc.length > 5000) return acc;
   const apiPath = path.split('/').filter(Boolean).map(encodeURIComponent).join('/');
   const url = `https://api.github.com/repos/${owner}/${repo}/contents/${apiPath}?ref=${encodeURIComponent(branch)}`;
   const res = await fetch(url);
@@ -1455,7 +1467,7 @@ async function fetchGithubTree(owner, repo, branch, path, depth, acc){
   const items = await res.json();
   if (!Array.isArray(items)) return acc; // path pointed at a single file, not a directory
   for (const item of items){
-    if (acc.length > 200) break;
+    if (acc.length > 5000) break;
     if (item.type === 'file' && /\.(mid|midi)$/i.test(item.name)){
       acc.push({ path: item.path, download_url: item.download_url || ghRawFallback(owner, repo, branch, item.path) });
     } else if (item.type === 'dir'){
@@ -1508,11 +1520,9 @@ async function browseLibrary(){
     return;
   }
 
-  libraryFiles = files;
-  librarySelect.innerHTML = files.map((f, i) => `<option value="${i}">${f.path}</option>`).join('');
-  librarySelect.disabled = false;
-  loadLibBtn.disabled = false;
-  libStatusEl.textContent = `Found ${files.length} MIDI file${files.length === 1 ? '' : 's'} on "${libStatusEl.dataset.branch}". Pick one and click Load Selected Song.`;
+  libraryFiles = files.map(f => Object.assign({ label: f.path, kind: 'full', search: f.path.toLowerCase() }, f));
+  renderRepoOptions();
+  libStatusEl.textContent = `Found ${files.length} MIDI file${files.length === 1 ? '' : 's'} in ${owner}/${repo} ("${libStatusEl.dataset.branch}"). Pick one and click Load Selected Song.`;
 }
 
 async function loadSelectedFromLibrary(){
@@ -1526,10 +1536,10 @@ async function loadSelectedFromLibrary(){
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const buf = await res.arrayBuffer();
     const parsed = parseMidi(buf);
-    const title = f.path.split('/').pop().replace(/\.(mid|midi)$/i, '');
+    const title = f.title || f.path.split('/').pop().replace(/\.(mid|midi)$/i, '');
     const song = songFromParsedMidi(parsed, title);
     setSong(song);
-    libStatusEl.textContent = 'Loaded from library: ' + f.path;
+    libStatusEl.textContent = 'Loaded: ' + (f.label || f.path);
   } catch (err){
     libStatusEl.textContent = 'Could not load "' + f.path + '": ' + err.message;
   } finally {
@@ -1539,6 +1549,124 @@ async function loadSelectedFromLibrary(){
 
 browseLibBtn.addEventListener('click', browseLibrary);
 loadLibBtn.addEventListener('click', loadSelectedFromLibrary);
+librarySelect.addEventListener('dblclick', loadSelectedFromLibrary);
+
+/* ==================================================================
+   Full KCM Melody Library auto-connect (Sep 29 2026).
+   Loads the complete file list from BenRyan1/KCM_Melody_Library in ONE
+   request (KCM_FINAL/REPORTS/all_midi_files.txt on raw.githubusercontent,
+   which has no API rate limit), with the git-trees API as a fallback.
+   Only the canonical KCM_FINAL/ folder is used (the repo also holds two
+   duplicate copies of the same files). Full-melody titles come from the
+   built-in LIBRARY_INDEX; section types (verse/chorus/…) come from the
+   repo's own per-melody metadata CSV.
+   ================================================================== */
+const KCM_LIB = { owner: 'BenRyan1', repo: 'KCM_Melody_Library', branch: 'main', root: 'KCM_FINAL/' };
+const repoSearch = document.getElementById('repoSearch');
+const repoKind = document.getElementById('repoKind');
+
+function kcmRaw(path){
+  return `https://raw.githubusercontent.com/${KCM_LIB.owner}/${KCM_LIB.repo}/${KCM_LIB.branch}/${path.split('/').map(encodeURIComponent).join('/')}`;
+}
+
+function renderRepoOptions(){
+  const q = (repoSearch.value || '').trim().toLowerCase();
+  const kind = repoKind.value;
+  const opts = [];
+  libraryFiles.forEach((f, i) => {
+    if (kind !== 'all' && f.kind !== kind) return;
+    if (q && !f.search.includes(q)) return;
+    opts.push(`<option value="${i}">${f.label.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</option>`);
+  });
+  librarySelect.innerHTML = opts.length ? opts.join('') : '<option disabled>— no matches —</option>';
+  librarySelect.disabled = !opts.length;
+  loadLibBtn.disabled = !opts.length;
+}
+repoSearch.addEventListener('input', renderRepoOptions);
+repoKind.addEventListener('change', renderRepoOptions);
+
+async function kcmListFiles(){
+  try {
+    const res = await fetch(kcmRaw(KCM_LIB.root + 'REPORTS/all_midi_files.txt'));
+    if (res.ok){
+      const list = (await res.text()).split(/\r?\n/).map(x => x.trim()).filter(x => /\.midi?$/i.test(x));
+      if (list.length) return list;
+    }
+  } catch (e) {}
+  const res = await fetch(`https://api.github.com/repos/${KCM_LIB.owner}/${KCM_LIB.repo}/git/trees/${KCM_LIB.branch}?recursive=1`);
+  if (!res.ok) throw new Error('GitHub ' + res.status);
+  const j = await res.json();
+  return (j.tree || []).map(x => x.path).filter(p => /\.midi?$/i.test(p));
+}
+
+async function kcmSectionMeta(){
+  const meta = {};
+  try {
+    const res = await fetch(kcmRaw(KCM_LIB.root + 'METADATA/bimmuda_per_melody_metadata.csv'));
+    if (!res.ok) return meta;
+    (await res.text()).split(/\r?\n/).slice(1).forEach(line => {
+      const c = line.split(',');
+      if (c[0]) meta[c[0].trim()] = { type: (c[1] || '').trim(), bars: (c[4] || '').trim() };
+    });
+  } catch (e) {}
+  return meta;
+}
+
+async function connectKcmLibrary(){
+  libStatusEl.textContent = 'Connecting to the KCM Melody Library…';
+  try {
+    const [paths, meta] = await Promise.all([kcmListFiles(), kcmSectionMeta()]);
+    const kcmPaths = paths.filter(p => p.startsWith(KCM_LIB.root));
+    // Song key = "YYYY_NN" or "YYYY_NNa" (a/b = A-side/B-side). The built-in
+    // LIBRARY_INDEX lists each year's songs in the same sorted order as the
+    // repo's FULL_MELODIES files, so match them up position-by-position.
+    const RX = /^(\d{4})_(\d+[a-z]?)_(full|misc|\d+)\.midi?$/i;
+    const idxByYear = {};
+    LIBRARY_INDEX.forEach(e => { (idxByYear[e.year] = idxByYear[e.year] || []).push(e); });
+    const fullKeysByYear = {};
+    kcmPaths.forEach(p => { const m = p.split('/').pop().match(RX); if (m && m[3].toLowerCase() === 'full') (fullKeysByYear[m[1]] = fullKeysByYear[m[1]] || []).push(m[1] + '_' + m[2]); });
+    const entryByKey = {};
+    Object.keys(fullKeysByYear).forEach(y => { fullKeysByYear[y].sort().forEach((k, i) => { if (idxByYear[y] && idxByYear[y][i]) entryByKey[k] = idxByYear[y][i]; }); });
+    const files = [];
+    kcmPaths.forEach(p => {
+      const name = p.split('/').pop();
+      const m = name.match(RX);
+      if (!m) return;
+      const key = m[1] + '_' + m[2];
+      const e = entryByKey[key];
+      const base = e ? e.label : `${m[1]} — #${m[2]}`;
+      const genre = e ? (e.genre || '') : '';
+      if (m[3].toLowerCase() === 'full'){
+        const label = base + ' — Full song';
+        files.push({ path: p, download_url: kcmRaw(p), kind: 'full', label, title: e ? e.songTitle : name,
+                     search: (label + ' ' + genre).toLowerCase(), sort: key + '_00' });
+      } else {
+        const isMisc = m[3].toLowerCase() === 'misc';
+        const md = meta[key + '_' + m[3]] || {};
+        const type = md.type && md.type !== 'N/A' ? md.type : '';
+        const bits = [type, md.bars ? md.bars + ' bars' : ''].filter(Boolean).join(', ');
+        const secName = isMisc ? 'Extra section' : `Section ${+m[3]}`;
+        const label = base + ` — ${secName}` + (bits ? ` (${bits})` : '');
+        files.push({ path: p, download_url: kcmRaw(p), kind: 'section', label,
+                     title: (e ? e.songTitle : name) + ` · ${secName}` + (type ? ` (${type})` : ''),
+                     search: (label + ' ' + genre).toLowerCase(), sort: key + '_' + (isMisc ? '99' : m[3].padStart(2, '0')) });
+      }
+    });
+    if (!files.length) throw new Error('no songs found');
+    files.sort((a, b) => a.sort < b.sort ? -1 : a.sort > b.sort ? 1 : 0);
+    libraryFiles = files;
+    renderRepoOptions();
+    const nFull = files.filter(f => f.kind === 'full').length;
+    libStatusEl.textContent = `Connected: ${nFull} full songs + ${files.length - nFull} sections. Pick one and click Load (or double-click).`;
+  } catch (err){
+    libraryFiles = [];
+    librarySelect.innerHTML = '<option>— library unavailable right now —</option>';
+    librarySelect.disabled = true;
+    loadLibBtn.disabled = true;
+    libStatusEl.textContent = 'Could not reach the online library (' + err.message + '). The built-in 375 songs above still work.';
+  }
+}
+connectKcmLibrary();
 
 /* ---------------- Built-in KCM Melody Library browser ---------------- */
 const builtinSearch = document.getElementById('builtinSearch');
