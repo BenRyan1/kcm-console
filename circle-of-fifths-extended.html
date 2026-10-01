@@ -214,6 +214,9 @@ body{font-family:var(--font-b);background:radial-gradient(ellipse at 30% 20%,#1e
 #cofRecStatus{font-size:0.68rem;color:#888;font-style:italic;}
 #cofNoteCount{background:rgba(200,35,51,0.85);color:#fff;border-radius:12px;
   padding:2px 8px;font-size:0.65rem;font-weight:800;display:none;}
+/* Mode vs Sequence captions, added 2026-10-01 */
+.kcm-cap{font-family:var(--font-b);font-size:.68rem;line-height:1.45;color:rgba(232,232,248,.72);margin:.35rem 0 .45rem;text-align:center;}
+.kcm-cap strong{color:#F4D03F;font-weight:700;letter-spacing:.02em;}
 </style>
 </head>
 <body>
@@ -277,6 +280,7 @@ body{font-family:var(--font-b);background:radial-gradient(ellipse at 30% 20%,#1e
         <button class="pbtn" id="majCW" style="background:linear-gradient(135deg,#001818,#000c0c);border-color:rgba(0,192,192,.35);color:#F4D03F;font-size:.65rem;">CW ↻ Maj</button>
         <button class="pbtn" id="majCCW" style="background:linear-gradient(135deg,#001818,#000c0c);border-color:rgba(0,192,192,.35);color:#F4D03F;font-size:.65rem;">↺ CCW Maj</button>
       </div>
+      <p class="kcm-cap"><strong>Sequence = the path around the circle.</strong> CW &#8635; climbs by fifths (tension &rarr; resolution). &#8634; CCW falls by fifths (warm, floating).</p>
       <button class="stop-btn" id="majStop" style="background:linear-gradient(135deg,rgba(42,5,5,.95),rgba(21,0,0,.98));border:1.5px solid rgba(255,80,80,.5);color:#ff9999;">■  STOP</button>
       <div class="prog-sep maj">
         <div class="ext-level-row" id="majExtLevelRow">
@@ -327,6 +331,7 @@ body{font-family:var(--font-b);background:radial-gradient(ellipse at 30% 20%,#1e
           <button class="stop-btn" id="extStopBtnTop" style="flex:1;margin-top:0;background:linear-gradient(135deg,rgba(42,5,5,.95),rgba(21,0,0,.98));border:1.5px solid rgba(255,80,80,.5);color:#ff9999;">■ Stop</button>
         </div>
 
+        <p class="kcm-cap"><strong>Mode = the notes in each chord.</strong> It sets the color: which 7th, 9th, 11th &amp; 13th tones get stacked on. Pick a Mode, then run a Sequence to hear those chords travel the circle.</p>
         <div class="ext-row" id="extModeRow">
           <button class="ext-mode-btn" data-mode="natural">Natural Minor</button>
           <button class="ext-mode-btn" data-mode="dorian">Dorian (Jazz)</button>
@@ -468,6 +473,7 @@ body{font-family:var(--font-b);background:radial-gradient(ellipse at 30% 20%,#1e
         <button class="pbtn" id="minCW" style="background:linear-gradient(135deg,#001818,#000c0c);border-color:rgba(139,107,163,.35);color:#c8a8e8;font-size:.65rem;">CW ↻ Min</button>
         <button class="pbtn" id="minCCW" style="background:linear-gradient(135deg,#001818,#000c0c);border-color:rgba(139,107,163,.35);color:#c8a8e8;font-size:.65rem;">↺ CCW Min</button>
       </div>
+      <p class="kcm-cap"><strong>Sequence = the path around the circle.</strong> CW &#8635; climbs by fifths (tension &rarr; resolution). &#8634; CCW falls by fifths (warm, floating).</p>
       <button class="stop-btn" id="minStop" style="background:linear-gradient(135deg,rgba(42,5,18,.95),rgba(21,0,8,.98));border:1.5px solid rgba(200,80,160,.5);color:#e080c0;">■  STOP</button>
       <div class="prog-sep min">
         <div class="ext-level-row" id="minExtLevelRow">
