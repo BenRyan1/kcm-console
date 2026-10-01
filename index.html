@@ -3,6 +3,16 @@
 <head>
 <script>
 (function(){
+  /* 2026-09-30 (PLAN.md Step 3): visitors arriving from the main site's
+     My Apps page (?via=kcm-account) already gave their email there, so they
+     skip this second email form. Soft gate only: the Console is free. */
+  try{
+    var q=new URLSearchParams(location.search);
+    if(q.get("via")==="kcm-account" && !localStorage.getItem("kcm_access")){
+      localStorage.setItem("kcm_access","kcm-account");
+      localStorage.setItem("kcm_access_granted","true");
+    }
+  }catch(e){}
   var token=localStorage.getItem("kcm_access");
   var granted=localStorage.getItem("kcm_access_granted");
   if(!token || granted!=="true"){window.location.replace("/gate.html");}
@@ -13,7 +23,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <title>KCM Console — Visual Music Theory | Keys, Codes &amp; Modes™</title>
-  <meta name="description" content="KCM Console is a browser-based visual music theory environment. Four synchronized panels — Music Theory Pro, Circle of Fifths, Modal Stencil Player, Chromatic Universe — powered by the 12-Color Chromatic Spectrum™. Save sessions as .gcis files. Built by Benjamin Ryan." />
+  <meta name="description" content="KCM Console is a browser-based visual music theory environment. Six synchronized panels — Music Theory Pro, Circle of Fifths, Modal Stencil Player, Melody Library, Chromatic Universe, The Decoder — powered by the 12-Color Chromatic Spectrum™. Save sessions as .gcis files. Built by Benjamin Ryan." />
   <meta name="author" content="Benjamin Ryan" />
   <meta name="robots" content="index, follow" />
   <meta name="theme-color" content="#008080" />
@@ -90,7 +100,7 @@
       "Circle of Fifths interactive panel",
       "Modal Stencil Player",
       "KCM Chromatic Universe panel",
-      "Four-panel synchronized harmonic state bus",
+      "Six-panel synchronized harmonic state bus",
       ".gcis session save and load",
       "AI Music Prompt Generator",
       "Live mic pitch detection — chord, scale, arpeggio recognition"
@@ -164,8 +174,9 @@
         <h2 id="hero-heading" class="kcm-hero__heading">KCM Console</h2>
         <p class="kcm-hero__lede">
           A visual operating system for music theory. The KCM Console connects
-          four Keys, Codes &amp; Modes applications through a shared harmonic state —
-          Music Theory Pro, Circle of Fifths, Modal Stencil Player, and the Chromatic Universe.
+          six Keys, Codes &amp; Modes applications through a shared harmonic state —
+          Music Theory Pro, Circle of Fifths, Modal Stencil Player, the Melody Library,
+          the Chromatic Universe, and The Decoder.
           Change the root in one panel — every other panel follows in real time.
         </p>
         <div class="kcm-hero__meta">
@@ -354,7 +365,7 @@
     <section class="kcm-status" aria-label="Build status">
       <h3 class="kcm-status__title">What ships in v1.2</h3>
       <ul class="kcm-status__list">
-        <li><strong>Four synchronized panels.</strong> Music Theory Pro, Circle of Fifths, Modal Stencil Player, and Chromatic Universe — all driven by a single shared harmonic state.</li>
+        <li><strong>Six synchronized panels.</strong> Music Theory Pro, Circle of Fifths, Modal Stencil Player, Melody Library, Chromatic Universe, and The Decoder — all driven by a single shared harmonic state.</li>
         <li><strong>Live mic engine.</strong> Sing or play any instrument — pitch detection lights up the chromatic clock, names the chord, identifies the scale, and tracks arpeggios. All panels follow in real time.</li>
         <li><strong>Cross-panel synchronization.</strong> Root, mode, scale, and active notes shared in real time. Change anything anywhere — everything follows.</li>
         <li><strong>.gcis file format.</strong> Save your harmonic state. Load it back later. Portable between sessions.</li>
