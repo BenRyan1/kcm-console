@@ -387,7 +387,7 @@
       <div class="now-lyric" id="nowLyric">Press Play to begin</div>
     </div>
 
-    <div class="strip" id="strip"></div>
+    <!-- Note-circle sequence strip removed 2026-10-01 at Ben's request (code kept, inactive). -->
   </section>
 
   <section class="panel">
@@ -803,8 +803,9 @@ const MAX_STRIP_STEPS = 300;
 const stripEl = document.getElementById('strip');
 let stepEls = [];
 function buildStrip(song){
-  stripEl.innerHTML = '';
   stepEls = [];
+  if (!stripEl) return; // strip removed from the page 2026-10-01
+  stripEl.innerHTML = '';
   const showCount = Math.min(song.steps.length, MAX_STRIP_STEPS);
   for (let i = 0; i < showCount; i++){
     const step = song.steps[i];
