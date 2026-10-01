@@ -418,6 +418,31 @@
         };
         function getIntervalSteps(iv){const s=[];for(let i=1;i<iv.length;i++)s.push(iv[i]-iv[i-1]);return s;}
 
+        // ── Correct note spelling (one letter per scale degree) ──────────
+        // NOTES (sharps) stays the internal pitch-class / color index. For
+        // DISPLAY, every mode is spelled with each letter A–G used exactly
+        // once, so C Aeolian reads C D Eb F G Ab Bb (not C D D# F G G# A#).
+        // If the selected sharp tonic would need double sharps (e.g. A#
+        // Ionian), its flat enharmonic is used instead (Bb Ionian).
+        const LETTERS=["C","D","E","F","G","A","B"];
+        const LETTER_PC={C:0,D:2,E:4,F:5,G:7,A:9,B:11};
+        const FLAT_NAME={"C#":"Db","D#":"Eb","F#":"Gb","G#":"Ab","A#":"Bb"};
+        const PC_FROM_NAME=(function(){const m={};NOTES.forEach((n,i)=>m[n]=i);Object.entries(FLAT_NAME).forEach(([sh,fl])=>m[fl]=m[sh]);m["Cb"]=11;m["Fb"]=4;m["E#"]=5;m["B#"]=0;return m;})();
+        function spellFrom(tonicName,iv){
+            const li=LETTERS.indexOf(tonicName[0]),tpc=PC_FROM_NAME[tonicName],out=[];
+            for(let d=0;d<7;d++){
+                const L=LETTERS[(li+d)%7],target=(tpc+iv[d])%12;
+                let diff=((target-LETTER_PC[L])%12+12)%12;if(diff>6)diff-=12;
+                if(Math.abs(diff)>1)return null; // would need a double accidental
+                out.push(L+(diff===1?"#":diff===-1?"b":""));
+            }
+            out.push(out[0]);return out;
+        }
+        function spellMode(tonic,iv){
+            return spellFrom(tonic,iv)||(FLAT_NAME[tonic]&&spellFrom(FLAT_NAME[tonic],iv))||iv.map(x=>NOTES[(NOTES.indexOf(tonic)+x)%12]);
+        }
+        function toSharpName(n){const pc=PC_FROM_NAME[n];return pc===undefined?null:NOTES[pc];}
+
         let currentTonic="C",playingMode=null,playInterval=null,playSpeed=500;
         let isRecording=false,recordedNotes=[],recordingStartTime=0;
         let audioContext=null;
@@ -442,16 +467,16 @@
 
         function buildStencilCells(containerEl, modeKey, modeData, isPlayZone=false) {
             containerEl.innerHTML="";
-            const ti=NOTES.indexOf(currentTonic),iv=modeData.intervals,steps=getIntervalSteps(iv);
+            const ti=NOTES.indexOf(currentTonic),iv=modeData.intervals,steps=getIntervalSteps(iv),sp=spellMode(currentTonic,iv);
             for(let deg=1;deg<=8;deg++){
                 const cell=document.createElement("div");
                 const dn=document.createElement("span");dn.className="degree-number";dn.textContent=deg;
                 const nn=document.createElement("span");nn.className="note-name";
-                const ni=(ti+iv[deg-1])%12,note=NOTES[ni];nn.textContent=note;
+                const ni=(ti+iv[deg-1])%12,note=sp[deg-1];nn.textContent=note;
                 const intv=document.createElement("span");intv.className="interval";if(deg<8)intv.textContent=steps[deg-1];
-                const midi=MIDI_BASE+iv[deg-1];
-                cell.dataset.midi=midi;cell.dataset.note=note;cell.dataset.degree=deg;
-                cell.className=`degree-cell note-${NOTE_COLORS[note]}`;
+                const midi=MIDI_BASE+ti+iv[deg-1];
+                cell.dataset.midi=midi;cell.dataset.note=note;cell.dataset.pc=ni;cell.dataset.degree=deg;
+                cell.className=`degree-cell note-${NOTE_COLORS[NOTES[ni]]}`;
                 cell.appendChild(dn);cell.appendChild(nn);cell.appendChild(intv);
                 cell.addEventListener("click",(e)=>{
                     e.stopPropagation();playNoteByMidi(midi);
@@ -485,16 +510,16 @@
 
         function buildSequencerCells(containerEl,modeKey,modeData){
             containerEl.innerHTML="";
-            const ti=NOTES.indexOf(currentTonic),iv=modeData.intervals;
+            const ti=NOTES.indexOf(currentTonic),iv=modeData.intervals,sp=spellMode(currentTonic,iv);
             sequenceOrder.forEach((deg,idx)=>{
                 const cell=document.createElement("div");
                 const handle=document.createElement("span");handle.className="seq-drag-handle";handle.textContent="⋮⋮";
                 const dn=document.createElement("span");dn.className="degree-number";dn.textContent=deg;
                 const nn=document.createElement("span");nn.className="note-name";
-                const ni=(ti+iv[deg-1])%12,note=NOTES[ni];nn.textContent=note;
-                const midi=MIDI_BASE+iv[deg-1];
-                cell.dataset.midi=midi;cell.dataset.note=note;cell.dataset.degree=deg;cell.dataset.seqIdx=idx;
-                cell.className=`degree-cell seq-cell note-${NOTE_COLORS[note]}`;
+                const ni=(ti+iv[deg-1])%12,note=sp[deg-1];nn.textContent=note;
+                const midi=MIDI_BASE+ti+iv[deg-1];
+                cell.dataset.midi=midi;cell.dataset.note=note;cell.dataset.pc=ni;cell.dataset.degree=deg;cell.dataset.seqIdx=idx;
+                cell.className=`degree-cell seq-cell note-${NOTE_COLORS[NOTES[ni]]}`;
                 cell.draggable=true;
                 cell.appendChild(handle);cell.appendChild(dn);cell.appendChild(nn);
 
@@ -544,10 +569,9 @@
 
         function buildIntervalMap(modeData) {
             const map=document.getElementById("interval-map");map.innerHTML="";
-            const ti=NOTES.indexOf(currentTonic),iv=modeData.intervals,steps=getIntervalSteps(iv);
+            const iv=modeData.intervals,steps=getIntervalSteps(iv),sp=spellMode(currentTonic,iv);
             for(let i=0;i<steps.length;i++){
-                const ni=(ti+iv[i])%12,note=NOTES[ni];
-                const nxt=(ti+iv[i+1])%12,nextNote=NOTES[nxt];
+                const note=sp[i],nextNote=sp[i+1];
                 const row=document.createElement("div");row.className="interval-row";row.dataset.degree=i+1;
                 const badge=document.createElement("div");badge.className="interval-badge";badge.textContent=i+1;
                 const step=document.createElement("div");
@@ -643,8 +667,11 @@
             if(relEl){
                 const deg=md.degree;
                 const ordinals=["","1st","2nd","3rd","4th","5th","6th","7th"];
-                const parentKey=NOTES[((NOTES.indexOf(currentTonic)-(md.intervals[deg-1]||0))+120)%12];
-                relEl.textContent=deg===1?`Root mode — ${currentTonic} Major scale`:`${ordinals[deg]} mode of ${parentKey} Major`;
+                // Parent major key = the note of THIS mode sitting where the
+                // parent's tonic falls (e.g. C Aeolian → Eb, C Dorian → Bb).
+                const sp=spellMode(currentTonic,md.intervals);
+                const parentKey=sp[(8-deg)%7];
+                relEl.textContent=deg===1?`Root mode — ${sp[0]} Major scale`:`${ordinals[deg]} mode of ${parentKey} Major`;
             }
             // Compare panel
             const compCol=document.getElementById("compare-col");
@@ -885,7 +912,7 @@
                 if(ev.data.type==='KCM_STOP'){stopPlaying();playingMode=null;renderTabs();renderActivePanel();if(audioContext)audioContext.suspend();return;}
                 if(ev.data.type!=='KCM_STATE')return;
                 var p=ev.data.payload;if(!p)return;var changed=false;
-                if(p.root&&p.root!==currentTonic){currentTonic=p.root;var sel=document.getElementById('tonicSelect');if(sel)sel.value=currentTonic;changed=true;}
+                var nr=p.root?toSharpName(p.root):null;if(nr&&nr!==currentTonic){currentTonic=nr;var sel=document.getElementById('tonicSelect');if(sel)sel.value=currentTonic;changed=true;}
                 if(p.mode&&VM.indexOf(p.mode)!==-1&&p.mode!==playingMode){if(isPlaying)stopPlaying();playingMode=p.mode;changed=true;}
                 if(changed){renderTabs();renderActivePanel();}
                 // Live note-by-note highlighting (e.g. The Decoder playing a
@@ -901,8 +928,7 @@
                     for(var pcI=0;pcI<12;pcI++){
                         var was=!!prevPcs[pcI],isOn=!!newPcs[pcI];
                         if(was!==isOn){
-                            var noteName=NOTES[pcI];
-                            document.querySelectorAll('.degree-cell[data-note="'+noteName+'"]').forEach(function(c){c.classList.toggle('bus-live',isOn);});
+                            document.querySelectorAll('.degree-cell[data-pc="'+pcI+'"]').forEach(function(c){c.classList.toggle('bus-live',isOn);});
                         }
                     }
                     window._mspBusPcCounts=newPcs;
