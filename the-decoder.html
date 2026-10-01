@@ -70,7 +70,8 @@
     .layout{ flex-direction:column; }
   }
   .visual-pane{
-    flex:2;
+    flex:1; /* was 2; compact reel 2026-10-01 gives the control side more room */
+    min-width:0;
     padding:28px;
     display:flex;
     flex-direction:column;
@@ -171,9 +172,13 @@
   }
   .voice-chips{
     display:flex;
-    flex-wrap:wrap;
+    flex-wrap:nowrap;          /* compact: one scrolling row per voice */
+    overflow-x:auto;
+    position:relative;
     gap:5px;
     flex:1;
+    min-width:0;
+    padding:8px 4px;
   }
 
   .dropzone{
@@ -217,20 +222,25 @@
   .info-grid .k{ color:var(--text-secondary); }
   .info-grid .v{ color:var(--text-primary); font-weight:600; }
 
+  /* Compact reel (2026-10-01): one row that follows playback instead of a
+     full-song grid. Scroll sideways to see the rest of the song. */
   .reel{
-    flex:1;
+    flex:0 0 auto;
     display:flex;
     align-items:center;
-    flex-wrap:wrap;
+    flex-wrap:nowrap;
+    overflow-x:auto;
+    position:relative;
     gap:6px;
-    padding:20px;
+    padding:14px 16px;
     background:rgba(255,255,255,0.02);
     border:1px solid var(--border);
     border-radius:10px;
-    min-height:220px;
-    align-content:flex-start;
+    min-height:72px;
   }
+  .reel:has(.voice-row){ flex-direction:column; align-items:stretch; overflow-x:visible; }
   .note-chip{
+    flex-shrink:0;
     width:34px; height:34px;
     border-radius:50%;
     display:flex; align-items:center; justify-content:center;
@@ -294,7 +304,7 @@
     <div class="pane-header">
       <div>
         <h2>Decoded Pattern</h2>
-        <p class="hint">Each note appears in its Chromatic Spectrum color, in the order it was played. The outlined chip is the detected root.</p>
+        <p class="hint">Each note in its Chromatic Spectrum color, in order. The row follows playback; scroll sideways to see the whole song. Outlined = detected root.</p>
       </div>
       <div class="transport">
         <select id="trackSelect" class="track-select" style="display:none;"></select>
@@ -796,6 +806,7 @@ function makeChip(n, rootPc){
 
 function renderNotes(){
   reel.innerHTML = '';
+  reel.scrollLeft = 0;
   const { notes: keyNotes, groups: keyGroups } = getKeyDetectionNoteSet();
   const keyGuess = guessKey(keyNotes, keyGroups);
 
@@ -1056,7 +1067,13 @@ function playNotes(){
     const chip = reel.querySelector('[data-id="' + n.id + '"]');
     const midiNum = midiNoteNumber(n);
     const onId = setTimeout(() => {
-      if (chip) chip.classList.add('playing');
+      if (chip){
+        chip.classList.add('playing');
+        const row = chip.parentElement;
+        if (row && row.scrollWidth > row.clientWidth){
+          row.scrollTo({ left: chip.offsetLeft - row.clientWidth / 2 + chip.offsetWidth / 2, behavior: 'smooth' });
+        }
+      }
       activeMidiNotes.add(midiNum);
       sendBridgeState({ activeNotes: Array.from(activeMidiNotes) });
     }, Math.max(0, delayMs));
