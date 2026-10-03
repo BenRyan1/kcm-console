@@ -1366,6 +1366,65 @@ select option { background: #1a1a2e; color: white; }
 }
 
 /* ============================================================
+   KCM ARCADE RUSH + EFFECTS (Oct 2026)
+   60-second rounds, 3 lives, combo multiplier, celebrations.
+   ============================================================ */
+#earTraining { position: relative; overflow: hidden; transition: box-shadow 0.25s; }
+#rushHud { display: none; margin: 0 0 0.75rem; }
+#earTraining.rush-on #rushHud { display: block; }
+#earTraining.rush-on #newQuizBtn,
+#earTraining.rush-on #rushStartBtn,
+#earTraining.rush-on #rushBestLine,
+#earTraining.rush-on #quizScore { display: none !important; }
+.rush-hud-row { display: flex; justify-content: space-between; align-items: center; gap: 10px;
+    font-family: var(--font-display); font-weight: 800; color: #e8e8f8; margin-bottom: 0.4rem; }
+.rush-lives { color: #e74c3c; letter-spacing: 3px; font-size: 1.05rem; min-width: 64px; text-align: left; }
+.rush-lives .lost { color: rgba(255,255,255,0.15); }
+.rush-score { color: #F4D03F; font-size: 1.35rem; }
+.rush-combo { color: #00c0c0; font-size: 0.85rem; min-width: 64px; text-align: right; }
+.rush-combo.hot { color: #F4D03F; text-shadow: 0 0 10px rgba(244,208,63,0.8); }
+.rush-timer { height: 10px; border-radius: 6px; background: rgba(255,255,255,0.08); overflow: hidden; }
+.rush-timer-fill { height: 100%; width: 100%; background: linear-gradient(90deg, #008080, #F4D03F); }
+.rush-timer-fill.low { background: linear-gradient(90deg, #CF7A5A, #e74c3c); }
+.rush-time { font-family: var(--font-display); font-size: 0.7rem; font-weight: 800; color: #b0b0cc; text-align: right; margin-top: 3px; }
+#rushStartBtn { background: linear-gradient(135deg, #F4D03F 0%, #CF7A5A 100%) !important; color: #1a1a2e !important; font-weight: 900; }
+#rushBestLine { font-family: var(--font-display); font-size: 0.7rem; font-weight: 700; color: #b0b0cc; margin: 0.25rem 0 0; }
+#rushEnd { display: none; padding: 0.5rem 0 0.25rem; }
+#rushEnd.show { display: block; animation: rushEndIn 0.4s ease-out; }
+@keyframes rushEndIn { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: scale(1); } }
+#rushEnd .rush-end-title { font-family: var(--font-display); font-size: 1.3rem; font-weight: 900; color: #e8e8f8; letter-spacing: 1px; }
+#rushEnd .rush-end-score { font-family: var(--font-display); font-size: 2.6rem; font-weight: 900; color: #F4D03F; line-height: 1.1; margin: 0.3rem 0; text-shadow: 0 0 22px rgba(244,208,63,0.5); }
+#rushEnd .rush-end-stats { display: flex; justify-content: center; gap: 18px; flex-wrap: wrap; font-size: 0.78rem; color: #b0b0cc; font-weight: 700; margin-bottom: 0.4rem; }
+#rushEnd .rush-end-stats b { color: #e8e8f8; }
+#rushEnd .rush-newbest { color: #F4D03F; font-family: var(--font-display); font-weight: 900; letter-spacing: 1px; animation: pibPulse 1.2s ease-in-out infinite; border-radius: 8px; padding: 2px 8px; display: inline-block; }
+.arcade-callout { position: absolute; left: 50%; top: 42%; transform: translate(-50%, -50%); font-family: var(--font-display);
+    font-weight: 900; font-size: 1.7rem; pointer-events: none; opacity: 0; white-space: nowrap; z-index: 6;
+    text-shadow: 0 0 18px currentColor, 0 2px 0 rgba(0,0,0,0.6); }
+.arcade-callout.show { animation: arcadeCallout 1s ease-out forwards; }
+@keyframes arcadeCallout {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+    18% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+    65% { opacity: 1; transform: translate(-50%, -62%) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -85%) scale(1); }
+}
+.arcade-points { position: absolute; font-family: var(--font-display); font-weight: 900; font-size: 1.05rem; color: #F4D03F;
+    pointer-events: none; z-index: 6; text-shadow: 0 0 10px rgba(244,208,63,0.7); animation: arcadePoints 0.9s ease-out forwards; }
+@keyframes arcadePoints { from { opacity: 1; transform: translate(-50%, 0); } to { opacity: 0; transform: translate(-50%, -46px); } }
+.arcade-particle { position: absolute; width: 9px; height: 9px; border-radius: 50%; pointer-events: none; z-index: 5; }
+#earTraining.arcade-shake { animation: arcadeShake 0.35s; }
+@keyframes arcadeShake { 0%,100% { transform: translateX(0); } 20% { transform: translateX(-8px); } 40% { transform: translateX(8px); } 60% { transform: translateX(-5px); } 80% { transform: translateX(5px); } }
+#earTraining.arcade-good { box-shadow: 0 0 0 3px #2ecc71, 0 0 34px rgba(46,204,113,0.55); }
+#earTraining.arcade-bad  { box-shadow: 0 0 0 3px #e74c3c, 0 0 34px rgba(231,76,60,0.55); }
+#arcadeFxBtn { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); color: #b0b0cc; border-radius: 8px;
+    font-size: 0.68rem; font-weight: 700; padding: 3px 8px; cursor: pointer; }
+.pib-chip.pib-hidden { color: #b0b0cc; min-width: 2.6rem; text-align: center; }
+@media (prefers-reduced-motion: reduce) {
+    #earTraining.arcade-shake { animation: none; }
+    .arcade-particle { display: none; }
+    .arcade-callout.show { animation-duration: 1.2s; }
+}
+
+/* ============================================================
    SPHERES (chromatic circle notes)
    ============================================================ */
 .sphere {
@@ -2645,28 +2704,56 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                     <span id="arcadeRank" style="letter-spacing:1px;color:#cd7f32;">🥉 BRONZE</span>
                     <span id="arcadeStreak" style="color:#F4D03F;">—</span>
                     <span id="arcadeBest" style="color:#888;font-size:0.68rem;font-weight:700;">Best streak: 0</span>
+                    <button id="arcadeFxBtn" onclick="_arcadeToggleFx()" aria-label="Sound effects on or off">🔔 FX on</button>
                 </div>
+                <div id="arcadeCallout" class="arcade-callout" aria-hidden="true"></div>
                 <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:0.85rem;">
                     <button class="arcade-mode-btn active" data-mode="interval" onclick="_arcadeSwitchMode('interval')">👂 Ear ID</button>
                     <button class="arcade-mode-btn" data-mode="chord" onclick="_arcadeSwitchMode('chord')">🎵 Chord ID</button>
                     <button class="arcade-mode-btn" data-mode="playback" onclick="_arcadeSwitchMode('playback')">🎤 Play It Back</button>
                 </div>
                 <div id="arcadeQuizPanel">
+                    <div id="rushHud" aria-live="polite">
+                        <div class="rush-hud-row">
+                            <span class="rush-lives" id="rushLives" aria-label="Lives">♥♥♥</span>
+                            <span class="rush-score" id="rushScore">0</span>
+                            <span class="rush-combo" id="rushCombo">x1</span>
+                        </div>
+                        <div class="rush-timer"><div class="rush-timer-fill" id="rushTimerFill"></div></div>
+                        <div class="rush-time" id="rushTime">60s</div>
+                    </div>
+                    <div id="rushEnd" aria-live="assertive">
+                        <div class="rush-end-title" id="rushEndTitle">⏱ TIME!</div>
+                        <div class="rush-end-score" id="rushEndScore">0</div>
+                        <div id="rushEndBest" style="margin-bottom:0.5rem;"></div>
+                        <div class="rush-end-stats">
+                            <span>Correct <b id="rushEndCorrect">0</b></span>
+                            <span>Accuracy <b id="rushEndAcc">0%</b></span>
+                            <span>Best combo <b id="rushEndCombo">0</b></span>
+                        </div>
+                        <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:0.6rem;">
+                            <button class="play-btn" onclick="_rushStart()" style="background:linear-gradient(135deg,#F4D03F 0%,#CF7A5A 100%);color:#1a1a2e;font-weight:900;">⚡ Play Again</button>
+                            <button class="play-btn" onclick="_rushPractice()" style="background:linear-gradient(135deg, var(--primary-purple) 0%, #6a4f8c 100%);">🎯 Practice</button>
+                        </div>
+                    </div>
                     <h3 id="quizQuestion" style="font-family:var(--font-display); font-size:1.15rem; font-weight:800; color:var(--primary-gold); margin-bottom:1rem;">Click "New Question" to start</h3>
                     <div class="quiz-options" id="quizOptions" role="group" aria-label="Answer options"></div>
                     <p id="quizFeedback" aria-live="assertive" style="min-height:1.6rem; margin:0.6rem 0 0; font-family:var(--font-display); font-size:1.05rem; font-weight:800;"></p>
                     <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin:0.75rem 0;">
                         <button class="play-btn" id="playQuizBtn">🔊 Replay Sound</button>
                         <button class="play-btn" id="newQuizBtn" style="background:linear-gradient(135deg, var(--primary-purple) 0%, #6a4f8c 100%);">🔄 New Question</button>
+                        <button class="play-btn" id="rushStartBtn" onclick="_rushStart()">⚡ RUSH · 60s</button>
                     </div>
+                    <p id="rushBestLine"></p>
                     <p id="quizScore" style="margin-top:1.25rem; font-family:var(--font-display); font-size:1.2rem; font-weight:700; color:var(--primary-gold);" aria-live="polite">Score: 0/0</p>
                 </div>
                 <div id="arcadePlaybackPanel" style="display:none;">
-                    <p id="pibStatus" aria-live="assertive" style="min-height:1.6rem; margin:0 0 0.6rem; font-family:var(--font-display); font-size:0.95rem; font-weight:800; color:var(--primary-gold); text-align:center;">Tap ▶ Hear It, then play the notes back on your instrument!</p>
+                    <p id="pibStatus" aria-live="assertive" style="min-height:1.6rem; margin:0 0 0.6rem; font-family:var(--font-display); font-size:0.95rem; font-weight:800; color:var(--primary-gold); text-align:center;">Tap ▶ Hear It, then play the notes back on your instrument — by ear!</p>
                     <div id="pibChips" style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:0.75rem 0;"></div>
                     <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin:0.75rem 0;">
                         <button class="play-btn" id="pibHearBtn" onclick="_pibHearIt()">▶ Hear It</button>
                         <button class="play-btn" id="pibStartBtn" onclick="_pibToggle()" style="background:linear-gradient(135deg,#008080,#005555);">🎤 Start Listening</button>
+                        <button class="play-btn" id="pibHintBtn" onclick="_pibHint()" style="background:linear-gradient(135deg,#8B6BA3,#5e4775);">💡 Hint</button>
                         <button class="play-btn" id="pibNewBtn" onclick="_pibNewRound()" style="background:linear-gradient(135deg, var(--primary-purple) 0%, #6a4f8c 100%);">🔄 New Sequence</button>
                     </div>
                 </div>
@@ -3469,7 +3556,7 @@ window.addEventListener('unhandledrejection', function(event) {
                     };
                 });
                 const closeEarBtn = document.getElementById('closeEarBtn');
-                if (closeEarBtn) closeEarBtn.onclick = () => { earTrainingOpen = false; updateEarOverlay(); _pibStop(); };
+                if (closeEarBtn) closeEarBtn.onclick = () => { earTrainingOpen = false; updateEarOverlay(); _pibStop(); _rushAbort(); };
                 // Key dropdown — plain <select>, replaces the old pill-grid popup
                 const _kps = document.getElementById('keyPickerSelect');
                 if (_kps) {
@@ -6363,6 +6450,11 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         // session widened to full piano range). A small persistent
         // streak/rank system (localStorage) spans all three modes.
         let _arcadeMode = 'interval';
+        // Rush / effects state (declared up here so every arcade function can use it)
+        let _pibHinted = new Set();
+        let _quizAdvanceTimer = null;
+        const RUSH_SECONDS = 60;
+        const _rush = { active: false, over: false, score: 0, lives: 3, combo: 0, maxCombo: 0, correct: 0, answered: 0, endsAt: 0, raf: 0, mode: 'interval' };
         const ARCADE_CHORD_QUALITIES = [
             {name:'Major',        ivals: triads.major},
             {name:'Minor',        ivals: triads.minor},
@@ -6375,8 +6467,10 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 question: 'What interval do you hear?',
                 labels: intervalNames,
                 makeQuestion() {
+                    // Random root (not always C), second note always ABOVE the root
                     const correct = Math.floor(Math.random() * 12);
-                    return { correct, notes: [0, correct], playTogether: false };
+                    const root = Math.floor(Math.random() * 12);
+                    return { correct, abs: [root, root + correct], playTogether: false };
                 },
             },
             chord: {
@@ -6385,8 +6479,9 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 makeQuestion() {
                     const rootPc = Math.floor(Math.random() * 12);
                     const qi = Math.floor(Math.random() * ARCADE_CHORD_QUALITIES.length);
-                    const notes = ARCADE_CHORD_QUALITIES[qi].ivals.map(iv => (rootPc + iv) % 12);
-                    return { correct: qi, notes, playTogether: true };
+                    // Root position: every chord tone stacked above the root
+                    const abs = ARCADE_CHORD_QUALITIES[qi].ivals.map(iv => rootPc + iv);
+                    return { correct: qi, abs, playTogether: true };
                 },
             },
         };
@@ -6437,6 +6532,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
             }
         }
         function _arcadeSwitchMode(mode) {
+            _rushAbort();
             _arcadeMode = mode;
             document.querySelectorAll('.arcade-mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
             const quizPanel = document.getElementById('arcadeQuizPanel');
@@ -6449,6 +6545,8 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         }
         function _arcadeOnOpen() {
             _arcadeUpdateHeaderUI();
+            _rushUpdateBestLine();
+            _arcadeUpdateFxBtn();
             if (_arcadeMode === 'playback') { if (_pibTarget.length === 0) _pibNewRound(); }
             else if (!currentQuiz) generateQuiz();
             else playQuizSound();
@@ -6456,9 +6554,13 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
 
         function generateQuiz() {
             try {
+                clearTimeout(_quizAdvanceTimer);
+                if (_rush.over) return; // round finished: wait for Play Again / Practice
                 const cfg = ARCADE_MODES[_arcadeMode] || ARCADE_MODES.interval;
                 const q = cfg.makeQuestion();
-                currentQuiz = { type: _arcadeMode, correct: q.correct, notes: q.notes, playTogether: q.playTogether, labels: cfg.labels, answered: false };
+                const notes = q.abs.map(a => a % 12);
+                const octs  = q.abs.map(a => 4 + Math.floor(a / 12));
+                currentQuiz = { type: _arcadeMode, correct: q.correct, notes, octs, playTogether: q.playTogether, labels: cfg.labels, answered: false, askedAt: performance.now() };
                 const qEl = document.getElementById('quizQuestion');
                 if (qEl) qEl.textContent = cfg.question;
                 const fbEl = document.getElementById('quizFeedback');
@@ -6484,9 +6586,10 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
 
         function playQuizSound() {
             if (!currentQuiz) return;
-            if (!audioReady) { alert('Click START AUDIO ENGINE first!'); return; }
-            if (currentQuiz.playTogether) currentQuiz.notes.forEach(n => playNote(n, 4, 1.0));
-            else currentQuiz.notes.forEach((n, i) => setTimeout(() => playNote(n, 4, 0.8), i * 600));
+            if (!audioReady) { _arcadeEnsureAudio(playQuizSound); return; }
+            const octs = currentQuiz.octs || currentQuiz.notes.map(() => 4);
+            if (currentQuiz.playTogether) currentQuiz.notes.forEach((n, i) => playNote(n, octs[i], 1.0));
+            else currentQuiz.notes.forEach((n, i) => setTimeout(() => playNote(n, octs[i], 0.8), i * 600));
         }
 
         function checkAnswer(ans) {
@@ -6508,10 +6611,13 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                     else { fbEl.textContent = `❌ NOT QUITE — it was ${labels[currentQuiz.correct]}`; fbEl.style.color = '#e74c3c'; }
                 }
                 _arcadeRecordResult(isRight);
-                try { trackEvent('quiz_answer', {correct: isRight, mode: currentQuiz.type}); } catch(e) {}
-                // Reveal all quiz notes together on staff
-                updateStaffNotation(currentQuiz.notes.map(n => ({pc: n, oct: 4})));
-                setTimeout(() => generateQuiz(), 2200);
+                try { trackEvent('quiz_answer', {correct: isRight, mode: currentQuiz.type, rush: _rush.active}); } catch(e) {}
+                updateStaffNotation(currentQuiz.notes.map((n, i) => ({pc: n, oct: (currentQuiz.octs || [])[i] || 4})));
+                const clicked = Array.from(btns).find(b => b.textContent === labels[ans]);
+                const pts = _rushOnAnswer(isRight);
+                _arcadeCelebrate(isRight, clicked, pts);
+                if (_rush.active) _quizAdvanceTimer = setTimeout(() => generateQuiz(), isRight ? 850 : 1500);
+                else if (!_rush.over) _quizAdvanceTimer = setTimeout(() => generateQuiz(), 2200);
             } catch(e) { console.error('Check answer error:', e); }
         }
 
@@ -6529,6 +6635,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 const rest = pool.filter(n => n !== root).sort(() => Math.random() - 0.5).slice(0, Math.max(0, _pibLength - 1));
                 _pibTarget = [root, ...rest];
                 _pibProgress = 0;
+                _pibHinted = new Set();
                 _renderPibChips();
                 const status = document.getElementById('pibStatus');
                 if (status) status.textContent = 'Tap ▶ Hear It, then play the notes back on your instrument!';
@@ -6539,11 +6646,14 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
             if (!wrap) return;
             wrap.innerHTML = _pibTarget.map((pc, i) => {
                 const state = i < _pibProgress ? 'pib-done' : (i === _pibProgress ? 'pib-next' : '');
-                return `<span class="pib-chip ${state}">${getNoteName(pc)}</span>`;
+                // True ear test: names stay hidden until played (or hinted)
+                const shown = i < _pibProgress || _pibHinted.has(i);
+                const style = i < _pibProgress ? '' : (shown ? `border-color:${colors[pc]};color:${colors[pc]};` : '');
+                return `<span class="pib-chip ${state}${shown ? '' : ' pib-hidden'}" style="${style}">${shown ? getNoteName(pc) : '?'}</span>`;
             }).join('');
         }
         function _pibHearIt() {
-            if (!audioReady) { alert('Click START AUDIO ENGINE first!'); return; }
+            if (!audioReady) { _arcadeEnsureAudio(_pibHearIt); return; }
             _pibTarget.forEach((pc, i) => setTimeout(() => playNote(pc, 4, 0.6), i * 550));
         }
         function _pibToggle() { _pibActive ? _pibStop() : _pibStart(); }
@@ -6574,8 +6684,10 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 const status = document.getElementById('pibStatus');
                 if (_pibProgress >= _pibTarget.length) {
                     _pibStop();
-                    _arcadeRecordResult(true);
-                    if (status) status.textContent = '🎉 NICE! Sequence complete!';
+                    const usedHint = _pibHinted.size > 0;
+                    if (!usedHint) _arcadeRecordResult(true);
+                    _arcadeCelebrate(true, document.getElementById('pibChips'), null);
+                    if (status) status.textContent = usedHint ? '✅ Done with a hint — try the next one by ear for streak points!' : '🎉 NICE! Sequence complete — by ear!';
                     if (_arcadeStats.currentStreak > 0 && _arcadeStats.currentStreak % 3 === 0 && _pibLength < 6) _pibLength++;
                     setTimeout(() => _pibNewRound(), 1600);
                 } else if (status) {
@@ -6585,9 +6697,278 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 const wrap = document.getElementById('pibChips');
                 const chip = wrap && wrap.children[_pibProgress];
                 if (chip) { chip.classList.add('pib-wrong'); setTimeout(() => chip.classList.remove('pib-wrong'), 350); }
+                _arcadeSfx(false);
             }
         }
         window._kcmGameNoteHeard = _kcmGameNoteHeard;
+
+        // ═════════════════════════════════════════════════════════
+        // KCM ARCADE RUSH + EFFECTS (Oct 2026)
+        // RUSH: 60 s, 3 lives. Each right answer = 100 pts + up to 100
+        // speed bonus, times the combo multiplier (x2 at 3 in a row,
+        // x3 at 6, x4 at 9). A miss costs a life and resets the combo.
+        // Best Rush score is kept per mode in this browser.
+        // ═════════════════════════════════════════════════════════
+        const KCM_RUSH_BEST_KEY = 'kcm_arcade_rush_best_v1';
+        let _rushBest = {};
+        try { _rushBest = JSON.parse(localStorage.getItem(KCM_RUSH_BEST_KEY) || '{}') || {}; } catch(e) { _rushBest = {}; }
+        let _arcadeFxOn = true;
+        try { _arcadeFxOn = localStorage.getItem('kcm_arcade_fx') !== '0'; } catch(e) {}
+        const _reduceMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+        // Start audio automatically instead of the old "START AUDIO ENGINE" pop-up
+        function _arcadeEnsureAudio(then) {
+            if (audioReady) { then(); return; }
+            try { initAudio(); } catch(e) {}
+            const t0 = performance.now();
+            (function wait() {
+                if (audioReady) { then(); return; }
+                if (performance.now() - t0 > 3000) {
+                    const fb = document.getElementById('quizFeedback') || document.getElementById('pibStatus');
+                    if (fb) fb.textContent = '🔊 Tap once more to turn on sound';
+                    return;
+                }
+                setTimeout(wait, 50);
+            })();
+        }
+
+        function _rushMultiplier() { return Math.min(4, 1 + Math.floor(_rush.combo / 3)); }
+
+        function _rushUpdateHud() {
+            const lives = document.getElementById('rushLives');
+            if (lives) lives.innerHTML = '♥'.repeat(Math.max(0, _rush.lives)) + '<span class="lost">' + '♥'.repeat(Math.max(0, 3 - _rush.lives)) + '</span>';
+            const sc = document.getElementById('rushScore'); if (sc) sc.textContent = _rush.score.toLocaleString();
+            const cb = document.getElementById('rushCombo');
+            if (cb) { const m = _rushMultiplier(); cb.textContent = `x${m}${_rush.combo ? ' · ' + _rush.combo + '🔥' : ''}`; cb.classList.toggle('hot', m >= 2); }
+        }
+
+        function _rushUpdateBestLine() {
+            const el = document.getElementById('rushBestLine');
+            if (!el) return;
+            const b = _rushBest[_arcadeMode] || 0;
+            el.textContent = b ? `⚡ Your Rush best (${_arcadeMode === 'chord' ? 'Chord ID' : 'Ear ID'}): ${b.toLocaleString()}` : '⚡ RUSH: 60 seconds, 3 lives, combos multiply your score!';
+        }
+
+        function _rushTick() {
+            if (!_rush.active) return;
+            const left = Math.max(0, _rush.endsAt - performance.now());
+            const fill = document.getElementById('rushTimerFill');
+            if (fill) { fill.style.width = (left / (RUSH_SECONDS * 1000) * 100) + '%'; fill.classList.toggle('low', left < 10000); }
+            const t = document.getElementById('rushTime'); if (t) t.textContent = Math.ceil(left / 1000) + 's';
+            if (left <= 0) { _rushEnd('time'); return; }
+            _rush.raf = requestAnimationFrame(_rushTick);
+        }
+
+        function _rushStart() {
+            if (_arcadeMode === 'playback') { _arcadeMode = 'interval'; document.querySelectorAll('.arcade-mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === 'interval'));
+                const qp = document.getElementById('arcadeQuizPanel'), pp = document.getElementById('arcadePlaybackPanel');
+                if (qp) qp.style.display = 'block'; if (pp) pp.style.display = 'none'; _pibStop(); }
+            _arcadeEnsureAudio(() => {
+                clearTimeout(_quizAdvanceTimer);
+                cancelAnimationFrame(_rush.raf);
+                Object.assign(_rush, { active: true, over: false, score: 0, lives: 3, combo: 0, maxCombo: 0, correct: 0, answered: 0, mode: _arcadeMode, endsAt: performance.now() + RUSH_SECONDS * 1000 });
+                const box = document.getElementById('earTraining'); if (box) box.classList.add('rush-on');
+                const end = document.getElementById('rushEnd'); if (end) end.classList.remove('show');
+                _rushShowQuiz(true);
+                _rushUpdateHud();
+                _arcadeCallout('GO!', '#F4D03F');
+                _rushTick();
+                generateQuiz();
+                try { trackEvent('rush_start', { mode: _arcadeMode }); } catch(e) {}
+            });
+        }
+
+        function _rushShowQuiz(show) {
+            ['quizQuestion', 'quizOptions', 'quizFeedback', 'quizScore'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display = show ? '' : 'none'; });
+            const row = document.getElementById('playQuizBtn'); if (row && row.parentElement) row.parentElement.style.display = show ? 'flex' : 'none';
+            const bl = document.getElementById('rushBestLine'); if (bl) bl.style.display = show ? '' : 'none';
+        }
+
+        function _rushOnAnswer(isRight) {
+            if (!_rush.active) return null;
+            _rush.answered++;
+            if (isRight) {
+                _rush.correct++;
+                _rush.combo++;
+                _rush.maxCombo = Math.max(_rush.maxCombo, _rush.combo);
+                // Speed bonus starts after the sound has finished playing
+                const soundSec = currentQuiz.playTogether ? 0.3 : (currentQuiz.notes.length - 1) * 0.6 + 0.3;
+                const thinkSec = (performance.now() - (currentQuiz.askedAt || performance.now())) / 1000 - soundSec;
+                const speed = Math.max(0, Math.min(1, 1 - (thinkSec - 1) / 5)); // full bonus within 1 s, none after 6 s
+                const pts = Math.round((100 + 100 * speed) * _rushMultiplier());
+                _rush.score += pts;
+                const m = _rushMultiplier();
+                if (_rush.combo === 3)  _arcadeCallout('🔥 x2 COMBO!', '#F4D03F');
+                else if (_rush.combo === 6)  _arcadeCallout('⚡ x3 ON FIRE!', '#CF7A5A');
+                else if (_rush.combo === 9)  _arcadeCallout('💥 x4 UNSTOPPABLE!', '#8000FF');
+                else if (_rush.combo > 9 && _rush.combo % 5 === 0) _arcadeCallout('💎 LEGENDARY!', '#00c0c0');
+                _rushUpdateHud();
+                return pts;
+            }
+            _rush.combo = 0;
+            _rush.lives--;
+            _rushUpdateHud();
+            if (_rush.lives <= 0) { _rush.active = false; setTimeout(() => _rushEnd('lives'), 900); }
+            return 0;
+        }
+
+        function _rushEnd(reason) {
+            const wasRunning = _rush.active || reason === 'lives';
+            _rush.active = false; _rush.over = true;
+            cancelAnimationFrame(_rush.raf);
+            clearTimeout(_quizAdvanceTimer);
+            if (!wasRunning && reason !== 'time') return;
+            const box = document.getElementById('earTraining'); if (box) box.classList.remove('rush-on');
+            _rushShowQuiz(false);
+            const prev = _rushBest[_rush.mode] || 0;
+            const isBest = _rush.score > prev;
+            if (isBest) { _rushBest[_rush.mode] = _rush.score; try { localStorage.setItem(KCM_RUSH_BEST_KEY, JSON.stringify(_rushBest)); } catch(e) {} }
+            const set = (id, v) => { const el = document.getElementById(id); if (el) el.innerHTML = v; };
+            set('rushEndTitle', reason === 'time' ? '⏱ TIME!' : '💔 OUT OF LIVES');
+            set('rushEndScore', _rush.score.toLocaleString());
+            set('rushEndBest', isBest && _rush.score > 0 ? '<span class="rush-newbest">🏆 NEW PERSONAL BEST!</span>' : `<span style="color:#b0b0cc;font-size:0.8rem;font-weight:700;">Best: ${Math.max(prev, _rush.score).toLocaleString()}</span>`);
+            set('rushEndCorrect', _rush.correct);
+            set('rushEndAcc', _rush.answered ? Math.round(_rush.correct / _rush.answered * 100) + '%' : '0%');
+            set('rushEndCombo', _rush.maxCombo);
+            const end = document.getElementById('rushEnd'); if (end) end.classList.add('show');
+            if (isBest && _rush.score > 0) { _arcadeBurst(end, 40, null); _arcadeSfx(true); }
+            try { trackEvent('rush_end', { mode: _rush.mode, reason, score: _rush.score, correct: _rush.correct, answered: _rush.answered, best: isBest }); } catch(e) {}
+        }
+
+        // Leave Rush quietly (mode switch, close) — nothing saved
+        function _rushAbort() {
+            const was = _rush.active || _rush.over;
+            _rush.active = false; _rush.over = false;
+            cancelAnimationFrame(_rush.raf);
+            clearTimeout(_quizAdvanceTimer);
+            if (!was) return;
+            const box = document.getElementById('earTraining'); if (box) box.classList.remove('rush-on');
+            const end = document.getElementById('rushEnd'); if (end) end.classList.remove('show');
+            _rushShowQuiz(true);
+            _rushUpdateBestLine();
+        }
+
+        function _rushPractice() {
+            _rushAbort();
+            generateQuiz();
+        }
+
+        // ── Effects ──────────────────────────────────────────────
+        function _arcadeCallout(text, color) {
+            const el = document.getElementById('arcadeCallout');
+            if (!el) return;
+            el.textContent = text; el.style.color = color || '#F4D03F';
+            el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+        }
+
+        function _arcadeBurst(anchor, count, pcs) {
+            if (_reduceMotion) return;
+            const box = document.getElementById('earTraining');
+            if (!box || !anchor) return;
+            const br = box.getBoundingClientRect(), ar = anchor.getBoundingClientRect();
+            const cx = ar.left - br.left + ar.width / 2, cy = ar.top - br.top + ar.height / 2;
+            const palette = (pcs && pcs.length) ? pcs.map(pc => colors[pc]) : colors;
+            for (let i = 0; i < count; i++) {
+                const p = document.createElement('span');
+                p.className = 'arcade-particle';
+                p.style.left = cx + 'px'; p.style.top = cy + 'px';
+                const c = palette[i % palette.length];
+                p.style.background = c; p.style.boxShadow = `0 0 8px ${c}`;
+                box.appendChild(p);
+                const ang = Math.random() * Math.PI * 2, dist = 40 + Math.random() * 90;
+                const anim = p.animate([
+                    { transform: 'translate(-50%,-50%) scale(1)', opacity: 1 },
+                    { transform: `translate(calc(-50% + ${Math.cos(ang) * dist}px), calc(-50% + ${Math.sin(ang) * dist}px)) scale(0.2)`, opacity: 0 }
+                ], { duration: 650 + Math.random() * 350, easing: 'cubic-bezier(.2,.7,.3,1)' });
+                anim.onfinish = () => p.remove();
+            }
+        }
+
+        function _arcadeFlash(cls) {
+            const box = document.getElementById('earTraining');
+            if (!box) return;
+            box.classList.remove('arcade-good', 'arcade-bad', 'arcade-shake');
+            void box.offsetWidth;
+            box.classList.add(cls);
+            if (cls === 'arcade-bad' && !_reduceMotion) box.classList.add('arcade-shake');
+            setTimeout(() => box.classList.remove(cls, 'arcade-shake'), 450);
+        }
+
+        // Light the answer notes on the Chromatic Circle / piano / fretboard
+        function _arcadeLightNotes(pcs) {
+            try {
+                pcs.forEach(pc => highlightNote(pc, true));
+                setTimeout(() => { try { pcs.forEach(pc => highlightNote(pc, false)); } catch(e) {} }, 800);
+            } catch(e) {}
+        }
+
+        function _arcadeCelebrate(isRight, anchor, pts) {
+            const pcs = currentQuiz && _arcadeMode !== 'playback' ? currentQuiz.notes : _pibTarget;
+            if (isRight) {
+                _arcadeFlash('arcade-good');
+                _arcadeBurst(anchor, 18, pcs);
+                _arcadeLightNotes(pcs);
+                if (pts && anchor) {
+                    const box = document.getElementById('earTraining');
+                    const br = box.getBoundingClientRect(), ar = anchor.getBoundingClientRect();
+                    const tag = document.createElement('span');
+                    tag.className = 'arcade-points';
+                    tag.textContent = '+' + pts;
+                    tag.style.left = (ar.left - br.left + ar.width / 2) + 'px';
+                    tag.style.top = (ar.top - br.top - 6) + 'px';
+                    box.appendChild(tag);
+                    setTimeout(() => tag.remove(), 950);
+                }
+            } else {
+                _arcadeFlash('arcade-bad');
+            }
+            _arcadeSfx(isRight);
+        }
+
+        // Unpitched sound effects, so they never confuse the ear-training notes
+        function _arcadeSfx(good) {
+            if (!_arcadeFxOn || !audioReady || !audioContext) return;
+            try {
+                const ctx = audioContext, len = Math.floor(ctx.sampleRate * (good ? 0.16 : 0.22));
+                const buf = ctx.createBuffer(1, len, ctx.sampleRate), d = buf.getChannelData(0);
+                for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, good ? 3 : 2);
+                const src = ctx.createBufferSource(); src.buffer = buf;
+                const f = ctx.createBiquadFilter();
+                f.type = good ? 'highpass' : 'lowpass';
+                f.frequency.value = good ? 5000 : 260;
+                const g = ctx.createGain(); g.gain.value = good ? 0.18 : 0.5;
+                src.connect(f); f.connect(g); g.connect(ctx.destination);
+                src.start();
+            } catch(e) {}
+        }
+
+        function _arcadeUpdateFxBtn() {
+            const b = document.getElementById('arcadeFxBtn');
+            if (b) b.textContent = _arcadeFxOn ? '🔔 FX on' : '🔕 FX off';
+        }
+        function _arcadeToggleFx() {
+            _arcadeFxOn = !_arcadeFxOn;
+            try { localStorage.setItem('kcm_arcade_fx', _arcadeFxOn ? '1' : '0'); } catch(e) {}
+            _arcadeUpdateFxBtn();
+        }
+
+        // Play It Back hint: reveal the next hidden note (that round earns no streak)
+        function _pibHint() {
+            if (!_pibTarget.length) return;
+            let i = _pibProgress;
+            while (i < _pibTarget.length && _pibHinted.has(i)) i++;
+            if (i >= _pibTarget.length) return;
+            _pibHinted.add(i);
+            _renderPibChips();
+            if (audioReady) playNote(_pibTarget[i], 4, 0.6);
+            const status = document.getElementById('pibStatus');
+            if (status) status.textContent = `💡 Note ${i + 1} is ${getNoteName(_pibTarget[i])} (hint rounds don't count toward your streak)`;
+        }
+
+        window._rushStart = _rushStart;
+        window._rushPractice = _rushPractice;
+        window._arcadeToggleFx = _arcadeToggleFx;
+        window._pibHint = _pibHint;
         // Inline onclick="" attributes in the Arcade HTML execute against the
         // global scope, not this IIFE's closure — these four are invoked
         // that way (mode-tab buttons, Hear It / Start Listening / New
