@@ -1369,7 +1369,7 @@ select option { background: #1a1a2e; color: white; }
    KCM ARCADE RUSH + EFFECTS (Oct 2026)
    60-second rounds, 3 lives, combo multiplier, celebrations.
    ============================================================ */
-#earTraining { position: relative; overflow: hidden; transition: box-shadow 0.25s; }
+#earTraining { position: relative; overflow: hidden; transition: box-shadow 0.25s; scroll-margin-top: 90px; margin: 0 auto 2.75rem !important; }
 #rushHud { display: none; margin: 0 0 0.75rem; }
 #earTraining.rush-on #rushHud { display: block; }
 #earTraining.rush-on #newQuizBtn,
@@ -1684,7 +1684,8 @@ input[type="range"]::-webkit-slider-thumb {
    fixed width, center is fluid -- the browser's own layout engine
    keeps all three side-by-side with no JS measurement involved.
    Three columns are ALWAYS kept side-by-side (never stacked to a
-   single column) per explicit request -- #kcmFitWrap scrolls
+   single column) per explicit request, EXCEPT on real phones (Ben,
+   Oct 2026: see PHONE LAYOUT / html.kcm-phone) -- #kcmFitWrap scrolls
    horizontally as the fallback on screens too narrow to show the row
    at full width, instead of ever falling back to vertical stacking.
    ============================================================ */
@@ -1741,6 +1742,53 @@ input[type="range"]::-webkit-slider-thumb {
     #sbPlayBtn, #sbMelodyBtn, #sbFullBtn { font-size: 0.68rem; padding: 0.5rem 0.4rem; }
 }
 
+
+/* ============================================================
+   PHONE LAYOUT (Oct 2026) — html.kcm-phone is set in <head> on real
+   phones only. One column: center (Arcade, Circle, staff, transport)
+   first, then Interface buttons, then Key + Elements, as compact grids.
+   ============================================================ */
+html.kcm-phone #kcmFitWrap { overflow-x: visible !important; }
+html.kcm-phone #kcmTwoColRow {
+    display: flex !important; flex-direction: column !important;
+    gap: 1.25rem !important; width: 100% !important; max-width: 520px; margin: 0 auto !important;
+}
+html.kcm-phone .kcm-center-col { order: 1; width: 100%; }
+html.kcm-phone .kcm-left-col   { order: 2; width: 100%; }
+html.kcm-phone .kcm-right-col  { order: 3; width: 100%; }
+html.kcm-phone .kcm-left-col > div:first-child,
+html.kcm-phone .kcm-right-col > div { text-align: center; }
+html.kcm-phone .view-toggle,
+html.kcm-phone .level-selector {
+    display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 0.5rem !important; width: 100% !important; height: auto !important;
+}
+html.kcm-phone .view-toggle > *,
+html.kcm-phone .level-selector > * {
+    width: 100% !important; min-width: 0 !important; margin: 0 !important;
+    white-space: normal !important; font-size: 0.68rem !important; padding: 0.6rem 0.3rem !important;
+}
+html.kcm-phone .kcm-right-col select { width: 100% !important; }
+html.kcm-phone #earTraining { max-width: 100% !important; padding: 0 1rem 1.25rem !important; }
+html.kcm-phone .ear-overlay-hdr { margin: 0 -1rem 1rem !important; }
+html.kcm-phone .app-container { padding-bottom: 4rem !important; } /* room for the dock bar */
+/* Use the phone's full width: slim down the two frames around the columns */
+html.kcm-phone .app-container { padding-left: 4px !important; padding-right: 4px !important; }
+html.kcm-phone .info-panel { padding-left: 6px !important; padding-right: 6px !important; }
+html.kcm-phone .info-panel > div:has(> #kcmFitWrap) { padding-left: 8px !important; padding-right: 8px !important; }
+/* Two-part labels (Instrument: Synth, MIDI: Not Connected) wrap inside their box */
+html.kcm-phone .view-toggle > * {
+    display: flex !important; flex-wrap: wrap !important; justify-content: center !important;
+    align-items: center !important; gap: 2px 4px !important; text-align: center !important;
+    overflow: hidden !important; line-height: 1.2 !important;
+}
+html.kcm-phone .view-toggle > * * { white-space: normal !important; min-width: 0 !important; }
+/* Bigger Chromatic Circle on phones 360px and wider (most phones):
+   300px circle with 50px spheres, matching createSpheres()' own sizing */
+@media (min-width: 360px) {
+    html.kcm-phone #chromaticCircle { width: 300px !important; height: 300px !important; }
+    html.kcm-phone .sphere { width: 50px !important; height: 50px !important; font-size: 11px !important; }
+}
 
 @media (prefers-reduced-motion: reduce) {
     * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
@@ -2268,6 +2316,23 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
     }
 }
 </style>
+<script>
+/* KCM phone layout switch (Oct 2026, Ben): on real phones the three
+   columns stack into one (Arcade + Circle first, then Interface, then
+   Key/Elements). Desktop, tablets and the Console panel keep the
+   three side-by-side columns. Inside an iframe the decision uses the
+   device's screen width, so a narrow Console panel on a desktop never
+   switches. */
+(function () {
+    function kcmPhoneCheck() {
+        var w = (window.self === window.top) ? window.innerWidth : (screen.width || window.innerWidth);
+        document.documentElement.classList.toggle('kcm-phone', w <= 700);
+    }
+    kcmPhoneCheck();
+    window.addEventListener('resize', kcmPhoneCheck);
+    window.addEventListener('orientationchange', kcmPhoneCheck);
+})();
+</script>
 </head>
 <body>
 
@@ -2457,6 +2522,73 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
 
             </div><!-- end kcm-left-col -->
             <div class="kcm-center-col" style="min-width:0;">
+            <!-- ── KCM ARCADE — sits at the TOP of the center column when open
+                 (Oct 2026, Ben). The Chromatic Circle / active view and the staff
+                 stay right below it and keep lighting up while you play. ── -->
+            <div id="earTraining" role="region" aria-label="KCM Arcade — ear training and instrument games">
+                <div class="ear-overlay-hdr">
+                    <span>🎮 KCM Arcade</span>
+                    <button id="closeEarBtn" aria-label="Close arcade">✕</button>
+                </div>
+                <div style="display:flex;gap:14px;justify-content:center;align-items:center;flex-wrap:wrap;margin-bottom:0.6rem;font-family:var(--font-display);font-size:0.75rem;font-weight:800;">
+                    <span id="arcadeRank" style="letter-spacing:1px;color:#cd7f32;">🥉 BRONZE</span>
+                    <span id="arcadeStreak" style="color:#F4D03F;">—</span>
+                    <span id="arcadeBest" style="color:#888;font-size:0.68rem;font-weight:700;">Best streak: 0</span>
+                    <button id="arcadeFxBtn" onclick="_arcadeToggleFx()" aria-label="Sound effects on or off">🔔 FX on</button>
+                </div>
+                <div id="arcadeCallout" class="arcade-callout" aria-hidden="true"></div>
+                <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:0.85rem;">
+                    <button class="arcade-mode-btn active" data-mode="interval" onclick="_arcadeSwitchMode('interval')">👂 Ear ID</button>
+                    <button class="arcade-mode-btn" data-mode="chord" onclick="_arcadeSwitchMode('chord')">🎵 Chord ID</button>
+                    <button class="arcade-mode-btn" data-mode="playback" onclick="_arcadeSwitchMode('playback')">🎤 Play It Back</button>
+                </div>
+                <div id="arcadeQuizPanel">
+                    <div id="rushHud" aria-live="polite">
+                        <div class="rush-hud-row">
+                            <span class="rush-lives" id="rushLives" aria-label="Lives">♥♥♥</span>
+                            <span class="rush-score" id="rushScore">0</span>
+                            <span class="rush-combo" id="rushCombo">x1</span>
+                        </div>
+                        <div class="rush-timer"><div class="rush-timer-fill" id="rushTimerFill"></div></div>
+                        <div class="rush-time" id="rushTime">60s</div>
+                    </div>
+                    <div id="rushEnd" aria-live="assertive">
+                        <div class="rush-end-title" id="rushEndTitle">⏱ TIME!</div>
+                        <div class="rush-end-score" id="rushEndScore">0</div>
+                        <div id="rushEndBest" style="margin-bottom:0.5rem;"></div>
+                        <div class="rush-end-stats">
+                            <span>Correct <b id="rushEndCorrect">0</b></span>
+                            <span>Accuracy <b id="rushEndAcc">0%</b></span>
+                            <span>Best combo <b id="rushEndCombo">0</b></span>
+                        </div>
+                        <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:0.6rem;">
+                            <button class="play-btn" onclick="_rushStart()" style="background:linear-gradient(135deg,#F4D03F 0%,#CF7A5A 100%);color:#1a1a2e;font-weight:900;">⚡ Play Again</button>
+                            <button class="play-btn" onclick="_rushPractice()" style="background:linear-gradient(135deg, var(--primary-purple) 0%, #6a4f8c 100%);">🎯 Practice</button>
+                        </div>
+                    </div>
+                    <h3 id="quizQuestion" style="font-family:var(--font-display); font-size:1.15rem; font-weight:800; color:var(--primary-gold); margin-bottom:1rem;">Click "New Question" to start</h3>
+                    <div class="quiz-options" id="quizOptions" role="group" aria-label="Answer options"></div>
+                    <p id="quizFeedback" aria-live="assertive" style="min-height:1.6rem; margin:0.6rem 0 0; font-family:var(--font-display); font-size:1.05rem; font-weight:800;"></p>
+                    <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin:0.75rem 0;">
+                        <button class="play-btn" id="playQuizBtn">🔊 Replay Sound</button>
+                        <button class="play-btn" id="newQuizBtn" style="background:linear-gradient(135deg, var(--primary-purple) 0%, #6a4f8c 100%);">🔄 New Question</button>
+                        <button class="play-btn" id="rushStartBtn" onclick="_rushStart()">⚡ RUSH · 60s</button>
+                    </div>
+                    <p id="rushBestLine"></p>
+                    <p id="quizScore" style="margin-top:1.25rem; font-family:var(--font-display); font-size:1.2rem; font-weight:700; color:var(--primary-gold);" aria-live="polite">Score: 0/0</p>
+                </div>
+                <div id="arcadePlaybackPanel" style="display:none;">
+                    <p id="pibStatus" aria-live="assertive" style="min-height:1.6rem; margin:0 0 0.6rem; font-family:var(--font-display); font-size:0.95rem; font-weight:800; color:var(--primary-gold); text-align:center;">Tap ▶ Hear It, then play the notes back on your instrument — by ear!</p>
+                    <div id="pibChips" style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:0.75rem 0;"></div>
+                    <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin:0.75rem 0;">
+                        <button class="play-btn" id="pibHearBtn" onclick="_pibHearIt()">▶ Hear It</button>
+                        <button class="play-btn" id="pibStartBtn" onclick="_pibToggle()" style="background:linear-gradient(135deg,#008080,#005555);">🎤 Start Listening</button>
+                        <button class="play-btn" id="pibHintBtn" onclick="_pibHint()" style="background:linear-gradient(135deg,#8B6BA3,#5e4775);">💡 Hint</button>
+                        <button class="play-btn" id="pibNewBtn" onclick="_pibNewRound()" style="background:linear-gradient(135deg, var(--primary-purple) 0%, #6a4f8c 100%);">🔄 New Sequence</button>
+                    </div>
+                </div>
+            </div>
+
             <!-- ══ PANEL SWAP ZONE — only one panel visible at a time ══ -->
             <div id="panelSwapZone" style="width:100%; position:relative;">
 
@@ -2687,74 +2819,6 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                             style="width:100%;padding:10px 0;background:linear-gradient(135deg,#e74c3c,#c0392b);color:#fff;border:2px solid #e74c3c;border-radius:8px;font-family:'Cinzel',serif;font-size:0.8rem;font-weight:800;letter-spacing:1.5px;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 12px rgba(231,76,60,0.3);"
                             onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 20px rgba(231,76,60,0.5)'"
                             onmouseout="this.style.transform='';this.style.boxShadow='0 4px 12px rgba(231,76,60,0.3)'">■ STOP</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ── EAR TRAINING — docked panel, appears below the staff when
-                 toggled open. Not part of panelSwapZone: the active view
-                 (Circle/Piano/Guitar/Sing/Stencil) and the staff above stay
-                 fully visible and keep lighting up while quizzing. ── -->
-            <div id="earTraining" role="region" aria-label="KCM Arcade — ear training and instrument games">
-                <div class="ear-overlay-hdr">
-                    <span>🎮 KCM Arcade</span>
-                    <button id="closeEarBtn" aria-label="Close arcade">✕</button>
-                </div>
-                <div style="display:flex;gap:14px;justify-content:center;align-items:center;flex-wrap:wrap;margin-bottom:0.6rem;font-family:var(--font-display);font-size:0.75rem;font-weight:800;">
-                    <span id="arcadeRank" style="letter-spacing:1px;color:#cd7f32;">🥉 BRONZE</span>
-                    <span id="arcadeStreak" style="color:#F4D03F;">—</span>
-                    <span id="arcadeBest" style="color:#888;font-size:0.68rem;font-weight:700;">Best streak: 0</span>
-                    <button id="arcadeFxBtn" onclick="_arcadeToggleFx()" aria-label="Sound effects on or off">🔔 FX on</button>
-                </div>
-                <div id="arcadeCallout" class="arcade-callout" aria-hidden="true"></div>
-                <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:0.85rem;">
-                    <button class="arcade-mode-btn active" data-mode="interval" onclick="_arcadeSwitchMode('interval')">👂 Ear ID</button>
-                    <button class="arcade-mode-btn" data-mode="chord" onclick="_arcadeSwitchMode('chord')">🎵 Chord ID</button>
-                    <button class="arcade-mode-btn" data-mode="playback" onclick="_arcadeSwitchMode('playback')">🎤 Play It Back</button>
-                </div>
-                <div id="arcadeQuizPanel">
-                    <div id="rushHud" aria-live="polite">
-                        <div class="rush-hud-row">
-                            <span class="rush-lives" id="rushLives" aria-label="Lives">♥♥♥</span>
-                            <span class="rush-score" id="rushScore">0</span>
-                            <span class="rush-combo" id="rushCombo">x1</span>
-                        </div>
-                        <div class="rush-timer"><div class="rush-timer-fill" id="rushTimerFill"></div></div>
-                        <div class="rush-time" id="rushTime">60s</div>
-                    </div>
-                    <div id="rushEnd" aria-live="assertive">
-                        <div class="rush-end-title" id="rushEndTitle">⏱ TIME!</div>
-                        <div class="rush-end-score" id="rushEndScore">0</div>
-                        <div id="rushEndBest" style="margin-bottom:0.5rem;"></div>
-                        <div class="rush-end-stats">
-                            <span>Correct <b id="rushEndCorrect">0</b></span>
-                            <span>Accuracy <b id="rushEndAcc">0%</b></span>
-                            <span>Best combo <b id="rushEndCombo">0</b></span>
-                        </div>
-                        <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:0.6rem;">
-                            <button class="play-btn" onclick="_rushStart()" style="background:linear-gradient(135deg,#F4D03F 0%,#CF7A5A 100%);color:#1a1a2e;font-weight:900;">⚡ Play Again</button>
-                            <button class="play-btn" onclick="_rushPractice()" style="background:linear-gradient(135deg, var(--primary-purple) 0%, #6a4f8c 100%);">🎯 Practice</button>
-                        </div>
-                    </div>
-                    <h3 id="quizQuestion" style="font-family:var(--font-display); font-size:1.15rem; font-weight:800; color:var(--primary-gold); margin-bottom:1rem;">Click "New Question" to start</h3>
-                    <div class="quiz-options" id="quizOptions" role="group" aria-label="Answer options"></div>
-                    <p id="quizFeedback" aria-live="assertive" style="min-height:1.6rem; margin:0.6rem 0 0; font-family:var(--font-display); font-size:1.05rem; font-weight:800;"></p>
-                    <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin:0.75rem 0;">
-                        <button class="play-btn" id="playQuizBtn">🔊 Replay Sound</button>
-                        <button class="play-btn" id="newQuizBtn" style="background:linear-gradient(135deg, var(--primary-purple) 0%, #6a4f8c 100%);">🔄 New Question</button>
-                        <button class="play-btn" id="rushStartBtn" onclick="_rushStart()">⚡ RUSH · 60s</button>
-                    </div>
-                    <p id="rushBestLine"></p>
-                    <p id="quizScore" style="margin-top:1.25rem; font-family:var(--font-display); font-size:1.2rem; font-weight:700; color:var(--primary-gold);" aria-live="polite">Score: 0/0</p>
-                </div>
-                <div id="arcadePlaybackPanel" style="display:none;">
-                    <p id="pibStatus" aria-live="assertive" style="min-height:1.6rem; margin:0 0 0.6rem; font-family:var(--font-display); font-size:0.95rem; font-weight:800; color:var(--primary-gold); text-align:center;">Tap ▶ Hear It, then play the notes back on your instrument — by ear!</p>
-                    <div id="pibChips" style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:0.75rem 0;"></div>
-                    <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin:0.75rem 0;">
-                        <button class="play-btn" id="pibHearBtn" onclick="_pibHearIt()">▶ Hear It</button>
-                        <button class="play-btn" id="pibStartBtn" onclick="_pibToggle()" style="background:linear-gradient(135deg,#008080,#005555);">🎤 Start Listening</button>
-                        <button class="play-btn" id="pibHintBtn" onclick="_pibHint()" style="background:linear-gradient(135deg,#8B6BA3,#5e4775);">💡 Hint</button>
-                        <button class="play-btn" id="pibNewBtn" onclick="_pibNewRound()" style="background:linear-gradient(135deg, var(--primary-purple) 0%, #6a4f8c 100%);">🔄 New Sequence</button>
                     </div>
                 </div>
             </div>
@@ -3539,6 +3603,9 @@ window.addEventListener('unhandledrejection', function(event) {
                             updateEarOverlay();
                             if (earTrainingOpen) {
                                 _arcadeOnOpen();
+                                const arc = document.getElementById('earTraining');
+                                const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                                if (arc) setTimeout(() => arc.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' }), 50);
                             }
                             try { trackEvent('ear_training_toggle', {open: earTrainingOpen}); } catch(e) {}
                             return;
@@ -10350,7 +10417,8 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
             <button class="dock-mini-btn" onclick="dockChangeBPM(+10)">+</button>
         </div>
 
-        <!-- ROW 4: Harmonized degree sub-menu (shown only for Harm Major/Minor) -->\n        <div class="dock-row" id="dockDegreeRow" style="display:none; flex-direction:column; gap:6px; border-top:1px solid rgba(0,200,200,0.15); padding-top:7px;">
+        <!-- ROW 4: Harmonized degree sub-menu (shown only for Harm Major/Minor) -->
+        <div class="dock-row" id="dockDegreeRow" style="display:none; flex-direction:column; gap:6px; border-top:1px solid rgba(0,200,200,0.15); padding-top:7px;">
 
             <!-- Major / Minor toggle — always visible in harm mode -->
             <div style="display:flex; gap:6px; justify-content:center; align-items:center;">
