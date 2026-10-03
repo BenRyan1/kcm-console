@@ -6450,6 +6450,23 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         // session widened to full piano range). A small persistent
         // streak/rank system (localStorage) spans all three modes.
         let _arcadeMode = 'interval';
+        // The Arcade follows the selected KEY: Ear ID starts on it, Chord ID builds on it
+        var _arcadeLastKey = null;
+        function _arcadeKey() { return ((typeof rootNote === 'number' ? rootNote : 0) % 12 + 12) % 12; }
+        // Called whenever the display updates: a new key gives a new question in that key
+        function _arcadeKeyMaybeChanged() {
+            try {
+                const k = _arcadeKey();
+                if (_arcadeLastKey === null) { _arcadeLastKey = k; return; }
+                if (k === _arcadeLastKey) return;
+                _arcadeLastKey = k;
+                if (!earTrainingOpen) return;
+                if (_arcadeMode === 'playback') { _pibStop(); _pibNewRound(); return; }
+                if (_rush.active || _rush.over) return; // in a Rush the next question uses the new key
+                clearTimeout(_quizAdvanceTimer);
+                _quizAdvanceTimer = setTimeout(() => generateQuiz(), 150);
+            } catch(e) {}
+        }
         // Rush / effects state (declared up here so every arcade function can use it)
         let _pibHinted = new Set();
         let _quizAdvanceTimer = null;
@@ -6468,8 +6485,9 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 labels: intervalNames,
                 makeQuestion() {
                     // Random root (not always C), second note always ABOVE the root
+                    // Starts on the KEY you picked; second note always above it
                     const correct = Math.floor(Math.random() * 12);
-                    const root = Math.floor(Math.random() * 12);
+                    const root = _arcadeKey();
                     return { correct, abs: [root, root + correct], playTogether: false };
                 },
             },
@@ -6477,7 +6495,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 question: 'What chord quality do you hear?',
                 labels: ARCADE_CHORD_QUALITIES.map(c => c.name),
                 makeQuestion() {
-                    const rootPc = Math.floor(Math.random() * 12);
+                    const rootPc = _arcadeKey(); // chord built on the KEY you picked
                     const qi = Math.floor(Math.random() * ARCADE_CHORD_QUALITIES.length);
                     // Root position: every chord tone stacked above the root
                     const abs = ARCADE_CHORD_QUALITIES[qi].ivals.map(iv => rootPc + iv);
@@ -6562,7 +6580,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 const octs  = q.abs.map(a => 4 + Math.floor(a / 12));
                 currentQuiz = { type: _arcadeMode, correct: q.correct, notes, octs, playTogether: q.playTogether, labels: cfg.labels, answered: false, askedAt: performance.now() };
                 const qEl = document.getElementById('quizQuestion');
-                if (qEl) qEl.textContent = cfg.question;
+                if (qEl) qEl.textContent = `Key of ${getNoteName(_arcadeKey())} — ${cfg.question}`;
                 const fbEl = document.getElementById('quizFeedback');
                 if (fbEl) { fbEl.textContent = ''; fbEl.style.color = ''; }
                 updateStaffNotation([]); // clear previous reveal so the new answer isn't given away
@@ -8867,6 +8885,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         // ── Main display update ───────────────────────────────────
         function updateDisplay(_rootNoteOverride) {
             if (typeof _rootNoteOverride === 'number') rootNote = _rootNoteOverride;
+            _arcadeKeyMaybeChanged();
             if (typeof syncKeyPickerLabel === 'function') syncKeyPickerLabel();
             try {
                 updatePattern(); updateSphereDisplay(); updateControls(); updateNoteList(); updateStaffNotation(Array.from(selectedNotes));
