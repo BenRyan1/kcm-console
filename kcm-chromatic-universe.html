@@ -2017,6 +2017,18 @@ let activeNote = null;
 let currentStencil = 'chromatic';
 let midiAccess = null;
 let activeMidiNotes = new Set();
+// Oct 2026: notes coming from the Console bus (the Rhythm Lab, The Decoder…)
+// light up on the KEY's wedge only (the spoke at 12 o'clock, root at the
+// center ring and the scale climbing outward), not every copy of that note
+// scattered around the wheel. See wedgeRingForMidi() / drawClock().
+let busWedgeMidis = new Set();
+// Ring (0–11) on the key's wedge where a MIDI note sits. The wedge spoke
+// holds root+0 … root+11 semitones, so the ring is the note's distance above
+// the root, folded into one octave.
+function wedgeRingForMidi(midi) {
+  const R = getRootSpokeIndex() % 12;
+  return (((midi - MIDI_BASE - R) % 12) + 12) % 12;
+}
 let segmentViewOnly = false;   // when true, wheel shows/plays only the current wedge (slice)
 let sphereWideMode = false;    // when true, Auto-Play sweeps every scale note across the whole wheel
 let sphereAutoS = 0, sphereAutoR = 0;  // traversal cursor for whole-sphere Auto-Play
@@ -2135,6 +2147,9 @@ function drawClock(highlightNotes = null) {
   // o'clock) is drawn/clickable — everything else stays out of notePositions'
   // visible set so the wheel reads as a single slice instead of the full wheel.
   const activeSpokeForView = getRootSpokeIndex();
+  const wedgeSpoke = activeSpokeForView;
+  const busWedgeRings = new Set();
+  busWedgeMidis.forEach(m => busWedgeRings.add(wedgeRingForMidi(m)));
 
   // Spokes and note dots
   for (let s = 0; s < SPOKES; s++) {
@@ -2160,7 +2175,8 @@ function drawClock(highlightNotes = null) {
 
       if (!spokeVisible) continue;
 
-      const isHi = hiArr.some(h => h.s===s && h.r===r) || activeMidiNotes.has(midi);
+      const isHi = hiArr.some(h => h.s===s && h.r===r) || activeMidiNotes.has(midi)
+                   || (s === wedgeSpoke && busWedgeRings.has(r));
       const inStencil = isNoteInStencil(noteIdx);
       const inWedge = isNoteInWedge(s);
       const isActive = inStencil && inWedge;
@@ -2868,9 +2884,7 @@ function checkRotationMatch(l) {
   for (const key in EUCLID_PRESETS) {
     const p = EUCLID_PRESETS[key];
     if (p.layers.length !== 1) continue;
-    const [s, pu] = p.layers[0];
-    if (s !== l.steps) continue;
-    if (bjorklund(s, pu).join('') === bitstr) { showToast('🎉 This rotation matches: ' + p.label + '!'); return; }
+    if (presetLayerPattern(p.layers[0]).join('') === bitstr) { showToast('🎉 This rotation matches: ' + p.label + '!'); return; }
   }
 }
 
@@ -3112,6 +3126,9 @@ function togglePlay() {
   initRhythmAudio();
   if(RS.audioCtx.state==='suspended') RS.audioCtx.resume();
   if(!RS.playing){
+    // Starting with Melodic Sync on: put the Chromatic Universe (and the
+    // whole Console) in this rhythm's key/scale so hits land on its wedge.
+    if (SYNC.active && window.KCM_RHYTHM_VIEW && typeof window.__rlPublishKey === 'function') window.__rlPublishKey();
     RS.playing=true; RS.nextNoteTime=RS.audioCtx.currentTime;
     rScheduler();
     document.getElementById('playBtn').textContent='⏸ Pause';
@@ -3358,26 +3375,51 @@ function rAnimate() {
 // previews + grouping), and updateEuclidPresetHighlight() (active-preset
 // indicator) all read from this so the button list and the load logic can
 // never drift out of sync with each other.
+// A preset layer is either [steps, pulses] (a Euclidean pattern, built by
+// bjorklund) or { p:'x..x..x...', sound } -- an EXACT hit pattern, one
+// character per 16th-note step (x = hit, . = rest). The claves are not
+// evenly spaced Euclidean rhythms, so they must be written out exactly.
+// Oct 2026 corrections: the old "3-2 Son Clave" / "2-3 Clave" played two
+// 8-step layers on top of each other (not a clave), "Shiko (4,8)" was just
+// straight 8ths, and both polyrhythms used layers of different cycle
+// lengths, so the two pulses never lined up over one shared cycle.
 const EUCLID_PRESETS = {
-  clave32:      { label:'3–2 Son Clave',      group:'Afro-Cuban / Latin', layers:[[8,3],[8,2]] },
-  clave23:      { label:'2–3 Clave',           group:'Afro-Cuban / Latin', layers:[[8,2],[8,3]] },
+  son32:        { label:'3–2 Son Clave',       group:'Afro-Cuban / Latin', layers:[{ p:'x..x..x...x.x...', sound:'clave' }] },
+  son23:        { label:'2–3 Son Clave',       group:'Afro-Cuban / Latin', layers:[{ p:'..x.x...x..x..x.', sound:'clave' }] },
+  rumba32:      { label:'3–2 Rumba Clave',     group:'Afro-Cuban / Latin', layers:[{ p:'x..x...x..x.x...', sound:'clave' }] },
+  rumba23:      { label:'2–3 Rumba Clave',     group:'Afro-Cuban / Latin', layers:[{ p:'..x.x...x..x...x', sound:'clave' }] },
   clave:        { label:'Clave (5,12)',        group:'Afro-Cuban / Latin', layers:[[12,5]] },
   tresillo:     { label:'Tresillo (3,8)',      group:'Afro-Cuban / Latin', layers:[[8,3]] },
   cinquillo:    { label:'Cinquillo (5,8)',     group:'Afro-Cuban / Latin', layers:[[8,5]] },
-  shiko:        { label:'Shiko (4,8)',         group:'Afro-Cuban / Latin', layers:[[8,4]] },
+  shiko:        { label:'Shiko',               group:'Afro-Cuban / Latin', layers:[{ p:'x...x.x...x.x...' }] },
   bossanova:    { label:'Bossa Nova (5,16)',   group:'Brazilian',          layers:[[16,5]] },
-  polyrhythm34: { label:'3 over 4 Polyrhythm', group:'Polyrhythm',         layers:[[12,3],[16,4]] },
-  polyrhythm45: { label:'4 over 5 Polyrhythm', group:'Polyrhythm',         layers:[[20,4],[16,5]] },
+  polyrhythm34: { label:'3 over 4 Polyrhythm', group:'Polyrhythm',         layers:[[12,3],[12,4]] },
+  polyrhythm45: { label:'4 over 5 Polyrhythm', group:'Polyrhythm',         layers:[[20,4],[20,5]] },
 };
+
+// Exact hit pattern (array of 0/1) for any preset layer spec.
+function presetLayerPattern(spec) {
+  if (Array.isArray(spec)) return bjorklund(spec[0], Math.min(spec[1], spec[0]));
+  return String(spec.p).split('').map(c => c === 'x' ? 1 : 0);
+}
 const LS_CUSTOM_PRESETS_KEY = 'kcm_cu_custom_euclid_presets';
 
 function loadEuclidPreset(name) {
   const p = EUCLID_PRESETS[name]; if (!p) return;
   RS.layers=[];
-  p.layers.forEach(([steps,pulses],i)=>{
-    RS.globalSteps=steps;
-    RS.layers.push(createLayer(steps,pulses,i,LAYER_SOUNDS[i]));
+  p.layers.forEach((spec,i)=>{
+    const pattern = presetLayerPattern(spec);
+    const layer = createLayer(pattern.length, Math.max(1, pattern.reduce((a,b)=>a+b,0)), i, LAYER_SOUNDS[i]);
+    layer.pattern = pattern;
+    layer.pulses = pattern.reduce((a,b)=>a+b,0);
+    if (!Array.isArray(spec)) { layer.source = 'preset'; if (spec.sound) layer.soundType = spec.sound; }
+    RS.layers.push(layer);
   });
+  // One shared cycle = the longest layer, so every layer loops cleanly in it
+  RS.globalSteps = Math.max.apply(null, RS.layers.map(l => l.steps));
+  RS.step = 0;
+  [16,32,64].forEach(n=>{ const b=document.getElementById('stepsBtn'+n); if(b) b.classList.toggle('active', n===RS.globalSteps); });
+  if (typeof syncResetCursors === 'function') syncResetCursors();
   renderLayers(); drawRhythmViz();
   showToast('✅ '+p.label+' loaded');
 }
@@ -3385,7 +3427,7 @@ function loadEuclidPreset(name) {
 // Small dot-row preview of a pattern's shape, e.g. ●○●○●○○○ — capped and
 // evenly downsampled for long patterns so it never overflows a button.
 function _euclidDots(steps, pulses) {
-  const pat = bjorklund(steps, Math.min(pulses, steps));
+  const pat = Array.isArray(steps) ? steps : bjorklund(steps, Math.min(pulses, steps));
   const MAX_DOTS = 16;
   let shown = pat;
   if (pat.length > MAX_DOTS) {
@@ -3414,8 +3456,7 @@ function renderEuclidPresets() {
     btn.dataset.preset = key;
     btn.style.fontSize = '0.7rem';
     btn.onclick = () => loadEuclidPreset(key);
-    const [steps0, pulses0] = p.layers[0];
-    btn.innerHTML = `<span>${p.label}</span><span class="euclid-preset-dots">${_euclidDots(steps0, pulses0)}</span>`;
+    btn.innerHTML = `<span>${p.label}</span><span class="euclid-preset-dots">${_euclidDots(presetLayerPattern(p.layers[0]))}</span>`;
     grid.appendChild(btn);
   });
   updateEuclidPresetHighlight();
@@ -3426,11 +3467,13 @@ function renderEuclidPresets() {
 // currently loaded into RS.layers — same "don't show one thing while
 // something else is actually loaded" principle as the degree-button sync.
 function updateEuclidPresetHighlight() {
-  const current = RS.layers.map(l => l.steps + ':' + l.pulses).join(',');
+  // Match on the exact hit patterns, not just step/pulse counts (two
+  // different rhythms can share the same counts, e.g. son vs rumba clave).
+  const current = RS.layers.map(l => l.pattern.join('')).join(',');
   document.querySelectorAll('.euclid-preset-btn').forEach(btn => {
     const key = btn.dataset.preset;
     const p = key.indexOf('custom:') === 0 ? _loadCustomPresets()[key.slice(7)] : EUCLID_PRESETS[key];
-    const target = p ? p.layers.map(([s,pu]) => s + ':' + pu).join(',') : null;
+    const target = p ? p.layers.map(spec => presetLayerPattern(spec).join('')).join(',') : null;
     btn.classList.toggle('active', target !== null && target === current);
   });
 }
@@ -3542,7 +3585,7 @@ function toggleSync() {
   const desc = document.getElementById('syncModeDesc');
 
   if (SYNC.active) {
-    btn.textContent = '◈  SYNC ON — CLICK TO DEACTIVATE';
+    btn.textContent = '◈  SYNC ON · CLICK TO STOP';
     btn.classList.add('active');
     row.style.display = 'flex';
     pill.classList.add('visible');
@@ -3731,12 +3774,14 @@ function redrawClockWithSync() {
   const highlights = [];
   const now = performance.now();
   const active = syncFlashNotes.filter(n=>n.expiry>now);
+  // Light the note on the KEY's wedge only (spoke at 12 o'clock), where the
+  // scale climbs outward from the root, instead of every copy of that pitch
+  // around the wheel.
+  const wedgeS = getRootSpokeIndex();
   for (const sn of active) {
-    for (const np of notePositions) {
-      if (np.noteIndex === sn.noteIndex) {
-        highlights.push({ ...np, _syncColor: sn.layerColor });
-      }
-    }
+    const r = wedgeRingForMidi(sn.midi);
+    const np = notePositions.find(p => p.s === wedgeS && p.r === r);
+    if (np) highlights.push({ ...np, _syncColor: sn.layerColor });
   }
   drawClock(highlights.length ? highlights : null);
 }
@@ -4822,7 +4867,8 @@ function etRestart() {
     // keyboard input -- activeMidiNotes, matched by each cell's own
     // computed `midi` value -- so route the bus's activeNotes through
     // that same, already-correct path instead.
-    activeMidiNotes = new Set(Array.isArray(midiArr) ? midiArr : []);
+    // Oct 2026 (Ben): show bus notes on the key's wedge, not scattered.
+    busWedgeMidis = new Set(Array.isArray(midiArr) ? midiArr : []);
     drawClock();
   }
 
@@ -4903,6 +4949,18 @@ function etRestart() {
     if (sm && typeof STENCILS !== 'undefined' && STENCILS[currentStencil]) sm.value = currentStencil;
   }
   window.addEventListener('message', function (e) {
+    // The Rhythm Lab's scale (incl. non-church scales like Pentatonic or
+    // Blues, which the bus's 7-mode vocabulary can't carry) -> this wheel.
+    if (e.data && e.data.type === 'KCM_STENCIL') {
+      var st = e.data.stencil;
+      if (typeof st === 'string' && STENCILS[st] && st !== currentStencil) {
+        currentStencil = st;
+        var ss0 = document.getElementById('stencilSelect'); if (ss0) ss0.value = st;
+        _syncMirrorPickers();
+        drawClock();
+      }
+      return;
+    }
     if (e.data && e.data.type === 'KCM_STOP') {
       if (typeof stopReset === 'function' && RS.playing) stopReset();
       return;
@@ -5516,7 +5574,9 @@ function etRestart() {
       payload.scale = STENCILS[currentStencil].filter(function (x) { return x <= 11; });
     }
     post({ type: 'KCM_STATE_PATCH', payload: payload });
+    post({ type: 'KCM_STENCIL', stencil: currentStencil });
   }
+  window.__rlPublishKey = publishKey;
   ['syncKeySelect', 'syncStencilSelect', 'keySelect', 'stencilSelect'].forEach(function (id) {
     var el = document.getElementById(id);
     if (el) el.addEventListener('change', function () { setTimeout(publishKey, 0); });

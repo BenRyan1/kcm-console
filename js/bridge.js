@@ -284,6 +284,18 @@
       return;
     }
 
+    // ── Rhythm Lab scale -> other panels (Oct 2026) ──────────────────
+    // The bus only speaks the 7 church modes; this carries the Rhythm
+    // Lab's exact scale (Pentatonic, Blues…) to the Chromatic Universe so
+    // its wedge shows the same scale the rhythm is playing.
+    if (data.type === 'KCM_STENCIL') {
+      readyPanels.forEach(function (ifr) {
+        if (ifr.contentWindow === ev.source) return;
+        try { ifr.contentWindow.postMessage({ type: 'KCM_STENCIL', stencil: data.stencil }, '*'); } catch (e) {}
+      });
+      return;
+    }
+
     // ── Bring a panel into view (Oct 2026) ───────────────────────────
     // e.g. the Chromatic Universe's "Rhythm Geometry Lab" tab asks for the
     // Rhythm Lab panel instead of opening a second copy inside itself.
