@@ -1846,6 +1846,8 @@ html.kcm-phone .kcm-center-col button { font-size: 0.58rem !important; padding-l
 html.kcm-phone .kcm-center-col .play-btn,
 html.kcm-phone .kcm-center-col > div > button { padding-top: 0.55rem !important; padding-bottom: 0.55rem !important; }
 html.kcm-phone #staffNotation button { font-size: 0.5rem !important; letter-spacing: 0 !important; }
+html.kcm-phone #staffNotation .staff-tab-btn { flex: 1 1 auto !important; font-size: 0.42rem !important; padding: 6px 1px !important; min-width: 0 !important; overflow: hidden; white-space: nowrap; }
+html.kcm-phone #staffNotation .stab-ico { display: none; }
 html.kcm-phone #status { font-size: 0.7rem !important; padding: 0.6rem 0.4rem !important; }
 
 html.kcm-phone #earTraining { max-width: 100% !important; padding: 0 1rem 1.25rem !important; }
@@ -2927,15 +2929,17 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                  decorative, so nothing is lost by moving the label here. -->
             <div id="staffNotation" aria-label="Staff notation showing selected notes — switchable between staff, fretboard and keyboard views" role="group">
                 <div style="display:flex;gap:2px;margin:-12px -15px 6px -15px;border-radius:8px 8px 0 0;overflow:hidden;">
-                    <button type="button" class="staff-tab-btn active" data-stafftab="staff" onclick="switchStaffTab('staff')">🎼 STAFF</button>
-                    <button type="button" class="staff-tab-btn" data-stafftab="fretboard" onclick="switchStaffTab('fretboard')">🎸 FRETBOARD</button>
-                    <button type="button" class="staff-tab-btn" data-stafftab="keyboard" onclick="switchStaffTab('keyboard')">🎹 KEYBOARD</button>
-                    <button type="button" class="staff-tab-btn" data-stafftab="timeline" onclick="switchStaffTab('timeline')">⏱ TIMELINE</button>
+                    <button type="button" class="staff-tab-btn active" data-stafftab="staff" onclick="switchStaffTab('staff')"><span class="stab-ico">🎼 </span>STAFF</button>
+                    <button type="button" class="staff-tab-btn" data-stafftab="fretboard" onclick="switchStaffTab('fretboard')"><span class="stab-ico">🎸 </span>FRETBOARD</button>
+                    <button type="button" class="staff-tab-btn" data-stafftab="keyboard" onclick="switchStaffTab('keyboard')"><span class="stab-ico">🎹 </span>KEYBOARD</button>
+                    <button type="button" class="staff-tab-btn" data-stafftab="tab" onclick="switchStaffTab('tab')"><span class="stab-ico">🎸 </span>TAB</button>
+                    <button type="button" class="staff-tab-btn" data-stafftab="timeline" onclick="switchStaffTab('timeline')"><span class="stab-ico">⏱ </span>TIMELINE</button>
                 </div>
                 <div style="display:flex;align-items:center;gap:0;">
                     <svg id="staffSVG" viewBox="0 0 220 100" preserveAspectRatio="xMidYMid meet" aria-hidden="true" style="flex-shrink:0;width:55%;"></svg>
                     <svg id="fretboardMiniSVG" viewBox="0 0 107 100" preserveAspectRatio="xMidYMid meet" aria-hidden="true" style="flex-shrink:0;width:min(150px, 48%);display:none;"></svg>
                     <svg id="keyboardMiniSVG" viewBox="0 0 220 100" preserveAspectRatio="xMidYMid meet" aria-hidden="true" style="flex-shrink:0;width:55%;display:none;"></svg>
+                    <svg id="tabMiniSVG" viewBox="0 0 220 100" preserveAspectRatio="xMidYMid meet" aria-hidden="true" style="flex-shrink:0;width:55%;display:none;"></svg>
                     <svg id="timelineSVG" viewBox="0 0 220 100" preserveAspectRatio="xMidYMid meet" aria-hidden="true" style="flex-shrink:0;width:100%;display:none;"></svg>
                     <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:0 12px;">
                         <button id="staffPlayBtn"
@@ -6535,6 +6539,125 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
             });
         }
 
+        // ── Guitar TAB renderer for the STAFF NOTATION panel's "TAB" tab
+        //    (Ben, Oct 3 2026 — brought over from the main site's Guitar TAB
+        //    panel). Same input convention as drawStaff():
+        //      [{pc, oct}, ...]  → a SEQUENCE (scale / melody): one column per
+        //                          note, left to right, in play order.
+        //      [pc, pc, ...]     → a CHORD: all notes stacked in one column,
+        //                          voiced ascending from the root, one note per
+        //                          string, first-position shape.
+        //    Six lines: high e on top, low E on the bottom (standard TAB).
+        //    Fret numbers sit on KCM-colored chips. Pitches are mapped the
+        //    way guitar music is written (sounds an octave below the staff),
+        //    so C4 on the staff = A string, 3rd fret. ──
+        function renderMiniTab(svg, notes) {
+            if (!svg) return;
+            const NS = 'http://www.w3.org/2000/svg';
+            svg.innerHTML = '';
+            const W = 220, H = 100;
+            svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+            const OPEN = [40, 45, 50, 55, 59, 64];            // E2 A2 D3 G3 B3 E4 (string 6 → 1)
+            const NAMES = ['E', 'A', 'D', 'G', 'B', 'e'];
+            const topY = 14, gap = 14, leftX = 30, rightX = W - 6;
+            const yOf = s => topY + (5 - s) * gap;           // s: 0 = low E ... 5 = high e
+            const el = (tag, attrs, txt) => {
+                const e = document.createElementNS(NS, tag);
+                for (const k in attrs) e.setAttribute(k, attrs[k]);
+                if (txt != null) e.textContent = txt;
+                svg.appendChild(e); return e;
+            };
+            // staff: 6 lines, string names, TAB clef, end bars
+            for (let s = 0; s < 6; s++) {
+                el('line', { x1: leftX, y1: yOf(s), x2: rightX, y2: yOf(s), stroke: '#666', 'stroke-width': 0.8 });
+                el('text', { x: 6, y: yOf(s) + 3, 'font-size': 8, 'font-weight': 'bold', fill: '#888', 'text-anchor': 'middle' }, NAMES[s]);
+            }
+            el('line', { x1: leftX, y1: yOf(5), x2: leftX, y2: yOf(0), stroke: '#333', 'stroke-width': 1.4 });
+            el('line', { x1: rightX, y1: yOf(5), x2: rightX, y2: yOf(0), stroke: '#333', 'stroke-width': 1.4 });
+            ['T', 'A', 'B'].forEach((ch, i) => el('text', { x: 20, y: topY + 20 + i * 15, 'font-size': 11, 'font-weight': '900', fill: '#555', 'text-anchor': 'middle', 'font-family': 'Georgia, serif' }, ch));
+            if (!notes || notes.length === 0) return;
+
+            const pcOf = n => ((((typeof n === 'object' ? n.pc : Number(n)) % 12) + 12) % 12);
+            // best single-note position: lowest fret (open strings first) within 0-4, else up to 12
+            function place(midi) {
+                while (midi < 40) midi += 12;
+                while (midi > 64 + 12) midi -= 12;
+                let best = null;
+                for (let s = 0; s < 6; s++) {
+                    const f = midi - OPEN[s];
+                    if (f < 0 || f > 12) continue;
+                    const cost = (f <= 4 ? 0 : 100) + f;
+                    if (!best || cost < best.cost) best = { s, f, cost };
+                }
+                return best;
+            }
+            const columns = [];   // each column: [{s, f, pc}]
+            let isSequence = typeof notes[0] === 'object';
+            // A static set of 5+ notes is a scale/mode, not a playable chord:
+            // write it as an ascending run, root to root (KCM Scale Law).
+            if (!isSequence) {
+                const u = Array.from(new Set(notes.map(pcOf))).sort((a, b) => a - b);
+                if (u.length > 4) {
+                    const r0 = (typeof rootNote === 'number' && u.indexOf(rootNote) >= 0) ? rootNote : u[0];
+                    const i0 = u.indexOf(r0);
+                    const run = [...u.slice(i0), ...u.slice(0, i0)];
+                    let oct = 4, prev = -1;
+                    notes = run.map(pc => { let m = (oct + 1) * 12 + pc; while (m <= prev) { oct++; m = (oct + 1) * 12 + pc; } prev = m; return { pc, oct }; });
+                    notes.push({ pc: r0, oct: notes[0].oct + 1 });
+                    isSequence = true;
+                }
+            }
+            if (isSequence) {
+                notes.forEach(n => {
+                    const pc = pcOf(n);
+                    const oct = (typeof n.oct === 'number') ? n.oct : 4;
+                    const p = place((oct + 1) * 12 + pc - 12);
+                    if (p) columns.push([{ s: p.s, f: p.f, pc }]);
+                });
+            } else {
+                // chord: ascending from the root, one note per string
+                const unique = Array.from(new Set(notes.map(pcOf))).sort((a, b) => a - b);
+                const r = (typeof rootNote === 'number') ? rootNote : unique[0];
+                const ri = unique.indexOf(r);
+                const ordered = ri >= 0 ? [...unique.slice(ri), ...unique.slice(0, ri)] : unique;
+                const col = [];
+                let s = 0, prevMidi = -1;
+                // root: lowest string where it falls in frets 0-4 (else the A string)
+                for (let i = 0; i < ordered.length && s < 6; i++) {
+                    const pc = ordered[i];
+                    let found = null;
+                    for (let ss = s; ss < 6 && !found; ss++) {
+                        for (let f = 0; f <= (i === 0 ? 4 : 5); f++) {
+                            const m = OPEN[ss] + f;
+                            if (((m % 12) === pc) && m > prevMidi) { found = { s: ss, f }; break; }
+                        }
+                    }
+                    if (!found && i === 0) {
+                        for (let f = 0; f <= 11; f++) if (((OPEN[1] + f) % 12) === pc) { found = { s: 1, f }; break; }
+                    }
+                    if (!found) continue;
+                    col.push({ s: found.s, f: found.f, pc });
+                    prevMidi = OPEN[found.s] + found.f;
+                    s = found.s + 1;
+                }
+                if (col.length) columns.push(col);
+            }
+            if (!columns.length) return;
+            const innerL = leftX + 8, innerR = rightX - 8;
+            const step = columns.length > 1 ? Math.min(24, (innerR - innerL) / (columns.length - 1)) : 0;
+            const startX = columns.length > 1 ? (innerL + innerR) / 2 - step * (columns.length - 1) / 2 : (innerL + innerR) / 2;
+            const chip = Math.max(5, Math.min(6.2, step ? step / 2 - 0.4 : 6.2));
+            const darkText = pc => { const h = colors[pc].replace('#', ''); const r = parseInt(h.substr(0, 2), 16), g = parseInt(h.substr(2, 2), 16), b = parseInt(h.substr(4, 2), 16); return (0.299 * r + 0.587 * g + 0.114 * b) > 140; };
+            columns.forEach((col, ci) => {
+                const x = startX + ci * step;
+                col.forEach(n => {
+                    const y = yOf(n.s);
+                    el('circle', { cx: x, cy: y, r: chip, fill: colors[n.pc], stroke: '#222', 'stroke-width': 0.8 });
+                    el('text', { x, y: y + 3, 'font-size': n.f >= 10 ? 6.5 : 8, 'font-weight': '900', 'text-anchor': 'middle', fill: darkText(n.pc) ? '#000' : '#fff', 'font-family': 'Montserrat, Arial, sans-serif' }, String(n.f));
+                });
+            });
+        }
+
         // ── STAFF NOTATION panel tab switcher — toggles which of the three
         //    compact renderers (staff / fretboard / keyboard) is visible.
         //    All three are always kept up to date by updateStaffNotation();
@@ -6543,9 +6666,9 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         //    The Stencil wheel / chromatic circle above is untouched. ──
         let activeStaffTab = 'staff';
         function switchStaffTab(tab) {
-            if (tab !== 'staff' && tab !== 'fretboard' && tab !== 'keyboard' && tab !== 'timeline') return;
+            if (tab !== 'staff' && tab !== 'fretboard' && tab !== 'keyboard' && tab !== 'tab' && tab !== 'timeline') return;
             activeStaffTab = tab;
-            const svgIds = { staff: 'staffSVG', fretboard: 'fretboardMiniSVG', keyboard: 'keyboardMiniSVG', timeline: 'timelineSVG' };
+            const svgIds = { staff: 'staffSVG', fretboard: 'fretboardMiniSVG', keyboard: 'keyboardMiniSVG', tab: 'tabMiniSVG', timeline: 'timelineSVG' };
             Object.keys(svgIds).forEach(t => {
                 const el = document.getElementById(svgIds[t]);
                 if (el) el.style.display = (t === tab) ? '' : 'none';
@@ -6578,6 +6701,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 if (!svg) return;
                 const fbMiniSVG = document.getElementById('fretboardMiniSVG');
                 const kbMiniSVG = document.getElementById('keyboardMiniSVG');
+                const tabMiniSVG = document.getElementById('tabMiniSVG');
                 if (!notes || notes.length === 0) {
                     // Clear staff — redraw empty staff lines only
                     drawStaff(svg, [], 220);
@@ -6585,6 +6709,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                     if (fbSVG) drawStaff(fbSVG, [], 500);
                     if (fbMiniSVG) renderMiniFretboard(fbMiniSVG, [], 220);
                     if (kbMiniSVG) renderMiniKeyboard(kbMiniSVG, [], 220);
+                    if (tabMiniSVG) renderMiniTab(tabMiniSVG, []);
                     // Un-highlight any staff-driven sphere glows
                     if (window._staffLitPcs) {
                         window._staffLitPcs.forEach(pc => {
@@ -6605,6 +6730,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 if (fbSVG) drawStaff(fbSVG, notes, 500);
                 if (fbMiniSVG) renderMiniFretboard(fbMiniSVG, notes, 220);
                 if (kbMiniSVG) renderMiniKeyboard(kbMiniSVG, notes, 220);
+                if (tabMiniSVG) renderMiniTab(tabMiniSVG, notes);
 
                 // ── Sync: light the matching spheres on the chromatic circle ──
                 // Extract pc values from notes (handles both {pc,oct} objects and plain numbers)
