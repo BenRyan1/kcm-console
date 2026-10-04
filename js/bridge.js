@@ -284,6 +284,22 @@
       return;
     }
 
+    // ── Bring a panel into view (Oct 2026) ───────────────────────────
+    // e.g. the Chromatic Universe's "Rhythm Geometry Lab" tab asks for the
+    // Rhythm Lab panel instead of opening a second copy inside itself.
+    if (data.type === 'KCM_FOCUS_PANEL') {
+      var FOCUS_IDS = { 'rhythm-lab': 'panel-rhythm' };
+      var target = document.getElementById(FOCUS_IDS[data.panel] || '');
+      if (target) {
+        if (target.classList.contains('is-minimized')) {
+          var mb = target.querySelector('[data-panel-action="minimize"]');
+          if (mb) mb.click();
+        }
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+      return;
+    }
+
     if (data.type !== 'KCM_STATE_PATCH') return;
     if (!data.payload || typeof data.payload !== 'object') return;
 
@@ -543,6 +559,15 @@
         console.log('[KCM.bridge] Chromatic Universe panel registered.');
       });
     }
+    // Rhythm Geometry Lab (Oct 2026) — kcm-chromatic-universe.html?view=rhythm
+    var rhythmIframe = document.getElementById('iframe-rhythm');
+    if (rhythmIframe) {
+      rhythmIframe.addEventListener('load', function () {
+        bridge.register(rhythmIframe);
+        console.log('[KCM.bridge] Rhythm Geometry Lab panel registered.');
+      });
+    }
+
     // The Decoder (song import panel)
     var decoderIframe = document.getElementById('iframe-decoder');
     if (decoderIframe) {

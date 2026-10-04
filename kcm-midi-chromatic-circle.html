@@ -1356,8 +1356,22 @@ function clearHighlights(){
 function broadcastActiveNotesToConsole(midiList){
   if (window.parent === window) return; // standalone, no Console to talk to
   if (!currentSong || (currentSong.source !== 'decoder' && currentSong.source !== 'kcm-pd')) return; // Decoder + KCM PD library songs drive the Console bus
+  // Oct 2026: only REAL playback drives the Console. The silent idle-preview
+  // loop (below) also runs highlightStep(), which used to light notes on every
+  // other panel a few seconds after the Console loaded, with nothing playing,
+  // and its clears could wipe notes another panel (e.g. the Rhythm Lab) had
+  // lit. Now: notes go out only while playing, and a clear goes out only if
+  // this panel actually lit something.
+  if (midiList.length) {
+    if (!playing) return;
+    _busLit = true;
+  } else {
+    if (!_busLit) return;
+    _busLit = false;
+  }
   window.parent.postMessage({ type: 'KCM_STATE_PATCH', payload: { activeNotes: midiList } }, '*');
 }
+let _busLit = false;
 
 function highlightStep(i){
   if (!currentSong) return;
