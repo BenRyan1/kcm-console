@@ -10835,6 +10835,18 @@ function toggleDock() {
         const app = document.querySelector('.app-container');
         const panel = app && app.querySelector('.info-panel');
         if (!dock || !panel) return;
+        /* Inside the KCM Console (Ben, Oct 3 2026): keep the dock pinned to
+           the BOTTOM of the Music Theory Pro panel window, opening upward.
+           Standalone pages (mtp, main site) keep the dock at the top. */
+        let inConsole = false;
+        try { inConsole = window.self !== window.top && !!window.parent.document.getElementById('iframe-mtp'); } catch (e) {}
+        if (inConsole) {
+            dock.classList.remove('kcm-dock-top');
+            let openC = false;
+            try { openC = localStorage.getItem('kcm_dock_open') === '1'; } catch (e) {}
+            dock.classList.toggle('collapsed', !openC);
+            return;
+        }
         if (dock.parentNode !== app) app.insertBefore(dock, panel);
         dock.classList.add('kcm-dock-top');
         let open = false;
