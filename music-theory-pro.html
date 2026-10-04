@@ -691,6 +691,35 @@ nav a.active { color:#009999; }
 #dockHandle .dock-title { font-family:var(--font-display); font-size:0.65rem; font-weight:800; letter-spacing:1.5px; text-transform:uppercase; color:#fff; }
 #dockHandle .dock-arrow { font-size:0.75rem; transition:transform 0.3s; color:rgba(255,255,255,0.8); }
 #floatingDock.collapsed #dockHandle .dock-arrow { transform:rotate(180deg); }
+/* ── DOCK AT THE TOP (Ben, Oct 3 2026) ───────────────────────────
+   The dock no longer floats at the bottom edge. kcmDockToTop() moves it
+   into the page directly ABOVE the Interface | Circle | Elements panel,
+   collapsed to one slim bar ("KCM Control Dock ▼") that opens downward.
+   It is sticky: scroll down and it stays pinned just under the site
+   header, so it is always one tap away without covering the Circle.
+   (At the bottom edge it was also lost entirely on mtp.keyscodesandmodes.com,
+   where the app sits in a full-height frame, so "bottom of the screen"
+   meant the bottom of the whole page.) */
+#floatingDock.kcm-dock-top {
+    position: sticky !important; top: var(--kcm-dock-top, 0px); bottom: auto !important;
+    left: auto !important; transform: none !important;
+    width: 100% !important; max-width: 1040px; margin: 0 auto 1rem; z-index: 900;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+}
+#floatingDock.kcm-dock-top.collapsed { transform: none !important; }
+/* Sticky needs the page itself to scroll: html/body used overflow-x:hidden,
+   which turns <body> into its own (non-scrolling) scroll box and silently
+   disables sticky. overflow-x:clip still blocks sideways scrolling but
+   doesn't create that box. Browsers without clip keep the old 'hidden'. */
+html, body { overflow-x: hidden; }
+@supports (overflow: clip) { html, body { overflow-x: clip !important; overflow-y: visible !important; } }
+#floatingDock.kcm-dock-top.collapsed #dockBody { display: none; }
+#floatingDock.kcm-dock-top.collapsed #dockHandle { border-radius: 12px; border-bottom: 1px solid rgba(0,255,255,0.2); }
+#floatingDock.kcm-dock-top #dockHandle { min-height: 36px; box-sizing: border-box; }
+#floatingDock.kcm-dock-top #dockHandle .dock-arrow { transform: rotate(180deg); }
+#floatingDock.kcm-dock-top.collapsed #dockHandle .dock-arrow { transform: none; }
+#floatingDock.kcm-dock-top #dockHandle .dock-title::after { content: ' — tap to open'; opacity: 0.7; font-weight: 600; letter-spacing: 0.5px; text-transform: none; }
+#floatingDock.kcm-dock-top:not(.collapsed) #dockHandle .dock-title::after { content: ''; }
 #dockBody {
     background: rgba(6,10,22,0.93);
     backdrop-filter: blur(20px);
@@ -3870,7 +3899,7 @@ window.addEventListener('unhandledrejection', function(event) {
                             const keySpan = document.getElementById('progressionKey');
                             const typeSpan = document.getElementById('progressionChordType');
                             const scaleSpan = document.getElementById('progressionScaleType');
-                            if (keySpan) keySpan.textContent = getRootName();
+                            if (keySpan) keySpan.textContent = getRootName() + (currentLevel === 'harmMinor' ? ' minor' : '');
                             if (typeSpan) typeSpan.textContent = currentHarmChordType === '7th' ? 'Seventh Chords (4-note)' : 'Triads (3-note)';
                             if (scaleSpan) scaleSpan.textContent = currentLevel === 'harmMinor' ? 'Natural Minor' : 'Major';
                         } else {
@@ -8114,13 +8143,16 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 const noteDur = beatMs * 0.80 / 1000; // seconds
 
                 // Build strictly ascending note sequence using the KCM Arpeggio Law.
-                // Start root at the chord's designated octave (vi and vii° start at oct 5
-                // so they always sit in the higher register above I-V).
+                // Octave is measured from the KEY's tonic in octave 4 (Oct 3 2026):
+                // each degree sits a scale step above the last, in every key —
+                // e.g. in C: I = C4, vi = A4 (not A5); in G: IV = C5 (not C4,
+                // which fell BELOW the G4 tonic). Old fixed startOct is unused.
                 const notes = [];
                 let prevMidi = -1;
-                let oct = data.startOct || 4;
                 data.intervals.forEach(semisFromKeyRoot => {
-                    const pc   = (rootNote + semisFromKeyRoot) % 12;
+                    const abs  = 4 * 12 + rootNote + semisFromKeyRoot;
+                    const pc   = abs % 12;
+                    let   oct  = Math.floor(abs / 12);
                     let   midi = oct * 12 + pc;
                     // Strictly ascending — only ever move UP
                     while (midi <= prevMidi) { oct++; midi = oct * 12 + pc; }
@@ -8201,9 +8233,11 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 // Build ascending first, then reverse
                 const notesAsc = [];
                 let prevMidi = -1;
-                let oct = data.startOct || 4;
                 data.intervals.forEach(semisFromKeyRoot => {
-                    const pc   = (rootNote + semisFromKeyRoot) % 12;
+                    // octave measured from the key's tonic (see playHarmChordAscending)
+                    const abs  = 4 * 12 + rootNote + semisFromKeyRoot;
+                    const pc   = abs % 12;
+                    let   oct  = Math.floor(abs / 12);
                     let   midi = oct * 12 + pc;
                     while (midi <= prevMidi) { oct++; midi = oct * 12 + pc; }
                     prevMidi = midi;
@@ -9279,6 +9313,22 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                     if (h.length > 10) h.shift();
                 }
             } catch(e3) {}
+            // Harmonized: keep the Chord Progressions header (key, triads/7ths,
+            // major/minor) and its buttons in step with the current settings —
+            // they were only set when the Harmonized button was first pressed,
+            // so changing key or Major/Minor left them stale (Oct 3 2026).
+            try {
+                if (currentLevel === 'harmMajor' || currentLevel === 'harmMinor') {
+                    const keySpan = document.getElementById('progressionKey');
+                    const typeSpan = document.getElementById('progressionChordType');
+                    const scaleSpan = document.getElementById('progressionScaleType');
+                    if (keySpan) keySpan.textContent = getRootName() + (currentLevel === 'harmMinor' ? ' minor' : '');
+                    if (typeSpan) typeSpan.textContent = currentHarmChordType === '7th' ? 'Seventh Chords (4-note)' : 'Triads (3-note)';
+                    if (scaleSpan) scaleSpan.textContent = currentLevel === 'harmMinor' ? 'Natural Minor' : 'Major';
+                    const pb = document.getElementById('progressionButtons');
+                    if (pb && pb.dataset.builtFor !== currentLevel) { updateProgressionButtons(); pb.dataset.builtFor = currentLevel; }
+                }
+            } catch(e4) {}
             } catch(e) { console.error('Update display error:', e); }
         }
 
@@ -9360,10 +9410,13 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 if (audioContext.state === 'suspended') { audioContext.resume(); }
                 // Build strictly ascending voice list (KCM Arpeggio Law — simultaneous chord)
                 const notesToPlay = [];
-                let oct = currentOctave;
                 let prevMidi = -1;
                 intervals.forEach(iv => {
-                    const note = (rootNote + iv) % 12;
+                    // octave measured from the key's tonic in the current
+                    // octave, so IV/V/vi sit ABOVE I in every key (Oct 3 2026)
+                    const abs = currentOctave * 12 + rootNote + iv;
+                    const note = abs % 12;
+                    let oct = Math.floor(abs / 12);
                     let midi = oct * 12 + note;
                     while (midi <= prevMidi) { oct++; midi = oct * 12 + note; }
                     notesToPlay.push({ note, octave: oct });
@@ -10770,8 +10823,35 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
 <script>
 // ── Dock JS ──────────────────────────────────────────────────
 function toggleDock() {
-    document.getElementById('floatingDock').classList.toggle('collapsed');
+    const d = document.getElementById('floatingDock');
+    d.classList.toggle('collapsed');
+    try { localStorage.setItem('kcm_dock_open', d.classList.contains('collapsed') ? '0' : '1'); } catch (e) {}
 }
+/* Move the dock up into the page, right above the 3-column panel, and keep
+   it pinned under the site header while scrolling (see .kcm-dock-top CSS). */
+(function kcmDockToTop() {
+    function place() {
+        const dock = document.getElementById('floatingDock');
+        const app = document.querySelector('.app-container');
+        const panel = app && app.querySelector('.info-panel');
+        if (!dock || !panel) return;
+        if (dock.parentNode !== app) app.insertBefore(dock, panel);
+        dock.classList.add('kcm-dock-top');
+        let open = false;
+        try { open = localStorage.getItem('kcm_dock_open') === '1'; } catch (e) {}
+        dock.classList.toggle('collapsed', !open);
+        setTop();
+    }
+    function setTop() {
+        const dock = document.getElementById('floatingDock');
+        const hdr = document.querySelector('.site-header');
+        let top = 0;
+        if (hdr && getComputedStyle(hdr).position === 'sticky') top = hdr.offsetHeight;
+        if (dock) dock.style.setProperty('--kcm-dock-top', top + 'px');
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', place); else place();
+    window.addEventListener('resize', setTop);
+})();
 
 function dockInitAudio() {
     const btn = document.getElementById('startAudio');
