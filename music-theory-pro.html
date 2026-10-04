@@ -2934,7 +2934,7 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                 </div>
                 <div style="display:flex;align-items:center;gap:0;">
                     <svg id="staffSVG" viewBox="0 0 220 100" preserveAspectRatio="xMidYMid meet" aria-hidden="true" style="flex-shrink:0;width:55%;"></svg>
-                    <svg id="fretboardMiniSVG" viewBox="0 0 220 100" preserveAspectRatio="xMidYMid meet" aria-hidden="true" style="flex-shrink:0;width:calc(55% - 48px);display:none;"></svg>
+                    <svg id="fretboardMiniSVG" viewBox="0 0 107 100" preserveAspectRatio="xMidYMid meet" aria-hidden="true" style="flex-shrink:0;width:min(150px, 48%);display:none;"></svg>
                     <svg id="keyboardMiniSVG" viewBox="0 0 220 100" preserveAspectRatio="xMidYMid meet" aria-hidden="true" style="flex-shrink:0;width:55%;display:none;"></svg>
                     <svg id="timelineSVG" viewBox="0 0 220 100" preserveAspectRatio="xMidYMid meet" aria-hidden="true" style="flex-shrink:0;width:100%;display:none;"></svg>
                     <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:0 12px;">
@@ -6464,7 +6464,9 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
         function renderMiniFretboard(svg, notes, viewW) {
             if (!svg) return;
             svg.innerHTML = '';
-            const W = viewW || 220, H = 100;
+            // viewBox only as wide as the narrow neck (+ room for edge dots),
+            // so the diagram fills the panel height at real-guitar proportion.
+            const W = 107, H = 100;
             svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
             svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
 
@@ -6475,10 +6477,14 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
             const tuning = [4, 9, 2, 7, 11, 4]; // E A D G B e — vertical strings, bass on left
             const stringLabels = ['E', 'A', 'D', 'G', 'B', 'e'];
             const numFrets = 4;
-            const marginX = 16, labelY = 10, openBandH = 14, bottomY = 92;
+            const labelY = 10, openBandH = 14, bottomY = 92;
             const topY = labelY + 5;
             const nutY = topY + openBandH;
-            const colW = (W - marginX * 2) / (tuning.length - 1);
+            // Narrow, centered neck (Ben, Oct 3 2026): strings 15 units apart
+            // instead of stretched across the full width, so the mini
+            // fretboard reads in real-guitar proportion (narrow neck, tall frets).
+            const colW = Math.min(15, (W - 32) / (tuning.length - 1));
+            const marginX = (W - colW * (tuning.length - 1)) / 2;
             const rowH = (bottomY - nutY) / numFrets;
 
             tuning.forEach((base, s) => {
