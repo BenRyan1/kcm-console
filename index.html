@@ -439,5 +439,35 @@
   <script src="js/suno-panel_1.js" defer></script>
   <script src="js/kcm-mic-engine.js" defer></script>
 
+  <!-- 2026-10-03 (Ben): no "Russian dolls". Panels are single apps; their own
+       main-site header/nav is hidden inside the Console, and any link that
+       leaves the panel's page opens in the full browser window, never inside
+       a panel. Console-only fix: the panel files themselves are unchanged. -->
+  <script>
+  (function(){
+    function tidy(f){
+      var d; try { d = f.contentDocument; } catch(e){ return; }
+      if (!d || !d.documentElement || d.__kcmTidy) return;
+      d.__kcmTidy = true;
+      var st = d.createElement('style');
+      st.textContent = '.site-header,.skip-nav{display:none !important;}';
+      (d.head || d.documentElement).appendChild(st);
+      d.addEventListener('click', function(ev){
+        var a = ev.target && ev.target.closest ? ev.target.closest('a[href]') : null;
+        if (!a) return;
+        var h = a.getAttribute('href') || '';
+        if (h.charAt(0) === '#' || /^(javascript|mailto|tel|blob|data):/i.test(h)) return;
+        if (a.target && a.target !== '_self') return;
+        ev.preventDefault();
+        window.top.location.href = a.href;
+      }, true);
+    }
+    document.querySelectorAll('iframe.kcm-panel__iframe').forEach(function(f){
+      f.addEventListener('load', function(){ tidy(f); });
+      tidy(f);
+    });
+  })();
+  </script>
+
 </body>
 </html>
