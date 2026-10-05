@@ -236,3 +236,6 @@
   .kcm-suno__body { padding: 1rem; }
   .kcm-suno__btn--copy { margin-left: 0; width: 100%; }
 }
+
+/* AI HOLD Oct 4 2026: Enhance-with-AI hidden; delete these 2 lines to restore */
+#suno-enhance-btn{display:none!important}

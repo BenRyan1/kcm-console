@@ -2488,6 +2488,7 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
     window.addEventListener('orientationchange', kcmPhoneCheck);
 })();
 </script>
+<style id="kcm-ai-hold">/* AI HOLD Oct 4 2026: remove this tag to show the AI Tutor again */#kcmAIPanel{display:none!important}</style>
 </head>
 <body>
 
@@ -11597,6 +11598,7 @@ Explain in 3 sentences: what they're looking at, what makes it musically interes
 const _KCM_AI_PROXY_URL = 'https://console.keyscodesandmodes.com/ai';
 
 async function _kcmAIProxy(messages, system, maxTokens) {
+    throw new Error('AI features are paused.'); // AI HOLD Oct 4 2026
     const res = await fetch(_KCM_AI_PROXY_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

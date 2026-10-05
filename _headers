@@ -1,0 +1,7 @@
+# Security headers (added 2026-10-04, student-privacy audit)
+# No CSP yet on purpose; no X-Frame-Options so nothing that embeds this site breaks.
+/*
+  Strict-Transport-Security: max-age=31536000
+  Permissions-Policy: microphone=(self), midi=(self), camera=(), geolocation=(), payment=(), usb=(), interest-cohort=()
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-Content-Type-Options: nosniff

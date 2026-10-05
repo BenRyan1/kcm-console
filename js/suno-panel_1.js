@@ -268,7 +268,7 @@ Return ONLY the prompt text — no preamble, no explanation, no markdown.`;
     <strong>How to use:</strong>
     1 · Choose root + mode in any of the 4 panels above &nbsp;
     2 · Prompt updates instantly &nbsp;
-    3 · Hit <em>Enhance</em> for a richer AI version &nbsp;
+    
     4 · <em>Copy</em> → paste into <span id="suno-howto-target">suno.com</span> → Generate
   </div>
 

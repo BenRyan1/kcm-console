@@ -449,6 +449,14 @@ export default {
     // forwards the request to Anthropic's API. The model is fixed here,
     // not client-supplied, so callers cannot request an arbitrary model.
     if (url.pathname === '/ai') {
+      // ── AI HOLD (Oct 4, 2026) ── AI is OFF unless the Worker variable
+      // AI_ENABLED is set to exactly "true". Nothing is sent to Anthropic
+      // and nothing is billed while this is off. To turn back on later:
+      // add AI_ENABLED=true in Cloudflare (Worker > Settings > Variables).
+      if (env.AI_ENABLED !== 'true') {
+        return new Response(JSON.stringify({ ok: false, paused: true, error: 'AI features are paused.' }),
+          { status: 503, headers: { ...cors, 'Content-Type': 'application/json' } });
+      }
       if (!env.ANTHROPIC_API_KEY) {
         return new Response(JSON.stringify({ ok: false, error: 'AI proxy not configured' }),
           { status: 500, headers: { ...cors, 'Content-Type': 'application/json' } });
