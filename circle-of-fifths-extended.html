@@ -312,7 +312,7 @@ body{font-family:var(--font-b);background:radial-gradient(ellipse at 30% 20%,#1e
     <!-- CENTER — Circle + loop -->
     <div class="center-col">
       <div class="circle-wrap">
-        <svg id="circleSvg" viewBox="0 0 700 700" class="circle-svg" role="img" aria-label="Interactive Circle of Fifths Extended — C at 12 o'clock, clockwise ascending, with 7th/9th/11th/13th rings toward the center">
+        <svg id="circleSvg" viewBox="0 0 700 700" class="circle-svg" role="group" aria-label="Interactive Circle of Fifths Extended — C at 12 o'clock, clockwise ascending, with 7th/9th/11th/13th rings toward the center">
           <!-- drawn by JS -->
         </svg>
       </div>
@@ -989,7 +989,15 @@ const playDot = (note,isMinor=false) => {
   const notes = _cofClickMode==='triad' ? (isMinor?getMinorTriad(note):getTriad(note)) : [note];
   const tok = ++_cofDotTok;
   S.active={note,type:isMinor?'inner':'outer'}; render();
-  playNotes(notes,4,0.9);
+  // Oct 5 2026: majors play in octave 4; every relative minor plays a
+  // minor 3rd BELOW its relative major (C4 -> A3, G4 -> E4), always.
+  let oct = 4;
+  if (isMinor) {
+    const rel = REL_MAJOR[note] || note;
+    const m = 60 + (NOTE_CHROMA[rel]||0) - 3;
+    oct = Math.floor(m/12) - 1;
+  }
+  playNotes(notes,oct,0.9);
   setTimeout(()=>{ if(tok===_cofDotTok && S.active && S.active.note===note){ S.active=null; render(); } },750);
 };
 // Tell the Console the key changed, so it stops pulling the wheel back
