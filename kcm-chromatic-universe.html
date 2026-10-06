@@ -1173,45 +1173,6 @@ input[type="range"] {
 #syncStatusPill.visible { display: block; }
 
 /* ══════════════════════════════════════════
-   RHYTHM LAB VIEW (?view=rhythm) + MY RHYTHMS
-   ══════════════════════════════════════════ */
-body.kcm-view-rhythm .site-header,
-body.kcm-view-rhythm .mode-tabs,
-body.kcm-view-rhythm .site-footer,
-body.kcm-view-rhythm #cu-recorder { display: none !important; }
-body.kcm-view-rhythm #main-content { padding-top: 0.75rem; }
-.rl-lib-row { display:flex; gap:0.4rem; margin-bottom:0.45rem; }
-.rl-lib-row input[type=text] {
-  flex:1; min-width:0; background:var(--bg-deep); color:var(--text);
-  border:1px solid rgba(255,255,255,0.12); border-radius:6px;
-  padding:0.45rem 0.6rem; font-size:0.8rem; font-family:inherit;
-}
-.rl-lib-row input[type=text]:focus { outline:none; border-color:var(--teal); }
-.rl-lib-actions { display:grid; grid-template-columns:1fr 1fr; gap:0.4rem; margin-bottom:0.6rem; }
-.rl-lib-actions .btn { font-size:0.68rem; padding-left:0.4rem; padding-right:0.4rem; }
-.rl-lib-list { display:flex; flex-direction:column; gap:0.35rem; max-height:320px; overflow-y:auto; }
-.rl-lib-empty { color:var(--text-ghost); font-size:0.72rem; padding:0.2rem 0; line-height:1.5; }
-.rl-lib-item {
-  display:flex; align-items:center; gap:0.5rem;
-  background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08);
-  border-radius:8px; padding:0.45rem 0.55rem;
-}
-.rl-lib-item.is-current { border-color:rgba(244,208,63,0.5); }
-.rl-lib-text { flex:1; min-width:0; }
-.rl-lib-name { font-size:0.8rem; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.rl-lib-meta { font-size:0.64rem; color:var(--text-ghost); margin-top:1px; }
-.rl-lib-btn {
-  background:transparent; border:1px solid rgba(255,255,255,0.12); color:var(--text-dim);
-  border-radius:5px; font-size:0.66rem; padding:0.25rem 0.4rem; cursor:pointer; font-family:inherit;
-  white-space:nowrap;
-}
-.rl-lib-btn:hover { border-color:var(--teal); color:var(--text); }
-.rl-lib-btn.play { color:var(--teal); border-color:rgba(0,128,128,0.45); }
-.rl-lib-btn.danger.armed { color:#fff; background:var(--coral); border-color:var(--coral); }
-.rl-drive-note { font-size:0.66rem; color:var(--text-ghost); margin-top:0.5rem; line-height:1.5; }
-.rl-drop-hint { outline:2px dashed var(--teal); outline-offset:4px; }
-
-/* ══════════════════════════════════════════
    RESPONSIVE TWEAKS
    ══════════════════════════════════════════ */
 @media (max-width: 600px) {
@@ -1222,19 +1183,6 @@ body.kcm-view-rhythm #main-content { padding-top: 0.75rem; }
 </style>
 </head>
 <body>
-<script>
-// ── Rhythm Lab view (Oct 2026) ──────────────────────────────────────────
-// The Console loads THIS SAME FILE a second time as its own "Rhythm Geometry
-// Lab" panel, with ?view=rhythm. One copy of the rhythm engine, two ways in:
-// the Chromatic Universe panel (clock + ear training) and the Rhythm Lab
-// panel (rhythm only). Standalone (outside the Console) nothing changes.
-window.KCM_RHYTHM_VIEW = (function(){
-  try { return new URLSearchParams(location.search).get('view') === 'rhythm'; }
-  catch (e) { return false; }
-})();
-window.KCM_EMBEDDED = (function(){ try { return window.parent !== window; } catch (e) { return true; } })();
-if (window.KCM_RHYTHM_VIEW) document.body.classList.add('kcm-view-rhythm');
-</script>
 
 <!-- ══════════════════════════════════════════
      HEADER
@@ -1296,7 +1244,7 @@ if (window.KCM_RHYTHM_VIEW) document.body.classList.add('kcm-view-rhythm');
   <button class="mode-tab-btn active" onclick="switchPanel('clock')" id="tab-clock" role="tab" aria-selected="true">
     ◉ Chromatic Spoke Clock
   </button>
-  <button class="mode-tab-btn" onclick="openRhythmTab()" id="tab-rhythm" role="tab" aria-selected="false">
+  <button class="mode-tab-btn" onclick="switchPanel('rhythm')" id="tab-rhythm" role="tab" aria-selected="false">
     ⬡ Rhythm Geometry Lab
   </button>
   <button class="mode-tab-btn" onclick="switchPanel('ear')" id="tab-ear" role="tab" aria-selected="false">
@@ -1556,26 +1504,11 @@ if (window.KCM_RHYTHM_VIEW) document.body.classList.add('kcm-view-rhythm');
           <div class="euclid-presets-grid" id="euclidPresetsGrid">
             <!-- populated by renderEuclidPresets() — see script below -->
           </div>
+          <button class="btn btn-ghost btn-full" onclick="saveEuclidPreset()" style="font-size:0.7rem;margin-top:0.6rem;color:var(--gold);border-color:rgba(244,208,63,0.35);">💾 Save Current Pattern as Preset</button>
           <div id="euclidCustomPresetsWrap" style="display:none;">
-            <div style="font-size:0.62rem;color:var(--text-ghost);letter-spacing:0.08em;margin:0.7rem 0 0.3rem;">OLDER SAVED SHAPES (pulse counts only)</div>
+            <div style="font-size:0.62rem;color:var(--text-ghost);letter-spacing:0.08em;margin:0.7rem 0 0.3rem;">YOUR PRESETS</div>
             <div class="euclid-presets-grid" id="euclidCustomPresetsGrid"></div>
           </div>
-        </div>
-
-        <!-- ★ MY RHYTHMS — save / name / replay ★ -->
-        <div class="ctrl-card" id="rlLibraryCard" style="border-color:rgba(244,208,63,0.3);">
-        <div class="ctrl-card-title" style="color:var(--gold);">💾 My Rhythms</div>
-        <div class="rl-lib-row">
-          <input type="text" id="rlNameInput" maxlength="60" placeholder="Name this rhythm…" aria-label="Rhythm name">
-          <button class="btn btn-gold" id="rlSaveBtn" onclick="rlSaveCurrent()" style="font-size:0.72rem;">Save</button>
-        </div>
-        <div class="rl-lib-actions">
-          <button class="btn btn-ghost" onclick="rlDownloadCurrent()" title="Download this rhythm as a .kcmr file">⬇ Save .kcmr file</button>
-          <button class="btn btn-ghost" onclick="rlOpenFile()" title="Open a .kcmr rhythm file">⬆ Open .kcmr file</button>
-          <button class="btn btn-ghost" onclick="rlExportMidiCurrent()" title="Download a General MIDI drum file for Logic, GarageBand, Ableton…" style="grid-column:1 / -1;">🎹 Export MIDI drum file</button>
-        </div>
-        <div class="rl-lib-list" id="rlLibList"></div>
-        <div class="rl-drive-note" id="rlDriveNote">Saves every hit exactly as played or tapped, plus sounds, mutes, tempo, key and Melodic Sync settings.</div>
         </div>
       </div>
 
@@ -1796,17 +1729,6 @@ if (window.KCM_RHYTHM_VIEW) document.body.classList.add('kcm-view-rhythm');
 // ═══════════════════════════════════════════
 // PANEL SWITCHING
 // ═══════════════════════════════════════════
-// Inside the Console the Rhythm Geometry Lab is its own panel, so this tab
-// asks the Console to bring that panel into view instead of opening a second,
-// separate copy here. Standalone, it opens the tab as it always has.
-function openRhythmTab() {
-  if (window.KCM_EMBEDDED && !window.KCM_RHYTHM_VIEW) {
-    try { window.parent.postMessage({ type: 'KCM_FOCUS_PANEL', panel: 'rhythm-lab' }, '*'); } catch (e) {}
-    return;
-  }
-  switchPanel('rhythm');
-}
-
 function switchPanel(name) {
   document.querySelectorAll('.app-panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.mode-tab-btn').forEach(b => {
@@ -2017,18 +1939,6 @@ let activeNote = null;
 let currentStencil = 'chromatic';
 let midiAccess = null;
 let activeMidiNotes = new Set();
-// Oct 2026: notes coming from the Console bus (the Rhythm Lab, The Decoder…)
-// light up on the KEY's wedge only (the spoke at 12 o'clock, root at the
-// center ring and the scale climbing outward), not every copy of that note
-// scattered around the wheel. See wedgeRingForMidi() / drawClock().
-let busWedgeMidis = new Set();
-// Ring (0–11) on the key's wedge where a MIDI note sits. The wedge spoke
-// holds root+0 … root+11 semitones, so the ring is the note's distance above
-// the root, folded into one octave.
-function wedgeRingForMidi(midi) {
-  const R = getRootSpokeIndex() % 12;
-  return (((midi - MIDI_BASE - R) % 12) + 12) % 12;
-}
 let segmentViewOnly = false;   // when true, wheel shows/plays only the current wedge (slice)
 let sphereWideMode = false;    // when true, Auto-Play sweeps every scale note across the whole wheel
 let sphereAutoS = 0, sphereAutoR = 0;  // traversal cursor for whole-sphere Auto-Play
@@ -2147,9 +2057,6 @@ function drawClock(highlightNotes = null) {
   // o'clock) is drawn/clickable — everything else stays out of notePositions'
   // visible set so the wheel reads as a single slice instead of the full wheel.
   const activeSpokeForView = getRootSpokeIndex();
-  const wedgeSpoke = activeSpokeForView;
-  const busWedgeRings = new Set();
-  busWedgeMidis.forEach(m => busWedgeRings.add(wedgeRingForMidi(m)));
 
   // Spokes and note dots
   for (let s = 0; s < SPOKES; s++) {
@@ -2175,8 +2082,7 @@ function drawClock(highlightNotes = null) {
 
       if (!spokeVisible) continue;
 
-      const isHi = hiArr.some(h => h.s===s && h.r===r) || activeMidiNotes.has(midi)
-                   || (s === wedgeSpoke && busWedgeRings.has(r));
+      const isHi = hiArr.some(h => h.s===s && h.r===r) || activeMidiNotes.has(midi);
       const inStencil = isNoteInStencil(noteIdx);
       const inWedge = isNoteInWedge(s);
       const isActive = inStencil && inWedge;
@@ -2838,7 +2744,7 @@ function createComplementLayer(sourceLayer, cIdx, sound) {
   const pattern = sourceLayer.pattern.map(v => v ? 0 : 1);
   const pulses = pattern.reduce((a,b) => a+b, 0);
   return { id, steps: sourceLayer.steps, pulses, pattern, color,
-    soundType: sound || LAYER_SOUNDS[cIdx % LAYER_SOUNDS.length], muted:false, rotation:0, source:'gaps' };
+    soundType: sound || LAYER_SOUNDS[cIdx % LAYER_SOUNDS.length], muted:false, rotation:0 };
 }
 
 function addComplementLayer(sourceLayerId) {
@@ -2884,7 +2790,9 @@ function checkRotationMatch(l) {
   for (const key in EUCLID_PRESETS) {
     const p = EUCLID_PRESETS[key];
     if (p.layers.length !== 1) continue;
-    if (presetLayerPattern(p.layers[0]).join('') === bitstr) { showToast('🎉 This rotation matches: ' + p.label + '!'); return; }
+    const [s, pu] = p.layers[0];
+    if (s !== l.steps) continue;
+    if (bjorklund(s, pu).join('') === bitstr) { showToast('🎉 This rotation matches: ' + p.label + '!'); return; }
   }
 }
 
@@ -2943,12 +2851,8 @@ function finalizeTapCapture() {
   const idx = RS.layers.length;
   const id = ++layerIdCtr;
   const color = LAYER_COLORS[idx % LAYER_COLORS.length];
-  // Raw tap timings are kept alongside the grid pattern (saved in .kcmr files)
-  // so a future "play with the player's real feel" mode needs no re-record.
   RS.layers.push({ id, steps, pulses, pattern: tappedPattern, color,
-    soundType: LAYER_SOUNDS[idx % LAYER_SOUNDS.length], muted:false, rotation:0,
-    source: 'tap',
-    feel: { stepMs: Math.round(stepDurMs * 100) / 100, hitsMs: _tapTimes.map(t => Math.round((t - t0) * 10) / 10) } });
+    soundType: LAYER_SOUNDS[idx % LAYER_SOUNDS.length], muted:false, rotation:0 });
   renderLayers(); drawRhythmViz();
 
   const idealPattern = bjorklund(steps, pulses);
@@ -2994,7 +2898,7 @@ function setLayerSound(id, sound) {
 
 function updateLayerPulses(id, val) {
   const l=RS.layers.find(l=>l.id===id);
-  if(l){l.pulses=parseInt(val); l.pattern=bjorklund(l.steps,Math.min(l.pulses,l.steps)); l.rotation=0; delete l.feel; l.source='euclid';
+  if(l){l.pulses=parseInt(val); l.pattern=bjorklund(l.steps,Math.min(l.pulses,l.steps)); l.rotation=0;
     document.getElementById(`lpv-${id}`).textContent=l.pulses;
     const rotEl=document.getElementById(`lrot-${id}`); if(rotEl) rotEl.textContent='0/'+l.steps;
     drawRhythmViz();
@@ -3069,7 +2973,7 @@ function setPolygon(n) {
   // Auto-expand steps if needed (e.g. 12 pulses needs at least 12 steps)
   if (n > RS.globalSteps) setSteps(Math.max(16, n));
   document.querySelectorAll('.poly-btn').forEach((b,i)=>b.classList.toggle('active',i+2===n));
-  RS.layers.forEach(l=>{l.pulses=n;l.pattern=bjorklund(l.steps,Math.min(n,l.steps));l.rotation=0;delete l.feel;l.source='euclid';});
+  RS.layers.forEach(l=>{l.pulses=n;l.pattern=bjorklund(l.steps,Math.min(n,l.steps));l.rotation=0;});
   renderLayers(); drawRhythmViz();
 }
 
@@ -3099,7 +3003,6 @@ function rScheduleNote(step, time) {
         const noteData = syncGetNextNote(li, ls, layer);
         if (noteData) {
           playMelodicNoteAtTime(noteData.midi, time, noteData.color);
-          if (typeof window.__rlBusHit === 'function') window.__rlBusHit(noteData.midi, delayMs, Math.max(80, (60 / RS.tempo) * 720));
           setTimeout(()=>{
             syncFlashClock(noteData.noteIndex, noteData.midi, li, layer.color);
             updateSyncBadge(li, noteData);
@@ -3126,9 +3029,6 @@ function togglePlay() {
   initRhythmAudio();
   if(RS.audioCtx.state==='suspended') RS.audioCtx.resume();
   if(!RS.playing){
-    // Starting with Melodic Sync on: put the Chromatic Universe (and the
-    // whole Console) in this rhythm's key/scale so hits land on its wedge.
-    if (SYNC.active && window.KCM_RHYTHM_VIEW && typeof window.__rlPublishKey === 'function') window.__rlPublishKey();
     RS.playing=true; RS.nextNoteTime=RS.audioCtx.currentTime;
     rScheduler();
     document.getElementById('playBtn').textContent='⏸ Pause';
@@ -3136,7 +3036,6 @@ function togglePlay() {
     rAnimate();
   } else {
     RS.playing=false; clearTimeout(RS.schedulerTimer);
-    if (typeof window.__rlBusClear === 'function') window.__rlBusClear();
     document.getElementById('playBtn').textContent='▶ Play';
     document.getElementById('playBtn').classList.remove('is-active');
     cancelAnimationFrame(RS.animFrame);
@@ -3144,7 +3043,6 @@ function togglePlay() {
 }
 
 function stopReset() {
-  if (typeof window.__rlBusClear === 'function') window.__rlBusClear();
   RS.playing=false; RS.step=0; RS.playheadAngle=-Math.PI/2;
   clearTimeout(RS.schedulerTimer); cancelAnimationFrame(RS.animFrame);
   document.getElementById('playBtn').textContent='▶ Play';
@@ -3152,9 +3050,8 @@ function stopReset() {
   drawRhythmViz();
 }
 
-function setRhythmTempo(val, fromBus) {
+function setRhythmTempo(val) {
   RS.tempo=parseInt(val);
-  if (!fromBus && typeof window.__rlBusTempo === 'function') window.__rlBusTempo(RS.tempo);
   document.getElementById('rTempoDisplay').textContent=val;
   // Shared tempo — keep the Chromatic Spoke Clock locked to the same BPM
   currentTempo = RS.tempo;
@@ -3171,7 +3068,7 @@ function setSteps(val) {
     const b=document.getElementById('stepsBtn'+n);
     if(b) b.classList.toggle('active', n===RS.globalSteps);
   });
-  RS.layers.forEach(l=>{l.steps=RS.globalSteps;l.pattern=bjorklund(l.steps,Math.min(l.pulses,l.steps));l.rotation=0;delete l.feel;l.source='euclid';});
+  RS.layers.forEach(l=>{l.steps=RS.globalSteps;l.pattern=bjorklund(l.steps,Math.min(l.pulses,l.steps));l.rotation=0;});
   renderLayers(); drawRhythmViz();
 }
 
@@ -3375,51 +3272,26 @@ function rAnimate() {
 // previews + grouping), and updateEuclidPresetHighlight() (active-preset
 // indicator) all read from this so the button list and the load logic can
 // never drift out of sync with each other.
-// A preset layer is either [steps, pulses] (a Euclidean pattern, built by
-// bjorklund) or { p:'x..x..x...', sound } -- an EXACT hit pattern, one
-// character per 16th-note step (x = hit, . = rest). The claves are not
-// evenly spaced Euclidean rhythms, so they must be written out exactly.
-// Oct 2026 corrections: the old "3-2 Son Clave" / "2-3 Clave" played two
-// 8-step layers on top of each other (not a clave), "Shiko (4,8)" was just
-// straight 8ths, and both polyrhythms used layers of different cycle
-// lengths, so the two pulses never lined up over one shared cycle.
 const EUCLID_PRESETS = {
-  son32:        { label:'3–2 Son Clave',       group:'Afro-Cuban / Latin', layers:[{ p:'x..x..x...x.x...', sound:'clave' }] },
-  son23:        { label:'2–3 Son Clave',       group:'Afro-Cuban / Latin', layers:[{ p:'..x.x...x..x..x.', sound:'clave' }] },
-  rumba32:      { label:'3–2 Rumba Clave',     group:'Afro-Cuban / Latin', layers:[{ p:'x..x...x..x.x...', sound:'clave' }] },
-  rumba23:      { label:'2–3 Rumba Clave',     group:'Afro-Cuban / Latin', layers:[{ p:'..x.x...x..x...x', sound:'clave' }] },
+  clave32:      { label:'3–2 Son Clave',      group:'Afro-Cuban / Latin', layers:[[8,3],[8,2]] },
+  clave23:      { label:'2–3 Clave',           group:'Afro-Cuban / Latin', layers:[[8,2],[8,3]] },
   clave:        { label:'Clave (5,12)',        group:'Afro-Cuban / Latin', layers:[[12,5]] },
   tresillo:     { label:'Tresillo (3,8)',      group:'Afro-Cuban / Latin', layers:[[8,3]] },
   cinquillo:    { label:'Cinquillo (5,8)',     group:'Afro-Cuban / Latin', layers:[[8,5]] },
-  shiko:        { label:'Shiko',               group:'Afro-Cuban / Latin', layers:[{ p:'x...x.x...x.x...' }] },
+  shiko:        { label:'Shiko (4,8)',         group:'Afro-Cuban / Latin', layers:[[8,4]] },
   bossanova:    { label:'Bossa Nova (5,16)',   group:'Brazilian',          layers:[[16,5]] },
-  polyrhythm34: { label:'3 over 4 Polyrhythm', group:'Polyrhythm',         layers:[[12,3],[12,4]] },
-  polyrhythm45: { label:'4 over 5 Polyrhythm', group:'Polyrhythm',         layers:[[20,4],[20,5]] },
+  polyrhythm34: { label:'3 over 4 Polyrhythm', group:'Polyrhythm',         layers:[[12,3],[16,4]] },
+  polyrhythm45: { label:'4 over 5 Polyrhythm', group:'Polyrhythm',         layers:[[20,4],[16,5]] },
 };
-
-// Exact hit pattern (array of 0/1) for any preset layer spec.
-function presetLayerPattern(spec) {
-  if (Array.isArray(spec)) return bjorklund(spec[0], Math.min(spec[1], spec[0]));
-  return String(spec.p).split('').map(c => c === 'x' ? 1 : 0);
-}
 const LS_CUSTOM_PRESETS_KEY = 'kcm_cu_custom_euclid_presets';
 
 function loadEuclidPreset(name) {
   const p = EUCLID_PRESETS[name]; if (!p) return;
   RS.layers=[];
-  p.layers.forEach((spec,i)=>{
-    const pattern = presetLayerPattern(spec);
-    const layer = createLayer(pattern.length, Math.max(1, pattern.reduce((a,b)=>a+b,0)), i, LAYER_SOUNDS[i]);
-    layer.pattern = pattern;
-    layer.pulses = pattern.reduce((a,b)=>a+b,0);
-    if (!Array.isArray(spec)) { layer.source = 'preset'; if (spec.sound) layer.soundType = spec.sound; }
-    RS.layers.push(layer);
+  p.layers.forEach(([steps,pulses],i)=>{
+    RS.globalSteps=steps;
+    RS.layers.push(createLayer(steps,pulses,i,LAYER_SOUNDS[i]));
   });
-  // One shared cycle = the longest layer, so every layer loops cleanly in it
-  RS.globalSteps = Math.max.apply(null, RS.layers.map(l => l.steps));
-  RS.step = 0;
-  [16,32,64].forEach(n=>{ const b=document.getElementById('stepsBtn'+n); if(b) b.classList.toggle('active', n===RS.globalSteps); });
-  if (typeof syncResetCursors === 'function') syncResetCursors();
   renderLayers(); drawRhythmViz();
   showToast('✅ '+p.label+' loaded');
 }
@@ -3427,7 +3299,7 @@ function loadEuclidPreset(name) {
 // Small dot-row preview of a pattern's shape, e.g. ●○●○●○○○ — capped and
 // evenly downsampled for long patterns so it never overflows a button.
 function _euclidDots(steps, pulses) {
-  const pat = Array.isArray(steps) ? steps : bjorklund(steps, Math.min(pulses, steps));
+  const pat = bjorklund(steps, Math.min(pulses, steps));
   const MAX_DOTS = 16;
   let shown = pat;
   if (pat.length > MAX_DOTS) {
@@ -3456,7 +3328,8 @@ function renderEuclidPresets() {
     btn.dataset.preset = key;
     btn.style.fontSize = '0.7rem';
     btn.onclick = () => loadEuclidPreset(key);
-    btn.innerHTML = `<span>${p.label}</span><span class="euclid-preset-dots">${_euclidDots(presetLayerPattern(p.layers[0]))}</span>`;
+    const [steps0, pulses0] = p.layers[0];
+    btn.innerHTML = `<span>${p.label}</span><span class="euclid-preset-dots">${_euclidDots(steps0, pulses0)}</span>`;
     grid.appendChild(btn);
   });
   updateEuclidPresetHighlight();
@@ -3467,13 +3340,11 @@ function renderEuclidPresets() {
 // currently loaded into RS.layers — same "don't show one thing while
 // something else is actually loaded" principle as the degree-button sync.
 function updateEuclidPresetHighlight() {
-  // Match on the exact hit patterns, not just step/pulse counts (two
-  // different rhythms can share the same counts, e.g. son vs rumba clave).
-  const current = RS.layers.map(l => l.pattern.join('')).join(',');
+  const current = RS.layers.map(l => l.steps + ':' + l.pulses).join(',');
   document.querySelectorAll('.euclid-preset-btn').forEach(btn => {
     const key = btn.dataset.preset;
     const p = key.indexOf('custom:') === 0 ? _loadCustomPresets()[key.slice(7)] : EUCLID_PRESETS[key];
-    const target = p ? p.layers.map(spec => presetLayerPattern(spec).join('')).join(',') : null;
+    const target = p ? p.layers.map(([s,pu]) => s + ':' + pu).join(',') : null;
     btn.classList.toggle('active', target !== null && target === current);
   });
 }
@@ -3585,7 +3456,7 @@ function toggleSync() {
   const desc = document.getElementById('syncModeDesc');
 
   if (SYNC.active) {
-    btn.textContent = '◈  SYNC ON · CLICK TO STOP';
+    btn.textContent = '◈  SYNC ON — CLICK TO DEACTIVATE';
     btn.classList.add('active');
     row.style.display = 'flex';
     pill.classList.add('visible');
@@ -3774,14 +3645,12 @@ function redrawClockWithSync() {
   const highlights = [];
   const now = performance.now();
   const active = syncFlashNotes.filter(n=>n.expiry>now);
-  // Light the note on the KEY's wedge only (spoke at 12 o'clock), where the
-  // scale climbs outward from the root, instead of every copy of that pitch
-  // around the wheel.
-  const wedgeS = getRootSpokeIndex();
   for (const sn of active) {
-    const r = wedgeRingForMidi(sn.midi);
-    const np = notePositions.find(p => p.s === wedgeS && p.r === r);
-    if (np) highlights.push({ ...np, _syncColor: sn.layerColor });
+    for (const np of notePositions) {
+      if (np.noteIndex === sn.noteIndex) {
+        highlights.push({ ...np, _syncColor: sn.layerColor });
+      }
+    }
   }
   drawClock(highlights.length ? highlights : null);
 }
@@ -4867,8 +4736,7 @@ function etRestart() {
     // keyboard input -- activeMidiNotes, matched by each cell's own
     // computed `midi` value -- so route the bus's activeNotes through
     // that same, already-correct path instead.
-    // Oct 2026 (Ben): show bus notes on the key's wedge, not scattered.
-    busWedgeMidis = new Set(Array.isArray(midiArr) ? midiArr : []);
+    activeMidiNotes = new Set(Array.isArray(midiArr) ? midiArr : []);
     drawClock();
   }
 
@@ -4936,70 +4804,25 @@ function etRestart() {
 
   /* ── Message listener ─────────────────────────────────────────────  */
   var _lastBusActiveMidiSet = {};
-  // The Console sends its WHOLE state on every change -- including every
-  // single note-on/off. Re-applying root/mode each time used to snap this
-  // panel's scale back to the bus mode on every note (e.g. a Pentatonic
-  // picked for Melodic Sync became Major the moment any note played).
-  // Only apply root / mode / scale / bpm when they actually changed.
-  var _lastBus = { root: undefined, mode: undefined, scale: undefined, bpm: undefined };
-  function _syncMirrorPickers() {
-    var ks = document.getElementById('keySelect'), sk = document.getElementById('syncKeySelect');
-    var sm = document.getElementById('syncStencilSelect');
-    if (ks && sk) sk.value = ks.value;
-    if (sm && typeof STENCILS !== 'undefined' && STENCILS[currentStencil]) sm.value = currentStencil;
-  }
   window.addEventListener('message', function (e) {
-    // The Rhythm Lab's scale (incl. non-church scales like Pentatonic or
-    // Blues, which the bus's 7-mode vocabulary can't carry) -> this wheel.
-    if (e.data && e.data.type === 'KCM_STENCIL') {
-      var st = e.data.stencil;
-      if (typeof st === 'string' && STENCILS[st] && st !== currentStencil) {
-        currentStencil = st;
-        var ss0 = document.getElementById('stencilSelect'); if (ss0) ss0.value = st;
-        _syncMirrorPickers();
-        drawClock();
-      }
-      return;
-    }
-    if (e.data && e.data.type === 'KCM_STOP') {
-      if (typeof stopReset === 'function' && RS.playing) stopReset();
-      return;
-    }
     if (!e.data || e.data.type !== 'KCM_STATE') return;
     var p = e.data.payload;
     if (!p) return;
 
     // 1. Root note → rotate clock
-    if (p.root !== undefined && p.root !== _lastBus.root) {
-      _lastBus.root = p.root;
+    if (p.root !== undefined) {
       var idx = NOTE_MAP[p.root];
       if (idx !== undefined) setRootNote(idx);
     }
 
     // 2. Mode/scale name → apply stencil
-    var _scaleSig = Array.isArray(p.scale) ? p.scale.join(',') : undefined;
-    var _modeChanged = p.mode !== undefined && p.mode !== _lastBus.mode;
-    if (_modeChanged) {
-      _lastBus.mode = p.mode;
+    if (p.mode !== undefined) {
       applyPatternByName(p.mode);
     }
 
     // 3. Scale intervals → match stencil (if mode name didn't resolve)
-    if (_scaleSig !== undefined && _scaleSig !== _lastBus.scale) {
-      _lastBus.scale = _scaleSig;
+    if (p.scale !== undefined && Array.isArray(p.scale)) {
       applyScaleIntervals(p.scale);
-    }
-    _syncMirrorPickers();
-
-    // 3b. Shared tempo → Rhythm Lab follows the Console's BPM
-    if (typeof p.bpm === 'number' && p.bpm !== _lastBus.bpm) {
-      _lastBus.bpm = p.bpm;
-      var _b = Math.max(40, Math.min(240, Math.round(p.bpm)));
-      if (_b !== RS.tempo && typeof setRhythmTempo === 'function') {
-        var _rs = document.getElementById('rTempoSlider');
-        if (_rs) _rs.value = _b;
-        setRhythmTempo(_b, true);
-      }
     }
 
     // 4. Active MIDI notes → highlight on clock
@@ -5025,7 +4848,7 @@ function etRestart() {
   });
 
   // Announce presence to Console bridge so it sends the current state immediately
-  window.parent.postMessage({ type: 'KCM_PANEL_READY', panel: window.KCM_RHYTHM_VIEW ? 'rhythm-lab' : 'chromatic-universe' }, '*');
+  window.parent.postMessage({ type: 'KCM_PANEL_READY', panel: 'chromatic-universe' }, '*');
 
 })();
 
@@ -5387,14 +5210,11 @@ function etRestart() {
       patterns[layerIdx][stepIdx] = 1;
     });
 
-    // Write patterns to layers (raw onset times kept as recorded "feel")
+    // Write patterns to layers
     RS.layers.forEach((layer, i) => {
       layer.steps   = steps;
       layer.pattern = patterns[i];
       layer.pulses  = patterns[i].filter(b=>b===1).length;
-      const raw = vrdOnsets.filter(o => Math.min(o.layer, RS.layers.length - 1) === i)
-                           .map(o => Math.round(o.t * 10) / 10);
-      if (raw.length) { layer.source = 'voice'; layer.feel = { stepMs: Math.round(sixteenth * 100) / 100, hitsMs: raw }; }
     });
 
     // Update global step count
@@ -5476,464 +5296,6 @@ function etRestart() {
 
 })();
 // ── END VRD ──────────────────────────────────────────────────────────────────
-</script>
-<script>
-// ══════════════════════════════════════════════════════════════════════════
-// ★ RHYTHM LAB: Console drive + My Rhythms (save / name / replay)  Oct 2026
-// ══════════════════════════════════════════════════════════════════════════
-// 1. DRIVE. Every Melodic Sync hit goes onto the Console bus as activeNotes,
-//    so every other panel (Music Theory Pro fretboard/piano/sphere, Circle of
-//    Fifths, Chromatic Universe, ...) lights up in time with the rhythm. BPM
-//    goes onto the bus too. Key/mode picked here goes onto the bus, and key/
-//    mode/BPM changed anywhere else in the Console comes back in.
-// 2. SAVE. A rhythm is saved EXACTLY: every layer's hit pattern, rotation,
-//    sound, mute, steps, tempo, key/scale and Melodic Sync settings. Tapped
-//    and voice-recorded layers also keep their raw hit timings ("feel") for
-//    a future live-feel playback mode. Three ways to keep it:
-//      - My Rhythms library (this browser, named, click to replay)
-//      - .kcmr file (portable JSON, versioned: format "kcm-rhythm" v1)
-//      - MIDI drum file (General MIDI channel 10, opens in any DAW)
-// ══════════════════════════════════════════════════════════════════════════
-(function () {
-  'use strict';
-
-  var LIB_KEY   = 'kcm_rhythm_library_v1';
-  var LIB_MAX   = 100;
-  var FORMAT    = 'kcm-rhythm';
-  var VERSION   = 1;
-  var BUS_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
-  var SOUNDS    = ['kick','bass','snare','hihat','openhat','cymbal','conga','clave','cowbell','rim','wood','click','tone'];
-  // Console bus speaks the 7 church modes; map the matching stencils.
-  var STENCIL_TO_BUS_MODE = { major:'ionian', dorian:'dorian', phrygian:'phrygian', lydian:'lydian',
-                              mixolydian:'mixolydian', minor:'aeolian', locrian:'locrian' };
-  // General MIDI percussion (channel 10) note for each Rhythm Lab sound.
-  var GM_DRUM = { kick:36, bass:35, snare:38, hihat:42, openhat:46, cymbal:49, conga:63,
-                  clave:75, cowbell:56, rim:37, wood:76, click:80, tone:67 };
-
-  var embedded = !!window.KCM_EMBEDDED;
-  var rhythmView = !!window.KCM_RHYTHM_VIEW;
-  var currentName = '';
-
-  function post(msg) { if (!embedded) return; try { window.parent.postMessage(msg, '*'); } catch (e) {} }
-  function toast(m) { if (typeof showToast === 'function') showToast(m); }
-
-  // ── 1. DRIVE THE CONSOLE ────────────────────────────────────────────────
-  // Notes are reference-counted (two layers can hit the same note) and
-  // batched: all hits landing in the same ~16 ms window go out as ONE bus
-  // update, so a 6-layer groove doesn't flood the Console with messages.
-  var sounding = {};      // midi -> count
-  var lastSent = '';
-  var flushTimer = null;
-  var noteTimers = [];
-
-  function flush() {
-    flushTimer = null;
-    var arr = Object.keys(sounding).filter(function (k) { return sounding[k] > 0; })
-                    .map(Number).sort(function (a, b) { return a - b; });
-    var sig = arr.join(',');
-    if (sig === lastSent) return;
-    lastSent = sig;
-    post({ type: 'KCM_STATE_PATCH', payload: { activeNotes: arr } });
-  }
-  function scheduleFlush() { if (!flushTimer) flushTimer = setTimeout(flush, 16); }
-
-  window.__rlBusHit = function (midi, delayMs, durMs) {
-    if (!embedded) return;
-    var on = setTimeout(function () {
-      sounding[midi] = (sounding[midi] || 0) + 1; scheduleFlush();
-      var off = setTimeout(function () {
-        sounding[midi] = Math.max(0, (sounding[midi] || 0) - 1); scheduleFlush();
-      }, durMs);
-      noteTimers.push(off);
-    }, Math.max(0, delayMs));
-    noteTimers.push(on);
-    if (noteTimers.length > 400) noteTimers = noteTimers.slice(-200);
-  };
-
-  window.__rlBusClear = function () {
-    noteTimers.forEach(clearTimeout); noteTimers = [];
-    sounding = {};
-    if (lastSent !== '') { lastSent = ''; post({ type: 'KCM_STATE_PATCH', payload: { activeNotes: [] } }); }
-  };
-
-  var tempoTimer = null;
-  window.__rlBusTempo = function (bpm) {
-    if (!rhythmView) return;          // only the Rhythm Lab panel publishes tempo
-    clearTimeout(tempoTimer);
-    tempoTimer = setTimeout(function () { post({ type: 'KCM_STATE_PATCH', payload: { bpm: bpm } }); }, 150);
-  };
-
-  function rootIndex() { return ((getRootSpokeIndex() % 12) + 12) % 12; }
-
-  function publishKey() {
-    if (!rhythmView) return;
-    var payload = { root: BUS_NAMES[rootIndex()] };
-    var m = STENCIL_TO_BUS_MODE[currentStencil];
-    if (m && STENCILS[currentStencil]) {
-      payload.mode = m;
-      payload.scale = STENCILS[currentStencil].filter(function (x) { return x <= 11; });
-    }
-    post({ type: 'KCM_STATE_PATCH', payload: payload });
-    post({ type: 'KCM_STENCIL', stencil: currentStencil });
-  }
-  window.__rlPublishKey = publishKey;
-  ['syncKeySelect', 'syncStencilSelect', 'keySelect', 'stencilSelect'].forEach(function (id) {
-    var el = document.getElementById(id);
-    if (el) el.addEventListener('change', function () { setTimeout(publishKey, 0); });
-  });
-
-  // ── 2. SNAPSHOT / APPLY ─────────────────────────────────────────────────
-  function snapshot(name) {
-    if (typeof initRhythmIfNeeded === 'function') initRhythmIfNeeded();
-    return {
-      format: FORMAT, version: VERSION,
-      name: name || 'Untitled Rhythm',
-      saved: new Date().toISOString(),
-      app: 'KCM Rhythm Geometry Lab',
-      tempo: RS.tempo,
-      globalSteps: RS.globalSteps,
-      selectedPoly: RS.selectedPoly,
-      key: { root: BUS_NAMES[rootIndex()], rootIndex: rootIndex(), stencil: currentStencil },
-      sync: { active: !!SYNC.active, mode: SYNC.mode, cursorMode: SYNC.cursorMode },
-      layers: RS.layers.map(function (l) {
-        var o = { steps: l.steps, pulses: l.pattern.reduce(function (a, b) { return a + (b ? 1 : 0); }, 0),
-                  pattern: l.pattern.map(function (v) { return v ? 1 : 0; }),
-                  rotation: l.rotation || 0, sound: l.soundType, muted: !!l.muted,
-                  color: l.color, source: l.source || 'euclid' };
-        if (l.feel && Array.isArray(l.feel.hitsMs)) o.feel = { stepMs: l.feel.stepMs, hitsMs: l.feel.hitsMs.slice() };
-        return o;
-      })
-    };
-  }
-
-  function validate(doc) {
-    if (!doc || typeof doc !== 'object') return 'Not a rhythm file';
-    if (doc.format !== FORMAT) return 'Not a KCM rhythm (.kcmr) file';
-    if (typeof doc.version !== 'number' || doc.version > VERSION) return 'This rhythm was saved by a newer version of KCM';
-    if (!Array.isArray(doc.layers) || !doc.layers.length) return 'This rhythm has no layers';
-    for (var i = 0; i < doc.layers.length; i++) {
-      var l = doc.layers[i];
-      if (!l || !Array.isArray(l.pattern) || !l.pattern.length || l.pattern.length > 128) return 'Layer ' + (i + 1) + ' is damaged';
-    }
-    return null;
-  }
-
-  function setSelectValue(id, v) { var el = document.getElementById(id); if (el) el.value = String(v); }
-
-  function apply(doc, opts) {
-    var err = validate(doc);
-    if (err) { toast('⚠️ ' + err); return false; }
-    if (typeof initRhythmIfNeeded === 'function') initRhythmIfNeeded();
-    if (RS.playing) togglePlay();
-    window.__rlBusClear();
-
-    // Layers, exactly as saved
-    RS.layers = [];
-    doc.layers.slice(0, 6).forEach(function (l, i) {
-      var pattern = l.pattern.map(function (v) { return v ? 1 : 0; });
-      var steps = pattern.length;
-      var layer = {
-        id: ++layerIdCtr, steps: steps,
-        pulses: pattern.reduce(function (a, b) { return a + b; }, 0),
-        pattern: pattern,
-        color: l.color || LAYER_COLORS[i % LAYER_COLORS.length],
-        soundType: SOUNDS.indexOf(l.sound) !== -1 ? l.sound : LAYER_SOUNDS[i % LAYER_SOUNDS.length],
-        muted: !!l.muted,
-        rotation: ((parseInt(l.rotation, 10) || 0) % steps + steps) % steps,
-        source: l.source || 'euclid'
-      };
-      if (l.feel && Array.isArray(l.feel.hitsMs)) layer.feel = { stepMs: +l.feel.stepMs || 0, hitsMs: l.feel.hitsMs.slice(0, 2048) };
-      RS.layers.push(layer);
-    });
-
-    // Grid
-    var g = parseInt(doc.globalSteps, 10);
-    RS.globalSteps = (g > 0 && g <= 128) ? g : Math.max.apply(null, RS.layers.map(function (l) { return l.steps; }));
-    [16, 32, 64].forEach(function (n) {
-      var b = document.getElementById('stepsBtn' + n);
-      if (b) b.classList.toggle('active', n === RS.globalSteps);
-    });
-    var sp = parseInt(doc.selectedPoly, 10);
-    if (sp >= 2 && sp <= 12) {
-      RS.selectedPoly = sp;
-      document.querySelectorAll('.poly-btn').forEach(function (b, i) { if (b.parentElement && b.parentElement.id === 'polyPicker') b.classList.toggle('active', i + 2 === sp); });
-    }
-    RS.step = 0; RS.playheadAngle = -Math.PI / 2;
-
-    // Tempo (also published to the Console)
-    var bpm = Math.max(40, Math.min(240, parseInt(doc.tempo, 10) || RS.tempo));
-    setSelectValue('rTempoSlider', bpm);
-    setRhythmTempo(bpm);
-
-    // Key + scale
-    if (doc.key) {
-      var ri = parseInt(doc.key.rootIndex, 10);
-      if (!(ri >= 0 && ri < 12)) ri = BUS_NAMES.indexOf(doc.key.root);
-      if (ri >= 0 && ri < 12) {
-        rotationAngle = -ri * (Math.PI * 2) / 12;
-        setSelectValue('keySelect', ri); setSelectValue('syncKeySelect', ri);
-      }
-      if (doc.key.stencil && STENCILS[doc.key.stencil]) {
-        currentStencil = doc.key.stencil;
-        setSelectValue('stencilSelect', currentStencil); setSelectValue('syncStencilSelect', currentStencil);
-      }
-      try { drawClock(); } catch (e) {}
-      publishKey();
-    }
-
-    // Melodic Sync
-    if (doc.sync) {
-      if (!!doc.sync.active !== !!SYNC.active) toggleSync();
-      if (['melodic', 'fused', 'mirror'].indexOf(doc.sync.mode) !== -1) setSyncMode(doc.sync.mode);
-      if (['ascending', 'random', 'arpeggio'].indexOf(doc.sync.cursorMode) !== -1) setCursorMode(doc.sync.cursorMode);
-    }
-    if (typeof syncResetCursors === 'function') syncResetCursors();
-
-    renderLayers(); drawRhythmViz();
-    currentName = doc.name || '';
-    var inp = document.getElementById('rlNameInput'); if (inp) inp.value = currentName;
-    renderLibrary();
-    if (opts && opts.play) {
-      setTimeout(function () { if (!RS.playing) togglePlay(); }, 30);
-    }
-    toast('✅ "' + (doc.name || 'Rhythm') + '" loaded' + (opts && opts.play ? ' and playing' : ''));
-    return true;
-  }
-
-  // ── 3. LIBRARY (this browser) ───────────────────────────────────────────
-  function readLib() {
-    try { var a = JSON.parse(localStorage.getItem(LIB_KEY)); return Array.isArray(a) ? a : []; }
-    catch (e) { return []; }
-  }
-  function writeLib(a) {
-    try { localStorage.setItem(LIB_KEY, JSON.stringify(a)); return true; }
-    catch (e) { toast('⚠️ Browser storage is full or blocked. Use "Save .kcmr file" instead.'); return false; }
-  }
-  function nameFromInput() {
-    var inp = document.getElementById('rlNameInput');
-    var n = inp ? inp.value.trim() : '';
-    return n.slice(0, 60);
-  }
-  function hasHits() { return RS.layers.some(function (l) { return l.pattern.indexOf(1) !== -1; }); }
-
-  window.rlSaveCurrent = function () {
-    if (!RS.layers.length || !hasHits()) { toast('⚠️ Nothing to save yet. Add a layer with some hits first.'); return; }
-    var name = nameFromInput();
-    if (!name) {
-      var inp = document.getElementById('rlNameInput');
-      if (inp) inp.focus();
-      toast('✏️ Type a name for this rhythm, then Save');
-      return;
-    }
-    var doc = snapshot(name);
-    var lib = readLib();
-    var existing = -1;
-    lib.forEach(function (d, i) { if (d.name.toLowerCase() === name.toLowerCase()) existing = i; });
-    if (existing !== -1) lib.splice(existing, 1);
-    lib.unshift(doc);
-    if (lib.length > LIB_MAX) lib = lib.slice(0, LIB_MAX);
-    if (!writeLib(lib)) return;
-    currentName = name;
-    renderLibrary();
-    toast(existing !== -1 ? '💾 Updated "' + name + '"' : '💾 Saved "' + name + '"');
-  };
-
-  function metaLine(d) {
-    var hits = d.layers.reduce(function (a, l) { return a + l.pattern.filter(function (v) { return v; }).length; }, 0);
-    var date = '';
-    try { date = new Date(d.saved).toLocaleDateString([], { month: 'short', day: 'numeric' }); } catch (e) {}
-    var key = d.key ? d.key.root : '';
-    return d.layers.length + ' layer' + (d.layers.length === 1 ? '' : 's') + ' · ' + d.globalSteps + ' steps · ' +
-           hits + ' hits · ' + d.tempo + ' BPM' + (d.sync && d.sync.active ? ' · Sync ' + key : '') + (date ? ' · ' + date : '');
-  }
-
-  function renderLibrary() {
-    var list = document.getElementById('rlLibList');
-    if (!list) return;
-    var lib = readLib();
-    list.innerHTML = '';
-    if (!lib.length) {
-      var e = document.createElement('div');
-      e.className = 'rl-lib-empty';
-      e.textContent = 'No saved rhythms yet. Build or tap a groove, give it a name, and press Save.';
-      list.appendChild(e);
-      return;
-    }
-    lib.forEach(function (d, idx) {
-      var row = document.createElement('div');
-      row.className = 'rl-lib-item' + (d.name === currentName ? ' is-current' : '');
-      var text = document.createElement('div'); text.className = 'rl-lib-text';
-      var nm = document.createElement('div'); nm.className = 'rl-lib-name'; nm.textContent = d.name;
-      var mt = document.createElement('div'); mt.className = 'rl-lib-meta'; mt.textContent = metaLine(d);
-      text.appendChild(nm); text.appendChild(mt);
-      function btn(label, cls, title, fn) {
-        var b = document.createElement('button');
-        b.className = 'rl-lib-btn ' + cls; b.textContent = label; b.title = title;
-        b.addEventListener('click', fn); return b;
-      }
-      row.appendChild(text);
-      row.appendChild(btn('▶ Play', 'play', 'Load and play this rhythm', function () { apply(readLib()[idx], { play: true }); }));
-      row.appendChild(btn('⬇', '', 'Download as .kcmr file', function () { downloadDoc(readLib()[idx]); }));
-      row.appendChild(btn('🎹', '', 'Export MIDI drum file', function () { downloadMidi(readLib()[idx]); }));
-      var del = btn('✕', 'danger', 'Delete (click twice)', function () {
-        if (!del.classList.contains('armed')) {
-          del.classList.add('armed'); del.textContent = 'Delete?';
-          setTimeout(function () { del.classList.remove('armed'); del.textContent = '✕'; }, 3000);
-          return;
-        }
-        var l = readLib(); var gone = l.splice(idx, 1)[0]; writeLib(l); renderLibrary();
-        toast('🗑 Deleted "' + (gone ? gone.name : '') + '"');
-      });
-      row.appendChild(del);
-      list.appendChild(row);
-    });
-  }
-
-  // ── 4. FILES (.kcmr) ────────────────────────────────────────────────────
-  function safeFile(n) { return (n || 'rhythm').replace(/[^a-zA-Z0-9_\- ]/g, '').trim().replace(/\s+/g, '_') || 'rhythm'; }
-  function download(blob, filename) {
-    var url = URL.createObjectURL(blob);
-    var a = document.createElement('a'); a.href = url; a.download = filename;
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
-  }
-  function downloadDoc(doc) {
-    download(new Blob([JSON.stringify(doc, null, 2)], { type: 'application/json' }), safeFile(doc.name) + '.kcmr');
-    toast('⬇ ' + safeFile(doc.name) + '.kcmr downloaded');
-  }
-  window.rlDownloadCurrent = function () {
-    if (!RS.layers.length || !hasHits()) { toast('⚠️ Nothing to save yet'); return; }
-    downloadDoc(snapshot(nameFromInput() || currentName || 'Untitled Rhythm'));
-  };
-
-  var fileInput = document.createElement('input');
-  fileInput.type = 'file'; fileInput.accept = '.kcmr,.json,application/json'; fileInput.style.display = 'none';
-  document.body.appendChild(fileInput);
-  window.rlOpenFile = function () { fileInput.value = ''; fileInput.click(); };
-  function readFile(file) {
-    if (!file) return;
-    var r = new FileReader();
-    r.onload = function (e) {
-      var doc; try { doc = JSON.parse(e.target.result); } catch (err) { toast('⚠️ Could not read that file'); return; }
-      if (apply(doc)) {
-        // keep a copy in the library so it's one click next time
-        var lib = readLib().filter(function (d) { return d.name.toLowerCase() !== String(doc.name).toLowerCase(); });
-        lib.unshift(doc); writeLib(lib.slice(0, LIB_MAX)); renderLibrary();
-      }
-    };
-    r.readAsText(file);
-  }
-  fileInput.addEventListener('change', function () { readFile(fileInput.files[0]); });
-
-  // Drag a .kcmr file onto the Rhythm Lab to open it
-  var rPanel = document.getElementById('panel-rhythm');
-  if (rPanel) {
-    rPanel.addEventListener('dragover', function (e) {
-      if (e.dataTransfer && Array.prototype.indexOf.call(e.dataTransfer.types || [], 'Files') !== -1) {
-        e.preventDefault(); rPanel.classList.add('rl-drop-hint');
-      }
-    });
-    rPanel.addEventListener('dragleave', function () { rPanel.classList.remove('rl-drop-hint'); });
-    rPanel.addEventListener('drop', function (e) {
-      rPanel.classList.remove('rl-drop-hint');
-      var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
-      if (!f) return;
-      e.preventDefault();
-      if (!/\.(kcmr|json)$/i.test(f.name)) { toast('⚠️ Drop a .kcmr rhythm file here'); return; }
-      readFile(f);
-    });
-  }
-
-  // ── 5. MIDI DRUM EXPORT (Standard MIDI File, format 0, channel 10) ──────
-  // One Rhythm Lab step = one 16th note (same spb/4 the scheduler uses).
-  // Layers loop exactly the way the scheduler plays them: global step s,
-  // layer step = (s mod globalSteps) mod layer.steps. Muted layers are left out.
-  function vlq(n) {
-    var bytes = [n & 0x7F]; n >>= 7;
-    while (n > 0) { bytes.unshift((n & 0x7F) | 0x80); n >>= 7; }
-    return bytes;
-  }
-  function str(t) { var a = []; for (var i = 0; i < t.length; i++) { var c = t.charCodeAt(i); a.push(c < 128 ? c : 63); } return a; }
-  function u32(n) { return [(n >>> 24) & 255, (n >>> 16) & 255, (n >>> 8) & 255, n & 255]; }
-
-  function buildMidi(doc) {
-    var PPQ = 480, TPS = PPQ / 4, LEN = TPS / 2;
-    var G = parseInt(doc.globalSteps, 10) || 16;
-    var cycles = Math.max(1, Math.ceil(64 / G));        // at least 4 bars of 16ths
-    var total = G * cycles;
-    var bpm = Math.max(40, Math.min(240, doc.tempo || 120));
-    var ev = [];                                        // {t, order, bytes}
-    for (var s = 0; s < total; s++) {
-      var gs = s % G, used = {};
-      doc.layers.forEach(function (l) {
-        if (l.muted) return;
-        var ls = gs % l.pattern.length;
-        if (!l.pattern[ls]) return;
-        var note = GM_DRUM[l.sound] || 37;
-        if (used[note]) return; used[note] = true;
-        var vel = gs === 0 ? 112 : 96;
-        ev.push({ t: s * TPS, o: 1, b: [0x99, note, vel] });
-        ev.push({ t: s * TPS + LEN, o: 0, b: [0x89, note, 0] });
-      });
-    }
-    ev.sort(function (a, b) { return a.t - b.t || a.o - b.o; });
-
-    var trk = [];
-    var name = str(doc.name || 'KCM Rhythm');
-    trk = trk.concat([0, 0xFF, 0x03], vlq(name.length), name);
-    var mpq = Math.round(60000000 / bpm);
-    trk = trk.concat([0, 0xFF, 0x51, 0x03, (mpq >> 16) & 255, (mpq >> 8) & 255, mpq & 255]);
-    var num = 4, den = 2;                               // 4/4 by default
-    if (G % 16 !== 0 && G % 4 === 0 && G / 4 <= 12) num = G / 4;
-    trk = trk.concat([0, 0xFF, 0x58, 0x04, num, den, 24, 8]);
-    var last = 0;
-    ev.forEach(function (e) { trk = trk.concat(vlq(e.t - last), e.b); last = e.t; });
-    var endT = total * TPS;
-    trk = trk.concat(vlq(Math.max(0, endT - last)), [0xFF, 0x2F, 0x00]);
-
-    var head = str('MThd').concat(u32(6), [0, 0, 0, 1, (PPQ >> 8) & 255, PPQ & 255]);
-    var body = str('MTrk').concat(u32(trk.length), trk);
-    return new Uint8Array(head.concat(body));
-  }
-  window.__rlBuildMidi = buildMidi;   // exposed for testing
-
-  function downloadMidi(doc) {
-    if (!doc.layers.some(function (l) { return !l.muted && l.pattern.indexOf(1) !== -1; })) { toast('⚠️ No unmuted hits to export'); return; }
-    download(new Blob([buildMidi(doc)], { type: 'audio/midi' }), safeFile(doc.name) + '.mid');
-    toast('🎹 ' + safeFile(doc.name) + '.mid downloaded (General MIDI drums)');
-  }
-  window.rlExportMidiCurrent = function () {
-    if (!RS.layers.length) { toast('⚠️ Nothing to export yet'); return; }
-    downloadMidi(snapshot(nameFromInput() || currentName || 'KCM Rhythm'));
-  };
-
-  // test hooks
-  window.__rlSnapshot = snapshot;
-  window.__rlApply = apply;
-
-  // ── 6. RHYTHM VIEW STARTUP ──────────────────────────────────────────────
-  if (rhythmView) {
-    switchPanel('rhythm');
-    var note = document.getElementById('rlDriveNote');
-    if (note) note.textContent = 'Turn on Melodic Sync and press Play: every hit lights up the whole Console in your key. Saves keep every hit exactly as played or tapped.';
-    // Report real content height so the Console sizes this panel with no inner scrollbar
-    var lastH = 0;
-    var reportH = function () {
-      // Measure the content itself, not the document (the document is never
-      // shorter than the iframe, which would make the panel grow forever).
-      var mc = document.getElementById('main-content');
-      if (!mc) return;
-      var h = Math.ceil(mc.getBoundingClientRect().bottom + (window.scrollY || 0)) + 16;
-      if (Math.abs(h - lastH) < 4) return;
-      lastH = h;
-      post({ type: 'KCM_PANEL_HEIGHT', panel: 'rhythm-lab', height: h });
-    };
-    try { new ResizeObserver(reportH).observe(document.getElementById('main-content')); } catch (e) {}
-    setTimeout(reportH, 300); setTimeout(reportH, 1500);
-  }
-  renderLibrary();
-})();
-
 </script>
 </body>
 </html>

@@ -117,14 +117,8 @@
   <link rel="stylesheet" href="css/console.css" />
   <link rel="stylesheet" href="css/suno-panel.css" />
   <link rel="stylesheet" href="css/responsive.css" />
-<style id="kcm-a11y-20261004">
-.kcm-skip{position:absolute;left:-9999px;top:8px;z-index:10000;background:#F4D03F;color:#0a0a15;padding:8px 14px;border-radius:6px;font-weight:700;text-decoration:none}
-.kcm-skip:focus{left:8px}
-@media (prefers-reduced-motion: reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
-</style>
 </head>
 <body>
-  <a class="kcm-skip" href="#main">Skip to the music panels</a>
 
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
   <!-- HEADER                                                                  -->
@@ -311,7 +305,7 @@
       // scrollbar again. Keyed by panel name -> iframe id so any future
       // panel can opt in the same way just by sending KCM_PANEL_HEIGHT.
       (function(){
-        var PANEL_IFRAME_IDS = { 'kcm-midi-chromatic-circle': 'iframe-neck', 'rhythm-lab': 'iframe-rhythm' };
+        var PANEL_IFRAME_IDS = { 'kcm-midi-chromatic-circle': 'iframe-neck' };
         window.addEventListener('message', function(e){
           if (!e.data || e.data.type !== 'KCM_PANEL_HEIGHT') return;
           var iframeId = PANEL_IFRAME_IDS[e.data.panel];
@@ -344,29 +338,6 @@
         </div>
       </div>
 
-      <!-- Panel 5b: Rhythm Geometry Lab (Oct 2026) -->
-      <!-- Same file as Chromatic Universe, loaded in rhythm-only view: one copy
-           of the rhythm engine. Melodic Sync hits drive every panel via the bus. -->
-      <div class="kcm-panel" id="panel-rhythm">
-        <div class="kcm-panel__header">
-          <span class="kcm-panel__accent" style="background:var(--primary-gold);"></span>
-          <h3 class="kcm-panel__title">Rhythm Geometry Lab</h3>
-          <div class="kcm-panel__controls">
-            <button class="kcm-panel__btn" data-panel-action="minimize" aria-label="Minimize panel">−</button>
-          </div>
-        </div>
-        <div class="kcm-panel__body">
-          <iframe
-            id="iframe-rhythm"
-            class="kcm-panel__iframe"
-            src="kcm-chromatic-universe.html?view=rhythm"
-            title="KCM Rhythm Geometry Lab"
-            allow="autoplay; microphone; midi"
-            loading="lazy"
-          ></iframe>
-        </div>
-      </div>
-
           <!-- Panel 6: The Decoder -->
       <div class="kcm-panel" id="panel-decoder">
         <div class="kcm-panel__header">
@@ -394,7 +365,7 @@
     <section class="kcm-status" aria-label="Build status">
       <h3 class="kcm-status__title">What ships in v1.2</h3>
       <ul class="kcm-status__list">
-        <li><strong>Seven synchronized panels.</strong> Music Theory Pro, Circle of Fifths, Modal Stencil Player, Melody Library, Chromatic Universe, Rhythm Geometry Lab, and The Decoder — all driven by a single shared harmonic state.</li>
+        <li><strong>Six synchronized panels.</strong> Music Theory Pro, Circle of Fifths, Modal Stencil Player, Melody Library, Chromatic Universe, and The Decoder — all driven by a single shared harmonic state.</li>
         <li><strong>Live mic engine.</strong> Sing or play any instrument — pitch detection lights up the chromatic clock, names the chord, identifies the scale, and tracks arpeggios. All panels follow in real time.</li>
         <li><strong>Cross-panel synchronization.</strong> Root, mode, scale, and active notes shared in real time. Change anything anywhere — everything follows.</li>
         <li><strong>.gcis file format.</strong> Save your harmonic state. Load it back later. Portable between sessions.</li>
@@ -449,7 +420,6 @@
         Benjamin Ryan · <a href="kcm-midi-chromatic-circle.html">Melody Library</a>
         <a href="mailto:ben@keyscodesandmodes.com">ben@keyscodesandmodes.com</a>
       </p>
-      <p class="kcm-footer__contact"><a href="https://keyscodesandmodes.com/privacy">Privacy</a> · <a href="https://keyscodesandmodes.com/terms-of-service">Terms</a> · <a href="https://keyscodesandmodes.com/accessibility">Accessibility</a></p>
     </div>
   </footer>
 
