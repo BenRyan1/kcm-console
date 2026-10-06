@@ -2058,6 +2058,18 @@ function drawClock(highlightNotes = null) {
   // visible set so the wheel reads as a single slice instead of the full wheel.
   const activeSpokeForView = getRootSpokeIndex();
 
+  // Oct 5 2026: notes coming from the Console bus / MIDI light ONLY inside
+  // the key's wedge (the root spoke), one dot per note, instead of every
+  // copy of that note all over the spiral. A note outside the wedge's range
+  // is shown at the same pitch name an octave up/down inside it.
+  const _wedgeLitR = new Set();
+  activeMidiNotes.forEach(m => {
+    let r = m - MIDI_BASE - activeSpokeForView;
+    while (r < 0) r += 12;
+    while (r >= RINGS) r -= 12;
+    if (r >= 0) _wedgeLitR.add(r);
+  });
+
   // Spokes and note dots
   for (let s = 0; s < SPOKES; s++) {
     const angle = (s/SPOKES)*Math.PI*2 - Math.PI/2 + rotationAngle;
@@ -2082,7 +2094,7 @@ function drawClock(highlightNotes = null) {
 
       if (!spokeVisible) continue;
 
-      const isHi = hiArr.some(h => h.s===s && h.r===r) || activeMidiNotes.has(midi);
+      const isHi = hiArr.some(h => h.s===s && h.r===r) || (s === activeSpokeForView && _wedgeLitR.has(r));
       const inStencil = isNoteInStencil(noteIdx);
       const inWedge = isNoteInWedge(s);
       const isActive = inStencil && inWedge;
