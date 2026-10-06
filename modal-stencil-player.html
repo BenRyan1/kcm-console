@@ -458,8 +458,56 @@
         // whenever the mode or tonic changes (see renderActivePanel).
         let sequenceOrder=[];
 
-        function initAudio(){if(!audioContext)audioContext=new(window.AudioContext||window.webkitAudioContext)();}
-        function playNote(freq,dur=0.3){initAudio();const o=audioContext.createOscillator(),g=audioContext.createGain();o.connect(g);g.connect(audioContext.destination);o.frequency.value=freq;o.type=currentWaveform;g.gain.setValueAtTime(0.3,audioContext.currentTime);g.gain.exponentialRampToValueAtTime(0.01,audioContext.currentTime+dur);o.start(audioContext.currentTime);o.stop(audioContext.currentTime+dur);}
+        // ── AUDIO ENGINE ─────────────────────────────────────────────
+        // Safari/iOS start an AudioContext "suspended" and only let it run
+        // after a user gesture, so we resume on every gesture and before
+        // every note. All notes go through a master gain + limiter so the
+        // panel is loud without clipping (same chain as Music Theory Pro).
+        let masterBus=null;
+        function initAudio(){
+            if(!audioContext){
+                audioContext=new(window.AudioContext||window.webkitAudioContext)();
+                const lim=audioContext.createDynamicsCompressor();
+                lim.threshold.value=-14;lim.knee.value=6;lim.ratio.value=20;
+                lim.attack.value=0.002;lim.release.value=0.1;
+                lim.connect(audioContext.destination);
+                masterBus=audioContext.createGain();masterBus.gain.value=1.8;
+                masterBus.connect(lim);
+            }
+            if(audioContext.state!=='running'){try{audioContext.resume();}catch(e){}}
+        }
+        ['pointerdown','touchstart','keydown','click'].forEach(ev=>
+            document.addEventListener(ev,initAudio,{capture:true,passive:true}));
+        // Tone recipes: [harmonic multiple, relative level] partials + envelope.
+        const VOICES={
+            sine:    {partials:[[1,1]],                                  wave:'sine',     attack:0.008,release:0.25},
+            triangle:{partials:[[1,1],[2,0.15]],                         wave:'triangle', attack:0.008,release:0.25},
+            sawtooth:{partials:[[1,1],[2,0.5],[3,0.3],[4,0.2],[6,0.12]], wave:'sine',     attack:0.02, release:0.12, sustain:true},  // Organ
+            square:  {partials:[[1,1],[2.76,0.45],[5.4,0.25],[8.93,0.12]],wave:'sine',    attack:0.003,release:1.4,  bell:true}     // Bell
+        };
+        function playNote(freq,dur=0.3){
+            initAudio();
+            const start=()=>{
+                const t=audioContext.currentTime+0.005;
+                const v=VOICES[currentWaveform]||VOICES.sine;
+                const len=v.bell?Math.max(dur,1.2):dur;
+                const env=audioContext.createGain();
+                env.gain.setValueAtTime(0.0001,t);
+                env.gain.linearRampToValueAtTime(0.45,t+v.attack);
+                if(v.sustain){env.gain.setValueAtTime(0.45,t+Math.max(v.attack,len-0.03));}
+                else{env.gain.setTargetAtTime(0.0001,t+v.attack,(v.bell?len:Math.max(len,0.15))/3);}
+                env.gain.setTargetAtTime(0.0001,t+len,v.release/4);
+                env.connect(masterBus);
+                const total=v.partials.reduce((a,p)=>a+p[1],0);
+                v.partials.forEach(([mult,lvl])=>{
+                    const f=freq*mult;if(f>16000)return;
+                    const o=audioContext.createOscillator(),g=audioContext.createGain();
+                    o.type=v.wave;o.frequency.value=f;g.gain.value=lvl/total;
+                    o.connect(g);g.connect(env);o.start(t);o.stop(t+len+v.release+0.1);
+                });
+            };
+            if(audioContext.state==='suspended'){audioContext.resume().then(start).catch(start);}else start();
+        }
         function midiToFreq(m){return 440*Math.pow(2,(m-69)/12);}
         function playNoteByMidi(m,d=0.3){playNote(midiToFreq(m),d);}
         function updateRecCounter(){const b=document.getElementById("rec-count");if(isRecording){b.classList.add("visible");const n=recordedNotes.length;b.textContent=n===1?"1 note":`${n} notes`;}else b.classList.remove("visible");}
