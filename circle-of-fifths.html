@@ -24,6 +24,7 @@
 <meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
 <!-- NO external JS dependencies — fully self-contained, works from file:// -->
 <style>
+svg{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 *{margin:0;padding:0;box-sizing:border-box;}
 :root{
   --bg:#0a0a15; --bg2:#1a1a2e;
@@ -981,15 +982,15 @@ function kcmCofSetClickMode(m){
     b.classList.toggle('is-active', on); b.setAttribute('aria-pressed', on?'true':'false');
   });
 }
-const playDot = async(note,isMinor=false) => {
+let _cofDotTok = 0;
+const playDot = (note,isMinor=false) => {
+  // Oct 5 2026: no lock -- every tap plays right away, even mid-note.
   _cofSendRoot(isMinor ? (REL_MAJOR[note]||note) : note);
-  if(_cofClickMode==='triad'){ return playTriad(note,isMinor); }
-  if(S.soloPlaying)return;
-  S.soloPlaying=true; S.soloStop=false;
+  const notes = _cofClickMode==='triad' ? (isMinor?getMinorTriad(note):getTriad(note)) : [note];
+  const tok = ++_cofDotTok;
   S.active={note,type:isMinor?'inner':'outer'}; render();
-  playNotes([note],4,0.9);
-  await sleep(750);
-  S.active=null; S.soloPlaying=false; render();
+  playNotes(notes,4,0.9);
+  setTimeout(()=>{ if(tok===_cofDotTok && S.active && S.active.note===note){ S.active=null; render(); } },750);
 };
 // Tell the Console the key changed, so it stops pulling the wheel back
 // to its old key. Only sent when it really differs from the Console's
@@ -1553,9 +1554,16 @@ const renderCircle = () => {
     // column, even after you'd moved on to a new key out here. The two
     // outer rings now "reconnect" the center display to the current click,
     // same as the extension rings already did.
-    outerDot.addEventListener('click',()=>{ if(!S.soloPlaying){S.majKey=note;S.minKey=REL_MINOR[note]||S.minKey; S.hubLabel={top:outerDisplay,bottom:'major'};S.lastPick='triad'; render(); playDot(note,false);} });
+    outerDot.addEventListener('click',()=>{ if(!S.soloPlaying||S.active){S.majKey=note;S.minKey=REL_MINOR[note]||S.minKey; S.hubLabel={top:outerDisplay,bottom:'major'};S.lastPick='triad'; render(); playDot(note,false);} });
     outerDot.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();if(!S.soloPlaying){S.majKey=note;S.minKey=REL_MINOR[note]||S.minKey;S.hubLabel={top:outerDisplay,bottom:'major'};S.lastPick='triad';render();playDot(note,false);}} });
     g.appendChild(outerDot);
+    { // Oct 5 2026: bigger, easier tap target (wider along the circle)
+      const h=svgEl('ellipse',{cx:ox,cy:oy,rx:outerR+16,ry:outerR+2,transform:`rotate(${(Math.atan2(oy-cy,ox-cx)*180/Math.PI)+90} ${ox} ${oy})`,fill:'transparent',stroke:'none','pointer-events':'all',cursor:'pointer','aria-hidden':'true'});
+      h.addEventListener('pointerdown',()=>getAudio());
+      h.addEventListener('click',()=>outerDot.dispatchEvent(new MouseEvent('click')));
+      outerDot.addEventListener('pointerdown',()=>getAudio());
+      g.appendChild(h);
+    }
     const outerLbl=svgEl('text',{'x':ox,'y':oy+5,'text-anchor':'middle','font-size':note==='Gb'?'10':'14','fill':textOn(note),'font-weight':'900','font-family':'Georgia,serif','pointer-events':'none','user-select':'none'});
     outerLbl.textContent=outerDisplay; g.appendChild(outerLbl);
 
@@ -1566,9 +1574,16 @@ const renderCircle = () => {
     }
     const innerDot=svgEl('circle',{cx:ix,cy:iy,r:innerR,fill:rmCol,stroke:isIA?'#F4D03F':'rgba(255,255,255,0.3)','stroke-width':isIA?'3':'1.5',opacity:isIA?'1':'0.88',cursor:'pointer',role:'button',tabindex:'0','aria-label':`Play ${dnInnerMinor(relMin)} minor`});
     if(isIA) innerDot.setAttribute('filter',`drop-shadow(0 0 7px ${rmCol})`);
-    innerDot.addEventListener('click',()=>{ if(!S.soloPlaying){S.minKey=relMin;S.majKey=REL_MAJOR[relMin]||S.majKey;S.hubLabel={top:dnInnerMinor(relMin)+'m',bottom:'relative minor'};S.lastPick='triad';render();playDot(relMin,true);} });
+    innerDot.addEventListener('click',()=>{ if(!S.soloPlaying||S.active){S.minKey=relMin;S.majKey=REL_MAJOR[relMin]||S.majKey;S.hubLabel={top:dnInnerMinor(relMin)+'m',bottom:'relative minor'};S.lastPick='triad';render();playDot(relMin,true);} });
     innerDot.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();if(!S.soloPlaying){S.minKey=relMin;S.majKey=REL_MAJOR[relMin]||S.majKey;S.hubLabel={top:dnInnerMinor(relMin)+'m',bottom:'relative minor'};S.lastPick='triad';render();playDot(relMin,true);}} });
     g.appendChild(innerDot);
+    { // Oct 5 2026: bigger, easier tap target (wider along the circle)
+      const h=svgEl('ellipse',{cx:ix,cy:iy,rx:innerR+14,ry:innerR+2,transform:`rotate(${(Math.atan2(iy-cy,ix-cx)*180/Math.PI)+90} ${ix} ${iy})`,fill:'transparent',stroke:'none','pointer-events':'all',cursor:'pointer','aria-hidden':'true'});
+      h.addEventListener('pointerdown',()=>getAudio());
+      h.addEventListener('click',()=>innerDot.dispatchEvent(new MouseEvent('click')));
+      innerDot.addEventListener('pointerdown',()=>getAudio());
+      g.appendChild(h);
+    }
     const il1=svgEl('text',{'x':ix,'y':iy,'text-anchor':'middle','font-size':'8','fill':textOn(relMin),'font-weight':'800','font-family':'Georgia,serif','pointer-events':'none','user-select':'none'});
     il1.textContent=dnInnerMinor(relMin); g.appendChild(il1);
     const il2=svgEl('text',{'x':ix,'y':iy+9,'text-anchor':'middle','font-size':'7','fill':textOn(relMin),'font-weight':'700','font-family':'Arial,sans-serif','pointer-events':'none','user-select':'none'});
