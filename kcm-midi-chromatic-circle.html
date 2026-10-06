@@ -1373,35 +1373,6 @@ function broadcastActiveNotesToConsole(midiList){
 }
 let _busLit = false;
 
-let _followingBus = false;
-function showBusNotes(midis){
-  clearHighlights();
-  if (holdClearTimer){ clearTimeout(holdClearTimer); holdClearTimer = null; }
-  _followingBus = true;
-  const names = [];
-  const lit = new Set();
-  midis.forEach(m => {
-    const name = noteNameFromMidi(m);
-    if (names.indexOf(name) === -1) names.push(name);
-    if (dotEls[name]) dotEls[name].classList.add('playing');
-    (cellEls[name] || []).forEach(el => el.classList.add('active'));
-    const dMidi = displayMidiFor(m);
-    if (lit.has(dMidi)) return;
-    lit.add(dMidi);
-    const k = keyElsByMidi[dMidi];
-    if (!k) return;
-    const dName = noteNameFromMidi(dMidi);
-    k.classList.add('active');
-    k.style.background = COLOR[dName];
-    k.style.setProperty('--dot-color', COLOR[dName]);
-    if (!keyIsBlackByMidi[dMidi]) k.style.color = '#0a0a15';
-  });
-  if (names.length){
-    nowNoteEl.textContent = names.map(n => n.replace('#','\u266f')).join(' + ');
-    nowNoteEl.style.color = COLOR[names[0]];
-  }
-}
-
 function highlightStep(i){
   if (!currentSong) return;
   clearHighlights();
@@ -1581,18 +1552,6 @@ window.addEventListener('message', function (ev) {
     }
     if (ev.data.type === 'KCM_DECODER_STOP') {
       restart();
-      return;
-    }
-
-    // Oct 5 2026: FOLLOW THE CONSOLE. When another panel (Modal Stencil
-    // Player, Music Theory Pro, Circle of Fifths...) plays notes, show them
-    // here instead of the idle Twinkle preview, so every panel lights the
-    // same notes at the same time. Ignored while this panel plays its own song.
-    if (ev.data.type === 'KCM_STATE') {
-      if (playing) return;
-      var an = (ev.data.payload && ev.data.payload.activeNotes) || [];
-      if (an.length) { idlePreviewOn = false; showBusNotes(an); }
-      else if (_followingBus) { clearHighlights(); _followingBus = false; }
       return;
     }
 
