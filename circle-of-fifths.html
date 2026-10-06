@@ -828,6 +828,17 @@ window.addEventListener('load', () => {
 
 const playNotes = (notes,oct=4,dur=0.9,delay=0) => {
   const ctx=getAudio();
+  // Oct 5 2026: voice chords UPWARD from the first note (the one you
+  // clicked), so it is always the lowest note you hear. Before, every
+  // note shared one octave, so e.g. G major sounded as D-G-B with D on
+  // the bottom. Single notes are unchanged.
+  let _prevAbs=-1;
+  const voiced=notes.map(n=>{
+    const c=(NOTE_CHROMA[n]!==undefined?NOTE_CHROMA[n]:0);
+    let o=oct; while((o+1)*12+c<=_prevAbs) o++;
+    _prevAbs=(o+1)*12+c;
+    return {n,o,midi:_prevAbs};
+  });
   // Bridge: tell the Console bus what's actually sounding here, so
   // Music Theory Pro's keyboard/fretboard, Chromatic Universe, and the
   // Modal Stencil Player light up too -- this panel has always RECEIVED
@@ -839,16 +850,15 @@ const playNotes = (notes,oct=4,dur=0.9,delay=0) => {
   // Reference-counted by exact MIDI number (not just pitch class) so two
   // overlapping calls on the same note don't have one's release wipe out
   // the other's highlight early.
-  notes.forEach(n=>{
-    const midi=Math.round((oct+1)*12+(NOTE_CHROMA[n]!==undefined?NOTE_CHROMA[n]:0));
+  voiced.forEach(({midi})=>{
     setTimeout(()=>_cofNoteOn(midi), Math.max(0,delay*1000));
     setTimeout(()=>_cofNoteOff(midi), Math.max(0,delay*1000)+dur*1000);
   });
   if (!_sfLoadStarted) _explLoadSamples();
   const sampledInst = _explTimbre === 'piano' ? _sfPiano : _explTimbre === 'guitar' ? _sfGuitar : null;
   if (sampledInst) {
-    notes.forEach(n => {
-      try { sampledInst.play(n + oct, ctx.currentTime + delay, { duration: dur, gain: 2.4, destination: masterGain }); }
+    voiced.forEach(({n,o}) => {
+      try { sampledInst.play(n + o, ctx.currentTime + delay, { duration: dur, gain: 2.4, destination: masterGain }); }
       catch (e) { /* fall through silently — recording capture below still runs */ }
     });
     if (typeof _cof_recording !== 'undefined' && _cof_recording && delay === 0) {
@@ -856,10 +866,10 @@ const playNotes = (notes,oct=4,dur=0.9,delay=0) => {
     }
     return;
   }
-  notes.forEach(n=>{
+  voiced.forEach(({n,o})=>{
     const osc=ctx.createOscillator(), g=ctx.createGain();
     const t0=ctx.currentTime+delay;
-    osc.frequency.value=noteToHz(n,oct);
+    osc.frequency.value=noteToHz(n,o);
     osc.connect(g); g.connect(masterGain||ctx.destination);
 
     if (_explTimbre === 'guitar') {
