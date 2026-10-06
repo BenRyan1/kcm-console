@@ -985,6 +985,7 @@ function kcmCofSetClickMode(m){
 let _cofDotTok = 0;
 const playDot = (note,isMinor=false) => {
   // Oct 5 2026: no lock -- every tap plays right away, even mid-note.
+  _cofTakeSolo(); S.soloPlaying=false; // stop any arpeggio/sequence still running
   _cofSendRoot(isMinor ? (REL_MAJOR[note]||note) : note);
   const notes = _cofClickMode==='triad' ? (isMinor?getMinorTriad(note):getTriad(note)) : [note];
   const tok = ++_cofDotTok;
@@ -1012,47 +1013,49 @@ function _cofSendRoot(k){
   sendBridgeState({root:r});
 }
 
+// Oct 5 2026: ONE CLICK ALWAYS WORKS. A new button press takes over from
+// whatever is playing (instead of being ignored / the button being
+// disabled until the sound finishes, which forced a second click).
+function _cofTakeSolo(){ S.soloGen=(S.soloGen||0)+1; S.soloStop=false; S.soloPlaying=true; return S.soloGen; }
+
 // ── Play single triad (solo layer) ───────────────────
 const playTriad = async(note,isMinor=false) => {
-  if(S.soloPlaying)return;
-  S.soloPlaying=true; S.soloStop=false;
+  const _gen=_cofTakeSolo();
   const triad=isMinor?getMinorTriad(note):getTriad(note);
   S.active={note,type:isMinor?'inner':'outer'}; render();
   playNotes(triad,4,0.9);
   await sleep(750);
-  S.active=null; S.soloPlaying=false; render();
+  if(_gen===S.soloGen){ S.active=null; S.soloPlaying=false; render(); }
 };
 
 // ── KCM ARPEGGIO LAW (solo layer) ────────────────────
 const playArpeggio = async(note,isMinor,dir) => {
-  if(S.soloPlaying)return;
-  S.soloPlaying=true; S.soloStop=false;
+  const _gen=_cofTakeSolo();
   const triad=isMinor?getMinorTriad(note):getTriad(note);
   const asc=assignOctaves(triad,4);
   const seq=dir==='down'?[...asc].reverse():asc;
   for(const {note:n,oct} of seq){
-    if(S.soloStop)break;
+    if(S.soloStop||_gen!==S.soloGen)break;
     S.active={note:n,type:isMinor?'inner':'outer'}; render();
     playNotes([n],oct,0.35);
     await sleep(280);
   }
-  S.active=null; S.soloPlaying=false; render();
+  if(_gen===S.soloGen){ S.active=null; S.soloPlaying=false; render(); }
 };
 
 // ── CW / CCW sequence (panel buttons, non-loop) ───────
 const playSequence = async(notes,isMinor) => {
-  if(S.soloPlaying)return;
-  S.soloPlaying=true; S.soloStop=false;
+  const _gen=_cofTakeSolo();
   for(let i=0;i<notes.length;i++){
-    if(S.soloStop)break;
+    if(S.soloStop||_gen!==S.soloGen)break;
     const note=notes[i];
     const triad=isMinor?getMinorTriad(note):getTriad(note);
     S.active={note,type:isMinor?'inner':'outer'}; render();
     playNotes(triad,4,0.68);
     await sleep(750);
-    if(S.soloStop)break;
+    if(S.soloStop||_gen!==S.soloGen)break;
   }
-  S.active=null; S.soloPlaying=false; render();
+  if(_gen===S.soloGen){ S.active=null; S.soloPlaying=false; render(); }
 };
 
 // ── LOOP PLAYER — independent layer ──────────────────
@@ -1085,14 +1088,13 @@ const startLoop = async() => {
 
 // ── Progression playback (solo layer) ────────────────
 const playProgression = async(progDef,isMinor,rootNote) => {
-  if(S.soloPlaying)return;
-  S.soloPlaying=true; S.soloStop=false;
+  const _gen=_cofTakeSolo();
   const level = isMinor ? S.minExtLevel : S.majExtLevel;
   S.progOverrides = {}; // fresh progression pick clears any per-chord manual overrides
   const chords = progDef.degs.map((deg,i)=> buildDegreeChord(rootNote, deg, isMinor, level));
   S.progChords=chords;
   for(let i=0;i<chords.length;i++){
-    if(S.soloStop)break;
+    if(S.soloStop||_gen!==S.soloGen)break;
     const ch=chords[i];
     S.progChordIdx=i;
     S.active={note:ch.root,type:ch.qual==='min'||ch.qual==='dim'?'inner':'outer'}; render();
@@ -1100,16 +1102,16 @@ const playProgression = async(progDef,isMinor,rootNote) => {
     playNotes(ch.baseNotes,4,dur);
     if(ch.tensionNotes.length) playNotes(ch.tensionNotes,5,dur); // tensions voiced an octave up — ascending, same idea as the wheel's inner rings
     await sleep(ch.tensionNotes.length ? 900 : 780);
-    if(S.soloStop)break;
+    if(S.soloStop||_gen!==S.soloGen)break;
   }
-  S.progChordIdx=-1; S.active=null; S.soloPlaying=false; render();
+  if(_gen===S.soloGen){ S.progChordIdx=-1; S.active=null; S.soloPlaying=false; render(); }
 };
 
 // Re-level one chord in the currently displayed progression without
 // replaying the whole thing — lets you audition Triad → 7th → Auto on a
 // single degree to hear exactly what that tension adds.
 const cyclePillLevel = i => {
-  if (S.soloPlaying || !S.progIdx) return;
+  if (!S.progIdx) return;
   const isMinor = S.progIdx.isMin;
   const progDef = (isMinor?MINOR_PROGS:MAJOR_PROGS)[S.progIdx.idx];
   const deg = progDef.degs[i];
@@ -1562,8 +1564,8 @@ const renderCircle = () => {
     // column, even after you'd moved on to a new key out here. The two
     // outer rings now "reconnect" the center display to the current click,
     // same as the extension rings already did.
-    outerDot.addEventListener('click',()=>{ if(!S.soloPlaying||S.active){S.majKey=note;S.minKey=REL_MINOR[note]||S.minKey; S.hubLabel={top:outerDisplay,bottom:'major'};S.lastPick='triad'; render(); playDot(note,false);} });
-    outerDot.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();if(!S.soloPlaying){S.majKey=note;S.minKey=REL_MINOR[note]||S.minKey;S.hubLabel={top:outerDisplay,bottom:'major'};S.lastPick='triad';render();playDot(note,false);}} });
+    outerDot.addEventListener('click',()=>{ if(true){S.majKey=note;S.minKey=REL_MINOR[note]||S.minKey; S.hubLabel={top:outerDisplay,bottom:'major'};S.lastPick='triad'; render(); playDot(note,false);} });
+    outerDot.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();if(true){S.majKey=note;S.minKey=REL_MINOR[note]||S.minKey;S.hubLabel={top:outerDisplay,bottom:'major'};S.lastPick='triad';render();playDot(note,false);}} });
     g.appendChild(outerDot);
     { // Oct 5 2026: bigger, easier tap target (wider along the circle)
       const h=svgEl('ellipse',{cx:ox,cy:oy,rx:outerR+16,ry:outerR+2,transform:`rotate(${(Math.atan2(oy-cy,ox-cx)*180/Math.PI)+90} ${ox} ${oy})`,fill:'transparent',stroke:'none','pointer-events':'all',cursor:'pointer','aria-hidden':'true'});
@@ -1582,8 +1584,8 @@ const renderCircle = () => {
     }
     const innerDot=svgEl('circle',{cx:ix,cy:iy,r:innerR,fill:rmCol,stroke:isIA?'#F4D03F':'rgba(255,255,255,0.3)','stroke-width':isIA?'3':'1.5',opacity:isIA?'1':'0.88',cursor:'pointer',role:'button',tabindex:'0','aria-label':`Play ${dnInnerMinor(relMin)} minor`});
     if(isIA) innerDot.setAttribute('filter',`drop-shadow(0 0 7px ${rmCol})`);
-    innerDot.addEventListener('click',()=>{ if(!S.soloPlaying||S.active){S.minKey=relMin;S.majKey=REL_MAJOR[relMin]||S.majKey;S.hubLabel={top:dnInnerMinor(relMin)+'m',bottom:'relative minor'};S.lastPick='triad';render();playDot(relMin,true);} });
-    innerDot.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();if(!S.soloPlaying){S.minKey=relMin;S.majKey=REL_MAJOR[relMin]||S.majKey;S.hubLabel={top:dnInnerMinor(relMin)+'m',bottom:'relative minor'};S.lastPick='triad';render();playDot(relMin,true);}} });
+    innerDot.addEventListener('click',()=>{ if(true){S.minKey=relMin;S.majKey=REL_MAJOR[relMin]||S.majKey;S.hubLabel={top:dnInnerMinor(relMin)+'m',bottom:'relative minor'};S.lastPick='triad';render();playDot(relMin,true);} });
+    innerDot.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();if(true){S.minKey=relMin;S.majKey=REL_MAJOR[relMin]||S.majKey;S.hubLabel={top:dnInnerMinor(relMin)+'m',bottom:'relative minor'};S.lastPick='triad';render();playDot(relMin,true);}} });
     g.appendChild(innerDot);
     { // Oct 5 2026: bigger, easier tap target (wider along the circle)
       const h=svgEl('ellipse',{cx:ix,cy:iy,rx:innerR+14,ry:innerR+2,transform:`rotate(${(Math.atan2(iy-cy,ix-cx)*180/Math.PI)+90} ${ix} ${iy})`,fill:'transparent',stroke:'none','pointer-events':'all',cursor:'pointer','aria-hidden':'true'});
@@ -1668,7 +1670,7 @@ const renderCircle = () => {
 
 // ── Panel render ──────────────────────────────────────
 const renderPanels = () => {
-  const dis = S.soloPlaying;
+  const dis = false; // Oct 5 2026: buttons never disabled -- one click always works
   // Major panel
   const majSel=document.getElementById('majSelect');
   if(majSel.value!==S.majKey) majSel.value=S.majKey;
@@ -1706,7 +1708,7 @@ const renderExtLevelRow = side => {
   const level = side==='maj' ? S.majExtLevel : S.minExtLevel;
   document.querySelectorAll(`#${side}ExtLevelRow .ext-level-btn`).forEach(b=>{
     b.classList.toggle('on', b.dataset.level===level);
-    b.disabled = S.soloPlaying;
+    b.disabled = false;
   });
 };
 
@@ -1758,7 +1760,7 @@ const renderProgList = (side, progs, isMinor, root) => {
     activeIdx>=0 ? progs[activeIdx].name+(isPlayingActive?' ♩':'') : 'Choose a progression…';
   trigger.querySelector('.prog-dd-trigger-meta').textContent =
     activeIdx>=0 ? `${progs[activeIdx].desc} · ${progs[activeIdx].tag}` : `${progs.length} to choose from`;
-  trigger.disabled = S.soloPlaying;
+  trigger.disabled = false;
 
   // Only rebuild the menu rows if the key changed or first render
   const currentKey = list.dataset.key;
@@ -1768,7 +1770,7 @@ const renderProgList = (side, progs, isMinor, root) => {
       const isActive=i===activeIdx;
       btn.className=`prog-btn ${side}${isActive?' active':''}`;
       btn.setAttribute('aria-selected', isActive?'true':'false');
-      btn.disabled=S.soloPlaying&&!isActive;
+      btn.disabled=false;
       const nm=btn.querySelector('.prog-name');
       if(nm&&isActive&&isPlayingActive) nm.textContent=progs[i].name+' ♩';
       else if(nm) nm.textContent=progs[i].name;
@@ -1784,7 +1786,7 @@ const renderProgList = (side, progs, isMinor, root) => {
     btn.setAttribute('role','option');
     btn.setAttribute('aria-selected', isActive?'true':'false');
     btn.className=`prog-btn ${side}${isActive?' active':''}`;
-    btn.disabled=S.soloPlaying&&!isActive;
+    btn.disabled=false;
     btn.title=prog.desc;
     btn.innerHTML=`<div class="prog-name">${prog.name}</div><div class="prog-meta"><span>${prog.desc}</span><span>${prog.tag}</span></div>`;
     btn.addEventListener('click',()=>{
@@ -1809,8 +1811,8 @@ const renderChordPills = side => {
     const lit=i===S.progChordIdx;
     const p=document.createElement('button');
     p.type='button';
-    p.className='cpill'+(lit?' lit':'')+(S.soloPlaying?' disabled':'');
-    p.disabled = S.soloPlaying;
+    p.className='cpill'+(lit?' lit':'')+'';
+    p.disabled = false;
     p.textContent=ch.label + (ch.avoidUsed && ch.avoidUsed.length ? ' ⚠' : '');
     p.style.background=lit?col:`${col}22`;
     p.style.borderColor=col;
@@ -1889,12 +1891,12 @@ const wireButtons = () => {
   document.getElementById('minSelect').addEventListener('change',e=>setMinKey(e.target.value));
 
   // Major ◀▶
-  document.getElementById('majPrev').addEventListener('click',()=>{ if(!S.soloPlaying)setMajKey(stepNote(S.majKey,'down',NOTE_ORDER)); });
-  document.getElementById('majNext').addEventListener('click',()=>{ if(!S.soloPlaying)setMajKey(stepNote(S.majKey,'up',NOTE_ORDER)); });
+  document.getElementById('majPrev').addEventListener('click',()=>{ setMajKey(stepNote(S.majKey,'down',NOTE_ORDER)); });
+  document.getElementById('majNext').addEventListener('click',()=>{ setMajKey(stepNote(S.majKey,'up',NOTE_ORDER)); });
 
   // Minor ◀▶
-  document.getElementById('minPrev').addEventListener('click',()=>{ if(!S.soloPlaying)setMinKey(stepNote(S.minKey,'down',INNER_ORDER)); });
-  document.getElementById('minNext').addEventListener('click',()=>{ if(!S.soloPlaying)setMinKey(stepNote(S.minKey,'up',INNER_ORDER)); });
+  document.getElementById('minPrev').addEventListener('click',()=>{ setMinKey(stepNote(S.minKey,'down',INNER_ORDER)); });
+  document.getElementById('minNext').addEventListener('click',()=>{ setMinKey(stepNote(S.minKey,'up',INNER_ORDER)); });
 
   // Major buttons
   document.getElementById('majArpUp').addEventListener('click',()=>playArpeggio(S.majKey,false,'up'));
@@ -1975,7 +1977,6 @@ const wireExtControls = () => {
 const wireProgLevels = () => {
   document.querySelectorAll('.ext-level-btn').forEach(b=>{
     b.addEventListener('click', ()=>{
-      if (S.soloPlaying) return;
       if (b.dataset.side==='maj') S.majExtLevel = b.dataset.level;
       else S.minExtLevel = b.dataset.level;
       renderExtLevelRow(b.dataset.side);
