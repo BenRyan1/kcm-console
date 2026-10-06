@@ -1446,7 +1446,7 @@ function getBusHubLabel(){
 const renderCircle = () => {
   const svg = document.getElementById('circleSvg');
   svg.innerHTML='';
-  const cx=350,cy=350,outerOrbit=258,outerR=26,innerOrbit=208,innerR=19,ksSig=302;
+  const cx=350,cy=350,outerOrbit=262,outerR=31,innerOrbit=208,innerR=21,ksSig=306; // Oct 5 2026: bigger keys
 
   // Background rings
   const addCirc=(r,fill,stroke,sw,dash='')=>{
@@ -1568,9 +1568,11 @@ const renderCircle = () => {
     outerDot.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();if(true){S.majKey=note;S.minKey=REL_MINOR[note]||S.minKey;S.hubLabel={top:outerDisplay,bottom:'major'};S.lastPick='triad';render();playDot(note,false);}} });
     g.appendChild(outerDot);
     { // Oct 5 2026: bigger, easier tap target (wider along the circle)
-      const h=svgEl('ellipse',{cx:ox,cy:oy,rx:outerR+16,ry:outerR+2,transform:`rotate(${(Math.atan2(oy-cy,ox-cx)*180/Math.PI)+90} ${ox} ${oy})`,fill:'transparent',stroke:'none','pointer-events':'all',cursor:'pointer','aria-hidden':'true'});
-      h.addEventListener('pointerdown',()=>getAudio());
-      h.addEventListener('click',()=>outerDot.dispatchEvent(new MouseEvent('click')));
+      const h=svgEl('ellipse',{cx:ox,cy:oy,rx:outerR+20,ry:outerR+10,transform:`rotate(${(Math.atan2(oy-cy,ox-cx)*180/Math.PI)+90} ${ox} ${oy})`,fill:'transparent',stroke:'none','pointer-events':'all',cursor:'pointer','aria-hidden':'true'});
+      // Oct 5 2026: fire on PRESS (not press+release) so a tiny mouse
+      // movement can't cancel it; the click that follows is ignored.
+      h.addEventListener('pointerdown',e=>{ if(e.button>0) return; getAudio(); window._cofPd=Date.now(); outerDot.dispatchEvent(new MouseEvent('click')); });
+      h.addEventListener('click',()=>{ if(Date.now()-(window._cofPd||0)<800) return; outerDot.dispatchEvent(new MouseEvent('click')); });
       outerDot.addEventListener('pointerdown',()=>getAudio());
       g.appendChild(h);
     }
@@ -1588,9 +1590,11 @@ const renderCircle = () => {
     innerDot.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();if(true){S.minKey=relMin;S.majKey=REL_MAJOR[relMin]||S.majKey;S.hubLabel={top:dnInnerMinor(relMin)+'m',bottom:'relative minor'};S.lastPick='triad';render();playDot(relMin,true);}} });
     g.appendChild(innerDot);
     { // Oct 5 2026: bigger, easier tap target (wider along the circle)
-      const h=svgEl('ellipse',{cx:ix,cy:iy,rx:innerR+14,ry:innerR+2,transform:`rotate(${(Math.atan2(iy-cy,ix-cx)*180/Math.PI)+90} ${ix} ${iy})`,fill:'transparent',stroke:'none','pointer-events':'all',cursor:'pointer','aria-hidden':'true'});
-      h.addEventListener('pointerdown',()=>getAudio());
-      h.addEventListener('click',()=>innerDot.dispatchEvent(new MouseEvent('click')));
+      const h=svgEl('ellipse',{cx:ix,cy:iy,rx:innerR+16,ry:innerR+6,transform:`rotate(${(Math.atan2(iy-cy,ix-cx)*180/Math.PI)+90} ${ix} ${iy})`,fill:'transparent',stroke:'none','pointer-events':'all',cursor:'pointer','aria-hidden':'true'});
+      // Oct 5 2026: fire on PRESS (not press+release) so a tiny mouse
+      // movement can't cancel it; the click that follows is ignored.
+      h.addEventListener('pointerdown',e=>{ if(e.button>0) return; getAudio(); window._cofPd=Date.now(); innerDot.dispatchEvent(new MouseEvent('click')); });
+      h.addEventListener('click',()=>{ if(Date.now()-(window._cofPd||0)<800) return; innerDot.dispatchEvent(new MouseEvent('click')); });
       innerDot.addEventListener('pointerdown',()=>getAudio());
       g.appendChild(h);
     }
@@ -1992,6 +1996,27 @@ wireExtControls();
 wireProgLevels();
 wireProgDropdowns();
 render();
+
+// Oct 6 2026: ONE PRESS ALWAYS PLAYS. The wheel is redrawn every time the
+// Console bus sends notes (Rhythm Lab, Chromatic Universe, MIDI...), often
+// several times a second. If a redraw lands between mouse-down and mouse-up
+// the dot you pressed no longer exists, so the browser drops the click and
+// you had to press again. Every dot keeps the same center (cx,cy) across
+// redraws, so if the pressed dot was replaced, we fire the click on its
+// replacement under the pointer instead.
+(function(){
+  const svg=document.getElementById('circleSvg'); if(!svg) return;
+  let down=null;
+  const pick=el=>{ const t=el&&el.closest?el.closest('[cx][cy]'):null; return (t&&svg.contains(t))?t:null; };
+  const keyOf=t=>t?t.getAttribute('cx')+','+t.getAttribute('cy'):null;
+  svg.addEventListener('pointerdown',e=>{ const t=pick(e.target); down=t?{el:t,k:keyOf(t)}:null; },true);
+  svg.addEventListener('pointerup',e=>{
+    const d=down; down=null;
+    if(!d || d.el.isConnected) return;           // not redrawn: the normal click fires
+    const t=pick(document.elementFromPoint(e.clientX,e.clientY));
+    if(t && keyOf(t)===d.k){ try{getAudio();}catch(_){} t.dispatchEvent(new MouseEvent('click',{bubbles:true})); }
+  },true);
+})();
 
 // KCM Console bridge
 window.addEventListener('message',ev=>{
