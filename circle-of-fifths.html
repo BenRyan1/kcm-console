@@ -786,8 +786,14 @@ function _cofNoteOff(midi){
 const getAudio = () => {
   if(!audioCtx || audioCtx.state==='closed') {
     audioCtx = new(window.AudioContext||window.webkitAudioContext)();
-    masterGain = audioCtx.createGain(); masterGain.gain.value=1.0;
-    masterGain.connect(audioCtx.destination);
+    // Oct 5 2026: louder, same chain as Music Theory Pro (boost + limiter).
+    // At 1.0 a single piano note peaked ~7% and was hard to hear next to
+    // the other panels; the limiter keeps the boost from distorting.
+    masterGain = audioCtx.createGain(); masterGain.gain.value=3.2;
+    const _cofLim = audioCtx.createDynamicsCompressor();
+    _cofLim.threshold.value=-16; _cofLim.knee.value=6; _cofLim.ratio.value=20;
+    _cofLim.attack.value=0.001; _cofLim.release.value=0.08;
+    masterGain.connect(_cofLim); _cofLim.connect(audioCtx.destination);
   }
   if(audioCtx.state==='suspended') audioCtx.resume();
   return audioCtx;
