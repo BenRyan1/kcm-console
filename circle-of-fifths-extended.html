@@ -256,6 +256,10 @@ body{font-family:var(--font-b);background:radial-gradient(ellipse at 30% 20%,#1e
       <button type="button" class="cof-variant-btn" aria-pressed="false" onclick="kcmCofSetVariant('standard')">Standard</button>
       <button type="button" class="cof-variant-btn is-active" aria-pressed="true" onclick="kcmCofSetVariant('extended')">Extended</button>
     </div>
+    <div class="cof-variant-toggle" id="cofClickMode" role="group" aria-label="Clicking a key plays">
+      <button type="button" class="cof-variant-btn is-active" aria-pressed="true" data-mode="note" onclick="kcmCofSetClickMode('note')">Note</button>
+      <button type="button" class="cof-variant-btn" aria-pressed="false" data-mode="triad" onclick="kcmCofSetClickMode('triad')">Triad</button>
+    </div>
   </div>
 
   <div class="three-col">
@@ -782,8 +786,14 @@ function _cofNoteOff(midi){
 const getAudio = () => {
   if(!audioCtx || audioCtx.state==='closed') {
     audioCtx = new(window.AudioContext||window.webkitAudioContext)();
-    masterGain = audioCtx.createGain(); masterGain.gain.value=1.0;
-    masterGain.connect(audioCtx.destination);
+    // Oct 5 2026: louder, same chain as Music Theory Pro (boost + limiter).
+    // At 1.0 a single piano note peaked ~7% and was hard to hear next to
+    // the other panels; the limiter keeps the boost from distorting.
+    masterGain = audioCtx.createGain(); masterGain.gain.value=3.2;
+    const _cofLim = audioCtx.createDynamicsCompressor();
+    _cofLim.threshold.value=-16; _cofLim.knee.value=6; _cofLim.ratio.value=20;
+    _cofLim.attack.value=0.001; _cofLim.release.value=0.08;
+    masterGain.connect(_cofLim); _cofLim.connect(audioCtx.destination);
   }
   if(audioCtx.state==='suspended') audioCtx.resume();
   return audioCtx;
@@ -828,6 +838,17 @@ window.addEventListener('load', () => {
 
 const playNotes = (notes,oct=4,dur=0.9,delay=0) => {
   const ctx=getAudio();
+  // Oct 5 2026: voice chords UPWARD from the first note (the one you
+  // clicked), so it is always the lowest note you hear. Before, every
+  // note shared one octave, so e.g. G major sounded as D-G-B with D on
+  // the bottom. Single notes are unchanged.
+  let _prevAbs=-1;
+  const voiced=notes.map(n=>{
+    const c=(NOTE_CHROMA[n]!==undefined?NOTE_CHROMA[n]:0);
+    let o=oct; while((o+1)*12+c<=_prevAbs) o++;
+    _prevAbs=(o+1)*12+c;
+    return {n,o,midi:_prevAbs};
+  });
   // Bridge: tell the Console bus what's actually sounding here, so
   // Music Theory Pro's keyboard/fretboard, Chromatic Universe, and the
   // Modal Stencil Player light up too -- this panel has always RECEIVED
@@ -839,16 +860,15 @@ const playNotes = (notes,oct=4,dur=0.9,delay=0) => {
   // Reference-counted by exact MIDI number (not just pitch class) so two
   // overlapping calls on the same note don't have one's release wipe out
   // the other's highlight early.
-  notes.forEach(n=>{
-    const midi=Math.round((oct+1)*12+(NOTE_CHROMA[n]!==undefined?NOTE_CHROMA[n]:0));
+  voiced.forEach(({midi})=>{
     setTimeout(()=>_cofNoteOn(midi), Math.max(0,delay*1000));
     setTimeout(()=>_cofNoteOff(midi), Math.max(0,delay*1000)+dur*1000);
   });
   if (!_sfLoadStarted) _explLoadSamples();
   const sampledInst = _explTimbre === 'piano' ? _sfPiano : _explTimbre === 'guitar' ? _sfGuitar : null;
   if (sampledInst) {
-    notes.forEach(n => {
-      try { sampledInst.play(n + oct, ctx.currentTime + delay, { duration: dur, gain: 2.4, destination: masterGain }); }
+    voiced.forEach(({n,o}) => {
+      try { sampledInst.play(n + o, ctx.currentTime + delay, { duration: dur, gain: 2.4, destination: masterGain }); }
       catch (e) { /* fall through silently — recording capture below still runs */ }
     });
     if (typeof _cof_recording !== 'undefined' && _cof_recording && delay === 0) {
@@ -856,10 +876,10 @@ const playNotes = (notes,oct=4,dur=0.9,delay=0) => {
     }
     return;
   }
-  notes.forEach(n=>{
+  voiced.forEach(({n,o})=>{
     const osc=ctx.createOscillator(), g=ctx.createGain();
     const t0=ctx.currentTime+delay;
-    osc.frequency.value=noteToHz(n,oct);
+    osc.frequency.value=noteToHz(n,o);
     osc.connect(g); g.connect(masterGain||ctx.destination);
 
     if (_explTimbre === 'guitar') {
@@ -948,6 +968,40 @@ const flash = (note,type,ms=700) => {
   S.active={note,type}; render();
   setTimeout(()=>{ if(S.active?.note===note){S.active=null;render();} },ms);
 };
+
+// ── Oct 5 2026: Note / Triad switch for clicks on the wheel ──
+// Note  = you hear and see exactly the key you clicked.
+// Triad = you hear its triad, with the clicked key as the root (lowest).
+// Either way the highlight stays on the dot you clicked.
+let _cofClickMode = 'note';
+function kcmCofSetClickMode(m){
+  _cofClickMode = (m==='triad') ? 'triad' : 'note';
+  document.querySelectorAll('#cofClickMode .cof-variant-btn').forEach(b=>{
+    const on = b.dataset.mode===_cofClickMode;
+    b.classList.toggle('is-active', on); b.setAttribute('aria-pressed', on?'true':'false');
+  });
+}
+const playDot = async(note,isMinor=false) => {
+  _cofSendRoot(isMinor ? (REL_MAJOR[note]||note) : note);
+  if(_cofClickMode==='triad'){ return playTriad(note,isMinor); }
+  if(S.soloPlaying)return;
+  S.soloPlaying=true; S.soloStop=false;
+  S.active={note,type:isMinor?'inner':'outer'}; render();
+  playNotes([note],4,0.9);
+  await sleep(750);
+  S.active=null; S.soloPlaying=false; render();
+};
+// Tell the Console the key changed, so it stops pulling the wheel back
+// to its old key. Only sent when it really differs from the Console's
+// key (no echo loop).
+const _COF_F2S={'Db':'C#','Eb':'D#','Gb':'F#','Ab':'G#','Bb':'A#'};
+let _cofBusRoot = null;
+function _cofSendRoot(k){
+  const r=_COF_F2S[k]||k;
+  if(r===_cofBusRoot) return;
+  _cofBusRoot=r;
+  sendBridgeState({root:r});
+}
 
 // ── Play single triad (solo layer) ───────────────────
 const playTriad = async(note,isMinor=false) => {
@@ -1499,8 +1553,8 @@ const renderCircle = () => {
     // column, even after you'd moved on to a new key out here. The two
     // outer rings now "reconnect" the center display to the current click,
     // same as the extension rings already did.
-    outerDot.addEventListener('click',()=>{ if(!S.soloPlaying){S.majKey=note;S.minKey=REL_MINOR[note]||S.minKey; S.hubLabel={top:outerDisplay,bottom:'major'};S.lastPick='triad'; render(); playTriad(note,false);} });
-    outerDot.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();if(!S.soloPlaying){S.majKey=note;S.minKey=REL_MINOR[note]||S.minKey;S.hubLabel={top:outerDisplay,bottom:'major'};S.lastPick='triad';render();playTriad(note,false);}} });
+    outerDot.addEventListener('click',()=>{ if(!S.soloPlaying){S.majKey=note;S.minKey=REL_MINOR[note]||S.minKey; S.hubLabel={top:outerDisplay,bottom:'major'};S.lastPick='triad'; render(); playDot(note,false);} });
+    outerDot.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();if(!S.soloPlaying){S.majKey=note;S.minKey=REL_MINOR[note]||S.minKey;S.hubLabel={top:outerDisplay,bottom:'major'};S.lastPick='triad';render();playDot(note,false);}} });
     g.appendChild(outerDot);
     const outerLbl=svgEl('text',{'x':ox,'y':oy+5,'text-anchor':'middle','font-size':note==='Gb'?'10':'14','fill':textOn(note),'font-weight':'900','font-family':'Georgia,serif','pointer-events':'none','user-select':'none'});
     outerLbl.textContent=outerDisplay; g.appendChild(outerLbl);
@@ -1512,8 +1566,8 @@ const renderCircle = () => {
     }
     const innerDot=svgEl('circle',{cx:ix,cy:iy,r:innerR,fill:rmCol,stroke:isIA?'#F4D03F':'rgba(255,255,255,0.3)','stroke-width':isIA?'3':'1.5',opacity:isIA?'1':'0.88',cursor:'pointer',role:'button',tabindex:'0','aria-label':`Play ${dnInnerMinor(relMin)} minor`});
     if(isIA) innerDot.setAttribute('filter',`drop-shadow(0 0 7px ${rmCol})`);
-    innerDot.addEventListener('click',()=>{ if(!S.soloPlaying){S.minKey=relMin;S.majKey=REL_MAJOR[relMin]||S.majKey;S.hubLabel={top:dnInnerMinor(relMin)+'m',bottom:'relative minor'};S.lastPick='triad';render();playTriad(relMin,true);} });
-    innerDot.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();if(!S.soloPlaying){S.minKey=relMin;S.majKey=REL_MAJOR[relMin]||S.majKey;S.hubLabel={top:dnInnerMinor(relMin)+'m',bottom:'relative minor'};S.lastPick='triad';render();playTriad(relMin,true);}} });
+    innerDot.addEventListener('click',()=>{ if(!S.soloPlaying){S.minKey=relMin;S.majKey=REL_MAJOR[relMin]||S.majKey;S.hubLabel={top:dnInnerMinor(relMin)+'m',bottom:'relative minor'};S.lastPick='triad';render();playDot(relMin,true);} });
+    innerDot.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();if(!S.soloPlaying){S.minKey=relMin;S.majKey=REL_MAJOR[relMin]||S.majKey;S.hubLabel={top:dnInnerMinor(relMin)+'m',bottom:'relative minor'};S.lastPick='triad';render();playDot(relMin,true);}} });
     g.appendChild(innerDot);
     const il1=svgEl('text',{'x':ix,'y':iy,'text-anchor':'middle','font-size':'8','fill':textOn(relMin),'font-weight':'800','font-family':'Georgia,serif','pointer-events':'none','user-select':'none'});
     il1.textContent=dnInnerMinor(relMin); g.appendChild(il1);
@@ -1927,6 +1981,7 @@ window.addEventListener('message',ev=>{
       setTimeout(()=>{if(S.active?.type==='tick'){S.active=null;render();}},Math.max(ev.data.payload?.beatMs*.7,120));
     } else if(ev.data.type==='KCM_STATE'){
       if(ev.data.payload?.root){
+        _cofBusRoot=ev.data.payload.root;
         const root=S2F[ev.data.payload.root]||ev.data.payload.root;
         if(NOTE_ORDER.includes(root)){setMajKey(root);}
       }
@@ -1939,7 +1994,12 @@ window.addEventListener('message',ev=>{
       // approximation for real-time playback (e.g. The Decoder), show
       // whichever note most recently turned on; clear when nothing's active.
       const an = ev.data.payload?.activeNotes;
-      if(an){
+      // Oct 5 2026: ignore the Console echoing back notes THIS panel is
+      // playing, so the highlight stays on the dot you clicked instead of
+      // jumping to the last note of the chord.
+      const _own = Object.keys(_cofActiveMidiCounts).map(Number);
+      const _isEcho = an && an.length && _own.length && an.every(m=>_own.includes(m));
+      if(an && !_isEcho){
         // True polyphony for the wheel's dots + center chord label: every
         // pitch class currently sounding gets tracked here (S.busActive),
         // independent of the single-note approximation right below (kept
