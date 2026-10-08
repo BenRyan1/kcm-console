@@ -774,11 +774,14 @@ function sendBridgeState(payload){
   if (window.parent === window) return;
   window.parent.postMessage({ type: 'KCM_STATE_PATCH', payload: payload }, '*');
 }
+let _cofLastOwn = 0;
 function _cofNoteOn(midi){
+  _cofLastOwn = Date.now();
   _cofActiveMidiCounts[midi] = (_cofActiveMidiCounts[midi]||0) + 1;
   sendBridgeState({ activeNotes: Object.keys(_cofActiveMidiCounts).map(Number) });
 }
 function _cofNoteOff(midi){
+  _cofLastOwn = Date.now();
   if (!_cofActiveMidiCounts[midi]) return;
   _cofActiveMidiCounts[midi] -= 1;
   if (_cofActiveMidiCounts[midi] <= 0) delete _cofActiveMidiCounts[midi];
@@ -1528,7 +1531,7 @@ const renderCircle = () => {
     // pitch classes at the same angular position.
     const busHas = pc => S.busActive && S.busActive.pcs && S.busActive.pcs.has(pc);
     const isOA = (activeN?.note===note && (activeN.type==='outer'||activeN.type==='tick')) || busHas(NOTE_CHROMA[note]);
-    const isIA = (activeN?.note===relMin && (activeN.type==='inner'||activeN.type==='tick')) || busHas(NOTE_CHROMA[relMin]);
+    const isIA = (activeN?.note===relMin && (activeN.type==='inner'||activeN.type==='tick')); // Oct 6 2026: bus notes light the major dot only, not every minor too
 
     // Sector wedge — spans from just outside the hub to the major ring, so
     // every ring (minor, 7th, 9th, 11th, 13th) sits inside the same tinted
@@ -2047,7 +2050,8 @@ window.addEventListener('message',ev=>{
       // playing, so the highlight stays on the dot you clicked instead of
       // jumping to the last note of the chord.
       const _own = Object.keys(_cofActiveMidiCounts).map(Number);
-      const _isEcho = an && an.length && _own.length && an.every(m=>_own.includes(m));
+      // also ignore notes arriving within 1.5s of this panel playing: other panels relay them back late
+      const _isEcho = an && an.length && ((_own.length && an.every(m=>_own.includes(m))) || (Date.now()-_cofLastOwn < 1500));
       if(an && !_isEcho){
         // True polyphony for the wheel's dots + center chord label: every
         // pitch class currently sounding gets tracked here (S.busActive),
