@@ -1351,7 +1351,7 @@ const renderExtPanel = () => {
   if (box) {
     box.innerHTML = list.length===0
       ? '<span class="ext-empty">No extension tones selected yet — click a ring on the wheel, or try a preset above</span>'
-      : list.map(n=>{
+      : [...list].sort((x,y)=> (+x.ring)-(+y.ring) || x.idx-y.idx).map(n=>{ // Oct 8 2026: read 7th, 9th, 11th, 13th (playback order unchanged)
           const ringLbl = {7:'7th',9:'9th',11:'11th',13:'13th'}[n.ring];
           const col = NOTE_COLORS[n.note]||'#888';
           return `<strong style="color:${col}">${dn(n.note)}</strong> (${ringLbl} of ${(EXT_MODES[S.extMode].base==='dominant') ? dn(extRootFor(n.majorNote,'dominant'))+' dominant' : dn(REL_MINOR[n.majorNote]||n.majorNote)+' minor'})`;
