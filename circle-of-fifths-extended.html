@@ -992,6 +992,9 @@ const playDot = (note,isMinor=false) => {
   _cofSendRoot(isMinor ? (REL_MAJOR[note]||note) : note);
   const notes = _cofClickMode==='triad' ? (isMinor?getMinorTriad(note):getTriad(note)) : [note];
   const tok = ++_cofDotTok;
+  // Oct 8 2026: a fresh click wipes any stale bus dots left over from the
+  // previous click (C then F quickly was leaving C's dots lit alongside F).
+  S.busActive={pcs:new Set(),bassPc:null}; _cofLastOwn=Date.now();
   S.active={note,type:isMinor?'inner':'outer'}; render();
   // Oct 5 2026: majors play in octave 4; every relative minor plays a
   // minor 3rd BELOW its relative major (C4 -> A3, G4 -> E4), always.
@@ -2051,7 +2054,7 @@ window.addEventListener('message',ev=>{
       // jumping to the last note of the chord.
       const _own = Object.keys(_cofActiveMidiCounts).map(Number);
       // also ignore notes arriving within 1.5s of this panel playing: other panels relay them back late
-      const _isEcho = an && an.length && ((_own.length && an.every(m=>_own.includes(m))) || (Date.now()-_cofLastOwn < 1500));
+      const _isEcho = an && an.length && ((_own.length && an.every(m=>_own.includes(m))) || (Date.now()-_cofLastOwn < 3000) || Object.keys(_cofActiveMidiCounts).length>0);
       if(an && !_isEcho){
         // True polyphony for the wheel's dots + center chord label: every
         // pitch class currently sounding gets tracked here (S.busActive),
