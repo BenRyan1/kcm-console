@@ -327,7 +327,7 @@ body{font-family:var(--font-b);background:radial-gradient(ellipse at 30% 20%,#1e
           <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#F7D9C4;margin-right:4px;vertical-align:middle;"></span>13th</span>
         </div>
         <div class="ext-steps">
-          Rings apply to <strong id="extKeyLabel">A minor</strong> (relative minor of the Major panel's key).
+          Rings apply to <strong id="extKeyLabel">A minor</strong> <span id="extKeyNote">(relative minor of the Major panel's key)</span>.
           Click a ring dot to toggle it in or out and hear it &mdash; each ring toward the center stacks one more tone on top of the last. Then <strong>▶ Play Chord</strong> (all at once), <strong>♪ Arpeggio</strong> (one at a time, low to high), or <strong>⇄ Compare</strong> exactly two.
         </div>
 
@@ -935,6 +935,8 @@ const S = {
   progChordIdx:-1,
   extMode:     'natural',   // EXT_MODES key
   extActive:   new Set(),   // Set of "ring-colIndex", ring in EXT_RINGS
+  extPreset:   null,        // Oct 8 2026: preset button last pressed (dots follow the selected key); null once rings are toggled by hand
+  extPresetKey:null,        // major key the preset dots are currently drawn for
   hubLabel:    null,        // {top,bottom} — last chord/degree chosen via the extension rings, shown in the wheel's center; null shows the default branding
   lastPick:    null,        // 'ext' | 'triad' | null — which kind of selection happened most recently, so the Explorer section below (Keyboard/Fretboard/Staff/Chromatic Circle) knows whether to mirror the toggled extension stack or a plain triad click
   majExtLevel: 'triad',     // 'triad' | '7' | 'auto' — default level for Major-panel progressions
@@ -1235,6 +1237,7 @@ const computeHubLabel = (colIdx) => {
 };
 
 const toggleExt = (ring, colIdx) => {
+  S.extPreset = null; // hand-picked rings no longer follow the key
   const key = ring+'-'+colIdx;
   const turningOn = !S.extActive.has(key);
   const level = RING_LEVELS.indexOf(ring);
@@ -1300,12 +1303,13 @@ const compareExt = () => {
   playNotes([b.note], b.oct, 1.2, 1.7);
 };
 
-const clearExt = () => { S.extActive.clear(); S.hubLabel = null; S.lastPick = null; render(); };
+const clearExt = () => { S.extPreset = null; S.extActive.clear(); S.hubLabel = null; S.lastPick = null; render(); };
 
 const setExtMode = m => { S.extMode = m; render(); };
 
 const applyExtPreset = p => {
   S.extMode = p.mode;
+  S.extPreset = p; S.extPresetKey = S.majKey;
   const idx = NOTE_ORDER.indexOf(S.majKey);
   S.extActive = new Set(p.rings.map(r=> r+'-'+idx));
   S.hubLabel = computeHubLabel(idx);
@@ -1328,7 +1332,15 @@ const renderExtPanel = () => {
   const idx = NOTE_ORDER.indexOf(S.majKey);
   const minorRoot = REL_MINOR[S.majKey] || S.majKey;
   const lbl = document.getElementById('extKeyLabel');
-  if (lbl) lbl.textContent = `${dn(minorRoot)} minor`;
+  // Oct 8 2026: name what the rings are really built on. Dominant modes
+  // stack off the key's dominant (one step clockwise), not its minor.
+  const _em = EXT_MODES[S.extMode];
+  const _isDom = _em && _em.base==='dominant';
+  const _ringRoot = _isDom ? extRootFor(S.majKey,'dominant') : minorRoot;
+  const _ringName = _isDom ? `${dn(_ringRoot)} dominant` : `${dn(minorRoot)} minor`;
+  if (lbl) lbl.textContent = _ringName;
+  const lblNote = document.getElementById('extKeyNote');
+  if (lblNote) lblNote.textContent = _isDom ? `(the dominant of the Major panel's key, ${dn(S.majKey)}, shown in the ${dn(S.majKey)} wedge)` : `(relative minor of the Major panel's key, in the ${dn(S.majKey)} wedge)`;
 
   document.querySelectorAll('.ext-mode-btn').forEach(b=>{
     b.classList.toggle('on', b.dataset.mode===S.extMode);
@@ -1342,7 +1354,7 @@ const renderExtPanel = () => {
       : list.map(n=>{
           const ringLbl = {7:'7th',9:'9th',11:'11th',13:'13th'}[n.ring];
           const col = NOTE_COLORS[n.note]||'#888';
-          return `<strong style="color:${col}">${dn(n.note)}</strong> (${ringLbl} of ${dn(n.majorNote)})`;
+          return `<strong style="color:${col}">${dn(n.note)}</strong> (${ringLbl} of ${(EXT_MODES[S.extMode].base==='dominant') ? dn(extRootFor(n.majorNote,'dominant'))+' dominant' : dn(REL_MINOR[n.majorNote]||n.majorNote)+' minor'})`;
         }).join('  +  ');
   }
   const compareBtn = document.getElementById('extCompareBtn');
@@ -1356,7 +1368,19 @@ const renderExtPanel = () => {
 // ══════════════════════════════════════════════════════
 // RENDER — builds the SVG circle and updates all DOM
 // ══════════════════════════════════════════════════════
+// Oct 8 2026: a preset's dots always sit in the wedge of the CURRENT key.
+// Previously, changing the key left the old wedge lit while the panel
+// header already named the new key.
+const syncExtPresetToKey = () => {
+  if (!S.extPreset || S.extPresetKey === S.majKey) return;
+  const idx = NOTE_ORDER.indexOf(S.majKey);
+  S.extActive = new Set(S.extPreset.rings.map(r=> r+'-'+idx));
+  S.extPresetKey = S.majKey;
+  S.hubLabel = computeHubLabel(idx);
+  S.lastPick = 'ext';
+};
 const render = () => {
+  syncExtPresetToKey();
   renderCircle();
   renderPanels();
   renderLoopBlock();
