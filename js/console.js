@@ -147,7 +147,7 @@
   function stampBuildVersion() {
     const el = document.getElementById('build-version');
     if (el) {
-      el.textContent = 'Build ' + BUILD.version + ' · Session ' + BUILD.session + ' · ' + BUILD.built;
+      el.textContent = 'Build v1.2 · 7 Panels · Mic Engine · 2026'; // display text kept in step with index.html and the v1.2 badge (BUILD.* stays for logging)
     }
   }
 
