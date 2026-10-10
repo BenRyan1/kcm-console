@@ -199,6 +199,15 @@ body::before{content:'';position:fixed;inset:0;
 }
 .btn-clear:hover{background:rgba(255,30,30,.18);border-color:rgba(255,60,60,.7);color:#ff6060;}
 .btn-clear:active{transform:scale(.96)}
+.btn-stop{
+  font-family:var(--font-display);font-size:9px;letter-spacing:.14em;font-weight:800;
+  padding:7px 18px;min-height:36px;min-width:0;border-radius:4px;cursor:pointer;
+  text-transform:uppercase;transition:all .18s;
+  border:1px solid rgba(255,70,70,.35);background:rgba(255,40,40,.06);color:rgba(255,110,110,.55);
+}
+.btn-stop.armed{background:#c4162a;border-color:#ff5a5a;color:#fff;box-shadow:0 0 14px rgba(255,50,50,.45);}
+.btn-stop.armed:hover{background:#e01b32;}
+.btn-stop:active{transform:scale(.95)}
 .btn-main.on{
   background:rgba(0,128,128,.15);border-color:var(--primary-teal);
   color:#00d9d9;animation:bb 1.3s ease-in-out infinite;
@@ -570,7 +579,9 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:10px;heigh
   <div class="ctrl-bar">
     <button class="btn-main idle" id="listenBtn"
       aria-label="Activate microphone for real-time audio visualization"
-      aria-pressed="false">▶ Activate</button>
+      aria-pressed="false" title="Activate microphone (Enter)">▶ Activate</button>
+    <button class="btn-stop" id="stopBtn" onclick="killAll()"
+      aria-label="Stop all sound and the microphone" title="STOP everything (Esc)">■ STOP</button>
     <div class="ctrl-group">GAIN
       <input type="range" id="gainSlider" min="1" max="8" step=".1" value="3"
         aria-label="Input gain">
@@ -585,7 +596,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:10px;heigh
     <button class="btn-clear" id="clearBtn" onclick="clearManualNotes()"
       aria-label="Clear all held notes" title="Clear all held notes">✕ CLEAR</button>
     <span style="font-family:var(--font-mono);font-size:7px;color:rgba(232,232,232,.28);letter-spacing:.06em;">
-      Click wheel/keys/frets · <span style="color:rgba(244,208,63,.45)">A S D F G H J K L ; ' \</span> = C C♯ D D♯ E F F♯ G G♯ A A♯ B · click again to release
+      Enter = activate · Esc = stop · Space = clear · Click wheel/staff/keys/frets · <span style="color:rgba(244,208,63,.45)">A S D F G H J K L ; ' \</span> = C C♯ D D♯ E F F♯ G G♯ A A♯ B · click again to release
     </span>
   </div>
 
@@ -706,6 +717,61 @@ function hexRgb(h){return{r:parseInt(h.slice(1,3),16),g:parseInt(h.slice(3,5),16
 
 // ═══ SHARED STATE — single source of truth for all 8 displays ════════════════
 const S={detectedNotes:[],dominantNote:null,rms:0,t:0,dt:1/60,activeNoteIndices:new Set()};
+let _staffG=null, _staffHover=null;     // staff geometry and the cursor position over it (used by drawStaff and the staff click handler)
+
+// ═══ 3D VIEW (oscilloscope, Lissajous, cymatics) ═════════════════════════════
+// Drag a panel to turn it. Double-click to start or stop the slow spin. The 3D chip switches 2D / 3D.
+const V3={
+  wave:{on:true, yaw:-0.55,pit:0.42,spin:true,idle:0,drag:false,label:'Oscilloscope'},
+  liss:{on:true, yaw: 0.6, pit:0.35,spin:true,idle:0,drag:false,label:'Lissajous'},
+  cym :{on:false,yaw: 0.5, pit:0.85,spin:true,idle:0,drag:false,label:'Cymatics'}
+};
+(function(){try{for(const k in V3){const s=localStorage.getItem('kcm_v3_'+k);if(s==='1')V3[k].on=true;else if(s==='0')V3[k].on=false}}catch(e){}})();
+const _P=[0,0,0];
+function _v3cam(st,cx,cy,F){
+  const cyw=Math.cos(st.yaw),syw=Math.sin(st.yaw),cp=Math.cos(st.pit),sp=Math.sin(st.pit);
+  return function(x,y,z){
+    const x1=x*cyw+z*syw, z1=-x*syw+z*cyw;
+    const y2=y*cp-z1*sp, z2=y*sp+z1*cp;
+    const k=F/(F+z2);
+    _P[0]=cx+x1*k;_P[1]=cy-y2*k;_P[2]=z2;return k;
+  };
+}
+function _v3step(st){
+  const dt=S.dt||1/60;
+  if(st.drag)return;
+  st.idle+=dt;
+  if(st.spin||st.idle>5){ st.yaw+=dt*0.38; }
+}
+function _v3axes(x,proj,ex,ey,ez){
+  x.lineWidth=0.7;
+  [[ -ex,0,0, ex,0,0,'255,90,90'],[0,-ey,0,0,ey,0,'110,255,140'],[0,0,-ez,0,0,ez,'110,160,255']].forEach(a=>{
+    proj(a[0],a[1],a[2]);const x0=_P[0],y0=_P[1];proj(a[3],a[4],a[5]);
+    x.strokeStyle=`rgba(${a[6]},.16)`;x.beginPath();x.moveTo(x0,y0);x.lineTo(_P[0],_P[1]);x.stroke();});
+}
+(function wire3D(){
+  const defs=[['wave','card-wave','c-wave'],['liss','card-lissajous','c-lissajous'],['cym','card-cymatics','c-cymatics']];
+  defs.forEach(([k,cardId,cvId])=>{
+    const st=V3[k];
+    function go(){
+      const card=document.getElementById(cardId),cv=document.getElementById(cvId);
+      if(!card||!cv){setTimeout(go,100);return}
+      const chip=document.createElement('button');chip.type='button';
+      chip.setAttribute('aria-label',st.label+' 3D view on or off');chip.title='3D view: drag to rotate, double-click to spin';
+      chip.style.cssText='position:absolute;top:24px;right:7px;z-index:11;min-width:0;min-height:0;width:34px;height:17px;line-height:15px;padding:0;border-radius:9px;font-family:"Space Mono",monospace;font-size:7px;letter-spacing:.08em;cursor:pointer;background:rgba(3,5,8,.6)';
+      const paint=()=>{chip.textContent=st.on?'3D':'2D';chip.style.color=st.on?'#F4D03F':'rgba(255,255,255,.5)';chip.style.border=st.on?'1px solid rgba(244,208,63,.6)':'1px solid rgba(255,255,255,.2)';cv.style.touchAction=st.on?'none':'';cv.style.cursor=st.on?'grab':(k==='staff'?'pointer':'')};
+      chip.onclick=e=>{e.stopPropagation();st.on=!st.on;try{localStorage.setItem('kcm_v3_'+k,st.on?'1':'0')}catch(_){}paint()};
+      card.appendChild(chip);paint();
+      let lx=0,ly=0;
+      cv.addEventListener('pointerdown',e=>{if(!st.on)return;st.drag=true;st.idle=0;lx=e.clientX;ly=e.clientY;try{cv.setPointerCapture(e.pointerId)}catch(_){}cv.style.cursor='grabbing'});
+      cv.addEventListener('pointermove',e=>{if(!st.on||!st.drag)return;st.yaw+=(e.clientX-lx)*0.01;st.pit=Math.max(-1.45,Math.min(1.45,st.pit+(e.clientY-ly)*0.01));lx=e.clientX;ly=e.clientY;st.idle=0});
+      const up=()=>{if(!st.drag)return;st.drag=false;st.idle=0;if(st.on)cv.style.cursor='grab'};
+      cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
+      cv.addEventListener('dblclick',()=>{if(st.on){st.spin=!st.spin;st.idle=0}});
+    }
+    go();
+  });
+})();
 // One shared clock: every panel animates from real elapsed time, not an assumed 60 frames per second
 // (a 120 Hz display used to run everything twice as fast).
 function advanceClock(){
@@ -812,6 +878,24 @@ function clearManualNotes(){
   _manualOct = {};
   _syncManualToState();
 }
+
+// KILL SWITCH: silence every tone now, clear held notes, stop the mic
+function killAll(){
+  Object.keys(_sustain).forEach(k=>_stopSustain(+k,true));
+  _manualNotes.clear();
+  _manualOct = {};
+  _syncManualToState();
+  try{ if(typeof isOn!=='undefined' && isOn) stop(); }catch(e){}
+  setTimeout(()=>{ try{ if(_interactCtx && _interactCtx.state==='running') _interactCtx.suspend(); }catch(e){} },60);
+  _stopArm();
+}
+function _stopArm(){
+  const b=document.getElementById('stopBtn'); if(!b) return;
+  let live=false;
+  try{ live = _manualNotes.size>0 || (typeof isOn!=='undefined' && isOn); }catch(e){}
+  b.classList.toggle('armed',live);
+}
+setInterval(_stopArm,250);
 
 function _syncManualToState(){
   // Build detectedNotes array from held manual notes + mic-detected notes
@@ -1447,6 +1531,7 @@ function drawWheel(){
 const WAVE_MS = 20;
 
 function drawWave(gain){
+  if(V3.wave.on){drawWave3D(gain);return;}
   const c=CV.wave;resize(c);const x=CX.wave,W=c.width,H=c.height;
   x.fillStyle='rgba(3,5,8,.3)';x.fillRect(0,0,W,H);
   // Allow rendering with synthetic buffers when manual notes are held
@@ -1491,6 +1576,154 @@ function drawWave(gain){
   }
 }
 
+// ── 3D OSCILLOSCOPE: every note is its own ribbon, lined up in depth, with the full sound in front ─────────────────────
+function drawWave3D(gain){
+  const c=CV.wave;resize(c);const x=CX.wave,W=c.width,H=c.height,st=V3.wave;
+  x.fillStyle='#030508';x.fillRect(0,0,W,H);
+  _v3step(st);
+  const F=Math.max(W,H)*1.5, proj=_v3cam(st,W/2,H*0.53,F);
+  const Wd=W*0.36, sY=H*0.30*gain, hasSig=tdb&&(isOn||_manualNotes.size>0);
+  const nw=hasSig?_noteWaves():{list:[]}, K=nw.list.length, L=K+1, D=Math.min(W,H)*0.20;
+  // floor frame, so the turning is easy to read
+  const zs=(L-1)/2*D+D*0.7, fy=-H*0.27;
+  x.lineWidth=0.7;x.strokeStyle='rgba(255,255,255,.09)';
+  const q=[[-Wd,fy,-zs],[Wd,fy,-zs],[Wd,fy,zs],[-Wd,fy,zs]];
+  x.beginPath();q.forEach((a,i)=>{proj(a[0],a[1],a[2]);i?x.lineTo(_P[0],_P[1]):x.moveTo(_P[0],_P[1])});x.closePath();x.stroke();
+  for(let i=1;i<4;i++){const xx=-Wd+2*Wd*i/4;proj(xx,fy,-zs);const a=_P[0],b=_P[1];proj(xx,fy,zs);x.beginPath();x.moveTo(a,b);x.lineTo(_P[0],_P[1]);x.stroke()}
+  if(!hasSig) return;
+  const _sr=(isOn&&audioCtx)?audioCtx.sampleRate:_SYN_SR;
+  const _win=Math.min(tdb.length-2,Math.round(_sr*WAVE_MS/1000));
+  let _t0=0;const _maxStart=Math.max(1,tdb.length-_win-1);
+  for(let i=1;i<_maxStart;i++){if(tdb[i-1]<0&&tdb[i]>=0){_t0=i;break}}
+  const NP=Math.max(60,Math.min(180,Math.round(W/3))), lanes=[];
+  let mr=0,mg=0,mb=0,mw=0;
+  nw.list.forEach((o,k)=>{
+    const w=2*Math.PI*o.f/nw.sr, ys=new Float32Array(NP);
+    for(let i=0;i<NP;i++){const bi=_t0+Math.floor(i*_win/NP);ys[i]=(o.a*Math.cos(w*bi)+o.b*Math.sin(w*bi))*sY}
+    lanes.push({ys:ys,z:(k-(L-1)/2)*D,rgb:o.rgb,col:o.color,main:false});
+    const a3=o.amp*o.amp*o.amp;mr+=a3*o.rgb.r;mg+=a3*o.rgb.g;mb+=a3*o.rgb.b;mw+=a3;
+  });
+  const ym=new Float32Array(NP);
+  for(let i=0;i<NP;i++){const bi=Math.min(_t0+Math.floor(i*_win/NP),tdb.length-1);ym[i]=tdb[bi]*sY}
+  let mixRgb;
+  if(mw>0)mixRgb={r:Math.round(mr/mw+(255-mr/mw)*.15),g:Math.round(mg/mw+(255-mg/mw)*.15),b:Math.round(mb/mw+(255-mb/mw)*.15)};
+  else{const dn=S.dominantNote?S.dominantNote.noteIndex:IDLE_NOTE;mixRgb=noteRgb(dn)}
+  lanes.push({ys:ym,z:(K-(L-1)/2)*D,rgb:mixRgb,col:`rgb(${mixRgb.r},${mixRgb.g},${mixRgb.b})`,main:true});
+  // far ribbons first
+  lanes.forEach(l=>{proj(0,0,l.z);l.d=_P[2]});
+  lanes.sort((a,b)=>b.d-a.d);
+  const clampY=H*0.46;
+  lanes.forEach(l=>{
+    const cc=l.rgb;
+    const pts=new Float32Array(NP*2),bs=new Float32Array(NP*2);
+    for(let i=0;i<NP;i++){
+      const xx=-Wd+2*Wd*i/(NP-1), yy=Math.max(-clampY,Math.min(clampY,l.ys[i]));
+      proj(xx,yy,l.z);pts[2*i]=_P[0];pts[2*i+1]=_P[1];
+      proj(xx,0,l.z);bs[2*i]=_P[0];bs[2*i+1]=_P[1];
+    }
+    // curtain under the wave, so the ribbon has body
+    x.strokeStyle=`rgba(${cc.r},${cc.g},${cc.b},${l.main?.20:.13})`;x.lineWidth=1;x.beginPath();
+    for(let i=0;i<NP;i+=2){x.moveTo(bs[2*i],bs[2*i+1]);x.lineTo(pts[2*i],pts[2*i+1])}x.stroke();
+    // baseline
+    x.strokeStyle='rgba(255,255,255,.10)';x.lineWidth=.6;x.beginPath();x.moveTo(bs[0],bs[1]);x.lineTo(bs[2*NP-2],bs[2*NP-1]);x.stroke();
+    // the wave
+    x.beginPath();for(let i=0;i<NP;i++)i?x.lineTo(pts[2*i],pts[2*i+1]):x.moveTo(pts[0],pts[1]);
+    x.strokeStyle=l.main?l.col:`rgba(${cc.r},${cc.g},${cc.b},.92)`;x.lineWidth=l.main?2:1.4;
+    x.shadowColor=l.col;x.shadowBlur=l.main?6+S.rms*14:4;x.stroke();x.shadowBlur=0;
+  });
+  x.font="8px 'Space Mono'";x.textBaseline='alphabetic';x.textAlign='right';
+  let rx=W-6;
+  nw.list.slice().reverse().forEach(o=>{const t=`${NOTES[o.ni].name} ${o.f.toFixed(0)}Hz`;x.fillStyle=o.color;x.fillText(t,rx,H-7);rx-=x.measureText(t).width+8});
+  x.textAlign='left';x.fillStyle='rgba(255,255,255,.35)';x.fillText(`${WAVE_MS} ms · each note on its own ribbon · drag to turn`,6,H-7);
+}
+
+// ── 3D LISSAJOUS: signal now, 5 ms later and 10 ms later make x, y and z ───────────────────────────────────────────────
+function drawLiss3D(x,W,H,buf,lag,_sr,c1,c2){
+  const st=V3.liss;
+  x.fillStyle='#030508';x.fillRect(0,0,W,H);
+  _v3step(st);
+  const R=Math.min(W,H)*0.36, proj=_v3cam(st,W/2,H/2,Math.min(W,H)*2.2);
+  const span=Math.max(2,Math.min(2048,buf.length-2*lag-1));
+  let pk=0.0001;
+  for(let i=0;i<span;i++){const a=Math.abs(buf[i]),b=Math.abs(buf[i+lag]),d=Math.abs(buf[i+2*lag]);if(a>pk)pk=a;if(b>pk)pk=b;if(d>pk)pk=d}
+  lissMax=Math.max(pk,lissMax*Math.pow(0.94,S.dt*60));
+  const scale=R/lissMax;
+  _v3axes(x,proj,R,R,R);
+  // faint ring in the x-y plane
+  x.beginPath();for(let a=0;a<=48;a++){const t=a/48*Math.PI*2;proj(Math.cos(t)*R,Math.sin(t)*R,0);a?x.lineTo(_P[0],_P[1]):x.moveTo(_P[0],_P[1])}
+  x.strokeStyle='rgba(255,255,255,.07)';x.lineWidth=.7;x.stroke();
+  const nw=_noteWaves(),comps=nw.list,K=comps.length,step=Math.max(1,Math.floor(span/520));
+  comps.forEach(o=>{
+    const w=2*Math.PI*o.f/nw.sr,cc=o.rgb;x.beginPath();
+    for(let i=0;i<span;i+=step){
+      const f=t=>(o.a*Math.cos(w*t)+o.b*Math.sin(w*t))*scale;
+      proj(f(i),f(i+lag),f(i+2*lag));i?x.lineTo(_P[0],_P[1]):x.moveTo(_P[0],_P[1]);
+    }
+    x.strokeStyle=`rgba(${cc.r},${cc.g},${cc.b},.5)`;x.lineWidth=1;x.stroke();
+  });
+  const r1=hexRgb(c1),r2=hexRgb(c2);
+  let px0=0,py0=0,pk0=1;
+  for(let i=0;i<span;i+=step){
+    const k=proj(buf[i]*scale,buf[i+lag]*scale,buf[i+2*lag]*scale),X=_P[0],Y=_P[1];
+    if(i>0){
+      let cr,cg,cb;
+      if(K){let sr_=0,sg=0,sb=0,sw=0;
+        for(let q=0;q<K;q++){const o=comps[q],w=2*Math.PI*o.f/nw.sr,v0=Math.abs(o.a*Math.cos(w*i)+o.b*Math.sin(w*i))+1e-4,v=v0*v0*v0;sw+=v;sr_+=v*o.rgb.r;sg+=v*o.rgb.g;sb+=v*o.rgb.b}
+        cr=sr_/sw;cg=sg/sw;cb=sb/sw;cr=Math.round(cr+(255-cr)*.12);cg=Math.round(cg+(255-cg)*.12);cb=Math.round(cb+(255-cb)*.12);
+      }else{const f=i/span;cr=Math.round(r1.r+(r2.r-r1.r)*f);cg=Math.round(r1.g+(r2.g-r1.g)*f);cb=Math.round(r1.b+(r2.b-r1.b)*f)}
+      x.strokeStyle=`rgba(${cr},${cg},${cb},${Math.min(1,0.55+0.4*k)})`;x.lineWidth=0.9+1.1*k;
+      x.beginPath();x.moveTo(px0,py0);x.lineTo(X,Y);x.stroke();
+    }
+    px0=X;py0=Y;
+  }
+  x.font="8px 'Space Mono'";x.textAlign='left';x.textBaseline='alphabetic';x.fillStyle='rgba(255,255,255,.35)';
+  x.fillText(`x, y, z = signal now, +${(1000*lag/_sr).toFixed(1)} ms, +${(2000*lag/_sr).toFixed(1)} ms · drag to turn`,6,H-7);
+}
+
+// ── 3D CYMATICS: the plate (or the water) as a surface that rises and falls with the sound ──────────────────────────────
+function _cym3D(x,W,H,vs,w,h,side,isDisk,sumW){
+  const st=V3.cym; _v3step(st);
+  x.fillStyle='#030508';x.fillRect(0,0,W,H);
+  const G=isDisk?38:30, half=Math.min(W,H)*0.34, F=Math.min(W,H)*2.6, proj=_v3cam(st,W/2,H*0.52,F);
+  const amp=half*(0.28+Math.min(1,S.rms*1.8)*0.30), NV=vs.length;
+  const X=new Float32Array((G+1)*(G+1)*3), HV=new Float32Array((G+1)*(G+1)), OK=new Uint8Array((G+1)*(G+1)), CI=new Uint8Array((G+1)*(G+1));
+  for(let j=0;j<=G;j++)for(let i=0;i<=G;i++){
+    const u=i/G,v=j/G,idx=j*(G+1)+i;
+    const px=Math.round(w/2+(u-0.5)*side),py=Math.round(h/2+(v-0.5)*side);
+    let hh=0,ok=NV>0&&px>=0&&px<w&&py>=0&&py<h,best=0,bi=12;
+    if(isDisk){const dx=u-0.5,dy=v-0.5;if(dx*dx+dy*dy>0.25)ok=false}
+    if(ok)for(let k=0;k<NV;k++){const f=vs[k].fld[py*w+px];if(f!==f){ok=false;break}
+      hh+=vs[k].w*f*vs[k].cs;const sc=vs[k].w*(f<0?-f:f);if(sc>=best){best=sc;bi=vs[k].ni}}
+    HV[idx]=ok?Math.max(-1.4,Math.min(1.4,hh)):0;OK[idx]=ok||(NV===0&&(!isDisk||((u-.5)*(u-.5)+(v-.5)*(v-.5))<=0.25))?1:0;CI[idx]=bi;
+    proj((u-0.5)*2*half,HV[idx]*amp,(v-0.5)*2*half);
+    X[idx*3]=_P[0];X[idx*3+1]=_P[1];X[idx*3+2]=_P[2];
+  }
+  const cells=[];
+  for(let j=0;j<G;j++)for(let i=0;i<G;i++){
+    const a=j*(G+1)+i,b=a+1,c=a+G+1,d=c+1;
+    if(!(OK[a]&&OK[b]&&OK[c]&&OK[d]))continue;
+    cells.push(j*G+i,(X[a*3+2]+X[b*3+2]+X[c*3+2]+X[d*3+2]));
+  }
+  const nC=cells.length/2, ord=new Array(nC);for(let k=0;k<nC;k++)ord[k]=k;
+  ord.sort((p,q)=>cells[2*q+1]-cells[2*p+1]);     // far cells first
+  const lw=Math.max(0.6,Math.min(1.1,W/420));
+  for(let o=0;o<nC;o++){
+    const ci=cells[2*ord[o]],i=ci%G,j=(ci/G)|0,a=j*(G+1)+i,b=a+1,c=a+G+1,d=c+1;
+    const hv=(HV[a]+HV[b]+HV[c]+HV[d])/4, ah=Math.min(1,Math.abs(hv));
+    let rgb;
+    if(NV){rgb=noteRgb(CI[a])}else rgb={r:140,g:160,b:190};
+    const lit=0.10+0.45*ah+(hv>0?0.12:0);
+    x.beginPath();x.moveTo(X[a*3],X[a*3+1]);x.lineTo(X[b*3],X[b*3+1]);x.lineTo(X[d*3],X[d*3+1]);x.lineTo(X[c*3],X[c*3+1]);x.closePath();
+    x.fillStyle=`rgb(${Math.round(4+rgb.r*lit)},${Math.round(6+rgb.g*lit)},${Math.round(10+rgb.b*lit)})`;x.fill();
+    const edge=NV?(0.25+0.6*ah):0.18;
+    x.strokeStyle=`rgba(${Math.min(255,rgb.r+40)},${Math.min(255,rgb.g+40)},${Math.min(255,rgb.b+40)},${edge})`;x.lineWidth=lw;x.stroke();
+  }
+  x.font="8px 'Space Mono'";x.textAlign='left';x.textBaseline='alphabetic';x.fillStyle='rgba(255,255,255,.35)';
+  x.fillText(NV?'surface height = the sound · drag to turn':'silent · drag to turn',6,H-7);
+  if(NV){x.textBaseline='top';x.textAlign='left';x.shadowColor='rgba(0,0,0,.95)';x.shadowBlur=4;x.font="8px 'Space Mono'";x.fillStyle=hexRgba(NOTES[vs[0].ni].color,.92);
+    x.fillText(vs.filter(v=>v.w>0.15).map(v=>`${NOTES[v.ni].name} ${v.f.toFixed(0)}Hz`).join('  '),8,26);x.shadowBlur=0}
+}
+
 // ═══ 3. LISSAJOUS ════════════════════════════════════════════════════════════
 // Lissajous state
 let lissMax=0.001;
@@ -1526,13 +1759,14 @@ function drawLissajous(){
 
   // ── ACTIVE: trail fade then draw ─────────────────────────────────────────
   // High opacity fade (0.55) so trails clear within ~5 frames — no lingering static
-  x.fillStyle='rgba(3,5,8,0.55)'; x.fillRect(0,0,W,H);
+  if(!V3.liss.on){x.fillStyle='rgba(3,5,8,0.55)'; x.fillRect(0,0,W,H);}
 
   if(!tdb){ return; }
   // Delay-coordinate phase portrait: x = signal(t), y = signal(t + T/4), T = period of the strongest note.
   // A pure sine traces a circle; overtones and other notes bend it into the figure that is really in the sound.
   const buf=tdb;
   const _sr=(isOn&&audioCtx)?audioCtx.sampleRate:_SYN_SR;
+  if(V3.liss.on){drawLiss3D(x,W,H,buf,Math.max(1,Math.round(_sr*LISS_DELAY_MS/1000)),_sr,S.dominantNote?S.dominantNote.color:NOTES[IDLE_NOTE].color,S.detectedNotes[1]?.color||(S.dominantNote?S.dominantNote.color:NOTES[IDLE_NOTE].color));return;}
   const _f0=S.dominantNote?(S.dominantNote.freq>0?S.dominantNote.freq:NOTE_FREQS[S.dominantNote.noteIndex]):NOTE_FREQS[IDLE_NOTE];
   // Delay-coordinate figure with a FIXED delay of 5 ms: a note of frequency f is shifted by 5 ms * f cycles, so every pitch
   // (and every octave of it) opens the ellipse to a different shape, between a straight line and a circle. Chords combine.
@@ -1676,7 +1910,7 @@ function _sandSpawn(i,disk){
     function paint(){for(const k in btns){const on=_cym.mode===k;btns[k].style.background=on?'rgba(244,208,63,.22)':'transparent';btns[k].style.color=on?'#F4D03F':'rgba(255,255,255,.45)'}}
     [['plate','PLATE'],['water','WATER'],['both','BOTH']].forEach(([k,t])=>{
       const b=document.createElement('button');b.type='button';b.textContent=t;b.setAttribute('aria-label','Cymatics '+t.toLowerCase());
-      b.style.cssText='font-family:"Space Mono",monospace;font-size:6px;letter-spacing:.08em;padding:4px 5px;border:0;cursor:pointer;background:transparent;'+(wrap.children.length?'border-top:1px solid rgba(255,255,255,.12);':'');
+      b.style.cssText='font-family:"Space Mono",monospace;font-size:6px;letter-spacing:.08em;padding:0;border:0;cursor:pointer;background:transparent;min-width:0;min-height:0;width:38px;height:22px;line-height:22px;'+(wrap.children.length?'border-top:1px solid rgba(255,255,255,.12);':'');
       b.onclick=()=>{_cym.mode=k;try{localStorage.setItem('kcm_cyma_mode',k)}catch(e){}paint();if(typeof drawCymatics==='function')drawCymatics()};
       btns[k]=b;wrap.appendChild(b)});
     paint();card.appendChild(wrap);
@@ -1821,7 +2055,8 @@ function drawCymatics(){
   };
   if(!vs.length){                       // nothing is being played: silence. An empty plate (or dish), nothing else.
     if(mode!=='water'){for(let i=0;i<_sand.N;i++){_sandSpawn(i,isDisk);_sand.C[i]=12}}     // the sand is spread evenly again, ready for the next sound
-    if(mode==='plate'){drawPlate()}
+    if(V3.cym.on){_cym3D(x,W,H,[],w,h,side,isDisk,0)}
+    else if(mode==='plate'){drawPlate()}
     else{
       x.fillStyle='#030508';x.fillRect(0,0,W,H);
       x.beginPath();x.arc(W/2,H/2,sideF/2,0,Math.PI*2);x.strokeStyle='rgba(160,200,255,.14)';x.lineWidth=1;x.stroke();
@@ -1848,6 +2083,7 @@ function drawCymatics(){
   });
   kAvg=kAvg/Math.max(0.001,sumW);
   const dom=vs[0], NV=vs.length, n=w*h;
+  if(V3.cym.on){_cym3D(x,W,H,vs,w,h,side,isDisk,sumW);return;}
 
   if(mode!=='water'){
     // 3. where the plate is moving least, for each grain: the smallest |phi| of any sounding note (a fading note holds less sand)
@@ -2354,6 +2590,7 @@ function drawStaff(){
   const ls = Math.max(7, Math.min(H * 0.082, 20));  // line spacing
 
   const spToY = sp => staffCY - (sp - 6) * (ls / 2);
+  _staffG={W:W,H:H,staffCY:staffCY,ls:ls,staffLeft:marginL*0.52,staffRight:W-marginR};
 
   const line1Y = spToY(2);   // E4
   const line5Y = spToY(10);  // F5
@@ -2374,12 +2611,26 @@ function drawStaff(){
   // Treble clef
   drawClef(x, staffLeft - ls*0.12, staffCY, ls);
 
+  // Ghost note under the cursor: shows exactly which note a click will play (Shift = sharp, Alt = flat)
+  if(_staffHover){
+    const pk=_staffPick(_staffHover.x,_staffHover.y,_staffHover.shift,_staffHover.alt);
+    if(pk){
+      const gx=Math.max(staffLeft+ls*2.2,Math.min(staffRight-ls,_staffHover.x)), gy=spToY(pk.sp), gr=Math.max(4,ls*0.44), col=NOTES[pk.pc].color;
+      x.strokeStyle=hexRgba(col,0.5);x.lineWidth=1.1;
+      if(pk.sp<=1)for(let l=0;l>=pk.sp;l-=2){const ly=spToY(l);x.beginPath();x.moveTo(gx-gr*1.8,ly);x.lineTo(gx+gr*1.8,ly);x.stroke()}
+      if(pk.sp>=11)for(let l=12;l<=pk.sp;l+=2){const ly=spToY(l);x.beginPath();x.moveTo(gx-gr*1.8,ly);x.lineTo(gx+gr*1.8,ly);x.stroke()}
+      x.beginPath();x.ellipse(gx,gy,gr,gr*0.68,-0.2,0,Math.PI*2);x.fillStyle=hexRgba(col,0.45);x.fill();x.strokeStyle=hexRgba(col,0.9);x.stroke();
+      x.font=`bold ${Math.max(6,Math.min(11,ls*0.52))}px 'Space Mono'`;x.fillStyle=hexRgba(col,0.95);x.textAlign='center';x.textBaseline='top';
+      x.fillText(NOTES[pk.pc].name+pk.oct,gx,gy+gr*2.1);
+    }
+  }
+
   // ── Notes ────────────────────────────────────────────────────────────────
   const notes = S.detectedNotes.slice(0,6);
   if(notes.length===0){
     x.font=`${Math.max(8,ls*0.6)}px 'Space Mono'`;
-    x.fillStyle='rgba(255,255,255,.13)'; x.textAlign='center'; x.textBaseline='middle';
-    x.fillText('play or sing…', W/2, H*0.82);
+    x.fillStyle='rgba(255,255,255,.32)'; x.textAlign='center'; x.textBaseline='middle';
+    x.fillText('click the staff, a key or a fret, or sing…', W/2, H*0.9);
     return;
   }
 
@@ -2467,6 +2718,35 @@ function drawClef(x,cx,cy,ls){
   x.stroke(); x.restore();
 }
 
+
+// ── STAFF AS A SOUND SOURCE ────────────────────────────────────────────────
+// Click a line or a space and that note plays and is held (click it again to release), exactly like the keys and the frets.
+// Shift-click = sharp, Alt/Option-click = flat. The note comes from where you click: its height on the staff gives the
+// letter and the octave (middle C sits on the first ledger line below the staff).
+const _DIA_SEMI=[0,2,4,5,7,9,11];                 // C D E F G A B as semitones above C
+function _staffPick(px,py,shift,alt){
+  const g=_staffG; if(!g) return null;
+  const sp=Math.max(-6,Math.min(16,Math.round(6+(g.staffCY-py)/(g.ls/2))));    // diatonic step, 0 = middle C
+  const oct=4+Math.floor(sp/7), dia=((sp%7)+7)%7;
+  let midi=12*(oct+1)+_DIA_SEMI[dia]+(shift?1:(alt?-1:0));
+  if(midi<24||midi>108) return null;
+  return {sp:sp,midi:midi,pc:((midi%12)+12)%12,oct:Math.floor(midi/12)-1};
+}
+(function wireStaffClicks(){
+  const c=CV.staff; if(!c) return;
+  c.style.cursor='pointer'; c.setAttribute('aria-label','Staff: click a line or space to play that note (Shift = sharp, Alt = flat)');
+  const pos=e=>{const r=c.getBoundingClientRect();return {x:(e.clientX-r.left)*(c.width/Math.max(1,r.width)),y:(e.clientY-r.top)*(c.height/Math.max(1,r.height))}};
+  c.addEventListener('pointermove',e=>{const p=pos(e);_staffHover={x:p.x,y:p.y,shift:e.shiftKey,alt:e.altKey};drawStaff()});
+  c.addEventListener('pointerleave',()=>{_staffHover=null;drawStaff()});
+  c.addEventListener('click',e=>{
+    const p=pos(e),pk=_staffPick(p.x,p.y,e.shiftKey,e.altKey); if(!pk) return;
+    // a pitch class holds one octave at a time: clicking the same note in another octave moves it there
+    if(SUSTAIN_HELD&&_manualNotes.has(pk.pc)&&_manualOct[pk.pc]!==pk.oct){
+      _stopSustain(pk.pc,true);_startSustain(pk.pc,pk.oct);_manualOct[pk.pc]=pk.oct;_syncManualToState();
+    }else playAndActivate(pk.pc,pk.oct,1.0);
+    _staffHover={x:p.x,y:p.y,shift:e.shiftKey,alt:e.altKey};
+  });
+})();
 
 // ═══ 8. VERTICAL GUITAR NECK ════════════════════════════════════════════════
 // Orientation: low E (string 0) at bottom, high e (string 5) at top
@@ -2928,7 +3208,7 @@ function idle(){
   // Update keyboard on idle too
   updateKeyboardDisplay();
   // Clear staff on idle
-  const cs=CV.staff;if(cs){resize(cs);const xs=CX.staff;xs.fillStyle='#080C14';xs.fillRect(0,0,cs.width,cs.height);}
+  drawStaff();
   updateNeckDisplay();
 }
 
@@ -2957,9 +3237,13 @@ function idle(){
     if(e.target && (e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.isContentEditable)) return;
 
     // Clear all notes
-    if(e.code==='Space' || e.code==='Escape'){
+    if(e.code==='Escape'){ e.preventDefault(); killAll(); return; }
+    if(e.code==='Space'){ e.preventDefault(); clearManualNotes(); return; }
+    if(e.code==='Enter' || e.code==='NumpadEnter'){
+      const t=e.target, tg=t&&t.tagName;
+      if(tg==='BUTTON'||tg==='A'||tg==='SELECT') return;
       e.preventDefault();
-      clearManualNotes();
+      try{ if(!isOn) document.getElementById('listenBtn').click(); }catch(_){}
       return;
     }
 
