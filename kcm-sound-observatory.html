@@ -1542,7 +1542,7 @@ function chladniModeFor(freq){
   const q=v=>Math.round(v*20)/20;
   return {m:q(lo.m+(hi.m-lo.m)*w), n:q(lo.n+(hi.n-lo.n)*w), N:t};
 }
-// Black-and-white liquid cymatics. Every sounding note is a "voice" with its own Chladni plate mode.
+// Liquid cymatics, lit like water and tinted by the KCM note colors. Every sounding note is a "voice" with its own Chladni plate mode.
 // Voices are mixed into ONE liquid surface, weighted by how loud each note is, and they crossfade
 // (a note fades in as you play it and melts away when you stop). The surface is lit like a liquid:
 // white foam gathers on the nodal lines, slopes catch the light, and the mic level drives ripples
@@ -1565,11 +1565,11 @@ function drawCymatics(){
   if(!W||!H) return;
   const zoom=cymaZoom, dt=S.dt||1/60;
   // the liquid is computed at a capped size and scaled up smooth, which also reads as softer, wetter
-  const sc=Math.min(1,300/Math.max(W,H)), w=Math.max(8,Math.round(W*sc)), h=Math.max(8,Math.round(H*sc));
+  const sc=Math.min(1,250/Math.max(W,H)), w=Math.max(8,Math.round(W*sc)), h=Math.max(8,Math.round(H*sc));
   if(!_cym.off){_cym.off=document.createElement('canvas');_cym.octx=_cym.off.getContext('2d')}
   if(_cym.w!==w||_cym.h!==h){
     _cym.off.width=w;_cym.off.height=h;_cym.w=w;_cym.h=h;
-    _cym.Hb=new Float32Array(w*h);_cym.Fb=new Float32Array(w*h);_cym.R=new Float32Array(w*h);
+    _cym.Hb=new Float32Array(w*h);_cym.Fb=new Float32Array(w*h);_cym.R=new Float32Array(w*h);_cym.Cr=new Float32Array(w*h);_cym.Cg=new Float32Array(w*h);_cym.Cb=new Float32Array(w*h);
     _cym.img=_cym.octx.createImageData(w,h);_cym.voices.clear();_cym.rkey='';
   }
   if(_cym.rkey!==w+'x'+h+'z'+zoom){                       // distance from the plate centre, for the ripples
@@ -1610,25 +1610,50 @@ function drawCymatics(){
   const kr=10+7*Math.log2(Math.max(60,dom.f)/80);          // higher pitch = tighter ripples
   _cym.rph=(_cym.rph+2*Math.PI*Math.min(9,1.5+dom.f/120)*0.6*dt)%(2*Math.PI);
   const rAmp=0.05+S.rms*0.85;
-  // 3. height of the liquid and the foam on the nodal lines
+  // The same live wave the oscilloscope draws (same window, same rising-zero start), laid around the centre as
+  // rings: whatever the scope shows, the liquid shows too, so it moves the moment a note is active.
+  let wv=null;
+  if(tdb&&(isOn||_manualNotes.size>0)){
+    const sr=(isOn&&audioCtx)?audioCtx.sampleRate:_SYN_SR;
+    // about 3 waves of the main note across the panel, so the rings stay smooth at any pitch
+    const win=Math.max(64,Math.min(tdb.length-2,Math.round(sr*WAVE_MS/1000),Math.round(sr*3/Math.max(60,dom.f))));
+    let t0=0;const mx=Math.max(1,tdb.length-win-1);
+    for(let i=1;i<mx;i++){if(tdb[i-1]<0&&tdb[i]>=0){t0=i;break}}
+    wv=_cym.wv||(_cym.wv=new Float32Array(128));
+    let pk=0;
+    for(let i=0;i<128;i++){const v=tdb[Math.min(t0+Math.floor(i*win/128),tdb.length-1)];wv[i]=v;const av=v<0?-v:v;if(av>pk)pk=av}
+    _cym.pk=Math.max(pk,(_cym.pk||0.05)*Math.pow(0.5,dt/1.5));   // level tracker, so quiet input still moves the liquid
+    const inv=1/Math.max(0.03,_cym.pk);
+    for(let i=0;i<128;i++)wv[i]*=inv;
+  }
+  const wAmp=wv?(0.22+S.rms*0.5):0;
+  // 3. height of the liquid, the foam on the nodal lines, and the note colour at every point
+  //    (each note tints the part of the surface where its own figure is strong, and its own nodal lines)
   // foam width stays about 2 px wide whatever the pitch (higher modes are steeper, so the band must widen)
   const thr=Math.max(0.10,Math.min(0.30,1.8*Math.PI*kAvg/(zoom*w)*0.8));
-  const Hb=_cym.Hb, Fb=_cym.Fb, R=_cym.R, n=w*h, NV=vs.length;
+  vs.forEach(v=>{const c=noteRgb(v.ni);v.cr=c.r;v.cg=c.g;v.cb=c.b});
+  const Hb=_cym.Hb, Fb=_cym.Fb, R=_cym.R, Cr=_cym.Cr, Cg=_cym.Cg, Cb=_cym.Cb, n=w*h, NV=vs.length;
   for(let p=0;p<n;p++){
-    let hh=0, foam=0, out=false;
+    let hh=0, foam=0, out=false, cw=0, cr=0, cg=0, cb=0;
     for(let k=0;k<NV;k++){
       const v=vs[k], f=v.fld[p];
       if(f!==f){out=true;break}                            // outside the plate (zoom < 1)
       hh+=v.w*f*v.cs;
       const af=f<0?-f:f;
-      if(af<thr) foam+=v.w*Math.pow(1-af/thr,1.4);
+      let fm=0;
+      if(af<thr){const tt=1-af/thr;fm=v.w*tt*Math.sqrt(tt);foam+=fm}
+      const wt=v.w*(0.3+af)+fm*3;
+      cw+=wt;cr+=wt*v.cr;cg+=wt*v.cg;cb+=wt*v.cb;
     }
     if(out){Hb[p]=NaN;Fb[p]=0;continue}
     const r=R[p];
-    Hb[p]=hh*norm+rAmp*Math.sin(kr*r-_cym.rph)/(1+2.5*r);
+    let wring=0;
+    if(wv){const wi=r*142;wring=wv[wi>127?127:(wi|0)]*wAmp/(1+1.2*r)}     // r/0.9 across the 128-sample window
+    Hb[p]=hh*norm+rAmp*Math.sin(kr*r-_cym.rph)/(1+2.5*r)+wring;
     Fb[p]=foam>1?1:foam;
+    if(cw>0){const ic=1/(cw*255);Cr[p]=cr*ic;Cg[p]=cg*ic;Cb[p]=cb*ic}else{Cr[p]=1;Cg[p]=1;Cb[p]=1}
   }
-  // 4. light the surface: slope facing the light is bright, the foam is white
+  // 4. light the surface: slope facing the light is bright, foam and glints go toward white
   const shade=amp*(w/(Math.PI*Math.max(2,kAvg)))*0.8;
   const d=_cym.img.data;
   for(let py=0,p=0,q=0;py<h;py++){
@@ -1639,12 +1664,12 @@ function drawCymatics(){
       if(hl!==hl)hl=hc; if(hr!==hr)hr=hc; if(hu!==hu)hu=hc; if(hd!==hd)hd=hc;
       const g=((hr-hl)*0.62+(hd-hu)*0.78)*shade;
       let sh=0.5+g*0.5; sh=sh<0?0:(sh>1?1:sh);
-      let lum=0.03+0.30*sh+(hc>0?0.10*hc*amp:0);
-      if(g>0.25){const s=Math.min(1,(g-0.25)*1.3);lum+=s*s*0.45*amp}      // glints on the wet surface
-      lum+=Fb[p]*edge*0.85;                                                 // foam on the nodal lines
-      lum=lum>1?1:(lum<0?0:lum);
-      const val=(lum*255)|0;
-      d[q]=val;d[q+1]=val;d[q+2]=val;d[q+3]=255;
+      const body=(0.03+0.30*sh+(hc>0?0.10*hc*amp:0))*1.5;               // the coloured liquid
+      let gl=0; if(g>0.25){const s2=Math.min(1,(g-0.25)*1.3);gl=s2*s2*0.45*amp}   // glints on the wet surface
+      const fo=Fb[p]*edge*0.85;                                          // foam on the nodal lines
+      const tr=Cr[p], tg=Cg[p], tb=Cb[p];
+      let rr=tr*body+fo*(0.45*tr+0.55)+gl, gg=tg*body+fo*(0.45*tg+0.55)+gl, bb=tb*body+fo*(0.45*tb+0.55)+gl;
+      d[q]=(rr>1?255:rr*255)|0; d[q+1]=(gg>1?255:gg*255)|0; d[q+2]=(bb>1?255:bb*255)|0; d[q+3]=255;
     }
   }
   _cym.octx.putImageData(_cym.img,0,0);
@@ -1656,7 +1681,7 @@ function drawCymatics(){
     x.font=`${fs}px 'Space Mono'`;x.textAlign='center';x.textBaseline='bottom';
     const tw=x.measureText(txt).width+12;
     x.fillStyle='rgba(0,0,0,.6)';x.fillRect(W/2-tw/2,H-fs-35,tw,fs+5);
-    x.fillStyle='rgba(255,255,255,.9)';
+    x.fillStyle=hexRgba(NOTES[vs[0].ni].color,.9);
     x.fillText(txt,W/2,H-31);
   }
 }
