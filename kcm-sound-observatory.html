@@ -1326,6 +1326,36 @@ function updatePills(){
 }
 
 // ═══ 1. CHROMATIC WHEEL ══════════════════════════════════════════════════════
+// ═══ EVERY NOTE, SEPARATELY ═══════════════════════════════════════════════════
+// The scope, Lissajous and wheel each need every sounding note's own wave, not just the loudest. One sine per detected
+// note is fitted to the live signal at the same time (least squares), which gives each note its true loudness and phase.
+// Component of note k at buffer sample t:  a*cos(2*pi*f*t/sr) + b*sin(2*pi*f*t/sr)
+let _nw={t:-1,list:[],sr:44100};
+function _noteWaves(){
+  if(_nw.t===S.t) return _nw;
+  _nw.t=S.t; _nw.list=[];
+  if(!tdb||!(isOn||_manualNotes.size>0)) return _nw;
+  const sr=(isOn&&audioCtx)?audioCtx.sampleRate:_SYN_SR; _nw.sr=sr;
+  const notes=S.detectedNotes.filter(n=>n.strength>0.04).slice(0,4), K=notes.length;
+  if(!K) return _nw;
+  const N=Math.min(tdb.length,2048), M=2*K;
+  const fr=notes.map(n=>n.freq>0?n.freq:NOTE_FREQS[n.noteIndex]);
+  const B=[];
+  for(let k=0;k<K;k++){const c=new Float32Array(N),sn=new Float32Array(N),w=2*Math.PI*fr[k]/sr;for(let i=0;i<N;i++){c[i]=Math.cos(w*i);sn[i]=Math.sin(w*i)}B.push(c,sn)}
+  const A=[],y=new Float64Array(M);
+  for(let i=0;i<M;i++){
+    A.push(new Float64Array(M));const bi=B[i];let sy=0;for(let t=0;t<N;t++)sy+=bi[t]*tdb[t];y[i]=sy;
+    for(let j=0;j<=i;j++){const bj=B[j];let s2=0;for(let t=0;t<N;t++)s2+=bi[t]*bj[t];A[i][j]=s2;A[j][i]=s2}
+  }
+  for(let i=0;i<M;i++)A[i][i]+=1e-3*N;                      // tiny ridge: close notes (F and F#) stay solvable
+  for(let i=0;i<M;i++){const pv=A[i][i];for(let r=i+1;r<M;r++){const f=A[r][i]/pv;if(f===0)continue;for(let c=i;c<M;c++)A[r][c]-=f*A[i][c];y[r]-=f*y[i]}}
+  const xs=new Float64Array(M);
+  for(let i=M-1;i>=0;i--){let sum=y[i];for(let c=i+1;c<M;c++)sum-=A[i][c]*xs[c];xs[i]=sum/A[i][i]}
+  for(let k=0;k<K;k++){const a=xs[2*k],b=xs[2*k+1],ni=notes[k].noteIndex;
+    _nw.list.push({ni:ni,f:fr[k],a:a,b:b,amp:Math.hypot(a,b),color:NOTES[ni].color,rgb:noteRgb(ni)})}
+  return _nw;
+}
+
 function drawWheel(){
   const c=CV.wheel;resize(c);const x=CX.wheel,W=c.width,H=c.height,cx=W/2,cy=H/2,R=Math.min(W,H)*.43;
   x.fillStyle='#030508';x.fillRect(0,0,W,H);
@@ -1346,7 +1376,9 @@ function drawWheel(){
     x.beginPath();x.moveTo(cx,cy);x.arc(cx,cy,R,a0,a1);x.closePath();
     x.strokeStyle=isActive?'rgba(255,255,255,.7)':'rgba(255,255,255,.2)';x.lineWidth=isActive?2:.8;x.stroke();
     if(isActive){
-      const pulse=Math.max(0.1,.85+.15*Math.sin(S.t*8+i)),dotR=R+Math.max(1,9*pulse);
+      const dn_=S.detectedNotes.find(n=>n.noteIndex===i), fq_=dn_&&dn_.freq>0?dn_.freq:NOTE_FREQS[i];
+      const oct_=Math.max(-3,Math.min(3,Math.log2(fq_/NOTE_FREQS[i]))), marg_=Math.min(W,H)*0.065;   // higher octave = dot sits further out
+      const pulse=Math.max(0.1,.85+.15*Math.sin(S.t*8+i)),dotR=R+Math.max(1,marg_*(0.25+0.55*(oct_+3)/6)+marg_*0.2*pulse);
       x.beginPath();x.arc(cx+dotR*Math.cos(am),cy+dotR*Math.sin(am),Math.max(.5,3*pulse),0,Math.PI*2);
       x.fillStyle=note.color;x.shadowColor=note.color;x.shadowBlur=9;x.fill();x.shadowBlur=0;
     }
@@ -1363,6 +1395,31 @@ function drawWheel(){
   const cg=x.createRadialGradient(cx,cy,0,cx,cy,R*.38);cg.addColorStop(0,'#0A0718');cg.addColorStop(1,'#030508');
   x.fillStyle=cg;x.fill();x.strokeStyle='rgba(244,208,63,.25)';x.lineWidth=1;x.stroke();
 
+  // The shape of what is held: a line from each sounding note to the next, fading between their colours
+  {
+    const act=[...S.activeNoteIndices].sort((p,q)=>p-q);
+    if(act.length>=1){
+      // distance from the centre = the note's octave (low notes near the middle, high notes toward the rim)
+      const P=act.map(i=>{const am=(i/12)*Math.PI*2-Math.PI/2+Math.PI/12;
+        const dn_=S.detectedNotes.find(n=>n.noteIndex===i), fq_=dn_&&dn_.freq>0?dn_.freq:NOTE_FREQS[i];
+        const rr=R*(0.42+0.5*Math.max(0,Math.min(1,Math.log2(fq_/65.4)/5)));
+        return {i:i,x:cx+rr*Math.cos(am),y:cy+rr*Math.sin(am),ax:cx+R*.38*Math.cos(am),ay:cy+R*.38*Math.sin(am),
+        s:(dn_||{strength:0.6}).strength}});
+      // a spoke from the centre disc to each note, as long as its octave is high
+      P.forEach(p=>{x.beginPath();x.moveTo(p.ax,p.ay);x.lineTo(p.x,p.y);x.strokeStyle='rgba(3,5,8,.85)';x.lineWidth=6+2*Math.min(1,p.s);x.stroke();      // dark edge, so the spoke shows against its own lit wedge
+        x.beginPath();x.moveTo(p.ax,p.ay);x.lineTo(p.x,p.y);x.strokeStyle=NOTES[p.i].color;x.lineWidth=2+2*Math.min(1,p.s);x.globalAlpha=0.95;x.shadowColor=NOTES[p.i].color;x.shadowBlur=6;x.stroke();x.shadowBlur=0;x.globalAlpha=1});
+      const E=act.length<2?0:(act.length===2?1:act.length);
+      for(let e=0;e<E;e++){
+        const p=P[e],q=P[(e+1)%P.length];
+        const g=x.createLinearGradient(p.x,p.y,q.x,q.y);g.addColorStop(0,NOTES[p.i].color);g.addColorStop(1,NOTES[q.i].color);
+        x.beginPath();x.moveTo(p.x,p.y);x.lineTo(q.x,q.y);
+        x.strokeStyle=g;x.lineWidth=1.5+1.8*Math.min(1,(p.s+q.s)/2);x.globalAlpha=0.9;x.shadowColor=NOTES[p.i].color;x.shadowBlur=6;x.stroke();x.shadowBlur=0;x.globalAlpha=1;
+      }
+      P.forEach(p=>{x.beginPath();x.arc(p.x,p.y,3.5+3*Math.min(1,p.s),0,Math.PI*2);x.fillStyle='rgba(3,5,8,.9)';x.fill();x.beginPath();x.arc(p.x,p.y,2+3*Math.min(1,p.s),0,Math.PI*2);x.fillStyle=NOTES[p.i].color;x.fill()});
+    }
+  }
+
+
   // 12-o'clock tick (rotated with wheel)
   x.beginPath();x.moveTo(cx,cy-R-1);x.lineTo(cx,cy-R-11);x.strokeStyle='rgba(244,208,63,.5)';x.lineWidth=1.5;x.stroke();
 
@@ -1371,7 +1428,17 @@ function drawWheel(){
 
   // Center labels — drawn after restore so they are upright
   x.font="700 9px 'Cinzel'";x.fillStyle='rgba(244,208,63,.75)';x.textAlign='center';x.textBaseline='middle';x.fillText('KCM™',cx,cy-6);
-  if(S.dominantNote){const dn=NOTES[S.dominantNote.noteIndex];x.font="12px 'Space Mono'";x.fillStyle=dn.color;x.fillText(dn.name,cx,cy+9)}
+  {
+    const act=S.detectedNotes.filter(n=>n.strength>0.04).slice(0,4);
+    if(act.length){
+      const fs_=act.length>2?9:12; x.font=`bold ${fs_}px 'Space Mono'`;x.textAlign='left';
+      const gap=fs_*0.5, wd=act.map(n=>x.measureText(NOTES[n.noteIndex].name).width), tot=wd.reduce((p,q)=>p+q,0)+gap*(act.length-1);
+      let px=cx-tot/2; act.forEach((n,k)=>{x.fillStyle=NOTES[n.noteIndex].color;x.fillText(NOTES[n.noteIndex].name,px,cy+9);px+=wd[k]+gap});
+      if(R*.38>=34){x.font="7px 'Space Mono'";x.textAlign='center';x.fillStyle=NOTES[act[0].noteIndex].color;
+        x.fillText(`${(act[0].freq>0?act[0].freq:NOTE_FREQS[act[0].noteIndex]).toFixed(0)} Hz`,cx,cy+22)}
+      x.textAlign='center';
+    }
+  }
 }
 
 // ═══ 2. OSCILLOSCOPE ═════════════════════════════════════════════════════════
@@ -1390,18 +1457,36 @@ function drawWave(gain){
   for(let i=1;i<4;i++){x.beginPath();x.moveTo(0,H*i/4);x.lineTo(W,H*i/4);x.stroke()}
   x.beginPath();x.moveTo(0,midY);x.lineTo(W,midY);x.strokeStyle='rgba(255,255,255,.07)';x.stroke();
   const bc=S.dominantNote?S.dominantNote.color:NOTES[IDLE_NOTE].color;
-  x.beginPath();
   // Fixed time window, started at a rising zero-crossing so the wave holds still
   const _sr=(isOn&&audioCtx)?audioCtx.sampleRate:_SYN_SR;
   const _win=Math.min(tdb.length-2,Math.round(_sr*WAVE_MS/1000));
   let _t0=0;const _maxStart=Math.max(1,tdb.length-_win-1);
   for(let i=1;i<_maxStart;i++){if(tdb[i-1]<0&&tdb[i]>=0){_t0=i;break}}
+  // every sounding note's own wave, in its own colour, underneath the full sound
+  const nw=_noteWaves();
+  let mixC=null;
+  if(nw.list.length){
+    let mr=0,mg=0,mb=0,mw=0;
+    nw.list.forEach(o=>{
+      const w=2*Math.PI*o.f/nw.sr,cc=o.rgb;
+      x.beginPath();
+      for(let i=0;i<W;i++){const bi=_t0+Math.floor(i*_win/W),yy=midY-(o.a*Math.cos(w*bi)+o.b*Math.sin(w*bi))*scaleY;i===0?x.moveTo(i,yy):x.lineTo(i,yy)}
+      x.strokeStyle=`rgba(${cc.r},${cc.g},${cc.b},.8)`;x.lineWidth=1.1;x.shadowColor=o.color;x.shadowBlur=4;x.stroke();x.shadowBlur=0;
+      const a3=o.amp*o.amp*o.amp;mr+=a3*cc.r;mg+=a3*cc.g;mb+=a3*cc.b;mw+=a3;
+    });
+    if(mw>0)mixC=`rgb(${Math.round(mr/mw+(255-mr/mw)*0.15)},${Math.round(mg/mw+(255-mg/mw)*0.15)},${Math.round(mb/mw+(255-mb/mw)*0.15)})`;
+  }
+  x.beginPath();
   for(let i=0;i<W;i++){const bi=Math.min(_t0+Math.floor(i*_win/W),tdb.length-1);i===0?x.moveTo(i,midY-tdb[bi]*scaleY):x.lineTo(i,midY-tdb[bi]*scaleY)}
-  x.strokeStyle=bc;x.lineWidth=1.3;x.shadowColor=bc;x.shadowBlur=5+S.rms*14;x.stroke();x.shadowBlur=0;
+  const mc=mixC||bc;
+  x.strokeStyle=mc;x.lineWidth=1.6;x.shadowColor=mc;x.shadowBlur=5+S.rms*14;x.stroke();x.shadowBlur=0;
   if(S.dominantNote){
     const _hz=S.dominantNote.freq>0?S.dominantNote.freq.toFixed(1):NOTE_FREQS[S.dominantNote.noteIndex].toFixed(1);
     const _cyc=(parseFloat(_hz)*WAVE_MS/1000).toFixed(1);
-    x.font="8px 'Space Mono'";x.fillStyle=S.dominantNote.color;x.textAlign='right';x.fillText(`${_hz} Hz`,W-6,H-7);
+    x.font="8px 'Space Mono'";x.textAlign='right';
+    let _rx=W-6;
+    (nw.list.length?nw.list:[{ni:S.dominantNote.noteIndex,f:parseFloat(_hz),color:S.dominantNote.color}]).slice().reverse().forEach(o=>{
+      const t_=`${NOTES[o.ni].name} ${o.f.toFixed(0)}Hz`;x.fillStyle=o.color;x.fillText(t_,_rx,H-7);_rx-=x.measureText(t_).width+8});
     x.textAlign='left';x.fillStyle='rgba(255,255,255,.35)';x.fillText(`${WAVE_MS} ms window · ~${_cyc} waves`,6,H-7);
   }
 }
@@ -1409,6 +1494,7 @@ function drawWave(gain){
 // ═══ 3. LISSAJOUS ════════════════════════════════════════════════════════════
 // Lissajous state
 let lissMax=0.001;
+const LISS_DELAY_MS=5;
 
 function drawLissajous(){
   const c=CV.lissajous; resize(c);
@@ -1448,7 +1534,9 @@ function drawLissajous(){
   const buf=tdb;
   const _sr=(isOn&&audioCtx)?audioCtx.sampleRate:_SYN_SR;
   const _f0=S.dominantNote?(S.dominantNote.freq>0?S.dominantNote.freq:NOTE_FREQS[S.dominantNote.noteIndex]):NOTE_FREQS[IDLE_NOTE];
-  const lag=Math.max(1,Math.round(_sr/(4*_f0)));
+  // Delay-coordinate figure with a FIXED delay of 5 ms: a note of frequency f is shifted by 5 ms * f cycles, so every pitch
+  // (and every octave of it) opens the ellipse to a different shape, between a straight line and a circle. Chords combine.
+  const lag=Math.max(1,Math.round(_sr*LISS_DELAY_MS/1000));
   const span=Math.max(2,Math.min(2048,buf.length-lag-1));
   const c1=S.dominantNote?S.dominantNote.color:NOTES[IDLE_NOTE].color;
   const c2=S.detectedNotes[1]?.color||c1;
@@ -1461,7 +1549,7 @@ function drawLissajous(){
   lissMax = Math.max(peakThisFrame, lissMax*Math.pow(0.94,S.dt*60));
   const scale = R / lissMax;
   x.font="8px 'Space Mono'";x.textAlign='left';x.textBaseline='alphabetic';x.fillStyle='rgba(255,255,255,.35)';
-  x.fillText(`x = signal · y = signal + T/4 (${(1000*lag/_sr).toFixed(2)} ms)`,6,H-7);
+  x.fillText(`x = signal · y = signal + ${(1000*lag/_sr).toFixed(1)} ms (shape set by pitch)`,6,H-7);
 
   // Faint axes
   x.strokeStyle='rgba(255,255,255,.05)'; x.lineWidth=0.5;
@@ -1471,15 +1559,34 @@ function drawLissajous(){
   x.beginPath(); x.arc(cx,cy,R,0,Math.PI*2);
   x.strokeStyle='rgba(255,255,255,.05)'; x.stroke();
 
-  // Draw Lissajous — gradient between the two strongest detected notes
-  const r1=hexRgb(c1), r2=hexRgb(c2);
+  // Each sounding note draws its own phase portrait (thin, its own colour and frequency); the full sound is drawn on top,
+  // coloured at every point by whichever notes are driving it there.
+  const nw=_noteWaves(), comps=nw.list, K=comps.length;
   const step=Math.max(1,Math.floor(span/600));
+  comps.forEach(o=>{
+    const w=2*Math.PI*o.f/nw.sr, cc=o.rgb;
+    x.beginPath();
+    for(let i=0;i<span;i+=step){
+      const xv=(o.a*Math.cos(w*i)+o.b*Math.sin(w*i))*scale, yv=(o.a*Math.cos(w*(i+lag))+o.b*Math.sin(w*(i+lag)))*scale;
+      i===0?x.moveTo(cx+xv,cy+yv):x.lineTo(cx+xv,cy+yv);
+    }
+    x.strokeStyle=`rgba(${cc.r},${cc.g},${cc.b},.55)`;x.lineWidth=1;x.stroke();
+  });
+  const r1=hexRgb(c1), r2=hexRgb(c2);
   for(let i=0;i<span-step;i+=step){
     const xv =buf[i       ]*scale, yv =buf[i+lag      ]*scale;
     const xv2=buf[i+step  ]*scale, yv2=buf[i+step+lag ]*scale;
-    const f=i/span;
-    x.strokeStyle=`rgba(${Math.round(r1.r+(r2.r-r1.r)*f)},${Math.round(r1.g+(r2.g-r1.g)*f)},${Math.round(r1.b+(r2.b-r1.b)*f)},0.78)`;
-    x.lineWidth=1.3;
+    let cr,cg,cb;
+    if(K){
+      let sr_=0,sg=0,sb=0,sw=0;
+      for(let k=0;k<K;k++){const o=comps[k],w=2*Math.PI*o.f/nw.sr,v0=Math.abs(o.a*Math.cos(w*i)+o.b*Math.sin(w*i))+1e-4,v=v0*v0*v0;sw+=v;sr_+=v*o.rgb.r;sg+=v*o.rgb.g;sb+=v*o.rgb.b}
+      cr=sr_/sw;cg=sg/sw;cb=sb/sw;
+      cr=Math.round(cr+(255-cr)*0.12);cg=Math.round(cg+(255-cg)*0.12);cb=Math.round(cb+(255-cb)*0.12);   // a little lighter than the thin loops
+    }else{
+      const f=i/span;cr=Math.round(r1.r+(r2.r-r1.r)*f);cg=Math.round(r1.g+(r2.g-r1.g)*f);cb=Math.round(r1.b+(r2.b-r1.b)*f);
+    }
+    x.strokeStyle=`rgba(${cr},${cg},${cb},0.82)`;
+    x.lineWidth=1.4;
     x.beginPath(); x.moveTo(cx+xv,cy+yv); x.lineTo(cx+xv2,cy+yv2); x.stroke();
   }
 }
@@ -1546,14 +1653,26 @@ function chladniModeFor(freq){
 // Voices are mixed into ONE liquid surface, weighted by how loud each note is, and they crossfade
 // (a note fades in as you play it and melts away when you stop). The surface is lit like a liquid:
 // white foam gathers on the nodal lines, slopes catch the light, and the mic level drives ripples
-// that spread from the centre. Input level -> brightness and ripple height. Pitch -> pattern and ripple spacing.
+// from the centre. Input level -> brightness and ring height. Pitch -> pattern.
 const _cym={voices:new Map(),Hb:null,Fb:null,R:null,img:null,off:null,octx:null,w:0,h:0,rkey:'',rph:0};
+// Every sound gets its own figure. The scale still follows pitch (m^2+n^2 = f/CHL_F0, so an octave is twice as dense),
+// but the SHAPE depends on the pitch class: each of the 12 notes (and every cent between them) has its own mix of
+// m and n and its own offset of the plate, so no two notes look alike. Octaves share a family, like the colour wheel.
+function _cymMode(f){
+  // detail grows by the same amount every octave (log), so a high note stays readable instead of turning to streaks
+  const r=Math.max(2.2,Math.min(12.5,2.8+2.2*Math.log2(Math.max(20,f)/82.4))), N=r*r;
+  const pc=((12*Math.log2(f/261.63))%12+12)%12, th=2*Math.PI*pc/12;
+  const a=(65+10*Math.sin(th))*Math.PI/180;
+  const q=v=>Math.round(v*20)/20;
+  return {m:q(r*Math.sin(a)), n:q(r*Math.cos(a)), N:N, sx:Math.round(0.2*Math.cos(th)*20)/20, sy:Math.round(0.2*Math.sin(th)*20)/20};
+}
 function _cymField(v,mode,w,h,zoom){
   const am=new Float32Array(w),an=new Float32Array(w),bm=new Float32Array(h),bn=new Float32Array(h);
-  for(let px=0;px<w;px++){const nx=(px/w-0.5)/zoom+0.5;
-    if(nx<0||nx>1){am[px]=NaN;an[px]=NaN}else{am[px]=Math.cos(mode.m*Math.PI*nx);an[px]=Math.cos(mode.n*Math.PI*nx)}}
-  for(let py=0;py<h;py++){const ny=(py/h-0.5)/zoom+0.5;
-    if(ny<0||ny>1){bm[py]=NaN;bn[py]=NaN}else{bm[py]=Math.cos(mode.m*Math.PI*ny);bn[py]=Math.cos(mode.n*Math.PI*ny)}}
+  const side=Math.min(w,h)*1.3*zoom;                      // the plate is a square, whatever shape the panel is
+  for(let px=0;px<w;px++){const nx=(px-w/2)/side+0.5, gx=nx+mode.sx;
+    if(nx<0||nx>1){am[px]=NaN;an[px]=NaN}else{am[px]=Math.cos(mode.m*Math.PI*gx);an[px]=Math.cos(mode.n*Math.PI*gx)}}
+  for(let py=0;py<h;py++){const ny=(py-h/2)/side+0.5, gy=ny+mode.sy;
+    if(ny<0||ny>1){bm[py]=NaN;bn[py]=NaN}else{bm[py]=Math.cos(mode.m*Math.PI*gy);bn[py]=Math.cos(mode.n*Math.PI*gy)}}
   const f=(v.fld&&v.fld.length===w*h)?v.fld:new Float32Array(w*h);
   for(let py=0;py<h;py++)for(let px=0;px<w;px++)f[py*w+px]=am[px]*bn[py]-an[px]*bm[py];
   return f;
@@ -1573,18 +1692,18 @@ function drawCymatics(){
     _cym.img=_cym.octx.createImageData(w,h);_cym.voices.clear();_cym.rkey='';
   }
   if(_cym.rkey!==w+'x'+h+'z'+zoom){                       // distance from the plate centre, for the ripples
-    for(let py=0;py<h;py++){const dy=(py/h-0.5)/zoom;for(let px=0;px<w;px++){const dx=(px/w-0.5)/zoom;_cym.R[py*w+px]=Math.sqrt(dx*dx+dy*dy)}}
+    const side=Math.min(w,h)*1.3*zoom;
+    for(let py=0;py<h;py++){const dy=(py-h/2)/side;for(let px=0;px<w;px++){const dx=(px-w/2)/side;_cym.R[py*w+px]=Math.sqrt(dx*dx+dy*dy)}}
     _cym.rkey=w+'x'+h+'z'+zoom;
   }
   // 1. who is sounding: up to 4 strongest notes, each weighted by its loudness relative to the loudest
   const tgt=new Map(); let maxS=0;
   S.detectedNotes.slice().sort((a,b)=>b.strength-a.strength).slice(0,4).forEach(n=>{
     if(n.strength>0.04){tgt.set(n.noteIndex,{f:n.freq>0?n.freq:NOTE_FREQS[n.noteIndex],s:n.strength});maxS=Math.max(maxS,n.strength)}});
-  if(!tgt.size) tgt.set(IDLE_NOTE,{f:NOTE_FREQS[IDLE_NOTE],s:0.7,idle:true});
   const kf=1-Math.exp(-dt*8);                              // crossfade speed (about 0.12 s)
   tgt.forEach((o,ni)=>{
     let v=_cym.voices.get(ni); if(!v){v={ni:ni,w:0,ph:0,key:'',fld:null,f:o.f,m:0,n:0};_cym.voices.set(ni,v)}
-    v.f=o.f; v.t=o.idle?o.s:o.s/maxS;
+    v.f=o.f; v.t=o.s/maxS;
   });
   _cym.voices.forEach((v,ni)=>{
     if(!tgt.has(ni)) v.t=0;
@@ -1592,11 +1711,18 @@ function drawCymatics(){
     if(v.t===0&&v.w<0.01) _cym.voices.delete(ni);
   });
   const vs=[..._cym.voices.values()].sort((a,b)=>b.w-a.w);
-  if(!vs.length) return;
+  if(!vs.length){                       // nothing is being played: a dark plate, no lines at all
+    x.fillStyle='#030508';x.fillRect(0,0,W,H);
+    const sd=Math.min(W,H)*1.3*zoom;
+    x.strokeStyle='rgba(255,255,255,.07)';x.lineWidth=1;x.strokeRect(W/2-sd/2,H/2-sd/2,sd,sd);
+    x.font=`${Math.max(8,Math.min(11,W*0.035))}px 'Space Mono'`;x.fillStyle='rgba(255,255,255,.18)';x.textAlign='center';x.textBaseline='middle';
+    x.fillText('play a key, a fret, or turn on the mic',W/2,H/2);
+    return;
+  }
   // 2. each voice: its plate figure (rebuilt only when its mode moves) and its swing in time
   let sumW=0, kAvg=0;
   vs.forEach(v=>{
-    const md=chladniModeFor(v.f), key=w+'x'+h+'z'+zoom+'m'+md.m.toFixed(2)+'_'+md.n.toFixed(2);
+    const md=_cymMode(v.f), key=w+'x'+h+'z'+zoom+'m'+md.m.toFixed(2)+'_'+md.n.toFixed(2)+'s'+md.sx.toFixed(2)+'_'+md.sy.toFixed(2);
     if(v.key!==key){v.fld=_cymField(v,md,w,h,zoom);v.key=key}
     v.m=md.m;v.n=md.n;
     const vf=Math.min(9,1.5+v.f/120);                      // slowed so the eye can follow it (real pitch is hundreds of Hz)
@@ -1607,9 +1733,6 @@ function drawCymatics(){
   kAvg=kAvg/Math.max(0.001,sumW);
   const dom=vs[0], norm=1/Math.max(1,sumW*0.75);
   const amp=Math.min(1,0.35+S.rms*1.5), edge=0.75+S.rms*0.25;
-  const kr=10+7*Math.log2(Math.max(60,dom.f)/80);          // higher pitch = tighter ripples
-  _cym.rph=(_cym.rph+2*Math.PI*Math.min(9,1.5+dom.f/120)*0.6*dt)%(2*Math.PI);
-  const rAmp=0.05+S.rms*0.85;
   // The same live wave the oscilloscope draws (same window, same rising-zero start), laid around the centre as
   // rings: whatever the scope shows, the liquid shows too, so it moves the moment a note is active.
   let wv=null;
@@ -1627,10 +1750,15 @@ function drawCymatics(){
     for(let i=0;i<128;i++)wv[i]*=inv;
   }
   const wAmp=wv?(0.22+S.rms*0.5):0;
+  // Timbre: how jagged the live wave is (a smooth tone vs a bright, buzzy one) changes the surface texture.
+  if(wv){let sd=0,sa=0;for(let i=0;i<127;i++){sd+=Math.abs(wv[i+1]-wv[i]);sa+=Math.abs(wv[i])}
+    const tn=Math.max(0,Math.min(1,(sd/Math.max(0.01,sa)-0.10)/0.25));
+    _cym.tim=(_cym.tim||0)+(tn-(_cym.tim||0))*(1-Math.exp(-dt*6))}
+  const tim=_cym.tim||0;
   // 3. height of the liquid, the foam on the nodal lines, and the note colour at every point
   //    (each note tints the part of the surface where its own figure is strong, and its own nodal lines)
   // foam width stays about 2 px wide whatever the pitch (higher modes are steeper, so the band must widen)
-  const thr=Math.max(0.10,Math.min(0.30,1.8*Math.PI*kAvg/(zoom*w)*0.8));
+  const thr=Math.max(0.10,Math.min(0.30,1.8*Math.PI*kAvg/(zoom*w)*0.8))*(1-0.25*tim);
   vs.forEach(v=>{const c=noteRgb(v.ni);v.cr=c.r;v.cg=c.g;v.cb=c.b});
   const Hb=_cym.Hb, Fb=_cym.Fb, R=_cym.R, Cr=_cym.Cr, Cg=_cym.Cg, Cb=_cym.Cb, n=w*h, NV=vs.length;
   for(let p=0;p<n;p++){
@@ -1642,19 +1770,19 @@ function drawCymatics(){
       const af=f<0?-f:f;
       let fm=0;
       if(af<thr){const tt=1-af/thr;fm=v.w*tt*Math.sqrt(tt);foam+=fm}
-      const wt=v.w*(0.3+af)+fm*3;
+      const w1=v.w*(0.3+af)+fm*3, wt=w1*w1*w1;     // cubed: the strongest voice here owns the colour, hues stay distinct
       cw+=wt;cr+=wt*v.cr;cg+=wt*v.cg;cb+=wt*v.cb;
     }
     if(out){Hb[p]=NaN;Fb[p]=0;continue}
     const r=R[p];
     let wring=0;
-    if(wv){const wi=r*142;wring=wv[wi>127?127:(wi|0)]*wAmp/(1+1.2*r)}     // r/0.9 across the 128-sample window
-    Hb[p]=hh*norm+rAmp*Math.sin(kr*r-_cym.rph)/(1+2.5*r)+wring;
+    if(wv){let wi=r*142;if(wi>126.99)wi=126.99;const i0=wi|0,fr=wi-i0;wring=(wv[i0]+(wv[i0+1]-wv[i0])*fr)*wAmp/(1+1.2*r)}     // r/0.9 across the 128-sample window, interpolated
+    Hb[p]=hh*norm+wring;
     Fb[p]=foam>1?1:foam;
-    if(cw>0){const ic=1/(cw*255);Cr[p]=cr*ic;Cg[p]=cg*ic;Cb[p]=cb*ic}else{Cr[p]=1;Cg[p]=1;Cb[p]=1}
+    if(cw>1e-9){const ic=1/(cw*255);Cr[p]=cr*ic;Cg[p]=cg*ic;Cb[p]=cb*ic}else{Cr[p]=1;Cg[p]=1;Cb[p]=1}
   }
   // 4. light the surface: slope facing the light is bright, foam and glints go toward white
-  const shade=amp*(w/(Math.PI*Math.max(2,kAvg)))*0.8;
+  const shade=amp*(w/(Math.PI*Math.max(2,kAvg)))*0.8*(1+0.8*tim);
   const d=_cym.img.data;
   for(let py=0,p=0,q=0;py<h;py++){
     for(let px=0;px<w;px++,p++,q+=4){
@@ -1665,10 +1793,10 @@ function drawCymatics(){
       const g=((hr-hl)*0.62+(hd-hu)*0.78)*shade;
       let sh=0.5+g*0.5; sh=sh<0?0:(sh>1?1:sh);
       const body=(0.03+0.30*sh+(hc>0?0.10*hc*amp:0))*1.5;               // the coloured liquid
-      let gl=0; if(g>0.25){const s2=Math.min(1,(g-0.25)*1.3);gl=s2*s2*0.45*amp}   // glints on the wet surface
+      let gl=0; if(g>0.25){const s2=Math.min(1,(g-0.25)*1.3);gl=s2*s2*0.45*amp*(0.6+0.8*tim)}   // glints on the wet surface
       const fo=Fb[p]*edge*0.85;                                          // foam on the nodal lines
       const tr=Cr[p], tg=Cg[p], tb=Cb[p];
-      let rr=tr*body+fo*(0.45*tr+0.55)+gl, gg=tg*body+fo*(0.45*tg+0.55)+gl, bb=tb*body+fo*(0.45*tb+0.55)+gl;
+      let rr=tr*body+fo*(0.8*tr+0.2)+gl*(0.4+0.6*tr), gg=tg*body+fo*(0.8*tg+0.2)+gl*(0.4+0.6*tg), bb=tb*body+fo*(0.8*tb+0.2)+gl*(0.4+0.6*tb);
       d[q]=(rr>1?255:rr*255)|0; d[q+1]=(gg>1?255:gg*255)|0; d[q+2]=(bb>1?255:bb*255)|0; d[q+3]=255;
     }
   }
