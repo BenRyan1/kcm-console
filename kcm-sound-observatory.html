@@ -1248,14 +1248,12 @@ function loop(){
   const gain=parseFloat(gainEl.value),binHz=audioCtx.sampleRate/FFT;
   // RMS
   let sq=0;for(let i=0;i<tdb.length;i++)sq+=tdb[i]**2;S.rms=Math.min(1,Math.sqrt(sq/tdb.length)*gain*3);
-  // ── NOISE FLOOR BASELINE ────────────────────────────────────────────────────
-  // Measure average spectral energy (silence baseline)
-  // Only fire a note if its peak is well above the floor AND above RMS threshold
-  let specSum=0,specCount=0;
-  for(let i=2;i<fdb.length-2;i++){if(fdb[i]>-120){specSum+=Math.pow(10,fdb[i]/10);specCount++;}}
-  const specFloorDB=specCount>0?10*Math.log10(specSum/specCount):-90;
-  // Dynamic threshold: floor + 18 dB headroom, minimum -62 dB
-  const PEAK_THRESH=Math.max(-62, specFloorDB+18);
+  // ── NOISE FLOOR (median of the spectrum, so a strong tone cannot raise its own threshold) ──
+  const _lo=Math.max(3,Math.floor(60/binHz)),_hi=Math.min(fdb.length-3,Math.ceil(5200/binHz));
+  const _band=Array.prototype.slice.call(fdb,_lo,_hi).sort((x,y)=>x-y);
+  const specFloorDB=_band.length?_band[_band.length>>1]:-90;
+  // Threshold: 20 dB above the median floor, never below -70 dB
+  const PEAK_THRESH=Math.max(-70, specFloorDB+20);
   // Silence gate: if overall RMS too low, emit nothing
   const SILENCE_GATE=0.012; // below this RMS = silence
   if(S.rms<SILENCE_GATE){
@@ -1263,17 +1261,34 @@ function loop(){
     if(S._smooth) for(let i=0;i<12;i++) S._smooth[i]*=Math.pow(0.5,S.dt*60);
     S.detectedNotes=[];S.dominantNote=null;S.activeNoteIndices=new Set();
   } else {
-    // Peak detect — only peaks clearly above noise floor
+    // Peak detect: local maxima above threshold, frequency refined by parabolic interpolation
     const nE=new Array(12).fill(0),nM=new Array(12).fill(0),nFq=new Array(12).fill(0);
+    const pk=[];
     for(let i=3;i<fdb.length-3;i++){
-      const freq=i*binHz;if(freq<60||freq>5200)continue;
       const db=fdb[i];if(db<PEAK_THRESH)continue;
-      // True local peak (check 3 neighbors each side)
-      if(db>fdb[i-1]&&db>fdb[i-2]&&db>fdb[i+1]&&db>fdb[i+2]){
-        const mi=Math.round(freqToMidi(freq)),ni=((mi%12)+12)%12;
-        const str=Math.max(0,(db-PEAK_THRESH)/40); // normalize above floor
-        if(str>nE[ni]){nE[ni]=str;nM[ni]=mi;nFq[ni]=freq}
+      if(db>fdb[i-1]&&db>fdb[i-2]&&db>=fdb[i+1]&&db>=fdb[i+2]){
+        const a0=fdb[i-1],b0=fdb[i],c0=fdb[i+1],den=a0-2*b0+c0;
+        const off=den<0?Math.max(-.5,Math.min(.5,.5*(a0-c0)/den)):0;
+        const freq=(i+off)*binHz;if(freq<60||freq>5200)continue;
+        pk.push({f:freq,db:db});
       }
+    }
+    pk.sort((x,y)=>y.db-x.db);
+    const top=pk.length?pk[0].db:0, acc=[];
+    for(const q of pk){
+      if(q.db<top-35)continue;               // ignore skirts far below the loudest peak
+      // Harmonic rejection: a peak at k x (a louder accepted lower peak), k=2..8, is an overtone not a note
+      let isHarm=false;
+      for(const a of acc){
+        if(a.f>=q.f)continue;
+        const k=Math.round(q.f/a.f);
+        if(k>=2&&k<=8&&Math.abs(q.f/(a.f*k)-1)<0.025&&q.db<a.db-2){isHarm=true;break}
+      }
+      if(isHarm)continue;
+      acc.push(q);
+      const mi=Math.round(freqToMidi(q.f)),ni=((mi%12)+12)%12;
+      const str=Math.min(1,Math.max(0,(q.db-PEAK_THRESH)/40));
+      if(str>nE[ni]){nE[ni]=str;nM[ni]=mi;nFq[ni]=q.f}
     }
     // Smoothed note strengths (temporal averaging to stop jumping)
     if(!S._smooth)S._smooth=new Array(12).fill(0);
