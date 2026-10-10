@@ -1530,12 +1530,17 @@ let cymaZoom = 0.7;
 // with more nodal lines (one octave up doubles m²+n²). Sand collects where the plate stands still:
 //   φ(x,y) = cos(mπx)cos(nπy) − cos(nπx)cos(mπy) = 0   (free square plate, classic approximation)
 // The nodal lines of a standing wave do not move; only the plate's amplitude changes.
-const CHL_F0 = 20;   // Hz per unit of m²+n²  (puts about 98 Hz on mode (2,1))
-const _CHL_MODES = (()=>{const a=[];for(let m=2;m<=12;m++)for(let n=1;n<m;n++)a.push({m,n,N:m*m+n*n});return a})();
+const CHL_F0 = 4;   // Hz per unit of m²+n² (a display scale: guitar range ~80 to 1000 Hz spans modes N=20 to 250)
+// Ladder of true plate modes, one per N = m²+n², sorted. Between two rungs the figure morphs smoothly,
+// so every semitone looks different (a pure mode only exists on a rung; the morph is a display choice).
+const _CHL_LADDER = (()=>{const m=new Map();for(let a=2;a<=14;a++)for(let b=1;b<a;b++){const N=a*a+b*b;if(!m.has(N))m.set(N,{m:a,n:b,N})}
+  return [...m.values()].sort((x,y)=>x.N-y.N)})();
 function chladniModeFor(freq){
-  const target=freq/CHL_F0;let best=_CHL_MODES[0],bd=1e9;
-  for(const md of _CHL_MODES){const d=Math.abs(md.N-target);if(d<bd){bd=d;best=md}}
-  return best;
+  const L=_CHL_LADDER,t=Math.max(L[0].N,Math.min(L[L.length-1].N,freq/CHL_F0));
+  let i=0;while(i<L.length-2&&L[i+1].N<t)i++;
+  const lo=L[i],hi=L[i+1],w=(t-lo.N)/(hi.N-lo.N);
+  const q=v=>Math.round(v*20)/20;
+  return {m:q(lo.m+(hi.m-lo.m)*w), n:q(lo.n+(hi.n-lo.n)*w), N:t};
 }
 let _chl={key:'',fields:[],img:null};
 
@@ -1548,7 +1553,7 @@ function drawCymatics(){
   let list=S.detectedNotes.slice(0,3).map(n=>({ni:n.noteIndex,f:n.freq>0?n.freq:NOTE_FREQS[n.noteIndex]}));
   if(!list.length) list=[{ni:IDLE_NOTE,f:NOTE_FREQS[IDLE_NOTE]}];
   const modes=list.map(o=>chladniModeFor(o.f));
-  const key=W+'x'+H+'z'+zoom+'m'+modes.map(m=>m.m+'_'+m.n).join(',');
+  const key=W+'x'+H+'z'+zoom+'m'+modes.map(m=>m.m.toFixed(2)+'_'+m.n.toFixed(2)).join(',');
   if(_chl.key!==key){
     const cx=new Map(), cy=new Map();
     const need=new Set();modes.forEach(m=>{need.add(m.m);need.add(m.n)});
@@ -1582,7 +1587,7 @@ function drawCymatics(){
   }
   x.putImageData(_chl.img,0,0);
   const fs=Math.max(7,Math.min(9,W*0.028));
-  const txt=list.map((o,i)=>`${NOTES[o.ni].name} ${o.f.toFixed(0)}Hz→(${modes[i].m},${modes[i].n})`).join('  ');
+  const txt=list.map((o,i)=>`${NOTES[o.ni].name} ${o.f.toFixed(0)}Hz→(${modes[i].m.toFixed(1)},${modes[i].n.toFixed(1)})`).join('  ');
   x.font=`${fs}px 'Space Mono'`;x.textAlign='center';x.textBaseline='bottom';
   const tw=x.measureText(txt).width+12;
   x.fillStyle='rgba(0,0,0,.55)';x.fillRect(W/2-tw/2,H-fs-35,tw,fs+5);
