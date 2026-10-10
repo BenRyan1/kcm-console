@@ -1572,7 +1572,16 @@ function drawCymatics(){
   }
   if(!_chl.img||_chl.img.width!==W||_chl.img.height!==H) _chl.img=x.createImageData(W,H);
   const d=_chl.img.data, cols=list.map(o=>hexRgb(NOTES[o.ni].color)), fl=_chl.fields;
-  const gl=0.10*S.rms, edge=0.85+S.rms*0.15;
+  // Vibration: the plate height is u = φ(x,y)·cos(2π·f_v·t). Sand stays on the nodal lines (φ=0);
+  // everything else swings up (note color) and down (cooler, darker) in time. The visual rate is slowed
+  // to f_v = 1.5 + f/120 Hz (max 9) so the eye can follow it; the real pitch is hundreds of Hz.
+  const amp=Math.min(1,0.30+S.rms*1.6), edge=0.80+S.rms*0.2;
+  if(!_chl.ph) _chl.ph={};
+  const cs=list.map(o=>{
+    const vf=Math.min(9,1.5+o.f/120);
+    const ph=((_chl.ph[o.ni]||0)+2*Math.PI*vf*S.dt)%(2*Math.PI);_chl.ph[o.ni]=ph;
+    return Math.cos(ph);
+  });
   for(let p=0,q=0;p<W*H;p++,q+=4){
     let r=3,g=8,b=16,out=false;
     for(let k=0;k<fl.length;k++){
@@ -1580,7 +1589,9 @@ function drawCymatics(){
       if(v!==v){out=true;break}                       // outside the plate (zoom < 1)
       const av=v<0?-v:v, col=cols[k];
       if(av<0.12){const a=Math.pow(1-av/0.12,1.4)*edge;r+=col.r*a;g+=col.g*a;b+=col.b*a}   // sand on the nodal line
-      else {const a=(av*0.5)*(av*0.5)*gl;r+=col.r*a;g+=col.g*a;b+=col.b*a}               // moving antinodes
+      const u=v*cs[k], au=u<0?-u:u, a2=au*au*amp*0.75;
+      if(u>=0){r+=col.r*a2;g+=col.g*a2;b+=col.b*a2}                                        // plate moving up
+      else {r+=col.r*a2*0.25;g+=col.g*a2*0.45+10*a2;b+=col.b*a2*0.45+110*a2}               // plate moving down
     }
     if(out){d[q]=3;d[q+1]=8;d[q+2]=16;d[q+3]=255;continue}
     d[q]=r>255?255:r;d[q+1]=g>255?255:g;d[q+2]=b>255?255:b;d[q+3]=255;
