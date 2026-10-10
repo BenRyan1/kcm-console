@@ -1649,17 +1649,39 @@ function chladniModeFor(freq){
   const q=v=>Math.round(v*20)/20;
   return {m:q(lo.m+(hi.m-lo.m)*w), n:q(lo.n+(hi.n-lo.n)*w), N:t};
 }
-// Liquid cymatics, lit like water and tinted by the KCM note colors. Every sounding note is a "voice" with its own Chladni plate mode.
-// Voices are mixed into ONE liquid surface, weighted by how loud each note is, and they crossfade
-// (a note fades in as you play it and melts away when you stop). The surface is lit like a liquid:
-// white foam gathers on the nodal lines, slopes catch the light, and the mic level drives ripples
-// from the centre. Input level -> brightness and ring height. Pitch -> pattern.
-const _cym={voices:new Map(),Hb:null,Fb:null,R:null,img:null,off:null,octx:null,w:0,h:0,rkey:'',rph:0};
-// Every sound gets its own figure. The scale still follows pitch (m^2+n^2 = f/CHL_F0, so an octave is twice as dense),
-// but the SHAPE depends on the pitch class: each of the 12 notes (and every cent between them) has its own mix of
-// m and n and its own offset of the plate, so no two notes look alike. Octaves share a family, like the colour wheel.
+// Cymatics: two classic images, one set of physics. Every sounding note is a "voice" with its own vibration mode.
+//  PLATE (default): a square metal plate with sand. Fine grains are shaken about where the plate moves and stay where it is still,
+//   so they pile up on the nodal lines of each note, in that note's colour. Sound stops: the sand is shaken loose and spreads out.
+//  WATER: a round dish with true circular modes (Bessel functions, antinode at the wall). Lit like a liquid surface, with the
+//   live waveform rippling out from the centre, tinted by each note's colour.
+// Pitch picks the mode (higher = finer pattern, every pitch class and octave has its own figure). Loudness drives how hard the
+// sand is shaken and how bright and tall the water is.
+const _cym={voices:new Map(),Hb:null,Fb:null,R:null,Th:null,Sf:null,Ow:null,Cr:null,Cg:null,Cb:null,img:null,off:null,octx:null,w:0,h:0,rkey:'',mode:'plate',bes:new Map(),kmap:new Map()};
+try{const m0=localStorage.getItem('kcm_cyma_mode');if(m0==='water'||m0==='plate')_cym.mode=m0}catch(e){}
+const _sand={N:0,U:null,V:null,C:null};
+
+// PLATE / WATER switch on the panel
+(function injectCymaMode(){
+  function tryInject(){
+    const card=document.getElementById('card-cymatics');
+    if(!card){setTimeout(tryInject,100);return}
+    const wrap=document.createElement('div');
+    wrap.style.cssText='position:absolute;top:24px;right:8px;z-index:10;display:flex;gap:0;border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,.16);background:rgba(3,5,8,.7)';
+    const btns={};
+    function paint(){for(const k in btns){const on=_cym.mode===k;btns[k].style.background=on?'rgba(244,208,63,.22)':'transparent';btns[k].style.color=on?'#F4D03F':'rgba(255,255,255,.45)'}}
+    [['plate','PLATE'],['water','WATER']].forEach(([k,t])=>{
+      const b=document.createElement('button');b.type='button';b.textContent=t;b.setAttribute('aria-label','Cymatics '+t.toLowerCase());
+      b.style.cssText='font-family:"Space Mono",monospace;font-size:7px;letter-spacing:.12em;padding:3px 8px;border:0;cursor:pointer;background:transparent';
+      b.onclick=()=>{_cym.mode=k;try{localStorage.setItem('kcm_cyma_mode',k)}catch(e){}paint();if(typeof drawCymatics==='function')drawCymatics()};
+      btns[k]=b;wrap.appendChild(b)});
+    paint();card.appendChild(wrap);
+  }
+  tryInject();
+})();
+
+// ── PLATE modes: free square plate, phi = cos(m pi x)cos(n pi y) - cos(n pi x)cos(m pi y).
+// Detail grows by the same amount every octave, and each pitch class has its own mix of m and n and its own offset.
 function _cymMode(f){
-  // detail grows by the same amount every octave (log), so a high note stays readable instead of turning to streaks
   const r=Math.max(2.2,Math.min(12.5,2.8+2.2*Math.log2(Math.max(20,f)/82.4))), N=r*r;
   const pc=((12*Math.log2(f/261.63))%12+12)%12, th=2*Math.PI*pc/12;
   const a=(65+10*Math.sin(th))*Math.PI/180;
@@ -1678,22 +1700,59 @@ function _cymField(v,mode,w,h,zoom){
   return f;
 }
 
+// ── WATER modes: circular dish, h = J_m(k r) cos(m theta + theta0). J_m is the Bessel function; k is chosen so the wave
+// has an antinode at the wall (J_m'(k) = 0), as a free water surface does. m (lobes around) comes from the pitch class,
+// the number of rings from the octave. Fine tuning (cents) turns the pattern a little, so you can see a note go flat or sharp.
+function _besJ(m,x){const N=160;let s=0;for(let i=0;i<N;i++){const t=(i+0.5)*Math.PI/N;s+=Math.cos(m*t-x*Math.sin(t))}return s/N}
+function _besJp(m,x){return 0.5*(_besJ(m-1,x)-_besJ(m+1,x))}
+function _besNeu(m,n){
+  const b=(n+m/2-0.75)*Math.PI;let x=b-(4*m*m+3)/(8*b);if(!(x>m))x=Math.max(m+0.5,b);
+  for(let it=0;it<12;it++){const j=_besJ(m,x),dj=_besJp(m,x),d2=-dj/x-(1-m*m/(x*x))*j;if(Math.abs(d2)<1e-9)break;
+    const dx=dj/d2;x-=Math.max(-0.6,Math.min(0.6,dx));if(Math.abs(dx)<1e-5)break}
+  return x;
+}
+function _besProf(m,k){
+  const key=m+'_'+k.toFixed(3);let p=_cym.bes.get(key);if(p)return p;
+  p=new Float32Array(257);let mx=1e-9;
+  for(let i=0;i<=256;i++){const v=_besJ(m,k*i/256);p[i]=v;const a=v<0?-v:v;if(a>mx)mx=a}
+  for(let i=0;i<=256;i++)p[i]/=mx;
+  _cym.bes.set(key,p);if(_cym.bes.size>200)_cym.bes.delete(_cym.bes.keys().next().value);
+  return p;
+}
+function _cymDish(f){
+  const pcf=((12*Math.log2(f/261.63))%12+12)%12, pr=Math.round(pcf), m=1+(pr%12);
+  const n=Math.max(1,Math.min(6,Math.round(1+1.1*Math.log2(Math.max(40,f)/82.4))));
+  const key=m*10+n;let k=_cym.kmap.get(key);if(k===undefined){k=_besNeu(m,n);_cym.kmap.set(key,k)}
+  return {m:m,n:n,k:k,th:(pcf-pr)*Math.PI/m};
+}
+function _cymFieldDish(v,md,w,h){
+  const f=(v.fld&&v.fld.length===w*h)?v.fld:new Float32Array(w*h), R=_cym.R, Th=_cym.Th, pr=_besProf(md.m,md.k), m=md.m, th=md.th;
+  for(let p=0;p<w*h;p++){
+    const r=R[p]*2; if(r>1){f[p]=NaN;continue}
+    const fi=r*256,i0=fi|0,fr=fi-i0,j=i0>255?256:i0+1;
+    f[p]=(pr[i0]+(pr[j]-pr[i0])*fr)*Math.cos(m*Th[p]+th);
+  }
+  return f;
+}
+
 function drawCymatics(){
   const c=CV.cymatics; resize(c);
   const x=CX.cymatics, W=c.width, H=c.height;
   if(!W||!H) return;
-  const zoom=cymaZoom, dt=S.dt||1/60;
-  // the liquid is computed at a capped size and scaled up smooth, which also reads as softer, wetter
+  const zoom=cymaZoom, dt=S.dt||1/60, mode=_cym.mode;
+  // the pattern is computed at a capped size (sharp grains are drawn at full size on top of it)
   const sc=Math.min(1,250/Math.max(W,H)), w=Math.max(8,Math.round(W*sc)), h=Math.max(8,Math.round(H*sc));
   if(!_cym.off){_cym.off=document.createElement('canvas');_cym.octx=_cym.off.getContext('2d')}
   if(_cym.w!==w||_cym.h!==h){
     _cym.off.width=w;_cym.off.height=h;_cym.w=w;_cym.h=h;
-    _cym.Hb=new Float32Array(w*h);_cym.Fb=new Float32Array(w*h);_cym.R=new Float32Array(w*h);_cym.Cr=new Float32Array(w*h);_cym.Cg=new Float32Array(w*h);_cym.Cb=new Float32Array(w*h);
+    const n=w*h;
+    _cym.Hb=new Float32Array(n);_cym.Fb=new Float32Array(n);_cym.R=new Float32Array(n);_cym.Th=new Float32Array(n);
+    _cym.Sf=new Float32Array(n);_cym.Ow=new Uint8Array(n);_cym.Cr=new Float32Array(n);_cym.Cg=new Float32Array(n);_cym.Cb=new Float32Array(n);
     _cym.img=_cym.octx.createImageData(w,h);_cym.voices.clear();_cym.rkey='';
   }
-  if(_cym.rkey!==w+'x'+h+'z'+zoom){                       // distance from the plate centre, for the ripples
+  if(_cym.rkey!==w+'x'+h+'z'+zoom){                       // distance from the plate centre and angle, per pixel
     const side=Math.min(w,h)*1.3*zoom;
-    for(let py=0;py<h;py++){const dy=(py-h/2)/side;for(let px=0;px<w;px++){const dx=(px-w/2)/side;_cym.R[py*w+px]=Math.sqrt(dx*dx+dy*dy)}}
+    for(let py=0;py<h;py++){const dy=(py-h/2)/side;for(let px=0;px<w;px++){const dx=(px-w/2)/side,p=py*w+px;_cym.R[p]=Math.sqrt(dx*dx+dy*dy);_cym.Th[p]=Math.atan2(dy,dx)}}
     _cym.rkey=w+'x'+h+'z'+zoom;
   }
   // 1. who is sounding: up to 4 strongest notes, each weighted by its loudness relative to the loudest
@@ -1702,7 +1761,7 @@ function drawCymatics(){
     if(n.strength>0.04){tgt.set(n.noteIndex,{f:n.freq>0?n.freq:NOTE_FREQS[n.noteIndex],s:n.strength});maxS=Math.max(maxS,n.strength)}});
   const kf=1-Math.exp(-dt*8);                              // crossfade speed (about 0.12 s)
   tgt.forEach((o,ni)=>{
-    let v=_cym.voices.get(ni); if(!v){v={ni:ni,w:0,ph:0,key:'',fld:null,f:o.f,m:0,n:0};_cym.voices.set(ni,v)}
+    let v=_cym.voices.get(ni); if(!v){v={ni:ni,w:0,ph:0,key:'',fld:null,f:o.f,m:0,n:0,kk:6};_cym.voices.set(ni,v)}
     v.f=o.f; v.t=o.s/maxS;
   });
   _cym.voices.forEach((v,ni)=>{
@@ -1711,61 +1770,147 @@ function drawCymatics(){
     if(v.t===0&&v.w<0.01) _cym.voices.delete(ni);
   });
   const vs=[..._cym.voices.values()].sort((a,b)=>b.w-a.w);
-  if(!vs.length){                       // nothing is being played: a dark plate, no lines at all
+  const side=Math.min(w,h)*1.3*zoom, sideF=Math.min(W,H)*1.3*zoom;
+  const Ns=Math.round(Math.max(3500,Math.min(16000,sideF*sideF*0.45)));
+  if(mode==='plate'&&(!_sand.U||_sand.N!==Ns)){                  // sand, spread evenly over the plate
+    _sand.N=Ns;_sand.U=new Float32Array(Ns);_sand.V=new Float32Array(Ns);_sand.C=new Uint8Array(Ns).fill(12);
+    for(let i=0;i<Ns;i++){_sand.U[i]=Math.random();_sand.V[i]=Math.random()}
+  }
+  const fs=Math.max(7,Math.min(9,W*0.028));
+  const label=txt=>{
+    if(!txt) return;
+    x.font=`${fs}px 'Space Mono'`;x.textAlign='center';x.textBaseline='bottom';
+    const tw=x.measureText(txt).width+12;
+    x.fillStyle='rgba(0,0,0,.6)';x.fillRect(W/2-tw/2,H-fs-35,tw,fs+5);
+    x.fillStyle=hexRgba(NOTES[vs[0].ni].color,.9);
+    x.fillText(txt,W/2,H-31);
+  };
+  const SAND_REST='rgba(214,204,184,';
+  const drawSand=(alpha)=>{
+    const U=_sand.U,V=_sand.V,C=_sand.C,N=_sand.N, x0=W/2-sideF/2, y0=H/2-sideF/2, sz=Math.max(1,sideF/170);
+    // sort the grains by colour in one pass, then draw each colour as one batch
+    const cnt=_sand.cnt||(_sand.cnt=new Int32Array(14));cnt.fill(0);
+    for(let i=0;i<N;i++)cnt[C[i]+1]++;
+    for(let ci=1;ci<14;ci++)cnt[ci]+=cnt[ci-1];
+    const ord=(_sand.ord&&_sand.ord.length===N)?_sand.ord:(_sand.ord=new Int32Array(N)), pos=_sand.pos||(_sand.pos=new Int32Array(14));
+    for(let ci=0;ci<13;ci++)pos[ci]=cnt[ci];
+    for(let i=0;i<N;i++)ord[pos[C[i]]++]=i;
+    x.globalCompositeOperation='lighter';
+    for(let ci=0;ci<=12;ci++){
+      const s0=cnt[ci],s1=cnt[ci+1]; if(s1<=s0)continue;
+      if(ci<12){const k=noteRgb(ci);x.fillStyle=`rgba(${Math.round(k.r+(255-k.r)*0.3)},${Math.round(k.g+(255-k.g)*0.3)},${Math.round(k.b+(255-k.b)*0.3)},${0.62*alpha})`}
+      else x.fillStyle=SAND_REST+(0.5*alpha)+')';
+      x.beginPath();
+      for(let j=s0;j<s1;j++){const i=ord[j];x.rect(x0+U[i]*sideF,y0+V[i]*sideF,sz,sz)}
+      x.fill();
+    }
+    x.globalCompositeOperation='source-over';
+  };
+  const drawPlate=()=>{
+    const x0=W/2-sideF/2, y0=H/2-sideF/2;
     x.fillStyle='#030508';x.fillRect(0,0,W,H);
-    const sd=Math.min(W,H)*1.3*zoom;
-    x.strokeStyle='rgba(255,255,255,.07)';x.lineWidth=1;x.strokeRect(W/2-sd/2,H/2-sd/2,sd,sd);
-    x.font=`${Math.max(8,Math.min(11,W*0.035))}px 'Space Mono'`;x.fillStyle='rgba(255,255,255,.18)';x.textAlign='center';x.textBaseline='middle';
-    x.fillText('play a key, a fret, or turn on the mic',W/2,H/2);
+    const g=x.createLinearGradient(x0,y0,x0+sideF,y0+sideF);g.addColorStop(0,'#0d121b');g.addColorStop(1,'#06090f');
+    x.fillStyle=g;x.fillRect(x0,y0,sideF,sideF);
+    x.strokeStyle='rgba(160,175,200,.22)';x.lineWidth=1;x.strokeRect(x0+.5,y0+.5,sideF-1,sideF-1);
+  };
+  if(!vs.length){                       // nothing is being played: silence. An empty plate (or dish), nothing else.
+    if(mode==='plate'){
+      const U=_sand.U,V=_sand.V,C=_sand.C,N=_sand.N;
+      for(let i=0;i<N;i++){U[i]=Math.random();V[i]=Math.random();C[i]=12}     // the sand is spread evenly again, ready for the next sound
+      drawPlate();
+    }else{
+      x.fillStyle='#030508';x.fillRect(0,0,W,H);
+      x.beginPath();x.arc(W/2,H/2,sideF/2,0,Math.PI*2);x.strokeStyle='rgba(160,200,255,.14)';x.lineWidth=1;x.stroke();
+    }
     return;
   }
-  // 2. each voice: its plate figure (rebuilt only when its mode moves) and its swing in time
+  // 2. each voice: its figure (rebuilt only when its mode moves) and its swing in time
   let sumW=0, kAvg=0;
   vs.forEach(v=>{
-    const md=_cymMode(v.f), key=w+'x'+h+'z'+zoom+'m'+md.m.toFixed(2)+'_'+md.n.toFixed(2)+'s'+md.sx.toFixed(2)+'_'+md.sy.toFixed(2);
-    if(v.key!==key){v.fld=_cymField(v,md,w,h,zoom);v.key=key}
-    v.m=md.m;v.n=md.n;
+    let key;
+    if(mode==='water'){
+      const md=_cymDish(v.f);key='W'+w+'x'+h+'z'+zoom+'m'+md.m+'_'+md.n+'t'+md.th.toFixed(2);
+      if(v.key!==key){v.fld=_cymFieldDish(v,md,w,h);v.key=key}
+      v.m=md.m;v.n=md.k;v.kk=2*md.k/Math.PI;
+    }else{
+      const md=_cymMode(v.f);key='P'+w+'x'+h+'z'+zoom+'m'+md.m.toFixed(2)+'_'+md.n.toFixed(2)+'s'+md.sx.toFixed(2)+'_'+md.sy.toFixed(2);
+      if(v.key!==key){v.fld=_cymField(v,md,w,h,zoom);v.key=key}
+      v.m=md.m;v.n=md.n;v.kk=md.m+md.n;
+    }
     const vf=Math.min(9,1.5+v.f/120);                      // slowed so the eye can follow it (real pitch is hundreds of Hz)
     v.ph=(v.ph+2*Math.PI*vf*dt)%(2*Math.PI);
     v.cs=Math.cos(v.ph);
-    sumW+=v.w; kAvg+=v.w*(v.m+v.n);
+    sumW+=v.w; kAvg+=v.w*v.kk;
   });
   kAvg=kAvg/Math.max(0.001,sumW);
-  const dom=vs[0], norm=1/Math.max(1,sumW*0.75);
+  const dom=vs[0], NV=vs.length, n=w*h;
+
+  if(mode==='plate'){
+    // 3. where the plate is moving least, for each grain: the smallest |phi| of any sounding note (a fading note holds less sand)
+    const Sf=_cym.Sf, Ow=_cym.Ow;
+    for(let p=0;p<n;p++){
+      let s=1e9,own=0,out=false;
+      for(let k=0;k<NV;k++){const f=vs[k].fld[p];if(f!==f){out=true;break}const a=(f<0?-f:f)+(1-vs[k].w)*0.7;if(a<s){s=a;own=k}}
+      Sf[p]=out?NaN:s;Ow[p]=own;
+    }
+    // 4. shake the sand: each grain tries a hop; it hops far where the plate moves a lot and barely at all on a nodal line, and it
+    // keeps a hop that lands somewhere stiller (or, now and then, somewhere not stiller: louder sound shakes harder).
+    const U=_sand.U,V=_sand.V,C=_sand.C,N=_sand.N;
+    const T=(1.1+1.0*S.rms)/side*Math.PI*0.5*kAvg;          // shaking energy, scaled so a line is about 1 to 2 px wide
+    let rs=_sand.rs||2463534242;const rnd=()=>{rs^=rs<<13;rs^=rs>>>17;rs^=rs<<5;return (rs>>>0)*2.3283064365386963e-10};   // fast random numbers for the grains
+    for(let i=0;i<N;i++){
+      let u=U[i],v=V[i],gp=0;
+      for(let a=0;a<3;a++){
+        gp=((h/2+(v-0.5)*side)|0)*w+((w/2+(u-0.5)*side)|0);
+        const s0=Sf[gp];
+        if(s0!==s0){u=rnd();v=rnd();continue}
+        const st=0.004+0.12*(s0>1?1:s0);
+        const nu=u+(rnd()-0.5)*2*st, nv=v+(rnd()-0.5)*2*st;
+        if(nu<0.004||nu>0.996||nv<0.004||nv>0.996) continue;
+        const s1=Sf[((h/2+(nv-0.5)*side)|0)*w+((w/2+(nu-0.5)*side)|0)];
+        if(s1!==s1) continue;
+        if(s1<=s0||rnd()<Math.exp(-(s1-s0)/T)){u=nu;v=nv}
+      }
+      U[i]=u;V[i]=v;
+      const o=Ow[((h/2+(v-0.5)*side)|0)*w+((w/2+(u-0.5)*side)|0)];
+      C[i]=o<NV?vs[o].ni:12;
+    }
+    _sand.rs=rs;
+    drawPlate();drawSand(Math.min(1,sumW*1.4));
+    label(vs.filter(v=>v.w>0.15).map(v=>`${NOTES[v.ni].name} ${v.f.toFixed(0)}Hz→(${v.m.toFixed(1)},${v.n.toFixed(1)})`).join('  '));
+    return;
+  }
+
+  // ── WATER ──
+  const norm=1/Math.max(1,sumW*0.75);
   const amp=Math.min(1,0.35+S.rms*1.5), edge=0.75+S.rms*0.25;
-  // The same live wave the oscilloscope draws (same window, same rising-zero start), laid around the centre as
-  // rings: whatever the scope shows, the liquid shows too, so it moves the moment a note is active.
+  // The same live wave the oscilloscope draws, laid around the centre as rings: whatever the scope shows, the water shows too.
   let wv=null;
   if(tdb&&(isOn||_manualNotes.size>0)){
     const sr=(isOn&&audioCtx)?audioCtx.sampleRate:_SYN_SR;
-    // about 3 waves of the main note across the panel, so the rings stay smooth at any pitch
     const win=Math.max(64,Math.min(tdb.length-2,Math.round(sr*WAVE_MS/1000),Math.round(sr*3/Math.max(60,dom.f))));
     let t0=0;const mx=Math.max(1,tdb.length-win-1);
     for(let i=1;i<mx;i++){if(tdb[i-1]<0&&tdb[i]>=0){t0=i;break}}
     wv=_cym.wv||(_cym.wv=new Float32Array(128));
     let pk=0;
     for(let i=0;i<128;i++){const v=tdb[Math.min(t0+Math.floor(i*win/128),tdb.length-1)];wv[i]=v;const av=v<0?-v:v;if(av>pk)pk=av}
-    _cym.pk=Math.max(pk,(_cym.pk||0.05)*Math.pow(0.5,dt/1.5));   // level tracker, so quiet input still moves the liquid
+    _cym.pk=Math.max(pk,(_cym.pk||0.05)*Math.pow(0.5,dt/1.5));
     const inv=1/Math.max(0.03,_cym.pk);
     for(let i=0;i<128;i++)wv[i]*=inv;
   }
   const wAmp=wv?(0.22+S.rms*0.5):0;
-  // Timbre: how jagged the live wave is (a smooth tone vs a bright, buzzy one) changes the surface texture.
   if(wv){let sd=0,sa=0;for(let i=0;i<127;i++){sd+=Math.abs(wv[i+1]-wv[i]);sa+=Math.abs(wv[i])}
     const tn=Math.max(0,Math.min(1,(sd/Math.max(0.01,sa)-0.10)/0.25));
     _cym.tim=(_cym.tim||0)+(tn-(_cym.tim||0))*(1-Math.exp(-dt*6))}
   const tim=_cym.tim||0;
-  // 3. height of the liquid, the foam on the nodal lines, and the note colour at every point
-  //    (each note tints the part of the surface where its own figure is strong, and its own nodal lines)
-  // foam width stays about 2 px wide whatever the pitch (higher modes are steeper, so the band must widen)
   const thr=Math.max(0.10,Math.min(0.30,1.8*Math.PI*kAvg/(zoom*w)*0.8))*(1-0.25*tim);
   vs.forEach(v=>{const c=noteRgb(v.ni);v.cr=c.r;v.cg=c.g;v.cb=c.b});
-  const Hb=_cym.Hb, Fb=_cym.Fb, R=_cym.R, Cr=_cym.Cr, Cg=_cym.Cg, Cb=_cym.Cb, n=w*h, NV=vs.length;
+  const Hb=_cym.Hb, Fb=_cym.Fb, R=_cym.R, Cr=_cym.Cr, Cg=_cym.Cg, Cb=_cym.Cb;
   for(let p=0;p<n;p++){
     let hh=0, foam=0, out=false, cw=0, cr=0, cg=0, cb=0;
     for(let k=0;k<NV;k++){
       const v=vs[k], f=v.fld[p];
-      if(f!==f){out=true;break}                            // outside the plate (zoom < 1)
+      if(f!==f){out=true;break}                            // outside the dish
       hh+=v.w*f*v.cs;
       const af=f<0?-f:f;
       let fm=0;
@@ -1776,43 +1921,38 @@ function drawCymatics(){
     if(out){Hb[p]=NaN;Fb[p]=0;continue}
     const r=R[p];
     let wring=0;
-    if(wv){let wi=r*142;if(wi>126.99)wi=126.99;const i0=wi|0,fr=wi-i0;wring=(wv[i0]+(wv[i0+1]-wv[i0])*fr)*wAmp/(1+1.2*r)}     // r/0.9 across the 128-sample window, interpolated
+    if(wv){let wi=r*142;if(wi>126.99)wi=126.99;const i0=wi|0,fr=wi-i0;wring=(wv[i0]+(wv[i0+1]-wv[i0])*fr)*wAmp/(1+1.2*r)}
     Hb[p]=hh*norm+wring;
     Fb[p]=foam>1?1:foam;
     if(cw>1e-9){const ic=1/(cw*255);Cr[p]=cr*ic;Cg[p]=cg*ic;Cb[p]=cb*ic}else{Cr[p]=1;Cg[p]=1;Cb[p]=1}
   }
-  // 4. light the surface: slope facing the light is bright, foam and glints go toward white
   const shade=amp*(w/(Math.PI*Math.max(2,kAvg)))*0.8*(1+0.8*tim);
   const d=_cym.img.data;
   for(let py=0,p=0,q=0;py<h;py++){
     for(let px=0;px<w;px++,p++,q+=4){
       const hc=Hb[p];
-      if(hc!==hc){d[q]=0;d[q+1]=0;d[q+2]=0;d[q+3]=255;continue}
+      if(hc!==hc){d[q]=3;d[q+1]=5;d[q+2]=8;d[q+3]=255;continue}
       let hl=px>0?Hb[p-1]:hc, hr=px<w-1?Hb[p+1]:hc, hu=py>0?Hb[p-w]:hc, hd=py<h-1?Hb[p+w]:hc;
       if(hl!==hl)hl=hc; if(hr!==hr)hr=hc; if(hu!==hu)hu=hc; if(hd!==hd)hd=hc;
       const g=((hr-hl)*0.62+(hd-hu)*0.78)*shade;
       let sh=0.5+g*0.5; sh=sh<0?0:(sh>1?1:sh);
-      const body=(0.03+0.30*sh+(hc>0?0.10*hc*amp:0))*1.5;               // the coloured liquid
-      let gl=0; if(g>0.25){const s2=Math.min(1,(g-0.25)*1.3);gl=s2*s2*0.45*amp*(0.6+0.8*tim)}   // glints on the wet surface
-      const fo=Fb[p]*edge*0.85;                                          // foam on the nodal lines
+      const rr2=R[p]*2;
+      const body=(0.03+0.30*sh+(hc>0?0.10*hc*amp:0))*1.5*(1-0.25*rr2*rr2);        // darker toward the wall, like a deep dish
+      let gl=0; if(g>0.25){const s2=Math.min(1,(g-0.25)*1.3);gl=s2*s2*0.45*amp*(0.6+0.8*tim)}
+      const fo=Fb[p]*edge*0.85;
+      let rim=0; if(rr2>0.94){rim=(rr2-0.94)/0.06;rim=rim*rim*0.55}                 // the bright meniscus at the glass wall
       const tr=Cr[p], tg=Cg[p], tb=Cb[p];
-      let rr=tr*body+fo*(0.8*tr+0.2)+gl*(0.4+0.6*tr), gg=tg*body+fo*(0.8*tg+0.2)+gl*(0.4+0.6*tg), bb=tb*body+fo*(0.8*tb+0.2)+gl*(0.4+0.6*tb);
-      d[q]=(rr>1?255:rr*255)|0; d[q+1]=(gg>1?255:gg*255)|0; d[q+2]=(bb>1?255:bb*255)|0; d[q+3]=255;
+      let r_=tr*body+fo*(0.8*tr+0.2)+gl*(0.4+0.6*tr)+rim*(0.5+0.5*tr), g_=tg*body+fo*(0.8*tg+0.2)+gl*(0.4+0.6*tg)+rim*(0.5+0.5*tg), b_=tb*body+fo*(0.8*tb+0.2)+gl*(0.4+0.6*tb)+rim*(0.5+0.5*tb);
+      d[q]=(r_>1?255:r_*255)|0; d[q+1]=(g_>1?255:g_*255)|0; d[q+2]=(b_>1?255:b_*255)|0; d[q+3]=255;
     }
   }
   _cym.octx.putImageData(_cym.img,0,0);
+  x.fillStyle='#030508';x.fillRect(0,0,W,H);
   x.imageSmoothingEnabled=true; x.imageSmoothingQuality='high';
   x.drawImage(_cym.off,0,0,W,H);
-  const fs=Math.max(7,Math.min(9,W*0.028));
-  const txt=vs.filter(v=>v.w>0.15).map(v=>`${NOTES[v.ni].name} ${v.f.toFixed(0)}Hz→(${v.m.toFixed(1)},${v.n.toFixed(1)})`).join('  ');
-  if(txt){
-    x.font=`${fs}px 'Space Mono'`;x.textAlign='center';x.textBaseline='bottom';
-    const tw=x.measureText(txt).width+12;
-    x.fillStyle='rgba(0,0,0,.6)';x.fillRect(W/2-tw/2,H-fs-35,tw,fs+5);
-    x.fillStyle=hexRgba(NOTES[vs[0].ni].color,.9);
-    x.fillText(txt,W/2,H-31);
-  }
+  label(vs.filter(v=>v.w>0.15).map(v=>`${NOTES[v.ni].name} ${v.f.toFixed(0)}Hz→m${v.m}·k${v.n.toFixed(1)}`).join('  '));
 }
+
 
 // ═══ 5. SPECTRAL WATERFALL ═══════════════════════════════════════════════════
 const wfOS=document.createElement('canvas');wfOS.width=1;wfOS.height=1;const wfC=wfOS.getContext('2d');
