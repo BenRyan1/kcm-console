@@ -2423,17 +2423,18 @@ function buildKeyboard(){
         `cursor:pointer;box-sizing:border-box;`+
         `transition:background .1s,box-shadow .1s;z-index:1;`;
       // Note name at bottom
+      // KCM color band at the base of the white key, tall enough that the note name sits in the middle of the colour
+      const fsz=Math.max(6,wkW*0.28), SWH=Math.round(fsz*2.7);
+      const sw=document.createElement('div');
+      sw.className='kb-swatch';
+      sw.style.cssText=`position:absolute;bottom:0;left:0;right:0;height:${SWH}px;border-radius:0 0 3px 3px;background:${NOTES[pc].color};opacity:.92;pointer-events:none;`;
+      k.appendChild(sw);
       const nl=document.createElement('span');
-      nl.style.cssText=`position:absolute;bottom:3px;width:100%;text-align:center;`+
-        `font-size:${Math.max(6,wkW*0.28)}px;font-weight:700;color:#555;`+
+      nl.style.cssText=`position:absolute;bottom:0;left:0;width:100%;height:${SWH}px;line-height:${SWH}px;text-align:center;`+
+        `font-size:${fsz}px;font-weight:700;color:${NOTES[pc].tc};`+
         `font-family:'Space Mono',monospace;pointer-events:none;`;
       nl.textContent=wi===0?NOTES[pc].name+oct:NOTES[pc].name;
       k.appendChild(nl);
-      // KCM color swatch at base of white key (always visible)
-      const sw=document.createElement('div');
-      sw.className='kb-swatch';
-      sw.style.cssText=`position:absolute;bottom:0;left:0;right:0;height:6px;border-radius:0 0 3px 3px;background:${NOTES[pc].color};opacity:.7;pointer-events:none;`;
-      k.appendChild(sw);
       k.addEventListener('click',()=>{
         kbPlayNote(pc,oct);
         k.style.transform='scaleY(0.97)';k.style.transformOrigin='top';
@@ -2456,7 +2457,7 @@ function buildKeyboard(){
       k.style.cssText=
         `position:absolute;left:${leftPx}px;top:0;`+
         `width:${bkW}px;height:${bkH}px;`+
-        `background:linear-gradient(180deg,#222,#000);`+
+        `background:#050505;`+
         `border:1px solid #000;border-radius:0 0 3px 3px;`+
         `cursor:pointer;box-sizing:border-box;`+
         `transition:background .1s,box-shadow .1s;z-index:3;`+
@@ -2509,18 +2510,18 @@ function updateKeyboardDisplay(){
       k.style.borderColor=hexRgba(note.color,.7);
       k.style.borderWidth='1px';
       const nl=k.querySelector('span');
-      if(nl){nl.style.color='#444';nl.style.textShadow='none';}
+      if(nl){nl.style.color=note.tc;nl.style.textShadow='none';}
       const sw=k.querySelector('.kb-swatch');
-      if(sw){sw.style.background=note.color;sw.style.opacity='.7';}
+      if(sw){sw.style.background=note.color;sw.style.opacity='.92';}
     } else {
       k.style.background='linear-gradient(to bottom,#f5f5f5,#ddd)';
       k.style.boxShadow='';
       k.style.borderColor='#555';
       k.style.borderWidth='1px';
       const nl=k.querySelector('span');
-      if(nl){nl.style.color='#444';nl.style.textShadow='none';}
+      if(nl){nl.style.color=note.tc;nl.style.textShadow='none';}
       const sw=k.querySelector('.kb-swatch');
-      if(sw){sw.style.background=note.color;sw.style.opacity='.7';}
+      if(sw){sw.style.background=note.color;sw.style.opacity='.92';}
     }
   });
   // Black keys
@@ -2535,12 +2536,11 @@ function updateKeyboardDisplay(){
       k.style.boxShadow=`0 0 22px ${note.color}, 0 0 10px ${note.color}`;
       k.style.borderColor=note.color;
     } else if(tint){
-      k.style.background=`linear-gradient(180deg,rgba(${rgb.r},${rgb.g},${rgb.b},0.6),#111)`;
+      k.style.background='#050505';
       k.style.boxShadow='0 3px 6px rgba(0,0,0,.6)';
       k.style.borderColor=note.color;
     } else {
-      // Subtle KCM color tint always visible on black keys
-      k.style.background=`linear-gradient(180deg,rgba(${rgb.r},${rgb.g},${rgb.b},0.28),#111)`;
+      k.style.background='#050505';
       k.style.boxShadow='0 3px 6px rgba(0,0,0,.6)';
       k.style.borderColor='#000';
     }
