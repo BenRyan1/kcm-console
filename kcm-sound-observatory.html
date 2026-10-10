@@ -1657,8 +1657,13 @@ function chladniModeFor(freq){
 // Pitch picks the mode (higher = finer pattern, every pitch class and octave has its own figure). Loudness drives how hard the
 // sand is shaken and how bright and tall the water is.
 const _cym={voices:new Map(),Hb:null,Fb:null,R:null,Th:null,Sf:null,Ow:null,Cr:null,Cg:null,Cb:null,img:null,off:null,octx:null,w:0,h:0,rkey:'',mode:'plate',bes:new Map(),kmap:new Map()};
-try{const m0=localStorage.getItem('kcm_cyma_mode');if(m0==='water'||m0==='plate')_cym.mode=m0}catch(e){}
+try{const m0=localStorage.getItem('kcm_cyma_mode');if(m0==='water'||m0==='plate'||m0==='both')_cym.mode=m0}catch(e){}
 const _sand={N:0,U:null,V:null,C:null};
+// place grain i at random on the plate (a square), or inside the dish (a circle)
+function _sandSpawn(i,disk){
+  if(disk){const r=Math.sqrt(Math.random())*0.5,a=Math.random()*6.283185307;_sand.U[i]=0.5+r*Math.cos(a);_sand.V[i]=0.5+r*Math.sin(a)}
+  else{_sand.U[i]=Math.random();_sand.V[i]=Math.random()}
+}
 
 // PLATE / WATER switch on the panel
 (function injectCymaMode(){
@@ -1669,7 +1674,7 @@ const _sand={N:0,U:null,V:null,C:null};
     wrap.style.cssText='position:absolute;top:24px;right:8px;z-index:10;display:flex;gap:0;border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,.16);background:rgba(3,5,8,.7)';
     const btns={};
     function paint(){for(const k in btns){const on=_cym.mode===k;btns[k].style.background=on?'rgba(244,208,63,.22)':'transparent';btns[k].style.color=on?'#F4D03F':'rgba(255,255,255,.45)'}}
-    [['plate','PLATE'],['water','WATER']].forEach(([k,t])=>{
+    [['plate','PLATE'],['water','WATER'],['both','BOTH']].forEach(([k,t])=>{
       const b=document.createElement('button');b.type='button';b.textContent=t;b.setAttribute('aria-label','Cymatics '+t.toLowerCase());
       b.style.cssText='font-family:"Space Mono",monospace;font-size:7px;letter-spacing:.12em;padding:3px 8px;border:0;cursor:pointer;background:transparent';
       b.onclick=()=>{_cym.mode=k;try{localStorage.setItem('kcm_cyma_mode',k)}catch(e){}paint();if(typeof drawCymatics==='function')drawCymatics()};
@@ -1739,7 +1744,7 @@ function drawCymatics(){
   const c=CV.cymatics; resize(c);
   const x=CX.cymatics, W=c.width, H=c.height;
   if(!W||!H) return;
-  const zoom=cymaZoom, dt=S.dt||1/60, mode=_cym.mode;
+  const zoom=cymaZoom, dt=S.dt||1/60, mode=_cym.mode, isDisk=mode!=='plate';
   // the pattern is computed at a capped size (sharp grains are drawn at full size on top of it)
   const sc=Math.min(1,250/Math.max(W,H)), w=Math.max(8,Math.round(W*sc)), h=Math.max(8,Math.round(H*sc));
   if(!_cym.off){_cym.off=document.createElement('canvas');_cym.octx=_cym.off.getContext('2d')}
@@ -1772,9 +1777,9 @@ function drawCymatics(){
   const vs=[..._cym.voices.values()].sort((a,b)=>b.w-a.w);
   const side=Math.min(w,h)*1.3*zoom, sideF=Math.min(W,H)*1.3*zoom;
   const Ns=Math.round(Math.max(3500,Math.min(16000,sideF*sideF*0.45)));
-  if(mode==='plate'&&(!_sand.U||_sand.N!==Ns)){                  // sand, spread evenly over the plate
+  if(mode!=='water'&&(!_sand.U||_sand.N!==Ns)){                  // sand, spread evenly over the plate
     _sand.N=Ns;_sand.U=new Float32Array(Ns);_sand.V=new Float32Array(Ns);_sand.C=new Uint8Array(Ns).fill(12);
-    for(let i=0;i<Ns;i++){_sand.U[i]=Math.random();_sand.V[i]=Math.random()}
+    for(let i=0;i<Ns;i++)_sandSpawn(i,isDisk);
   }
   const fs=Math.max(7,Math.min(9,W*0.028));
   const label=txt=>{
@@ -1814,11 +1819,9 @@ function drawCymatics(){
     x.strokeStyle='rgba(160,175,200,.22)';x.lineWidth=1;x.strokeRect(x0+.5,y0+.5,sideF-1,sideF-1);
   };
   if(!vs.length){                       // nothing is being played: silence. An empty plate (or dish), nothing else.
-    if(mode==='plate'){
-      const U=_sand.U,V=_sand.V,C=_sand.C,N=_sand.N;
-      for(let i=0;i<N;i++){U[i]=Math.random();V[i]=Math.random();C[i]=12}     // the sand is spread evenly again, ready for the next sound
-      drawPlate();
-    }else{
+    if(mode!=='water'){for(let i=0;i<_sand.N;i++){_sandSpawn(i,isDisk);_sand.C[i]=12}}     // the sand is spread evenly again, ready for the next sound
+    if(mode==='plate'){drawPlate()}
+    else{
       x.fillStyle='#030508';x.fillRect(0,0,W,H);
       x.beginPath();x.arc(W/2,H/2,sideF/2,0,Math.PI*2);x.strokeStyle='rgba(160,200,255,.14)';x.lineWidth=1;x.stroke();
     }
@@ -1828,7 +1831,7 @@ function drawCymatics(){
   let sumW=0, kAvg=0;
   vs.forEach(v=>{
     let key;
-    if(mode==='water'){
+    if(mode!=='plate'){
       const md=_cymDish(v.f);key='W'+w+'x'+h+'z'+zoom+'m'+md.m+'_'+md.n+'t'+md.th.toFixed(2);
       if(v.key!==key){v.fld=_cymFieldDish(v,md,w,h);v.key=key}
       v.m=md.m;v.n=md.k;v.kk=2*md.k/Math.PI;
@@ -1845,7 +1848,7 @@ function drawCymatics(){
   kAvg=kAvg/Math.max(0.001,sumW);
   const dom=vs[0], NV=vs.length, n=w*h;
 
-  if(mode==='plate'){
+  if(mode!=='water'){
     // 3. where the plate is moving least, for each grain: the smallest |phi| of any sounding note (a fading note holds less sand)
     const Sf=_cym.Sf, Ow=_cym.Ow;
     for(let p=0;p<n;p++){
@@ -1863,7 +1866,7 @@ function drawCymatics(){
       for(let a=0;a<3;a++){
         gp=((h/2+(v-0.5)*side)|0)*w+((w/2+(u-0.5)*side)|0);
         const s0=Sf[gp];
-        if(s0!==s0){u=rnd();v=rnd();continue}
+        if(s0!==s0){if(isDisk){const rr=Math.sqrt(rnd())*0.5,aa=6.283185307*rnd();u=0.5+rr*Math.cos(aa);v=0.5+rr*Math.sin(aa)}else{u=rnd();v=rnd()}continue}
         const st=0.004+0.12*(s0>1?1:s0);
         const nu=u+(rnd()-0.5)*2*st, nv=v+(rnd()-0.5)*2*st;
         if(nu<0.004||nu>0.996||nv<0.004||nv>0.996) continue;
@@ -1876,9 +1879,11 @@ function drawCymatics(){
       C[i]=o<NV?vs[o].ni:12;
     }
     _sand.rs=rs;
-    drawPlate();drawSand(Math.min(1,sumW*1.4));
-    label(vs.filter(v=>v.w>0.15).map(v=>`${NOTES[v.ni].name} ${v.f.toFixed(0)}Hz→(${v.m.toFixed(1)},${v.n.toFixed(1)})`).join('  '));
-    return;
+    if(mode==='plate'){
+      drawPlate();drawSand(Math.min(1,sumW*1.4));
+      label(vs.filter(v=>v.w>0.15).map(v=>`${NOTES[v.ni].name} ${v.f.toFixed(0)}Hz→(${v.m.toFixed(1)},${v.n.toFixed(1)})`).join('  '));
+      return;
+    }
   }
 
   // ── WATER ──
@@ -1899,6 +1904,7 @@ function drawCymatics(){
     for(let i=0;i<128;i++)wv[i]*=inv;
   }
   const wAmp=wv?(0.22+S.rms*0.5):0;
+  const dimW=mode==='both'?0.55:1;                     // under the sand the water is held back a little so the grains stand out
   if(wv){let sd=0,sa=0;for(let i=0;i<127;i++){sd+=Math.abs(wv[i+1]-wv[i]);sa+=Math.abs(wv[i])}
     const tn=Math.max(0,Math.min(1,(sd/Math.max(0.01,sa)-0.10)/0.25));
     _cym.tim=(_cym.tim||0)+(tn-(_cym.tim||0))*(1-Math.exp(-dt*6))}
@@ -1943,6 +1949,7 @@ function drawCymatics(){
       let rim=0; if(rr2>0.94){rim=(rr2-0.94)/0.06;rim=rim*rim*0.55}                 // the bright meniscus at the glass wall
       const tr=Cr[p], tg=Cg[p], tb=Cb[p];
       let r_=tr*body+fo*(0.8*tr+0.2)+gl*(0.4+0.6*tr)+rim*(0.5+0.5*tr), g_=tg*body+fo*(0.8*tg+0.2)+gl*(0.4+0.6*tg)+rim*(0.5+0.5*tg), b_=tb*body+fo*(0.8*tb+0.2)+gl*(0.4+0.6*tb)+rim*(0.5+0.5*tb);
+      r_*=dimW;g_*=dimW;b_*=dimW;
       d[q]=(r_>1?255:r_*255)|0; d[q+1]=(g_>1?255:g_*255)|0; d[q+2]=(b_>1?255:b_*255)|0; d[q+3]=255;
     }
   }
@@ -1950,6 +1957,7 @@ function drawCymatics(){
   x.fillStyle='#030508';x.fillRect(0,0,W,H);
   x.imageSmoothingEnabled=true; x.imageSmoothingQuality='high';
   x.drawImage(_cym.off,0,0,W,H);
+  if(mode==='both')drawSand(Math.min(1,sumW*1.4));
   label(vs.filter(v=>v.w>0.15).map(v=>`${NOTES[v.ni].name} ${v.f.toFixed(0)}Hz→m${v.m}·k${v.n.toFixed(1)}`).join('  '));
 }
 
