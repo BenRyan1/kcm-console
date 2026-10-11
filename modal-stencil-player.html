@@ -428,6 +428,8 @@
         const LETTER_PC={C:0,D:2,E:4,F:5,G:7,A:9,B:11};
         const FLAT_NAME={"C#":"Db","D#":"Eb","F#":"Gb","G#":"Ab","A#":"Bb"};
         const PC_FROM_NAME=(function(){const m={};NOTES.forEach((n,i)=>m[n]=i);Object.entries(FLAT_NAME).forEach(([sh,fl])=>m[fl]=m[sh]);m["Cb"]=11;m["Fb"]=4;m["E#"]=5;m["B#"]=0;return m;})();
+        // Display only: show accidentals as real symbols (Bb -> B♭, F# -> F♯) so the Cinzel display font cannot turn a flat "b" into a capital B
+        function fmtNote(n){return String(n).replace(/(?<=[A-G])b/g,"♭").replace(/(?<=[A-G♭])b/g,"♭").replace(/#/g,"♯");}
         function spellFrom(tonicName,iv){
             const li=LETTERS.indexOf(tonicName[0]),tpc=PC_FROM_NAME[tonicName],out=[];
             for(let d=0;d<7;d++){
@@ -472,7 +474,7 @@
                 const cell=document.createElement("div");
                 const dn=document.createElement("span");dn.className="degree-number";dn.textContent=deg;
                 const nn=document.createElement("span");nn.className="note-name";
-                const ni=(ti+iv[deg-1])%12,note=sp[deg-1];nn.textContent=note;
+                const ni=(ti+iv[deg-1])%12,note=sp[deg-1];nn.textContent=fmtNote(note);
                 const intv=document.createElement("span");intv.className="interval";if(deg<8)intv.textContent=steps[deg-1];
                 const midi=MIDI_BASE+ti+iv[deg-1];
                 cell.dataset.midi=midi;cell.dataset.note=note;cell.dataset.pc=ni;cell.dataset.degree=deg;
@@ -516,7 +518,7 @@
                 const handle=document.createElement("span");handle.className="seq-drag-handle";handle.textContent="⋮⋮";
                 const dn=document.createElement("span");dn.className="degree-number";dn.textContent=deg;
                 const nn=document.createElement("span");nn.className="note-name";
-                const ni=(ti+iv[deg-1])%12,note=sp[deg-1];nn.textContent=note;
+                const ni=(ti+iv[deg-1])%12,note=sp[deg-1];nn.textContent=fmtNote(note);
                 const midi=MIDI_BASE+ti+iv[deg-1];
                 cell.dataset.midi=midi;cell.dataset.note=note;cell.dataset.pc=ni;cell.dataset.degree=deg;cell.dataset.seqIdx=idx;
                 cell.className=`degree-cell seq-cell note-${NOTE_COLORS[NOTES[ni]]}`;
@@ -577,7 +579,7 @@
                 const step=document.createElement("div");
                 step.className=`interval-step ${steps[i]===2?'whole':'half'}`;
                 step.textContent=steps[i]===2?"W":"H";
-                const noteLbl=document.createElement("div");noteLbl.className="interval-note";noteLbl.textContent=`${note} → ${nextNote}`;
+                const noteLbl=document.createElement("div");noteLbl.className="interval-note";noteLbl.textContent=`${fmtNote(note)} → ${fmtNote(nextNote)}`;
                 row.appendChild(badge);row.appendChild(step);row.appendChild(noteLbl);
                 map.appendChild(row);
             }
@@ -671,7 +673,7 @@
                 // parent's tonic falls (e.g. C Aeolian → Eb, C Dorian → Bb).
                 const sp=spellMode(currentTonic,md.intervals);
                 const parentKey=sp[(8-deg)%7];
-                relEl.textContent=deg===1?`Root mode — ${sp[0]} Major scale`:`${ordinals[deg]} mode of ${parentKey} Major`;
+                relEl.textContent=deg===1?`Root mode — ${fmtNote(sp[0])} Major scale`:`${ordinals[deg]} mode of ${fmtNote(parentKey)} Major`;
             }
             // Compare panel
             const compCol=document.getElementById("compare-col");

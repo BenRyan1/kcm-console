@@ -167,7 +167,7 @@ const FLAT_KEYS=[5,10,3,8,1,6];
 const FLAT_MAP={'C#':'Db','D#':'Eb','F#':'Gb','G#':'Ab','A#':'Bb'};
 function useFlats(k){return FLAT_KEYS.includes(k);}
 function dispNote(ch,k){const n=CHR[ch];return(useFlats(k)&&FLAT_MAP[n])||n;}
-function keyLabel(ch){return['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'][ch];}
+function keyLabel(ch){return['C','D♭','D','E♭','E','F','G♭','G','A♭','A','B♭','B'][ch];}
 function isDupe(s,f){return s<5&&(SM[s]+f)===SM[s+1];}
 const SPEEDS=[0.65,0.36,0.18];
 const POS_HINTS={0:'open strings · NUT',1:'1st position',2:'2nd position',3:'3rd position',4:'4th position',5:'5th fret',6:'6th position',7:'7th position',8:'8th position',9:'9th position',10:'10th position',11:'11th position',12:'12th fret · octave',13:'13th position',14:'14th position',15:'15th position',16:'16th position',17:'17th fret'};
