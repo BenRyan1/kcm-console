@@ -1721,7 +1721,7 @@ function _cym3D(x,W,H,vs,w,h,side,isDisk,sumW){
   x.font="8px 'Space Mono'";x.textAlign='left';x.textBaseline='alphabetic';x.fillStyle='rgba(255,255,255,.35)';
   x.fillText(NV?'surface height = the sound · drag to turn':'silent · drag to turn',6,H-7);
   if(NV){x.textBaseline='top';x.textAlign='left';x.shadowColor='rgba(0,0,0,.95)';x.shadowBlur=4;x.font="8px 'Space Mono'";x.fillStyle=hexRgba(NOTES[vs[0].ni].color,.92);
-    x.fillText(vs.filter(v=>v.w>0.15).map(v=>`${NOTES[v.ni].name} ${v.f.toFixed(0)}Hz`).join('  '),8,26);x.shadowBlur=0}
+    x.fillText(vs.filter(v=>v.w>0.15).map(v=>`${NOTES[v.ni].name}${v.hn>1?'×'+v.hn:''} ${v.f.toFixed(0)}Hz`).join('  '),8,26);x.shadowBlur=0}
 }
 
 // ═══ 3. LISSAJOUS ════════════════════════════════════════════════════════════
@@ -1974,6 +1974,46 @@ function _cymFieldDish(v,md,w,h){
   return f;
 }
 
+// ═══ ONE OVERTONE SERIES, READ BY CYMATICS AND THE OVERTONES VIEW ═══════════════════════════════════════════════════
+// The base note and its harmonics (1x to 12x its frequency) are worked out once per frame. Each one carries the KCM colour of
+// the note it lands on, its cents from that note, and its real energy: str is the bar height the Overtones view draws, amp is
+// the linear level relative to the loudest of the series (20 dB down = 0.1), which is what weights it in Cymatics.
+// One clock (ph) serves the whole series, so harmonic n swings exactly n times for every swing of the base note.
+const _ot={t:-1,f0:0,pc:0,list:[],ph:0};
+function _overtones(){
+  if(_ot.t===S.t) return _ot;
+  _ot.t=S.t; _ot.list=[]; _ot.f0=0;
+  if(!fdb||!(isOn||_manualNotes.size>0)) return _ot;
+  const binHz=(isOn&&audioCtx)?audioCtx.sampleRate/FFT:1, gain=parseFloat(gainEl.value);
+  const dn=S.dominantNote;
+  let f0=0;
+  if(dn){ f0=dn.freq>0?dn.freq:NOTE_FREQS[dn.noteIndex]; }
+  else {
+    // The app has not named a note, so use the loudest spectral peak (refined between bins) as the base tone
+    const k0=Math.max(2,Math.floor(60/binHz)), k1=Math.min(fdb.length-2,Math.ceil(2000/binHz));
+    let m=-999,mk=0; for(let k=k0;k<=k1;k++){ if(fdb[k]>m){m=fdb[k];mk=k} }
+    if(m>-70){ const a=fdb[mk-1],b=fdb[mk],c=fdb[mk+1],den=a-2*b+c; const d=den!==0?0.5*(a-c)/den:0; f0=(mk+Math.max(-0.5,Math.min(0.5,d)))*binHz; }
+  }
+  if(!(f0>0)) return _ot;
+  const maxHz=binHz*(fdb.length-1), raw=[]; let mx=-200;
+  for(let n=1;n<=12;n++){
+    const f=n*f0; let m=-200;
+    if(f<maxHz){
+      const half=Math.max(1,Math.round(f*0.02/binHz)), b=Math.round(f/binHz);
+      for(let j=b-half;j<=b+half;j++){ if(j>0&&j<fdb.length&&fdb[j]>m) m=fdb[j]; }
+    }
+    const midi=freqToMidi(f), nm=Math.round(midi), pc=((nm%12)+12)%12;
+    raw.push({n:n,f:f,db:m,pc:pc,cents:Math.round((midi-nm)*100),col:NOTES[pc].color,
+      str:Math.max(0,Math.min(1,(m+100)/100*gain*.55))});
+    if(m>mx) mx=m;
+  }
+  for(const o of raw) o.amp=o.db>-200?Math.pow(10,(o.db-mx)/20):0;
+  _ot.list=raw; _ot.f0=f0; _ot.pc=((Math.round(freqToMidi(f0))%12)+12)%12;
+  // slowed so the eye can follow it: 0.8 to 1.6 swings a second for the base, so the 12th harmonic is at most about 19
+  _ot.ph=(_ot.ph+2*Math.PI*Math.min(1.6,0.8+f0/500)*(S.dt||1/60))%(2*Math.PI);
+  return _ot;
+}
+
 function drawCymatics(){
   const c=CV.cymatics; resize(c);
   const x=CX.cymatics, W=c.width, H=c.height;
@@ -1999,12 +2039,33 @@ function drawCymatics(){
   S.detectedNotes.slice().sort((a,b)=>b.strength-a.strength).slice(0,4).forEach(n=>{
     if(n.strength>0.04){tgt.set(n.noteIndex,{f:n.freq>0?n.freq:NOTE_FREQS[n.noteIndex],s:n.strength});maxS=Math.max(maxS,n.strength)}});
   const kf=1-Math.exp(-dt*8);                              // crossfade speed (about 0.12 s)
+  const ot=_overtones();
   tgt.forEach((o,ni)=>{
     let v=_cym.voices.get(ni); if(!v){v={ni:ni,w:0,ph:0,key:'',fld:null,f:o.f,m:0,n:0,kk:6};_cym.voices.set(ni,v)}
-    v.f=o.f; v.t=o.s/maxS;
+    v.f=o.f; v.t=o.s/maxS; v.hn=(ot.f0>0&&ni===ot.pc)?1:0;      // the base note runs on the series clock
+  });
+  // The overtones of the base note join as voices of their own: each in the colour of the note it lands on, weighted by its
+  // real energy against the base. Only the audible ones (above -22 dB, at most 5), and none that is already a played note.
+  const otT=new Map();
+  if(tgt.size&&ot.f0>0){
+    const bT=tgt.has(ot.pc)?tgt.get(ot.pc).s/maxS:1, bA=Math.max(ot.list[0].amp,1e-3);
+    let cnt=0;
+    ot.list.slice().sort((p,q)=>q.amp-p.amp).forEach(o=>{
+      if(o.amp<0.08||o.db<-70) return;
+      if(o.n===1){ if(tgt.has(o.pc)) return; }
+      else{
+        let dup=false; tgt.forEach(t=>{if(Math.abs(t.f/o.f-1)<0.03)dup=true});
+        if(dup||cnt>=5) return; cnt++;
+      }
+      otT.set('h'+o.n,{f:o.f,s:bT*Math.min(1,o.amp/bA),pc:o.pc,hn:o.n});
+    });
+  }
+  otT.forEach((o,key)=>{
+    let v=_cym.voices.get(key); if(!v){v={ni:o.pc,w:0,ph:0,key:'',fld:null,f:o.f,m:0,n:0,kk:6,hn:o.hn};_cym.voices.set(key,v)}
+    v.f=o.f; v.ni=o.pc; v.t=o.s; v.hn=o.hn;
   });
   _cym.voices.forEach((v,ni)=>{
-    if(!tgt.has(ni)) v.t=0;
+    if(!tgt.has(ni)&&!otT.has(ni)) v.t=0;
     v.w+=(v.t-v.w)*kf;
     if(v.t===0&&v.w<0.01) _cym.voices.delete(ni);
   });
@@ -2076,9 +2137,12 @@ function drawCymatics(){
       if(v.key!==key){v.fld=_cymField(v,md,w,h,zoom);v.key=key}
       v.m=md.m;v.n=md.n;v.kk=md.m+md.n;
     }
-    const vf=Math.min(9,1.5+v.f/120);                      // slowed so the eye can follow it (real pitch is hundreds of Hz)
-    v.ph=(v.ph+2*Math.PI*vf*dt)%(2*Math.PI);
-    v.cs=Math.cos(v.ph);
+    if(v.hn){ v.cs=Math.cos(v.hn*ot.ph); }                 // base note and its overtones: harmonic n swings n times per swing of the base
+    else{
+      const vf=Math.min(9,1.5+v.f/120);                    // slowed so the eye can follow it (real pitch is hundreds of Hz)
+      v.ph=(v.ph+2*Math.PI*vf*dt)%(2*Math.PI);
+      v.cs=Math.cos(v.ph);
+    }
     sumW+=v.w; kAvg+=v.w*v.kk;
   });
   kAvg=kAvg/Math.max(0.001,sumW);
@@ -2118,7 +2182,7 @@ function drawCymatics(){
     _sand.rs=rs;
     if(mode==='plate'){
       drawPlate();drawSand(Math.min(1,sumW*1.4));
-      label(vs.filter(v=>v.w>0.15).map(v=>`${NOTES[v.ni].name} ${v.f.toFixed(0)}Hz→(${v.m.toFixed(1)},${v.n.toFixed(1)})`).join('  '));
+      label(vs.filter(v=>v.w>0.15).map(v=>`${NOTES[v.ni].name}${v.hn>1?'×'+v.hn:''} ${v.f.toFixed(0)}Hz→(${v.m.toFixed(1)},${v.n.toFixed(1)})`).join('  '));
       return;
     }
   }
@@ -2195,7 +2259,7 @@ function drawCymatics(){
   x.imageSmoothingEnabled=true; x.imageSmoothingQuality='high';
   x.drawImage(_cym.off,0,0,W,H);
   if(mode==='both')drawSand(Math.min(1,sumW*1.4));
-  label(vs.filter(v=>v.w>0.15).map(v=>`${NOTES[v.ni].name} ${v.f.toFixed(0)}Hz→m${v.m}·k${v.n.toFixed(1)}`).join('  '));
+  label(vs.filter(v=>v.w>0.15).map(v=>`${NOTES[v.ni].name}${v.hn>1?'×'+v.hn:''} ${v.f.toFixed(0)}Hz→m${v.m}·k${v.n.toFixed(1)}`).join('  '));
 }
 
 
@@ -2305,38 +2369,21 @@ function _wfChroma(x,W,H){
 // Each bar is the energy found at n x f0; labels give the nearest note and how many cents the overtone sits from it.
 function _wfOvertones(x,W,H,binHz,gain){
   x.fillStyle='#030508';x.fillRect(0,0,W,H);
-  const dn=S.dominantNote;
-  let f0=0;
-  if(dn){ f0=dn.freq>0?dn.freq:NOTE_FREQS[dn.noteIndex]; }
-  else {
-    // The app has not named a note, so use the loudest spectral peak (refined between bins) as the base tone
-    const k0=Math.max(2,Math.floor(60/binHz)), k1=Math.min(fdb.length-2,Math.ceil(2000/binHz));
-    let m=-999,mk=0; for(let k=k0;k<=k1;k++){ if(fdb[k]>m){m=fdb[k];mk=k} }
-    if(m>-70){ const a=fdb[mk-1],b=fdb[mk],c=fdb[mk+1],den=a-2*b+c; const d=den!==0?0.5*(a-c)/den:0; f0=(mk+Math.max(-0.5,Math.min(0.5,d)))*binHz; }
-  }
+  const ot=_overtones(), f0=ot.f0;                 // the same series the Cymatics panel uses
   if(!(f0>0)){ x.font="9px 'Space Mono'";x.fillStyle='rgba(255,255,255,.2)';x.textAlign='center';x.fillText('play a note…',W/2,H/2); return; }
-  const f0pc=((Math.round(freqToMidi(f0))%12)+12)%12;
-  const N=12,padL=8,padR=8,padT=WF_TOP+18,padB=50,bw=(W-padL-padR)/N,plotH=H-padT-padB,maxHz=binHz*(fdb.length-1);
+  const N=12,padL=8,padR=8,padT=WF_TOP+18,padB=50,bw=(W-padL-padR)/N,plotH=H-padT-padB;
   const fs=Math.max(6,Math.min(9,bw*0.3));
-  for(let n=1;n<=N;n++){
-    const f=n*f0, X=padL+(n-1)*bw;
-    let str=0;
-    if(f<maxHz){
-      const half=Math.max(1,Math.round(f*0.02/binHz)), b=Math.round(f/binHz); let m=-200;
-      for(let j=b-half;j<=b+half;j++){ if(j>0&&j<fdb.length&&fdb[j]>m) m=fdb[j]; }
-      str=Math.max(0,Math.min(1,(m+100)/100*gain*.55));
-    }
-    const midi=freqToMidi(f), nm=Math.round(midi), pc=((nm%12)+12)%12, cents=Math.round((midi-nm)*100), col=NOTES[pc].color;
-    const h=str*plotH;
+  for(const o of ot.list){
+    const n=o.n, X=padL+(n-1)*bw, str=o.str, col=o.col, h=str*plotH;
     x.save(); x.shadowColor=col; x.shadowBlur=str>0.1?10:0;
     x.fillStyle=hexRgba(col,0.25+0.75*str); x.fillRect(X+bw*0.16,padT+plotH-h,bw*0.68,Math.max(1,h)); x.restore();
     x.textAlign='center';x.font=`${fs}px 'Space Mono'`;
     x.fillStyle='rgba(255,255,255,.55)'; x.fillText(`${n}×`,X+bw/2,padT+plotH+fs+3);
-    x.fillStyle=col; x.fillText(NOTES[pc].name,X+bw/2,padT+plotH+fs*2+5);
-    x.fillStyle='rgba(255,255,255,.4)'; x.fillText(`${cents>0?'+':''}${cents}¢`,X+bw/2,padT+plotH+fs*3+7);
+    x.fillStyle=col; x.fillText(NOTES[o.pc].name,X+bw/2,padT+plotH+fs*2+5);
+    x.fillStyle='rgba(255,255,255,.4)'; x.fillText(`${o.cents>0?'+':''}${o.cents}¢`,X+bw/2,padT+plotH+fs*3+7);
   }
-  x.textAlign='left';x.font="8px 'Space Mono'";x.fillStyle=NOTES[f0pc].color;
-  x.fillText(`harmonics of ${NOTES[f0pc].name} · ${f0.toFixed(1)} Hz`,8,padT-10);
+  x.textAlign='left';x.font="8px 'Space Mono'";x.fillStyle=NOTES[ot.pc].color;
+  x.fillText(`harmonics of ${NOTES[ot.pc].name} · ${f0.toFixed(1)} Hz`,8,padT-10);
 }
 
 // View switcher for the waterfall card
