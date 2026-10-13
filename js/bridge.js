@@ -312,6 +312,27 @@
       return;
     }
 
+    // ── Recording events from a panel → state bus history (Claim C-5) ──
+    // A panel runs in its own window and has no state bus of its own, so it
+    // sends each recorded note here and the Console stores it in KCM.bus
+    // history (which the Console's Save .gcis exports as the "events" array).
+    if (data.type === 'KCM_BUS_CLEAR_HISTORY') {
+      if (window.KCM && window.KCM.bus) window.KCM.bus.clearHistory();
+      return;
+    }
+    if (data.type === 'KCM_BUS_PUSH_EVENT') {
+      var ev2 = data.event;
+      if (ev2 && typeof ev2 === 'object' && isFinite(ev2.t) && isFinite(ev2.midi) && isFinite(ev2.duration) &&
+          window.KCM && window.KCM.bus && window.KCM.bus.state.history.length < 20000) {
+        var clean = { t: ev2.t, pc: (ev2.pc === null || isFinite(ev2.pc)) ? ev2.pc : null,
+                      midi: ev2.midi, duration: ev2.duration,
+                      root: String(ev2.root || ''), mode: String(ev2.mode || '') };
+        if (ev2.isDrum) { clean.isDrum = true; clean.drumType = String(ev2.drumType || ''); }
+        window.KCM.bus.pushEvent(clean);
+      }
+      return;
+    }
+
     if (data.type !== 'KCM_STATE_PATCH') return;
     if (!data.payload || typeof data.payload !== 'object') return;
 

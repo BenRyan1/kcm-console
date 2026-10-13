@@ -1233,6 +1233,22 @@ window.KCM_RHYTHM_VIEW = (function(){
   catch (e) { return false; }
 })();
 window.KCM_EMBEDDED = (function(){ try { return window.parent !== window; } catch (e) { return true; } })();
+// Claim C-5: a panel iframe has no state bus of its own (KCM.bus lives in the
+// Console window), so recorded note events go to the Console by postMessage and
+// the Console's bridge stores them in the bus history. Standalone (not embedded)
+// use falls back to a local bus if one exists, otherwise does nothing.
+window._kcmBusPush = function (evt) {
+  try {
+    if (window.KCM && window.KCM.bus && window.KCM.bus.pushEvent) window.KCM.bus.pushEvent(evt);
+    else if (window.KCM_EMBEDDED) window.parent.postMessage({ type: 'KCM_BUS_PUSH_EVENT', event: evt }, '*');
+  } catch (e) {}
+};
+window._kcmBusClear = function () {
+  try {
+    if (window.KCM && window.KCM.bus && window.KCM.bus.clearHistory) window.KCM.bus.clearHistory();
+    else if (window.KCM_EMBEDDED) window.parent.postMessage({ type: 'KCM_BUS_CLEAR_HISTORY' }, '*');
+  } catch (e) {}
+};
 if (window.KCM_RHYTHM_VIEW) document.body.classList.add('kcm-view-rhythm');
 </script>
 
@@ -3374,6 +3390,40 @@ function drawRhythmViz() {
   rCtx.setLineDash([]);
 }
 
+// ── DIRECT CANVAS BEAT EDITING ──────────────────────────────────────────
+// Click (or tap) a dot position on any layer's ring to switch that beat on
+// or off, independent of the Bjorklund (Euclidean) generator. Layers are
+// concentric rings (ring li has radius 210 - 28*li, same as drawRhythmViz),
+// so the distance from the centre picks the layer and the angle picks the
+// step. Coordinates are canvas pixels (520 x 520), not CSS pixels.
+function rhythmHitTest(px, py) {
+  const cx = 260, cy = 260, maxR = 210, ringGap = 28;
+  const dx = px - cx, dy = py - cy, r = Math.hypot(dx, dy);
+  if (r < 30 || r > maxR + ringGap / 2) return null;           // centre hub or outside
+  const li = Math.round((maxR - r) / ringGap);
+  if (li < 0 || li >= RS.layers.length) return null;            // no layer on this ring
+  const steps = RS.layers[li].steps;
+  let ang = Math.atan2(dy, dx) + Math.PI / 2;                   // 0 = 12 o'clock, clockwise
+  ang = ((ang % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+  const step = Math.round(ang / (2 * Math.PI) * steps) % steps; // nearest step position
+  return { li, step };
+}
+
+rCanvas.style.cursor = 'pointer';
+rCanvas.title = 'Click a ring to switch a beat on or off';
+rCanvas.addEventListener('click', e => {
+  const rect = rCanvas.getBoundingClientRect();
+  const hit = rhythmHitTest((e.clientX - rect.left) * rCanvas.width / rect.width,
+                            (e.clientY - rect.top)  * rCanvas.height / rect.height);
+  if (!hit) return;
+  const layer = RS.layers[hit.li];
+  layer.pattern[hit.step] = layer.pattern[hit.step] ? 0 : 1;
+  layer.pulses = layer.pattern.reduce((a, b) => a + b, 0);
+  layer.source = 'custom';
+  delete layer.feel;                    // recorded timing no longer matches the edited pattern
+  renderLayers(); drawRhythmViz();
+});
+
 function rAnimate() {
   if(!RS.playing) return;
   drawRhythmViz();
@@ -4205,8 +4255,8 @@ function etRestart() {
         // duration, true 0-11 pitch class — independent of the seconds-
         // based recEvents above (kept as-is; the timeline UI depends on it).
         try {
-          if (window.KCM && window.KCM.bus && window.KCM.bus.pushEvent) {
-            window.KCM.bus.pushEvent({
+          if (window._kcmBusPush) {
+            window._kcmBusPush({
               t        : Math.round(t * 1000),
               pc       : ((midiNumber % 12) + 12) % 12,
               midi     : midiNumber,
@@ -4248,8 +4298,8 @@ function etRestart() {
       drumType : soundType
     });
     try {
-      if (window.KCM && window.KCM.bus && window.KCM.bus.pushEvent) {
-        window.KCM.bus.pushEvent({
+      if (window._kcmBusPush) {
+        window._kcmBusPush({
           t: Math.round(t * 1000), pc: null, midi: midi, duration: 150,
           root: '', mode: currentStencil, isDrum: true, drumType: soundType
         });
@@ -4334,7 +4384,7 @@ function etRestart() {
     recording = true;
     recStart  = Date.now();
     recEvents = [];
-    try { if (window.KCM && window.KCM.bus && window.KCM.bus.clearHistory) window.KCM.bus.clearHistory(); } catch (e) {}
+    try { if (window._kcmBusClear) window._kcmBusClear(); } catch (e) {}
     if (dotEl) { dotEl.classList.remove('playing'); dotEl.classList.add('recording'); }
     recBtn.classList.add('active-rec');
     stopBtn.disabled  = false;
@@ -4514,10 +4564,12 @@ function etRestart() {
       if (ev.isDrum) { out.isDrum = true; out.drumType = ev.drumType; }
       return out;
     });
+    var savedAtX = new Date().toISOString();
     var doc = {
-      gcis      : 1,
+      gcis      : '1.0',
+      metadata  : { title: take.name, author: 'Benjamin Ryan', created: savedAtX, application: 'KCM Chromatic Universe' },
       kcm       : '1.0',
-      saved     : new Date().toISOString(),
+      saved     : savedAtX,
       title     : take.name,
       state     : {
         root        : take.root,
@@ -4763,12 +4815,15 @@ function etRestart() {
     saveBtn.addEventListener('click', function() {
       var state = readClockState();
       var title = (titleEl ? titleEl.value.trim() : '') || 'CU Session';
+      var savedAt = new Date().toISOString();
       var doc = {
-        gcis  : 1,
-        kcm   : '1.0',
-        saved : new Date().toISOString(),
-        title : title,
-        state : state
+        gcis     : '1.0',
+        metadata : { title: title, author: 'Benjamin Ryan', created: savedAt, application: 'KCM Chromatic Universe' },
+        kcm      : '1.0',
+        saved    : savedAt,
+        title    : title,
+        state    : state,
+        events   : []
       };
       var blob = new Blob([JSON.stringify(doc, null, 2)], { type: 'application/json' });
       var url  = URL.createObjectURL(blob);
@@ -4804,7 +4859,7 @@ function etRestart() {
           showToast('⚠ Could not parse .gcis file', 'error');
           return;
         }
-        if (!doc || doc.gcis !== 1 || !doc.state || !doc.state.root) {
+        if (!doc || Math.floor(parseFloat(doc.gcis)) !== 1 || !doc.state || !doc.state.root) {
           showToast('⚠ Not a valid .gcis session file', 'error');
           return;
         }
@@ -4812,7 +4867,14 @@ function etRestart() {
         applyClockState(doc.state);
         // Broadcast to Console parent if embedded
         try {
-          window.parent.postMessage({ type: 'KCM_STATE', payload: doc.state }, '*');
+          var patch = {};
+          var st = doc.state;
+          if (typeof st.root === 'string') patch.root = st.root;
+          if (typeof st.mode === 'string') patch.mode = st.mode;
+          if (Array.isArray(st.scale)) patch.scale = st.scale;
+          if (Array.isArray(st.activeNotes)) patch.activeNotes = st.activeNotes;
+          if (typeof st.bpm === 'number' && st.bpm > 0) patch.bpm = st.bpm;
+          window.parent.postMessage({ type: 'KCM_STATE_PATCH', payload: patch }, '*');
         } catch(e) {}
         flashBtn(loadBtn, '✓ Loaded!', 'gcis-btn--loaded');
         console.info('[CU gcis] Loaded:', doc);

@@ -1,5 +1,5 @@
 /* ─────────────────────────────────────────────────────────────────────────
-   KCM CONSOLE — gcis.js  (v1.1)
+   KCM CONSOLE — gcis.js  (v1.2)
    Session 8: .gcis — Global Chromatic Identity State
    v1.1 (Claim C-5 fix, 2026-06-29): the "history" field below was a
    reserved, unused placeholder. It's now wired to the bus's real
@@ -20,7 +20,11 @@
    ──────────────
    {
      "gcis":    "1.0",           ← format version (semver, never changes for v1)
-     "created": "2026-04-25T...",← ISO timestamp
+     "metadata": {               ← Claim C-1: metadata object (v1.2)
+       "title": "My Session", "author": "Benjamin Ryan",
+       "created": "2026-04-25T...", "application": "KCM Console"
+     },
+     "created": "2026-04-25T...",← legacy top-level copies, kept so older readers still work
      "title":   "My Session",    ← user-editable
      "author":  "Benjamin Ryan", ← user-editable
      "app": {
@@ -44,7 +48,6 @@
    ───────────
    The .gcis format and the KCM harmonic state bus are proprietary to
    Keys, Codes & Modes™ / Benjamin Ryan. All rights reserved.
-   FreeStyle® Musical Device (4 US patents).
    ───────────────────────────────────────────────────────────────────────── */
 
 (function () {
@@ -58,11 +61,23 @@
   // title and author are optional — defaults used if omitted.
   function serialise(state, meta) {
     meta = meta || {};
+    var created = new Date().toISOString();
+    var title   = meta.title  || 'KCM Session';
+    var author  = meta.author || 'Benjamin Ryan';
     var doc = {
       gcis:    GCIS_VERSION,
-      created: new Date().toISOString(),
-      title:   meta.title  || 'KCM Session',
-      author:  meta.author || 'Benjamin Ryan',
+      // Claim C-1: a metadata object (session title, author identifier,
+      // creation timestamp, application identifier). The same values are also
+      // kept at the top level (below) so files stay readable by older code.
+      metadata: {
+        title:       title,
+        author:      author,
+        created:     created,
+        application: 'KCM Console'
+      },
+      created: created,
+      title:   title,
+      author:  author,
       app: {
         name:    'KCM Console',
         version: APP_VERSION,
@@ -86,6 +101,10 @@
 
 
   var ALIAS_MODES={major:"ionian",minor:"aeolian"};
+  // Claim C-2: scale and activeNotes must be arrays of whole numbers.
+  function allIntegers(a){
+    return a.every(function(n){return typeof n==="number"&&isFinite(n)&&Math.floor(n)===n;});
+  }
   function validateGCIS(doc){
     var e=[],w=[];
     if(!doc||typeof doc!=="object")return{ok:false,errors:["Not a valid JSON object"],warnings:[]};
@@ -93,12 +112,16 @@
     if(!doc.state)e.push("Missing state field");
     if(doc.state){var s=doc.state;
       if(!s.root)e.push("Missing state.root");
+      else if(typeof s.root!=="string")e.push("state.root must be a string");
       else if(VALID_PITCH_CLASSES.indexOf(s.root)===-1)e.push("Invalid root:"+s.root);
       if(!s.mode)e.push("Missing state.mode");
+      else if(typeof s.mode!=="string")e.push("state.mode must be a string");
       else if(ALIAS_MODES[s.mode])w.push(s.mode+" is alias, use "+ALIAS_MODES[s.mode]);
       else if(VALID_MODES.indexOf(s.mode)===-1)e.push("Invalid mode:"+s.mode);
       if(!Array.isArray(s.scale))e.push("scale must be array");
+      else if(!allIntegers(s.scale))e.push("scale must be an array of integers");
       if(!Array.isArray(s.activeNotes))e.push("activeNotes must be array");
+      else if(!allIntegers(s.activeNotes))e.push("activeNotes must be an array of integers");
     }
     return{ok:e.length===0,errors:e,warnings:w};
   }
@@ -134,12 +157,13 @@
     if (err) return { ok: false, error: err };
 
     var s = doc.state;
+    var md = (doc.metadata && typeof doc.metadata === 'object') ? doc.metadata : {};
     return {
       ok: true,
       meta: {
-        title:   doc.title   || 'Untitled',
-        author:  doc.author  || '',
-        created: doc.created || '',
+        title:   md.title   || doc.title   || 'Untitled',
+        author:  md.author  || doc.author  || '',
+        created: md.created || doc.created || '',
         gcis:    doc.gcis
       },
       state: {
