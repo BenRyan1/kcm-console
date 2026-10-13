@@ -2139,6 +2139,10 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
     border-color: var(--primary-teal);
     color: #e8fafa;
 }
+.kcm-stencil-tab-play { background: rgba(39,174,96,0.18); border-color: rgba(39,174,96,0.65); color: #d6f5e3; }
+.kcm-stencil-tab-play:hover { background: rgba(39,174,96,0.4); border-color: #27ae60; color: #fff; }
+.kcm-stencil-tab-stop { background: rgba(160,160,175,0.12); border-color: rgba(160,160,175,0.5); color: #e0e0ea; }
+.kcm-stencil-tab-stop:hover { background: rgba(160,160,175,0.3); border-color: #b8b8c8; color: #fff; }
 .kcm-stencil-tab.active {
     background: var(--primary-teal);
     border-color: var(--primary-teal);
@@ -2890,6 +2894,8 @@ button:focus-visible, [role="button"]:focus-visible { box-shadow: 0 0 0 3px var(
                         <button class="kcm-stencil-tab" data-cat="chords">Chords</button>
                         <button class="kcm-stencil-tab" data-cat="thirteenths">13ths</button>
                         <button class="kcm-stencil-tab" data-cat="songs">🎵 Songs</button>
+                        <button class="kcm-stencil-tab kcm-stencil-tab-play" id="kcmTabPlayBtn" type="button" aria-label="Play">▶ Play</button>
+                        <button class="kcm-stencil-tab kcm-stencil-tab-stop" id="kcmTabStopBtn" type="button" aria-label="Stop">■ Stop</button>
                     </div>
 
                     <!-- Circle + SVG Overlay — visual panel moved above the
@@ -13635,9 +13641,9 @@ async function kcmAIAsk(type) {
     // ── Init ─────────────────────────────────────────────────
     function initStencil() {
         // Build tabs
-        document.querySelectorAll('.kcm-stencil-tab').forEach(tab => {
+        document.querySelectorAll('.kcm-stencil-tab[data-cat]').forEach(tab => {
             tab.addEventListener('click', function() {
-                document.querySelectorAll('.kcm-stencil-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.kcm-stencil-tab[data-cat]').forEach(t => t.classList.remove('active'));
                 this.classList.add('active');
                 currentCat = this.dataset.cat;
                 currentStencil = null;
@@ -13721,6 +13727,18 @@ async function kcmAIAsk(type) {
         if (songBtn)  songBtn.addEventListener('click',  () => playSongProgression());
         if (melodyBtn) melodyBtn.addEventListener('click', () => playSongMelody());
         if (stopBtn)  stopBtn.addEventListener('click',  () => _stencilCancelAll());
+        // Tab-row Play / Stop (same row as the category tabs)
+        const tabPlayBtn = document.getElementById('kcmTabPlayBtn');
+        const tabStopBtn = document.getElementById('kcmTabStopBtn');
+        if (tabPlayBtn) tabPlayBtn.addEventListener('click', () => {
+            if (currentCat === 'songs') {
+                if (currentSong && currentSong.melody && currentSong.melody.length) playSongMelody();
+                else playSongProgression();
+            } else {
+                stencilPlay('up');
+            }
+        });
+        if (tabStopBtn) tabStopBtn.addEventListener('click', () => _stencilCancelAll());
         toggleSongUI(false);
         // Expose for staff play button
         window._stencilPlayUp     = () => stencilPlay('up');
