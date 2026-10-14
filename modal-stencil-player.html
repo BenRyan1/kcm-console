@@ -149,12 +149,12 @@
         .degree-cell{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;border-radius:5px;min-height:38px;transition:all 0.2s;cursor:pointer;user-select:none;border:2px solid transparent;}
         .degree-cell:hover{transform:scale(1.07);filter:brightness(1.2);border-color:rgba(255,255,255,0.3);box-shadow:0 4px 12px currentColor;}
         .degree-cell:active{transform:scale(0.96);}
-        .degree-cell.active{transform:scale(1.14);box-shadow:0 0 28px currentColor,0 0 50px currentColor;filter:brightness(1.4);border-color:rgba(255,255,255,0.5);z-index:10;}
+        .degree-cell.active{transform:scale(1.14);box-shadow:0 0 28px currentColor,0 0 50px currentColor;border-color:rgba(255,255,255,0.5);z-index:10;}
         .degree-cell.playing{animation:note-pulse 0.3s ease-out;}
         /* Live from the Console bus (e.g. The Decoder playing back a file) --
            a distinct gold glow so it never collides with .active (this panel's
            own step-sequencer playhead) or .playing (its own click/step pulse). */
-        .degree-cell.bus-live{outline:2.5px solid #F4D03F;box-shadow:0 0 16px rgba(244,208,63,0.6),0 0 30px rgba(244,208,63,0.3);filter:brightness(1.25);}
+        .degree-cell.bus-live{outline:2.5px solid #F4D03F;box-shadow:0 0 16px rgba(244,208,63,0.6),0 0 30px rgba(244,208,63,0.3);}
         @keyframes note-pulse{0%{transform:scale(1);}50%{transform:scale(1.18);box-shadow:0 0 36px currentColor;}100%{transform:scale(1.07);}}
         .degree-number{font-size:9px;font-weight:700;color:rgba(0,0,0,0.6);min-width:14px;}
         .note-name{font-size:15px;font-weight:900;color:#000;flex:1;text-align:center;font-family:var(--font-display);}
