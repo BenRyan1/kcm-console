@@ -688,18 +688,18 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:10px;heigh
 // ═══ KCM 12-Color Chromatic Spectrum™ — SINGLE SOURCE OF TRUTH ══════════════
 // All 8 panels read color/name/tc/freq/cname from this array only. No duplicates.
 const NOTES=[
-  {name:'C',  color:'#FFE800', tc:'#222', freq:261.63, cname:'Yellow'},
+  {name:'C',  color:'#FFFF00', tc:'#222', freq:261.63, cname:'Yellow'},
   {name:'C♯', color:'#FFC400', tc:'#222', freq:277.18, cname:'Yellow-Orange'},
   {name:'D',  color:'#FF8000', tc:'#fff', freq:293.66, cname:'Orange'},
-  {name:'D♯', color:'#FF4400', tc:'#fff', freq:311.13, cname:'Red-Orange'},
+  {name:'D♯', color:'#FF4000', tc:'#fff', freq:311.13, cname:'Red-Orange'},
   {name:'E',  color:'#FF0000', tc:'#fff', freq:329.63, cname:'Red'},
-  {name:'F',  color:'#CC0077', tc:'#fff', freq:349.23, cname:'Red-Purple'},
-  {name:'F♯', color:'#8800FF', tc:'#fff', freq:369.99, cname:'Purple'},
-  {name:'G',  color:'#4400FF', tc:'#fff', freq:392.00, cname:'Blue-Purple'},
+  {name:'F',  color:'#C4007F', tc:'#fff', freq:349.23, cname:'Red-Purple'},
+  {name:'F♯', color:'#8000FF', tc:'#fff', freq:369.99, cname:'Purple'},
+  {name:'G',  color:'#4000FF', tc:'#fff', freq:392.00, cname:'Blue-Purple'},
   {name:'G♯', color:'#0000FF', tc:'#fff', freq:415.30, cname:'Blue'},
-  {name:'A',  color:'#0088FF', tc:'#fff', freq:440.00, cname:'Blue-Green'},
-  {name:'A♯', color:'#00FF88', tc:'#222', freq:466.16, cname:'Green'},
-  {name:'B',  color:'#88FF00', tc:'#222', freq:493.88, cname:'Yellow-Green'},
+  {name:'A',  color:'#007FFF', tc:'#fff', freq:440.00, cname:'Blue-Green'},
+  {name:'A♯', color:'#00FF80', tc:'#222', freq:466.16, cname:'Green'},
+  {name:'B',  color:'#80FF00', tc:'#222', freq:493.88, cname:'Yellow-Green'},
 ];
 // Convenience arrays derived from NOTES — no separate duplicates needed
 const NOTE_FREQS = NOTES.map(n=>n.freq);
@@ -1289,7 +1289,7 @@ document.getElementById('micFlagBtn').addEventListener('click', ()=>{
     // Clipboard not available — show the URL as text
     const ul = document.querySelector('#mic-modal .steps ul');
     const li = document.createElement('li');
-    li.innerHTML = '<strong style="color:#00FF88">Paste this in Chrome:</strong> chrome://flags/#unsafely-treat-insecure-origin-as-secure';
+    li.innerHTML = '<strong style="color:#00FF80">Paste this in Chrome:</strong> chrome://flags/#unsafely-treat-insecure-origin-as-secure';
     ul.appendChild(li);
   });
 });
