@@ -1236,9 +1236,30 @@ const computeHubLabel = (colIdx) => {
   };
 };
 
-const toggleExt = (ring, colIdx) => {
-  S.extPreset = null; // hand-picked rings no longer follow the key
+// Oct 14 2026: ONE PRESS ALWAYS SOUNDS. Pressing a ring dot that was already
+// lit (e.g. after a preset or Play Chord lit the whole group) used to switch
+// it off silently, so you had to press again to hear anything. Now a press on
+// a lit dot re-sounds its column's chord and leaves it lit. To switch a lit
+// ring OFF: double-tap it (two presses within 0.4s), Shift/Alt/Cmd/Ctrl-click
+// it, or use "Clear rings".
+let _extLastLit = { key:null, t:0 };
+const toggleExt = (ring, colIdx, ev) => {
   const key = ring+'-'+colIdx;
+  if (S.extActive.has(key)) {
+    const now = Date.now();
+    const offGesture = !!(ev && (ev.shiftKey || ev.altKey || ev.metaKey || ev.ctrlKey));
+    const doubleTap = _extLastLit.key===key && (now-_extLastLit.t) < 400;
+    if (!offGesture && !doubleTap) {
+      _extLastLit = { key, t: now };
+      S.hubLabel = computeHubLabel(colIdx);
+      S.lastPick = 'ext';
+      render();
+      playColumnChord(colIdx);
+      return;
+    }
+  }
+  _extLastLit = { key:null, t:0 };
+  S.extPreset = null; // hand-picked rings no longer follow the key
   const turningOn = !S.extActive.has(key);
   const level = RING_LEVELS.indexOf(ring);
   if (turningOn) {
@@ -1672,7 +1693,7 @@ const renderCircle = () => {
       // touch earlier (getAudio() is a no-op if already running), so the
       // click still feels immediate without risking silent rings.
       hit.addEventListener('pointerdown',()=> getAudio());
-      hit.addEventListener('click',()=> toggleExt(ring,index));
+      hit.addEventListener('click',(e)=> toggleExt(ring,index,e));
       eg.appendChild(hit);
       if(isOn){
         const eglow=svgEl('circle',{cx:ex,cy:ey,r:cfg.r+6,fill:'none',stroke:'#F4D03F','stroke-width':'1.5',opacity:'0.55','pointer-events':'none'});
@@ -1686,8 +1707,8 @@ const renderCircle = () => {
       // click dead-centered on a ring (i.e. almost all of them) would
       // register on nothing. The hit-ellipse's click handler only ever
       // fires for the padding ring just outside the visible dot.
-      dot.addEventListener('click',()=> toggleExt(ring,index));
-      dot.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault(); toggleExt(ring,index);} });
+      dot.addEventListener('click',(e)=> toggleExt(ring,index,e));
+      dot.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault(); toggleExt(ring,index,e);} });
       eg.appendChild(dot);
       // Dot label is just the extension number itself (7 / 9 / 11 / 13) —
       // no note name. Ben's call: the note-name-plus-superscript-number
