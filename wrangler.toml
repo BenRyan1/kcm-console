@@ -1,6 +1,8 @@
 name = "snowy-rain-84a5"
 main = "worker.js"
 compatibility_date = "2024-01-01"
+# Keep dashboard-set plain variables when deploying from the CLI (added 2026-10-25)
+keep_vars = true
 workers_dev = true
 preview_urls = true
 
