@@ -317,6 +317,7 @@
     .card-heading { font-size: 1.1rem; }
   }
 </style>
+<script src="https://keyscodesandmodes.com/js/kcm-ref.js"></script>
 </head>
 <body>
 
@@ -475,7 +476,8 @@
           email: email,
           name: name,
           group: ML_GROUP_ID,
-          signup_source: 'console-gate'
+          signup_source: 'console-gate',
+          ref: (window.KCMRef && KCMRef.get()) || undefined
         })
       });
 

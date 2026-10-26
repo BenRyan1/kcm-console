@@ -4,6 +4,7 @@ export default {
     const ALLOWED_ORIGINS = [
       'https://keyscodesandmodes.com',
       'https://console.keyscodesandmodes.com',
+      'https://mtp.keyscodesandmodes.com',
     ];
     const requestOrigin = request.headers.get('Origin') || '';
     const cors = {
@@ -11,7 +12,7 @@ export default {
         ? requestOrigin
         : ALLOWED_ORIGINS[0],
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Key',
     };
 
     if (request.method === 'OPTIONS') {
@@ -33,6 +34,16 @@ export default {
           "'":  '&#39;',
           '&':  '&amp;',
         }[c]));
+    }
+
+    // Added 2026-10-22 (security audit): compare secrets without an early
+    // exit, and without leaking the length through the loop count.
+    function safeEq(a, b) {
+      a = String(a); b = String(b);
+      let d = a.length ^ b.length;
+      const n = Math.max(a.length, b.length);
+      for (let i = 0; i < n; i++) d |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0);
+      return d === 0;
     }
 
     // ── Signed session tokens ────────────────────────────────────────────
@@ -113,6 +124,26 @@ export default {
       if (mismatch !== 0) return null;
       if (!payload || typeof payload.exp !== 'number' || Date.now() > payload.exp) return null;
       if (!payload.tier) return null;
+      // Added 2026-10-22 (security audit finding 3): revocation that also
+      // reaches access-code, creator and one-time-payment tokens.
+      //   tier:<tier>  cutoff time: tokens of that tier issued BEFORE it are dead
+      //   ref:<ref>    cutoff time: same, for one creator's tokens
+      //   pi:<id>      a refunded or disputed one-time payment
+      // Tokens issued before this change have no iat, so they count as
+      // issued at time 0 and any cutoff retires them.
+      if (revokedKV) {
+        try {
+          const iat = typeof payload.iat === 'number' ? payload.iat : 0;
+          const [tierCut, refCut, piHit] = await Promise.all([
+            revokedKV.get('tier:' + payload.tier),
+            payload.ref ? revokedKV.get('ref:' + payload.ref) : null,
+            payload.pi ? revokedKV.get('pi:' + payload.pi) : null,
+          ]);
+          if (piHit) return null;
+          if (tierCut && iat <= Number(tierCut)) return null;
+          if (refCut && iat <= Number(refCut)) return null;
+        } catch (e) { /* same availability trade-off as the cust check below */ }
+      }
       if (payload.cust && revokedKV) {
         try {
           const revoked = await revokedKV.get(payload.cust);
@@ -174,6 +205,167 @@ export default {
 
     const url = new URL(request.url);
 
+    // ── Creator attribution (added 2026-10-20) ──────────────────────────
+    // Lets each creator/educator carry a public REF (used in links like
+    // keyscodesandmodes.com/?ref=SARAH) and a separate PRIVATE access code
+    // (their own free access). The public ref is never an access code.
+    // Records live in KV (env.CREATORS if bound, else the RATE_LIMIT
+    // namespace under distinct key prefixes):
+    //   creator:<REF>  {name, created, access_code}
+    //   acc:<CODE>     {ref}        (private access code -> ref)
+    //   stats:<REF>    {visits, leads, signups, revenue_cents}
+    //   cust:<custId>  {ref, start} (so renewals credit the same creator)
+    // Counters are read-modify-write (not atomic): fine at this scale.
+    const REF_RE = /^[A-Za-z0-9_-]{2,40}$/;
+    const CREATOR_KV = env.CREATORS || env.RATE_LIMIT;
+    const REV_SHARE_MS = (Number(env.REV_SHARE_MONTHS) || 12) * 30 * 24 * 60 * 60 * 1000;
+    const normRef = (s) => (typeof s === 'string' && REF_RE.test(s.trim())) ? s.trim().toUpperCase() : '';
+    const J = (obj, status = 200) => new Response(JSON.stringify(obj),
+      { status, headers: { ...cors, 'Content-Type': 'application/json' } });
+
+    async function getCreator(ref) {
+      if (!ref || !CREATOR_KV) return null;
+      try { return await CREATOR_KV.get('creator:' + ref, { type: 'json' }); } catch (e) { return null; }
+    }
+    async function getStats(ref) {
+      let s = null;
+      try { s = await CREATOR_KV.get('stats:' + ref, { type: 'json' }); } catch (e) {}
+      return Object.assign({ visits: 0, leads: 0, signups: 0, revenue_cents: 0 }, s || {});
+    }
+    async function bumpStats(ref, fn) {
+      const s = await getStats(ref);
+      fn(s);
+      await CREATOR_KV.put('stats:' + ref, JSON.stringify(s));
+    }
+    // true the first time a key is seen (within ttl), false afterwards
+    async function once(key, ttlSec = 400 * 86400) {
+      const seen = await CREATOR_KV.get(key);
+      if (seen) return false;
+      await CREATOR_KV.put(key, '1', { expirationTtl: Math.max(60, ttlSec) });
+      return true;
+    }
+    async function addRevenue(ref, id, cents) {
+      if (!cents || cents < 0) return;
+      if (await once('rev:' + id)) await bumpStats(ref, s => { s.revenue_cents += cents; });
+    }
+    // Called with a Stripe Checkout Session (client_reference_id = creator ref).
+    async function recordCheckout(session) {
+      if (!session || !CREATOR_KV) return;
+      const ref = normRef(session.client_reference_id);
+      if (!ref || !(await getCreator(ref))) return;
+      if (await once('sale:' + session.id)) {
+        await bumpStats(ref, s => { s.signups += 1; });
+        if (session.customer) {
+          await CREATOR_KV.put('cust:' + session.customer, JSON.stringify({ ref, start: Date.now() }),
+            { expirationTtl: Math.ceil(REV_SHARE_MS / 1000) + 86400 });
+        }
+      }
+      if (session.payment_status === 'paid') {
+        await addRevenue(ref, session.invoice || session.id, session.amount_total || 0);
+      }
+    }
+    function adminOK() {
+      const k = request.headers.get('X-Admin-Key') || '';
+      const s = env.ADMIN_KEY || '';
+      if (!s || k.length !== s.length) return false;
+      let d = 0;
+      for (let i = 0; i < s.length; i++) d |= k.charCodeAt(i) ^ s.charCodeAt(i);
+      return d === 0;
+    }
+
+    // Public: count a visit that arrived via ?ref=. Always answers ok so
+    // it can't be used to discover which refs exist. Once per IP/ref/day.
+    if (url.pathname === '/api/ref-hit') {
+      try {
+        const body = await request.json();
+        const ref = normRef(body.ref);
+        const ip = request.headers.get('CF-Connecting-IP') || 'x';
+        const day = new Date().toISOString().slice(0, 10);
+        if (ref && await getCreator(ref) && await once('hit:' + ref + ':' + ip + ':' + day, 90000)) {
+          await bumpStats(ref, s => { s.visits += 1; });
+        }
+      } catch (e) {}
+      return J({ ok: true });
+    }
+
+    // Admin only (X-Admin-Key header = ADMIN_KEY secret).
+    if (url.pathname === '/api/creator-admin') {
+      if (!adminOK()) return J({ ok: false, error: 'Unauthorized' }, 401);
+      if (!CREATOR_KV) return J({ ok: false, error: 'No KV binding' }, 500);
+      let body = {};
+      try { body = await request.json(); } catch (e) {}
+      const action = body.action;
+
+      if (action === 'create') {
+        const name = sanitize(body.name || '', 80);
+        if (!name) return J({ ok: false, error: 'name required' }, 422);
+        const ref = normRef(body.ref) || name.replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 20);
+        if (ref.length < 2) return J({ ok: false, error: 'ref too short' }, 422);
+        if (await getCreator(ref)) return J({ ok: false, error: 'ref already exists' }, 409);
+        const alphabet = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+        const rnd = crypto.getRandomValues(new Uint8Array(8));
+        const tail = Array.from(rnd).map(b => alphabet[b % alphabet.length]).join('');
+        const accessCode = ref.slice(0, 8) + '-' + tail;
+        await CREATOR_KV.put('creator:' + ref, JSON.stringify({ name, created: Date.now(), access_code: accessCode }));
+        await CREATOR_KV.put('acc:' + accessCode, JSON.stringify({ ref }));
+        return J({
+          ok: true, ref, name, access_code: accessCode,
+          link: 'https://keyscodesandmodes.com/?ref=' + ref,
+          mtp_link: 'https://mtp.keyscodesandmodes.com/?ref=' + ref,
+        });
+      }
+
+      if (action === 'list') {
+        const rows = [];
+        let cursor;
+        do {
+          const page = await CREATOR_KV.list({ prefix: 'creator:', cursor });
+          for (const k of page.keys) {
+            const ref = k.name.slice('creator:'.length);
+            const c = await getCreator(ref);
+            const s = await getStats(ref);
+            const pct = Number(env.REV_SHARE_PCT);
+            rows.push({
+              ref, name: c && c.name, access_code: c && c.access_code,
+              visits: s.visits, leads: s.leads, paid_signups: s.signups,
+              revenue_usd: Math.round(s.revenue_cents) / 100,
+              ...(Number.isFinite(pct) && pct > 0 ? { share_owed_usd: Math.round(s.revenue_cents * pct / 100) / 100 } : {}),
+            });
+          }
+          cursor = page.list_complete ? undefined : page.cursor;
+        } while (cursor);
+        return J({ ok: true, creators: rows });
+      }
+
+      // Stops the creator's free access but keeps their attribution history.
+      if (action === 'revoke_access') {
+        const ref = normRef(body.ref);
+        const c = await getCreator(ref);
+        if (!c) return J({ ok: false, error: 'not found' }, 404);
+        await CREATOR_KV.delete('acc:' + c.access_code);
+        // Added 2026-10-22: also retire tokens already issued to this creator.
+        if (env.REVOKED_SESSIONS) {
+          await env.REVOKED_SESSIONS.put('ref:' + ref, String(Date.now()),
+            { expirationTtl: Math.ceil(SESSION_TTL_MS / 1000) });
+        }
+        return J({ ok: true, revoked: ref });
+      }
+
+      // Added 2026-10-22: after rotating a shared code (school, demo, press,
+      // and so on), call this to retire every token of that tier issued
+      // before now. People enter the new code and get a fresh token.
+      if (action === 'revoke_tier') {
+        const tier = typeof body.tier === 'string' ? body.tier.trim() : '';
+        if (!/^[a-z_]{2,40}$/.test(tier)) return J({ ok: false, error: 'tier required' }, 422);
+        if (!env.REVOKED_SESSIONS) return J({ ok: false, error: 'No KV binding' }, 500);
+        await env.REVOKED_SESSIONS.put('tier:' + tier, String(Date.now()),
+          { expirationTtl: Math.ceil(SESSION_TTL_MS / 1000) });
+        return J({ ok: true, revoked_tier: tier });
+      }
+
+      return J({ ok: false, error: 'unknown action' }, 422);
+    }
+
     if (url.pathname === '/api/verify-code') {
       let code = '';
       try {
@@ -219,8 +411,21 @@ export default {
       let matchedTier = null;
       if (code.length > 0) {
         for (const [tier, value] of Object.entries(codesByTier)) {
-          if (value && code === value) { matchedTier = tier; break; }
+          if (value && safeEq(code, value)) { matchedTier = tier; break; }
         }
+      }
+
+      // Added 2026-10-20: creator access codes (private, per person) are
+      // looked up in KV after the fixed tier codes. Case-insensitive.
+      let creatorRef = null;
+      if (matchedTier === null && code.length > 0 && code.length <= 60 && CREATOR_KV) {
+        try {
+          const acc = await CREATOR_KV.get('acc:' + code.toUpperCase(), { type: 'json' });
+          if (acc && acc.ref && await getCreator(acc.ref)) {
+            matchedTier = 'creator';
+            creatorRef = acc.ref;
+          }
+        } catch (e) { /* KV hiccup: treat as no match */ }
       }
 
       if (matchedTier === null) {
@@ -236,7 +441,7 @@ export default {
       let sessionToken = null;
       if (matchedTier !== null && env.SESSION_SIGNING_KEY) {
         sessionToken = await signSession(
-          { tier: matchedTier, exp: Date.now() + SESSION_TTL_MS },
+          { tier: matchedTier, iat: Date.now(), exp: Date.now() + SESSION_TTL_MS, ...(creatorRef ? { ref: creatorRef } : {}) },
           env.SESSION_SIGNING_KEY
         );
       }
@@ -314,7 +519,7 @@ export default {
       let stripeRes;
       try {
         stripeRes = await fetch(
-          `https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(sessionId)}`,
+          `https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(sessionId)}?expand%5B%5D=line_items`,
           { headers: { 'Authorization': `Bearer ${env.STRIPE_SECRET_KEY}` } }
         );
       } catch (e) {
@@ -336,6 +541,44 @@ export default {
           { status: 401, headers: { ...cors, 'Content-Type': 'application/json' } });
       }
 
+      // Added 2026-10-22 (security audit finding 2): the session must be
+      // complete and recent, and (once PRICE_TIERS is set) must be for a
+      // product we sell. A success link is not meant to work for weeks.
+      if (session.status !== 'complete') {
+        return new Response(JSON.stringify({ ok: false, error: 'Payment not completed' }),
+          { status: 401, headers: { ...cors, 'Content-Type': 'application/json' } });
+      }
+      const sessionAgeSec = Date.now() / 1000 - Number(session.created || 0);
+      if (!Number.isFinite(sessionAgeSec) || sessionAgeSec > 3 * 86400) {
+        return new Response(JSON.stringify({ ok: false, error: 'Session expired' }),
+          { status: 401, headers: { ...cors, 'Content-Type': 'application/json' } });
+      }
+      // PRICE_TIERS is a Worker variable holding JSON, for example
+      //   {"price_123":"student_monthly","price_456":"founders_circle"}
+      // When set, the tier comes from what was actually bought and the
+      // client-supplied tier is ignored.
+      let mappedTier = null;
+      if (env.PRICE_TIERS) {
+        let priceTierMap;
+        try { priceTierMap = JSON.parse(env.PRICE_TIERS); } catch (e) {
+          return new Response(JSON.stringify({ ok: false, error: 'Tier mapping misconfigured' }),
+            { status: 500, headers: { ...cors, 'Content-Type': 'application/json' } });
+        }
+        const items = (session.line_items && Array.isArray(session.line_items.data)) ? session.line_items.data : [];
+        for (const it of items) {
+          const pid = it && it.price && it.price.id;
+          if (pid && Object.prototype.hasOwnProperty.call(priceTierMap, pid)) { mappedTier = priceTierMap[pid]; break; }
+        }
+        if (!mappedTier) {
+          return new Response(JSON.stringify({ ok: false, error: 'Unrecognized product' }),
+            { status: 403, headers: { ...cors, 'Content-Type': 'application/json' } });
+        }
+      }
+
+      // Added 2026-10-20: credit the creator whose ?ref= link brought this
+      // buyer (Stripe returns it as client_reference_id). Never blocks access.
+      try { await recordCheckout(session); } catch (e) { /* tracking only */ }
+
       // The tier label only decides which token/display name they get —
       // access itself is already gated on the payment_status check above.
       // Restricted to a known allow-list so it can't be used to inject
@@ -345,14 +588,40 @@ export default {
         'professional_monthly', 'professional_yearly',
         'founders_circle',
       ];
-      const tier = VALID_TIERS.includes(requestedTier) ? requestedTier : 'professional_monthly';
+      let tier;
+      if (mappedTier) {
+        if (!VALID_TIERS.includes(mappedTier)) {
+          return new Response(JSON.stringify({ ok: false, error: 'Tier mapping misconfigured' }),
+            { status: 500, headers: { ...cors, 'Content-Type': 'application/json' } });
+        }
+        tier = mappedTier;
+      } else {
+        // Legacy behavior until PRICE_TIERS is configured.
+        tier = VALID_TIERS.includes(requestedTier) ? requestedTier : 'professional_monthly';
+      }
+
+      // One paid session may mint a handful of tokens (a few devices), not
+      // an unlimited number for anyone who is handed the success link.
+      const REDEEM_MAX = 5;
+      if (CREATOR_KV) {
+        try {
+          const rKey = 'redeem:' + session.id;
+          const used = Number(await CREATOR_KV.get(rKey)) || 0;
+          if (used >= REDEEM_MAX) {
+            return new Response(JSON.stringify({ ok: false, error: 'Session already redeemed' }),
+              { status: 401, headers: { ...cors, 'Content-Type': 'application/json' } });
+          }
+          await CREATOR_KV.put(rKey, String(used + 1), { expirationTtl: 7 * 86400 });
+        } catch (e) { /* KV hiccup: do not block a paying customer */ }
+      }
 
       // Carrying the Stripe customer ID inside the token (not secret —
       // it's meaningless without the signature) is what lets
       // /api/stripe-webhook shut off access early if this person cancels,
       // instead of waiting out the full 180-day token lifetime.
       const sessionToken = await signSession(
-        { tier, exp: Date.now() + SESSION_TTL_MS, cust: session.customer || null },
+        { tier, iat: Date.now(), exp: Date.now() + SESSION_TTL_MS, cust: session.customer || null,
+          pi: session.payment_intent || null },
         env.SESSION_SIGNING_KEY
       );
 
@@ -435,6 +704,41 @@ export default {
         }
       }
 
+      // Added 2026-10-22 (security audit finding 2): a full refund or a
+      // chargeback ends access. One-time payments are matched by payment
+      // intent (stored in the token as `pi`), subscriptions by customer.
+      // Needs the charge.refunded and charge.dispute.created events enabled
+      // on the Stripe webhook endpoint.
+      if ((event.type === 'charge.refunded' || event.type === 'charge.dispute.created') && env.REVOKED_SESSIONS) {
+        const obj = event.data && event.data.object;
+        const endsAccess = event.type === 'charge.dispute.created' || (obj && obj.refunded === true);
+        if (obj && endsAccess) {
+          const ttl = Math.ceil(SESSION_TTL_MS / 1000);
+          const stamp = String(Date.now());
+          if (obj.payment_intent) {
+            await env.REVOKED_SESSIONS.put('pi:' + String(obj.payment_intent), stamp, { expirationTtl: ttl });
+          }
+          if (event.type === 'charge.refunded' && obj.customer) {
+            await env.REVOKED_SESSIONS.put(String(obj.customer), stamp, { expirationTtl: ttl });
+          }
+        }
+      }
+
+      // Added 2026-10-20: creator attribution. Wrapped so a tracking
+      // problem can never affect the revocation logic above.
+      try {
+        if (event.type === 'checkout.session.completed') {
+          await recordCheckout(event.data && event.data.object);
+        } else if (event.type === 'invoice.paid' && CREATOR_KV) {
+          const inv = event.data && event.data.object;
+          const map = inv && inv.customer
+            ? await CREATOR_KV.get('cust:' + inv.customer, { type: 'json' }) : null;
+          if (map && Date.now() - map.start < REV_SHARE_MS) {
+            await addRevenue(map.ref, inv.id, inv.amount_paid || 0);
+          }
+        }
+      } catch (e) { /* tracking only */ }
+
       return new Response(JSON.stringify({ received: true }),
         { status: 200, headers: { ...cors, 'Content-Type': 'application/json' } });
     }
@@ -462,6 +766,15 @@ export default {
           { status: 500, headers: { ...cors, 'Content-Type': 'application/json' } });
       }
 
+      // Added 2026-10-22 (security audit finding 5): the AI route needs a
+      // valid signed session token (Authorization: Bearer <kcm_session_token>).
+      // The AI calls in the apps must send it when AI is switched back on.
+      const aiBearer = (request.headers.get('Authorization') || '').replace(/^Bearer\s+/i, '');
+      const aiSession = await verifySession(aiBearer, env.SESSION_SIGNING_KEY, env.REVOKED_SESSIONS);
+      if (!aiSession) {
+        return J({ ok: false, error: 'Sign in required' }, 401);
+      }
+
       let body;
       try {
         body = await request.json();
@@ -473,6 +786,33 @@ export default {
       if (!Array.isArray(body.messages) || body.messages.length === 0) {
         return new Response(JSON.stringify({ ok: false, error: '"messages" array is required' }),
           { status: 422, headers: { ...cors, 'Content-Type': 'application/json' } });
+      }
+
+      // Added 2026-10-22: cap request size and daily volume so a valid token
+      // cannot be used to run up the Anthropic bill. Limits are adjustable
+      // with the AI_DAILY_MAX (per IP) and AI_GLOBAL_DAILY_MAX variables.
+      // Counters are best effort (KV is not atomic) and fail CLOSED, since
+      // this route costs money.
+      if (body.messages.length > 20 || JSON.stringify(body.messages).length > 20000) {
+        return J({ ok: false, error: 'Request too large' }, 413);
+      }
+      if (CREATOR_KV) {
+        try {
+          const aiDay = new Date().toISOString().slice(0, 10);
+          const ipKey = 'ai:' + aiDay + ':' + (request.headers.get('CF-Connecting-IP') || 'x');
+          const allKey = 'ai:' + aiDay + ':all';
+          const [ipN, allN] = await Promise.all([CREATOR_KV.get(ipKey), CREATOR_KV.get(allKey)]);
+          if ((Number(ipN) || 0) >= (Number(env.AI_DAILY_MAX) || 40) ||
+              (Number(allN) || 0) >= (Number(env.AI_GLOBAL_DAILY_MAX) || 2000)) {
+            return J({ ok: false, error: 'Daily AI limit reached' }, 429);
+          }
+          await Promise.all([
+            CREATOR_KV.put(ipKey, String((Number(ipN) || 0) + 1), { expirationTtl: 172800 }),
+            CREATOR_KV.put(allKey, String((Number(allN) || 0) + 1), { expirationTtl: 172800 }),
+          ]);
+        } catch (e) {
+          return J({ ok: false, error: 'AI temporarily unavailable' }, 503);
+        }
       }
 
       // Optional system prompt, forwarded as Anthropic's separate `system` field
@@ -515,7 +855,7 @@ export default {
         // Forward Anthropic's status/detail for debugging, but never log
         // or echo the API key itself (it was never in this response body).
         return new Response(
-          JSON.stringify({ ok: false, error: 'AI request failed', anthropic_status: anthropicResponse.status, detail: data }),
+          JSON.stringify({ ok: false, error: 'AI request failed', anthropic_status: anthropicResponse.status }),
           { status: 502, headers: { ...cors, 'Content-Type': 'application/json' } }
         );
       }
@@ -524,61 +864,129 @@ export default {
         { status: 200, headers: { ...cors, 'Content-Type': 'application/json' } });
     }
 
-    let email        = '';
-    let subscriberName = '';
-    // Defaults preserve the original tuner-landing behavior for any
-    // existing caller that doesn't send group/signup_source.
-    let groupId      = '179228643447276862';
-    let signupSource = 'tuner-landing';
-    try {
-      const body = await request.json();
-      email          = sanitize((body.email || '').toLowerCase(), 100);
-      subscriberName = sanitize(body.name || '', 100);
-      // Group IDs are plain MailerLite list identifiers, not secrets —
-      // safe to accept from the client, but validated as numeric-only
-      // so this can't be abused to inject arbitrary fields.
-      if (typeof body.group === 'string' && /^\d+$/.test(body.group)) {
-        groupId = body.group;
-      }
-      if (typeof body.signup_source === 'string') {
-        signupSource = sanitize(body.signup_source, 60);
-      }
-    } catch (e) {
-      return new Response(JSON.stringify({ ok: false, error: 'Invalid JSON' }),
-        { status: 400, headers: { ...cors, 'Content-Type': 'application/json' } });
+    // ── Newsletter signup ───────────────────────────────────────────────
+    // Hardened 2026-10-22 (security audit finding 1). Before this, ANY POST
+    // that did not match a route above fell through to this code, and the
+    // caller could pick any MailerLite group.
+    const SUBSCRIBE_PATHS = ['/api/subscribe', '/subscribe', '/'];
+    if (!SUBSCRIBE_PATHS.includes(url.pathname)) {
+      return J({ ok: false, error: 'Not found' }, 404);
     }
+    if (!env.MAILERLITE_API_KEY) {
+      return J({ ok: false, error: 'Signup not configured' }, 500);
+    }
+
+    const DEFAULT_GROUP = '179228643447276862';
+    // Groups a signup form may choose. Anything else lands in the default
+    // group. Add more IDs (comma separated) in the ALLOWED_GROUPS variable.
+    const ALLOWED_GROUPS = new Set([
+      DEFAULT_GROUP,
+      '147630778924778065', // KCM Console Users (gate.html)
+      '188921594406503949', // KCM Console Users (per deploy notes)
+      '183424819298043087', // Superintendents (superintendent.html)
+      ...String(env.ALLOWED_GROUPS || '').split(',').map(g => g.trim()).filter(g => /^\d+$/.test(g)),
+    ]);
+
+    // Per-IP limit: 30 signup attempts per hour. Best effort (KV is not
+    // atomic) and fails open, since signups matter more than this defense.
+    const SUBSCRIBE_MAX_PER_HOUR = 30;
+    const subIp = request.headers.get('CF-Connecting-IP') || '';
+    if (env.RATE_LIMIT && subIp) {
+      try {
+        const key = 'subscribe:' + subIp;
+        const now = Date.now();
+        const rec = await env.RATE_LIMIT.get(key, { type: 'json' });
+        let count = 1;
+        let resetAt = now + 3600 * 1000;
+        if (rec && rec.resetAt > now) { count = rec.count + 1; resetAt = rec.resetAt; }
+        if (count > SUBSCRIBE_MAX_PER_HOUR) {
+          return new Response(JSON.stringify({ ok: false, error: 'Too many requests, try again later' }),
+            { status: 429, headers: { ...cors, 'Content-Type': 'application/json',
+              'Retry-After': String(Math.ceil((resetAt - now) / 1000)) } });
+        }
+        await env.RATE_LIMIT.put(key, JSON.stringify({ count, resetAt }),
+          { expirationTtl: Math.max(60, Math.ceil((resetAt - now) / 1000)) });
+      } catch (e) { /* KV hiccup: fail open */ }
+    }
+
+    let body;
+    try {
+      body = await request.json();
+    } catch (e) {
+      return J({ ok: false, error: 'Invalid JSON' }, 400);
+    }
+    if (!body || typeof body !== 'object') return J({ ok: false, error: 'Invalid JSON' }, 400);
+
+    // Cloudflare Turnstile. OFF until the TURNSTILE_SECRET variable is set;
+    // once set, every signup form must send the widget's token as
+    // "turnstile_token" (or "cf-turnstile-response"), and this fails closed.
+    if (env.TURNSTILE_SECRET) {
+      const tsToken = typeof body.turnstile_token === 'string' ? body.turnstile_token
+        : (typeof body['cf-turnstile-response'] === 'string' ? body['cf-turnstile-response'] : '');
+      let tsOK = false;
+      if (tsToken && tsToken.length <= 2048) {
+        try {
+          const form = new FormData();
+          form.append('secret', env.TURNSTILE_SECRET);
+          form.append('response', tsToken);
+          if (subIp) form.append('remoteip', subIp);
+          const tsRes = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', { method: 'POST', body: form });
+          const tsData = await tsRes.json().catch(() => ({}));
+          tsOK = tsData.success === true;
+        } catch (e) { tsOK = false; }
+      }
+      if (!tsOK) return J({ ok: false, error: 'Verification failed' }, 403);
+    }
+
+    const email = sanitize((typeof body.email === 'string' ? body.email : '').toLowerCase(), 100);
+    const fieldsName = (body.fields && typeof body.fields === 'object' && typeof body.fields.name === 'string') ? body.fields.name : '';
+    const subscriberName = sanitize((typeof body.name === 'string' ? body.name : '') || fieldsName, 100);
+    let groupId = DEFAULT_GROUP;
+    const requestedGroup = typeof body.group === 'string' ? body.group
+      : (Array.isArray(body.groups) && typeof body.groups[0] === 'string' ? body.groups[0] : '');
+    if (ALLOWED_GROUPS.has(requestedGroup)) groupId = requestedGroup;
+    let signupSource = 'tuner-landing';
+    if (typeof body.signup_source === 'string') {
+      signupSource = sanitize(body.signup_source, 60);
+    }
+    const leadRef = normRef(body.ref);
+    if (leadRef) signupSource = sanitize(signupSource + '|ref:' + leadRef, 80);
 
     const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
     if (!emailRe.test(email)) {
-      return new Response(JSON.stringify({ ok: false, error: 'Invalid email' }),
-        { status: 422, headers: { ...cors, 'Content-Type': 'application/json' } });
+      return J({ ok: false, error: 'Invalid email' }, 422);
     }
 
-    const mlResponse = await fetch('https://connect.mailerlite.com/api/subscribers', {
-      method: 'POST',
-      headers: {
-        'Content-Type':  'application/json',
-        'Accept':        'application/json',
-        'Authorization': `Bearer ${env.MAILERLITE_API_KEY}`,
-      },
-      body: JSON.stringify({
-        email:  email,
-        fields: { signup_source: signupSource, ...(subscriberName ? { name: subscriberName } : {}) },
-        groups: [groupId],
-        status: 'active',
-      }),
-    });
-
-    const mlBody = await mlResponse.json().catch(() => ({}));
+    let mlResponse;
+    try {
+      mlResponse = await fetch('https://connect.mailerlite.com/api/subscribers', {
+        method: 'POST',
+        headers: {
+          'Content-Type':  'application/json',
+          'Accept':        'application/json',
+          'Authorization': `Bearer ${env.MAILERLITE_API_KEY}`,
+        },
+        body: JSON.stringify({
+          email:  email,
+          fields: { signup_source: signupSource, ...(subscriberName ? { name: subscriberName } : {}) },
+          groups: [groupId],
+          status: 'active',
+        }),
+      });
+    } catch (e) {
+      return J({ ok: false, error: 'Upstream request failed' }, 502);
+    }
 
     if (mlResponse.ok || mlResponse.status === 409) {
-      return new Response(JSON.stringify({ ok: true }),
-        { status: 200, headers: { ...cors, 'Content-Type': 'application/json' } });
+      try {
+        if (leadRef && await getCreator(leadRef) && await once('lead:' + email + ':' + leadRef)) {
+          await bumpStats(leadRef, s => { s.leads += 1; });
+        }
+      } catch (e) { /* tracking only */ }
+      return J({ ok: true });
     }
 
-    return new Response(
-      JSON.stringify({ ok: false, ml_status: mlResponse.status, ml_error: mlBody }),
-      { status: 200, headers: { ...cors, 'Content-Type': 'application/json' } }
-    );
+    // MailerLite's own error text is no longer passed back to the browser.
+    return J({ ok: false, ml_status: mlResponse.status });
   }
 };

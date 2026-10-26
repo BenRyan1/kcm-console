@@ -22,4 +22,14 @@ git add "$TARGET"
 git commit -m "$MSG" 2>/dev/null || echo "(nothing new to commit)"
 git push
 
-curl -s -X POST https://api.cloudflare.com/client/v4/pages/webhooks/deploy_hooks/9dd8bf85-567f-48cf-9bff-7d9331c92814 > /dev/null && echo "🚀 Deploy triggered — live in ~90 seconds" || echo "❌ Deploy hook failed"
+# The deploy hook URL is a secret, so it is NOT stored in this file.
+# Put it in the KCM_DEPLOY_HOOK_URL environment variable, or in a one-line
+# file at ~/.kcm-deploy-hook (outside every repo). Without it, the push
+# above still deploys: Cloudflare Pages auto-deploys on every push to main.
+HOOK="${KCM_DEPLOY_HOOK_URL:-}"
+if [ -z "$HOOK" ] && [ -f "$HOME/.kcm-deploy-hook" ]; then HOOK="$(head -n 1 "$HOME/.kcm-deploy-hook")"; fi
+if [ -z "$HOOK" ]; then
+  echo "ℹ️  No deploy hook configured; relying on Pages auto-deploy from the push."
+else
+  curl -s -X POST "$HOOK" > /dev/null && echo "🚀 Deploy triggered — live in ~90 seconds" || echo "❌ Deploy hook failed"
+fi

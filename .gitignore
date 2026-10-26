@@ -7,3 +7,12 @@ qa/node_modules
 # One-off dev scratch (bak snapshots, one-time patch/diagnostic scripts) -- tidied Sep 12 2026
 _dev_scratch/
 *.bak-before-*
+
+# Internal documents that must not be published (Pages deploys the repo root).
+# Added 2026-10-22 (security audit). Already-tracked files also need
+# `git rm --cached <file>` once; see the audit report.
+CONSOLE_BUILD_STATE.md
+auth-guard-snippet.html
+KCM_Console_Master_Strategic_Bible.pages
+.kcm-midi-head-tmp.html
+1171169
