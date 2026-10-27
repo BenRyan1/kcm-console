@@ -5520,11 +5520,13 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
             }
 
             _currentSFInst  = instrument;
-            _samplesReady   = loaded > 0;
+            // Count samples already cached too, so re-selecting a loaded instrument is not reported as a failure
+            const _haveCount = _MIDI_NOTES_TO_LOAD.filter(m => _sampleCache[`${instrument}:${m}`]).length;
+            _samplesReady   = _haveCount > 0;
             _samplesLoading = false;
             _updateInstrumentStatus(
                 _samplesReady
-                    ? `✅ ${instrument.charAt(0).toUpperCase()+instrument.slice(1)} ready — ${loaded} samples loaded`
+                    ? `✅ ${instrument.charAt(0).toUpperCase()+instrument.slice(1)} ready — ${_haveCount} samples loaded`
                     : `⚠️ Samples failed — shaped synth active`,
                 _samplesReady ? '#27ae60' : '#F4D03F'
             );
