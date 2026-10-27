@@ -21,59 +21,12 @@ Santa Barbara, California | All Rights Reserved
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- Cookie Consent CSS -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cookieconsent@3/build/cookieconsent.min.css">
-<style>
-.cc-window { font-family: 'Montserrat', sans-serif !important; background: #0a0a15 !important; border: 2px solid #008080 !important; box-shadow: 0 8px 30px rgba(0,217,255,0.3) !important; }
-.cc-btn { background: linear-gradient(135deg, #008080 0%, #8B6BA3 100%) !important; border: none !important; padding: 0.75rem 2rem !important; font-weight: 600 !important; transition: all 0.3s ease !important; }
-.cc-btn:hover { transform: translateY(-2px) !important; box-shadow: 0 5px 15px rgba(0,128,128,0.4) !important; }
-.cc-link { color: #F4D03F !important; }
-.cc-link:hover { color:#009999 !important; }
-</style>
-<script src="https://cdn.jsdelivr.net/npm/cookieconsent@3/build/cookieconsent.min.js"></script>
 <script src="js/kcm-midi-recorder.js"></script>
 <script>
-window.addEventListener('load', function() {
-  // Guard: ad-blockers commonly block cookieconsent-style scripts by name,
-  // and if the CDN is ever briefly down this whole listener would otherwise
-  // throw. It's isolated to just the cookie banner (other load listeners on
-  // the page fire independently either way), but there's no reason not to
-  // fail quietly here instead of leaving an error in the console.
-  if (!window.cookieconsent) return;
-  window.cookieconsent.initialise({
-    palette: { popup: { background: "#0a0a15", text: "#E8E8E8" }, button: { background: "#008080", text: "#ffffff" } },
-    theme: "classic", position: "bottom", type: "opt-in", revokable: true, animateRevokable: false,
-    content: { message: "We use cookies to enhance your experience. By clicking Accept, you consent to our use of cookies.", dismiss: "Accept", deny: "Decline", link: "Privacy", href: "/privacy.html" },
-    onStatusChange: function(status) { if (this.hasConsented()) { grantAnalytics(); loadGoogleAnalytics(); } },
-    onInitialise: function(status) { if (this.hasConsented()) { grantAnalytics(); loadGoogleAnalytics(); } }
-  });
-});
-// ── GA4 Consent Mode v2 — DENY ALL by default (GDPR compliant) ──
-window.dataLayer = window.dataLayer || [];
-function gtag(){dataLayer.push(arguments);}
-gtag('consent', 'default', {
-  'ad_storage':              'denied',
-  'analytics_storage':       'denied',
-  'ad_user_data':            'denied',
-  'ad_personalization':      'denied',
-  'functionality_storage':   'denied',
-  'personalization_storage': 'denied',
-  'security_storage':        'granted',  // always allowed (CSRF etc.)
-  'wait_for_update':         500
-});
-function grantAnalytics() {
-  gtag('consent', 'update', {
-    'analytics_storage':       'granted',
-    'functionality_storage':   'granted',
-    'personalization_storage': 'granted'
-  });
-}
-function loadGoogleAnalytics() {
-  if (window.gaLoaded) return; window.gaLoaded = true;
-  var s = document.createElement('script'); s.async = true; s.src = 'https://www.googletagmanager.com/gtag/js?id=G-6EGC5ZNZPF'; document.head.appendChild(s);
-  gtag('js', new Date()); gtag('config', 'G-6EGC5ZNZPF', {'anonymize_ip': true, 'allow_google_signals': false, 'allow_ad_personalization_signals': false});
-}
-function trackEvent(n,p){if(typeof gtag==='function')gtag('event',n,p);}
+// STUDENT PRIVACY Oct 27 2026: Google Analytics and the cookie banner were removed from the
+// Console's Music Theory Pro copy, matching the live MTP (Oct 5 2026), so the page sets no
+// cookies and sends no analytics. trackEvent is a no-op so the existing calls keep working.
+function trackEvent(n,p){}
 </script>
 
 <meta charset="UTF-8">
