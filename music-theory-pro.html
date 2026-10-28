@@ -1825,6 +1825,7 @@ html.kcm-phone #fret4Btn, html.kcm-phone #fret5Btn, html.kcm-phone #fret12Btn {
 }
 html.kcm-phone #fbTable, html.kcm-phone .piano-outer { overflow: hidden !important; }
 html.kcm-phone .piano-outer { padding-top: 32px !important; }
+html.kcm-phone .register-label { font-size: 0.5rem !important; letter-spacing: 0 !important; }
 html.kcm-phone .kcm-center-col button { font-size: 0.58rem !important; padding-left: 0.3rem !important; padding-right: 0.3rem !important; }
 html.kcm-phone .kcm-center-col .play-btn,
 html.kcm-phone .kcm-center-col > div > button { padding-top: 0.55rem !important; padding-bottom: 0.55rem !important; }
@@ -4889,8 +4890,8 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 // Add register divider label
                 const regLabel = document.createElement('div');
                 regLabel.className = 'register-label';
-                regLabel.textContent = `Register ${octIdx+1} — Octave ${oct}`;
-                regLabel.style.cssText = `position:absolute; top:-28px; left:${offsetPx}px; z-index:6; pointer-events:none; width:${7*WHITE_W}px; text-align:center; font-size:0.62rem; font-weight:700; color:var(--primary-gold); font-family:var(--font-body); letter-spacing:0.5px; pointer-events:none;`;
+                regLabel.textContent = `Register ${octIdx+1} · Oct ${oct}`; // short so it stays on one line on phones
+                regLabel.style.cssText = `position:absolute; white-space:nowrap; overflow:hidden; top:-28px; left:${offsetPx}px; z-index:6; pointer-events:none; width:${7*WHITE_W}px; text-align:center; font-size:0.62rem; font-weight:700; color:var(--primary-gold); font-family:var(--font-body); letter-spacing:0.5px; pointer-events:none;`;
                 container.appendChild(regLabel);
 
                 whiteOrder.forEach((pc, wi) => {
