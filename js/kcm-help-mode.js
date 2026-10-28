@@ -27,7 +27,7 @@
 
   function lookup(el) {
     var d = el.getAttribute('data-help');
-    if (d) return { n: clean(el.textContent), t: d };
+    if (d) return { n: el.getAttribute('data-help-name') || clean(el.textContent), t: d };
     var H = window.KCM_HELP || {};
     if (el.id && H.ids && H.ids[el.id]) return H.ids[el.id];
     var rules = H.rules || [];

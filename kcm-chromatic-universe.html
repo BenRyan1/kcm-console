@@ -1459,7 +1459,7 @@ if (window.KCM_RHYTHM_VIEW) document.body.classList.add('kcm-view-rhythm');
           ◈ Tip: turn your scale into a rhythm — try <strong>Melodic Sync</strong> in the Rhythm Geometry Lab tab
         </div>
         <div class="canvas-wrap" style="position:relative;">
-          <canvas id="mainCanvas" width="900" height="900" tabindex="0" aria-label="Chromatic Spoke Clock - interactive music theory wheel"></canvas>
+          <canvas id="mainCanvas" data-help-name="Spoke Clock" data-help="The twelve notes around a wheel. Touch any note to hear it. Drag the center to turn the wheel. Arrow keys also turn it." width="900" height="900" tabindex="0" aria-label="Chromatic Spoke Clock - interactive music theory wheel"></canvas>
           <div id="clockSyncFlash"></div>
         </div>
       </div>
@@ -6007,5 +6007,7 @@ function etRestart() {
 })();
 
 </script>
+<script src="js/kcm-help-text-cu.js"></script>
+<script src="js/kcm-help-mode.js"></script>
 </body>
 </html>
