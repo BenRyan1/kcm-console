@@ -11,7 +11,7 @@
   if (window.KCMHelp) return;
 
   var TARGET = 'button, select, input, textarea, summary, [role="button"], [data-help], .sphere, .white-key, .black-key';
-  var S = { on: false, cloud: null, btn: null, live: null, cur: null, pinned: false };
+  var S = { voice: false, vbtn: null, spoke: { el: null, t: 0 }, on: false, cloud: null, btn: null, live: null, cur: null, pinned: false };
   var EMBED = false;
   try { EMBED = !!window.parent && window.parent !== window; } catch (e) { EMBED = false; }
   var ORIGIN = location.origin;
@@ -72,6 +72,8 @@
       '#kcmHelpBtn.inline{position:static;display:inline-block;left:auto;bottom:auto;font-size:15px;letter-spacing:.3px}' +
       '#kcmHelpBtn.inline.float{position:fixed;left:14px;bottom:14px}' +
       '#kcmHelpBtn.on{background:#ffd24a;color:#12122a;font-size:14px;letter-spacing:.3px}' +
+      '#kcmVoiceBtn{display:none;margin-left:8px;min-width:44px;height:44px;padding:0 14px;border-radius:22px;border:2px solid rgba(255,210,74,.9);background:#12122a;color:#ffd24a;font:700 14px/1 system-ui,sans-serif;cursor:pointer;touch-action:manipulation;vertical-align:top}' +
+      '#kcmVoiceBtn.show{display:inline-block}#kcmVoiceBtn.on{background:#ffd24a;color:#12122a}' +
       '#kcmHelpCloud{position:fixed;z-index:100000;max-width:300px;padding:12px 15px;border-radius:16px;' +
       'background:linear-gradient(135deg,#1a1a2e,#0a0a15);border:2px solid #ffd24a;color:#f0f0ff;' +
       'font:500 14px/1.5 var(--font-body,system-ui),sans-serif;text-align:left;box-shadow:0 10px 32px rgba(0,0,0,.75);' +
@@ -85,7 +87,7 @@
       '.kcm-help-target{outline:2px dashed #ffd24a!important;outline-offset:2px!important}' +
       'body.kcm-help-on .kcm-tooltip{display:none!important}' +
       '#kcmHelpLive{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}' +
-      '@media print{#kcmHelpBtn,#kcmHelpCloud{display:none!important}}';
+      '@media print{#kcmHelpBtn,#kcmVoiceBtn,#kcmHelpCloud{display:none!important}}';
     document.head.appendChild(css);
 
     var c = document.createElement('div');
@@ -124,6 +126,15 @@
       }
     } else document.body.appendChild(b);
     S.btn = b;
+    if (CAN_SPEAK) {
+      var v = document.createElement('button');
+      v.id = 'kcmVoiceBtn'; v.type = 'button';
+      v.title = 'Read aloud: speaks each help cloud with your device voice. Touch to turn on or off.';
+      v.setAttribute('aria-pressed', 'false'); v.textContent = 'Read aloud: OFF';
+      v.addEventListener('click', function () { setVoice(!S.voice); });
+      if (mount) mount.appendChild(v); else document.body.appendChild(v);
+      S.vbtn = v;
+    }
   }
 
   function place(el) {
@@ -138,6 +149,32 @@
     c.style.top = top + 'px';
     var ax = Math.max(18, Math.min(r.left + r.width / 2 - left, w - 18));
     c.style.setProperty('--kh-ax', ax + 'px');
+  }
+
+  /* ---------- optional read aloud (device voice, off by default, nothing stored) ---------- */
+  var CAN_SPEAK = !!(window.speechSynthesis && window.SpeechSynthesisUtterance);
+  function stopSpeech() { try { if (CAN_SPEAK) window.speechSynthesis.cancel(); } catch (e) {} }
+  function speak(el, text) {
+    if (!S.voice || !CAN_SPEAK) return;
+    var now = Date.now();
+    if (S.spoke.el === el && now - S.spoke.t < 900) return; /* press then focus fire close together */
+    S.spoke.el = el; S.spoke.t = now;
+    try {
+      window.speechSynthesis.cancel();
+      var u = new SpeechSynthesisUtterance(text);
+      u.lang = document.documentElement.lang || 'en-US';
+      window.speechSynthesis.speak(u);
+    } catch (e) {}
+  }
+  function setVoice(on, fromSync) {
+    S.voice = !!on;
+    if (S.vbtn) {
+      S.vbtn.classList.toggle('on', S.voice);
+      S.vbtn.setAttribute('aria-pressed', S.voice ? 'true' : 'false');
+      S.vbtn.textContent = S.voice ? 'Read aloud: ON' : 'Read aloud: OFF';
+    }
+    if (!S.voice) stopSpeech();
+    if (!fromSync) { post({ type: 'KCM_HELP_VOICE_USER', on: S.voice }); broadcastVoice(S.voice); }
   }
 
   function show(el, pin) {
@@ -155,6 +192,7 @@
     m.hidden = !info.m; m.textContent = info.m || '';
     c.classList.add('show');
     place(el);
+    speak(el, (info.n || '') + '. ' + (info.t || ''));
     S.live.textContent = (info.n || '') + '. ' + (info.t || '');
   }
 
@@ -168,6 +206,7 @@
     clearTarget();
     S.cur = null; S.pinned = false;
     if (S.cloud) S.cloud.classList.remove('show');
+    stopSpeech();
   }
 
   /* ---------- on / off ---------- */
@@ -177,10 +216,16 @@
     if (S.btn) { S.btn.classList.toggle('on', S.on);
     S.btn.setAttribute('aria-pressed', S.on ? 'true' : 'false'); }
     if (S.btn) S.btn.textContent = S.on ? 'Help ON \u2022 touch again to turn off' : (S.inline ? '? Help Mode' : '?');
+    if (S.vbtn) S.vbtn.classList.toggle('show', S.on);
     if (!S.on) { hide(); if (S.btn) S.btn.classList.remove('float'); }
     else if (S.inline && S.btn) { var mr = document.getElementById('kcmHelpMount').getBoundingClientRect(); S.btn.classList.toggle('float', mr.bottom < 0 || mr.top > window.innerHeight); }
     if (!fromSync) { post({ type: 'KCM_HELP_USER', on: S.on }); broadcast(S.on); }
     if (S.live) S.live.textContent = S.on ? 'Help Mode on. Hover or touch any control to hear what it does. Controls still work. Press the Help button again, question mark or Escape to turn it off.' : 'Help Mode off.';
+  }
+  function broadcastVoice(on) {
+    Array.prototype.forEach.call(document.querySelectorAll('iframe'), function (f) {
+      try { f.contentWindow.postMessage({ type: 'KCM_HELP_VOICE', on: !!on }, ORIGIN); } catch (e) {}
+    });
   }
   function toggle() { set(!S.on); }
 
@@ -189,10 +234,12 @@
     if (e.origin !== ORIGIN) return;
     var d = e.data;
     if (!d || typeof d !== 'object') return;
-    if (d.type === 'KCM_HELP_SET' && EMBED) set(!!d.on, true);
+    if (d.type === 'KCM_HELP_VOICE' && EMBED) setVoice(!!d.on, true);
+    else if (d.type === 'KCM_HELP_VOICE_USER' && !EMBED) { setVoice(!!d.on, true); broadcastVoice(!!d.on); }
+    else if (d.type === 'KCM_HELP_SET' && EMBED) set(!!d.on, true);
     else if (d.type === 'KCM_HELP_USER' && !EMBED) { set(!!d.on, true); broadcast(!!d.on); }
     else if (d.type === 'KCM_HELP_READY' && !EMBED && e.source) {
-      try { e.source.postMessage({ type: 'KCM_HELP_SET', on: S.on }, ORIGIN); } catch (x) {}
+      try { e.source.postMessage({ type: 'KCM_HELP_SET', on: S.on }, ORIGIN); e.source.postMessage({ type: 'KCM_HELP_VOICE', on: S.voice }, ORIGIN); } catch (x) {}
     }
   });
 
