@@ -849,6 +849,9 @@ select:focus {
     box-shadow: var(--teal-glow);
 }
 select option { background: #1a1a2e; color: white; }
+/* kcm-select-fit: keep the whole chosen word visible in the narrow Elements column */
+.control-group { padding: 0.6rem 0.45rem; }
+.control-group select { padding: 0.55rem 0.3rem; font-size: 0.74rem; letter-spacing: 0; text-overflow: clip; }
 
 /* ============================================================
    STATUS BAR
@@ -8474,7 +8477,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
                 }
                 if (currentLevel === '4') {
                     const g = document.createElement('div'); g.className = 'control-group';
-                    g.innerHTML = `<label>7th Chord Type:</label><select id="extendedSelect"><option value="major7">Major 7th (Maj7)</option><option value="dominant7">Dominant 7th (7)</option><option value="minor7">Minor 7th (m7)</option><option value="diminished7">Diminished 7th (dim7)</option><option value="augmented7">Augmented 7th (aug7)</option><option value="halfDiminished7">Half-Diminished 7th (ø7)</option><option value="minorMajor7">Minor Major 7th (mMaj7)</option><option value="augmentedMajor7">Augmented Major 7th (augMaj7)</option></select>`;
+                    g.innerHTML = `<label>7th Chord Type:</label><select id="extendedSelect"><option value="major7">Major 7th</option><option value="dominant7">Dominant 7th</option><option value="minor7">Minor 7th</option><option value="diminished7">Dim 7th</option><option value="augmented7">Aug 7th</option><option value="halfDiminished7">Half-Dim ø7</option><option value="minorMajor7">Min-Maj 7th</option><option value="augmentedMajor7">Aug-Maj 7th</option></select>`;
                     c.appendChild(g);
                     setTimeout(() => { const es = document.getElementById('extendedSelect'); if (es) { es.value=currentExtendedSelection; es.onchange=function(){currentExtendedSelection=this.value; updateDisplay(); setTimeout(()=>playSelection('chord'),200);}; }}, 0);
                 }
@@ -8537,7 +8540,7 @@ const _pianoKeysActive = new Set(); // prevent repeat-fire on held keys
 
                     // Chord Type dropdown
                     const g2 = document.createElement('div'); g2.className = 'control-group';
-                    g2.innerHTML = `<label>Chord Type:</label><select id="harmTypeSelect"><option value="triad">Triads (3-note)</option><option value="7th">Seventh Chords (4-note)</option></select>`;
+                    g2.innerHTML = `<label>Chord Type:</label><select id="harmTypeSelect"><option value="triad">Triads (3-note)</option><option value="7th">Sevenths (4-note)</option></select>`;
 
                     c.appendChild(g1); c.appendChild(g2);
 
