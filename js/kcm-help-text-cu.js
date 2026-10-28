@@ -87,6 +87,12 @@ window.KCM_HELP = {
     { sel: '[data-preset="polyrhythm34"]', n: '3 over 4 Polyrhythm', t: 'Layers three beats against four, so two pulses run against each other.' + ' Touch to load it into your layers.' },
     { sel: '[data-preset="polyrhythm45"]', n: '4 over 5 Polyrhythm', t: 'Layers four beats against five. A tricky, floating feel.' + ' Touch to load it into your layers.' },
     { sel: '.et-answer-btn', own: true, t: 'Your answer. Touch it if you think this is what you heard.' },
+    { sel: 'button.btn-full', x: '^3.2 Son Clave', n: '3-2 Son Clave', t: 'The classic Afro-Cuban bell pattern, started on the three-side. Touch to load it into your layers.' },
+    { sel: 'button.btn-full', x: '^2.3 Clave', n: '2-3 Clave', t: 'The same clave pattern turned around, starting on the two-side. Touch to load it into your layers.' },
+    { sel: 'button.btn-full', x: '^Tresillo', n: 'Tresillo (3,8)', t: 'Three beats over eight steps. A pattern heard in Latin, jazz and pop. Touch to load it.' },
+    { sel: 'button.btn-full', x: '^Cinquillo', n: 'Cinquillo (5,8)', t: 'Five beats over eight steps. A lively pattern from Cuban dance music. Touch to load it.' },
+    { sel: 'button.btn-full', x: '^3 over 4', n: '3 over 4 Polyrhythm', t: 'Layers three beats against four, so two pulses run against each other. Touch to load it.' },
+    { sel: 'button.btn-full', x: '^4 over 5', n: '4 over 5 Polyrhythm', t: 'Layers four beats against five. A tricky, floating feel. Touch to load it.' },
     { sel: '#polyPicker .poly-btn', own: true, t: 'Sets how many beats are spread evenly around the circle. The shape they make changes with the number.' }
   ]
 };
