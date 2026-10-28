@@ -228,7 +228,8 @@
     if (!info) { hide(); return; }
     S.cur = el; S.pinned = !!pin;
     clearTimeout(S.timer);
-    if (pin) S.timer = setTimeout(function () { if (S.cur === el) hide(); }, 5000);
+    if (pin) { var ms = S.voice ? Math.max(5000, ((info.n || '').length + (info.t || '').length) * 75 + 2500) : 5000; /* keep the cloud up while it is being read */
+      S.timer = setTimeout(function () { if (S.cur === el) hide(); }, ms); }
     el.classList.add('kcm-help-target');
     var c = S.cloud;
     c.querySelector('.kh-n').textContent = info.n || clean(el.textContent) || 'Control';
@@ -251,7 +252,7 @@
     clearTarget();
     S.cur = null; S.pinned = false;
     if (S.cloud) S.cloud.classList.remove('show');
-    stopSpeech();
+    /* speech is not cut off here: a sentence being read finishes, and the next cloud replaces it */
   }
 
   /* ---------- on / off ---------- */
@@ -262,7 +263,7 @@
     S.btn.setAttribute('aria-pressed', S.on ? 'true' : 'false'); }
     if (S.btn) S.btn.textContent = S.on ? 'Help ON \u2022 touch again to turn off' : (S.inline ? '? Help Mode' : '?');
     if (S.vbtn) S.vbtn.classList.toggle('show', S.on);
-    if (!S.on) { hide(); if (S.btn) S.btn.classList.remove('float'); }
+    if (!S.on) { hide(); stopSpeech(); if (S.btn) S.btn.classList.remove('float'); }
     else if (S.inline && S.btn) { var mr = document.getElementById('kcmHelpMount').getBoundingClientRect(); S.btn.classList.toggle('float', mr.bottom < 0 || mr.top > window.innerHeight); }
     if (!fromSync) { post({ type: 'KCM_HELP_USER', on: S.on }); broadcast(S.on); }
     if (S.live) S.live.textContent = S.on ? 'Help Mode on. Hover or touch any control to hear what it does. Controls still work. Press the Help button again, question mark or Escape to turn it off.' : 'Help Mode off.';
