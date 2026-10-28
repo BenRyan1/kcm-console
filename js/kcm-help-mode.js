@@ -11,6 +11,8 @@
   if (window.KCMHelp) return;
 
   var TARGET = 'button, select, input, textarea, summary, [role="button"], [data-help], .sphere, .white-key, .black-key';
+  /* A page's text file may add its own clickable things: KCM_HELP.targets = 'selector, selector' */
+  function allTargets() { var x = window.KCM_HELP && window.KCM_HELP.targets; return x ? TARGET + ', ' + x : TARGET; }
   var S = { voice: false, vbtn: null, spoke: { el: null, t: 0 }, on: false, cloud: null, btn: null, live: null, cur: null, pinned: false };
   var EMBED = false;
   try { EMBED = !!window.parent && window.parent !== window; } catch (e) { EMBED = false; }
@@ -50,7 +52,7 @@
   function targetOf(node) {
     if (!node || !node.closest) return null;
     if (node.closest('#kcmHelpBtn, #kcmHelpCloud')) return null;
-    var t = node.closest(TARGET);
+    var t = node.closest(allTargets());
     if (t) return t;
     /* Big invisible tap areas (SVG ellipses) sit on top of dots. Help for them = the dot beside them. */
     if (node.tagName && node.tagName.toLowerCase() === 'ellipse' && node.getAttribute('aria-hidden') === 'true') {
@@ -303,7 +305,7 @@
   }
   function audit() {
     var missing = [], fallback = [], ok = 0;
-    document.querySelectorAll(TARGET).forEach(function (el) {
+    document.querySelectorAll(allTargets()).forEach(function (el) {
       if (el.closest('#kcmHelpBtn, #kcmHelpCloud')) return;
       if (!el.getClientRects().length) return; // hidden controls do not need help text
       var i = lookup(el);
