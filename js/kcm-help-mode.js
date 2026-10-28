@@ -50,7 +50,15 @@
   function targetOf(node) {
     if (!node || !node.closest) return null;
     if (node.closest('#kcmHelpBtn, #kcmHelpCloud')) return null;
-    return node.closest(TARGET);
+    var t = node.closest(TARGET);
+    if (t) return t;
+    /* Big invisible tap areas (SVG ellipses) sit on top of dots. Help for them = the dot beside them. */
+    if (node.tagName && node.tagName.toLowerCase() === 'ellipse' && node.getAttribute('aria-hidden') === 'true') {
+      var p = node.previousElementSibling, n = node.nextElementSibling;
+      if (p && p.matches && p.matches('[role="button"]')) return p;
+      if (n && n.matches && n.matches('[role="button"]')) return n;
+    }
+    return null;
   }
 
   /* ---------- cloud ---------- */
@@ -87,6 +95,12 @@
     document.body.appendChild(c);
     S.cloud = c;
 
+    var l = document.createElement('div');
+    l.id = 'kcmHelpLive';
+    l.setAttribute('aria-live', 'polite');
+    document.body.appendChild(l);
+    S.live = l;
+
     if (EMBED) return; /* panels have no button: the Console header button controls them */
     var b = document.createElement('button');
     b.id = 'kcmHelpBtn';
@@ -110,12 +124,6 @@
       }
     } else document.body.appendChild(b);
     S.btn = b;
-
-    var l = document.createElement('div');
-    l.id = 'kcmHelpLive';
-    l.setAttribute('aria-live', 'polite');
-    document.body.appendChild(l);
-    S.live = l;
   }
 
   function place(el) {
