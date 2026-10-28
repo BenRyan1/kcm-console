@@ -155,18 +155,60 @@
 
   /* ---------- optional read aloud (device voice, off by default, nothing stored) ---------- */
   var CAN_SPEAK = !!(window.speechSynthesis && window.SpeechSynthesisUtterance);
-  function stopSpeech() { try { if (CAN_SPEAK) window.speechSynthesis.cancel(); } catch (e) {} }
+  var voiceCache = null, pending = null, keep = null;
+  function pickVoice() {
+    try {
+      var vs = window.speechSynthesis.getVoices() || [];
+      if (!vs.length) return null;
+      var lang = (document.documentElement.lang || navigator.language || 'en-US').toLowerCase();
+      var i, pre = lang.slice(0, 2);
+      for (i = 0; i < vs.length; i++) if (vs[i].lang && vs[i].lang.toLowerCase() === lang) return vs[i];
+      for (i = 0; i < vs.length; i++) if (vs[i].lang && vs[i].lang.toLowerCase().indexOf(pre) === 0) return vs[i];
+      return vs[0];
+    } catch (e) { return null; }
+  }
+  function stopSpeech() { pending = null; try { if (CAN_SPEAK) window.speechSynthesis.cancel(); } catch (e) {} }
+  /* iOS only lets speech start from a real tap, and cancel() right before speak() can swallow it,
+     so: resume, cancel, then speak after a short pause, and retry once on the next tap if it never started. */
+  function say(text) {
+    if (!CAN_SPEAK) return;
+    var job = { text: text, started: false };
+    pending = job;
+    try {
+      var synth = window.speechSynthesis;
+      if (synth.paused) synth.resume();
+      synth.cancel();
+      setTimeout(function () {
+        if (pending !== job) return;
+        try {
+          var u = new SpeechSynthesisUtterance(text);
+          u.lang = document.documentElement.lang || navigator.language || 'en-US';
+          var v = voiceCache || (voiceCache = pickVoice());
+          if (v) { u.voice = v; u.lang = v.lang || u.lang; }
+          u.rate = 1; u.pitch = 1; u.volume = 1;
+          u.onstart = function () { job.started = true; };
+          u.onend = u.onerror = function () { if (pending === job && job.started) pending = null; };
+          keep = u; /* hold a reference so the utterance is not garbage collected mid-speech */
+          synth.speak(u);
+        } catch (e) {}
+      }, 80);
+    } catch (e) {}
+  }
+  function retryOnTap() {
+    if (!S.voice || !pending || pending.started) return;
+    var t = pending.text; pending = null; say(t);
+  }
+  if (CAN_SPEAK) {
+    try { window.speechSynthesis.getVoices(); window.speechSynthesis.onvoiceschanged = function () { voiceCache = null; }; } catch (e) {}
+    document.addEventListener('touchend', retryOnTap, true);
+    document.addEventListener('click', retryOnTap, true);
+  }
   function speak(el, text) {
     if (!S.voice || !CAN_SPEAK) return;
     var now = Date.now();
     if (S.spoke.el === el && now - S.spoke.t < 900) return; /* press then focus fire close together */
     S.spoke.el = el; S.spoke.t = now;
-    try {
-      window.speechSynthesis.cancel();
-      var u = new SpeechSynthesisUtterance(text);
-      u.lang = document.documentElement.lang || 'en-US';
-      window.speechSynthesis.speak(u);
-    } catch (e) {}
+    say(text);
   }
   function setVoice(on, fromSync) {
     S.voice = !!on;
@@ -176,6 +218,7 @@
       S.vbtn.textContent = S.voice ? 'Read aloud: ON' : 'Read aloud: OFF';
     }
     if (!S.voice) stopSpeech();
+    else if (!fromSync) say('Read aloud is on.');
     if (!fromSync) { post({ type: 'KCM_HELP_VOICE_USER', on: S.voice }); broadcastVoice(S.voice); }
   }
 
