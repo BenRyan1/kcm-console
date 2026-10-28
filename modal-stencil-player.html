@@ -478,6 +478,7 @@
                 const midi=MIDI_BASE+ti+iv[deg-1];
                 cell.dataset.midi=midi;cell.dataset.note=note;cell.dataset.pc=ni;cell.dataset.degree=deg;
                 cell.className=`degree-cell note-${NOTE_COLORS[NOTES[ni]]}`;
+                cell.setAttribute('data-help-name','Scale degree '+deg+': '+fmtNote(note));cell.setAttribute('data-help','Touch to hear this note. The number is its place in the scale, the small letter is the step to the next note (W whole, H half).');
                 cell.appendChild(dn);cell.appendChild(nn);cell.appendChild(intv);
                 cell.addEventListener("click",(e)=>{
                     e.stopPropagation();playNoteByMidi(midi);
@@ -521,6 +522,7 @@
                 const midi=MIDI_BASE+ti+iv[deg-1];
                 cell.dataset.midi=midi;cell.dataset.note=note;cell.dataset.pc=ni;cell.dataset.degree=deg;cell.dataset.seqIdx=idx;
                 cell.className=`degree-cell seq-cell note-${NOTE_COLORS[NOTES[ni]]}`;
+                cell.setAttribute('data-help-name','Sequence note: '+fmtNote(note));cell.setAttribute('data-help','Touch to hear this note. Drag it, or use its arrows, to change the order the scale plays in.');
                 cell.draggable=true;
                 cell.appendChild(handle);cell.appendChild(dn);cell.appendChild(nn);
 
@@ -628,6 +630,7 @@
             for(const[mk,md]of Object.entries(MODES)){
                 const tab=document.createElement("div");
                 tab.className=`mode-tab${playingMode===mk?' active':''}`;
+                tab.setAttribute('data-help-name',md.name);tab.setAttribute('data-help','Choose '+md.name+' to see its notes and hear it. Its step pattern is '+md.char+' (W whole step, H half step).');
                 tab.innerHTML=`<div class="tab-dot"></div><div><div class="tab-label">${md.name}</div><div class="tab-char">${md.char}</div></div>`;
                 tab.addEventListener("click",()=>selectMode(mk));
                 tabsEl.appendChild(tab);
@@ -940,5 +943,7 @@
             try{ window.parent.postMessage({type:'KCM_PANEL_READY', panel:'modal-stencil-player'},'*'); }catch(e){}
         })();
     </script>
+<script src="js/kcm-help-text-msp.js"></script>
+<script src="js/kcm-help-mode.js"></script>
 </body>
 </html>
