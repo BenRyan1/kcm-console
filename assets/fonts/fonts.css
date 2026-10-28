@@ -1,0 +1,11 @@
+/* Self-hosted fonts (Cinzel, Montserrat; SIL Open Font License). No third-party requests. */
+@font-face{font-family:'Cinzel';font-style:normal;font-display:swap;font-weight:400;src:url('/assets/fonts/cinzel-latin-400-normal.woff2') format('woff2');}
+@font-face{font-family:'Cinzel';font-style:normal;font-display:swap;font-weight:500;src:url('/assets/fonts/cinzel-latin-500-normal.woff2') format('woff2');}
+@font-face{font-family:'Cinzel';font-style:normal;font-display:swap;font-weight:600;src:url('/assets/fonts/cinzel-latin-600-normal.woff2') format('woff2');}
+@font-face{font-family:'Cinzel';font-style:normal;font-display:swap;font-weight:700;src:url('/assets/fonts/cinzel-latin-700-normal.woff2') format('woff2');}
+@font-face{font-family:'Cinzel';font-style:normal;font-display:swap;font-weight:900;src:url('/assets/fonts/cinzel-latin-900-normal.woff2') format('woff2');}
+@font-face{font-family:'Montserrat';font-style:normal;font-display:swap;font-weight:300;src:url('/assets/fonts/montserrat-latin-300-normal.woff2') format('woff2');}
+@font-face{font-family:'Montserrat';font-style:normal;font-display:swap;font-weight:400;src:url('/assets/fonts/montserrat-latin-400-normal.woff2') format('woff2');}
+@font-face{font-family:'Montserrat';font-style:normal;font-display:swap;font-weight:500;src:url('/assets/fonts/montserrat-latin-500-normal.woff2') format('woff2');}
+@font-face{font-family:'Montserrat';font-style:normal;font-display:swap;font-weight:600;src:url('/assets/fonts/montserrat-latin-600-normal.woff2') format('woff2');}
+@font-face{font-family:'Montserrat';font-style:normal;font-display:swap;font-weight:700;src:url('/assets/fonts/montserrat-latin-700-normal.woff2') format('woff2');}
