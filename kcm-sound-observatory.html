@@ -63,15 +63,8 @@
 }
 </script>
 
-<!-- ── GOOGLE ANALYTICS 4 ─────────────────────────────────────────── -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-6EGC5ZNZPF"></script>
-<script>
-  window.dataLayer=window.dataLayer||[];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js',new Date());
-  gtag('config','G-6EGC5ZNZPF',{anonymize_ip:true,cookie_flags:'SameSite=None;Secure'});
-  function trackEvent(name,params){if(typeof gtag!=='undefined')gtag('event',name,params);}
-</script>
+<!-- STUDENT PRIVACY Oct 27 2026: no analytics, no cookies. trackEvent is a no-op. -->
+<script>function trackEvent(n,p){}</script>
 
 <!-- ── FONTS ──────────────────────────────────────────────────────── -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
