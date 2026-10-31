@@ -573,6 +573,10 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:10px;heigh
     <button class="btn-main idle" id="listenBtn"
       aria-label="Activate microphone for real-time audio visualization"
       aria-pressed="false" title="Activate microphone (Enter)">▶ Activate</button>
+    <button class="btn-main idle" id="trackBtn" type="button"
+      aria-label="Load an audio track to analyze, or drag one onto the page"
+      title="Load a track (or drag and drop one anywhere on this page)">📂 Track</button>
+    <input type="file" id="trackInput" accept="audio/*,.wav,.aif,.aiff,.mp3,.m4a,.caf,.flac,.ogg" style="display:none">
     <button class="btn-stop" id="stopBtn" onclick="killAll()"
       aria-label="Stop all sound and the microphone" title="STOP everything (Esc)">■ STOP</button>
     <div class="ctrl-group">GAIN
@@ -1081,7 +1085,7 @@ function resize(c){
 
 // ═══ AUDIO ════════════════════════════════════════════════════════════════════
 const FFT=4096;
-let audioCtx=null,analyser=null,micStream=null,tdb=null,fdb=null,isOn=false,raf=null;
+let audioCtx=null,analyser=null,micStream=null,tdb=null,fdb=null,isOn=false,raf=null,fileEl=null,fileUrl=null;
 const gainEl=document.getElementById('gainSlider'),smEl=document.getElementById('smoothSlider');
 gainEl.oninput=e=>document.getElementById('gainVal').textContent=parseFloat(e.target.value).toFixed(1);
 smEl.oninput=e=>{document.getElementById('smoothVal').textContent=parseFloat(e.target.value).toFixed(2);if(analyser)analyser.smoothingTimeConstant=parseFloat(e.target.value)};
@@ -1158,12 +1162,87 @@ function stop(){
   isOn=false;
   if(raf){cancelAnimationFrame(raf);raf=null;}
   if(micStream) micStream.getTracks().forEach(t=>t.stop());
+  if(fileEl){try{fileEl.pause();fileEl.removeAttribute('src');fileEl.load();}catch(e){} fileEl=null;}
+  if(fileUrl){URL.revokeObjectURL(fileUrl);fileUrl=null;}
   if(audioCtx && audioCtx.state!=='closed') audioCtx.close();
   micStream=null; audioCtx=null; analyser=null;
   S.detectedNotes=[]; S.dominantNote=null; S.activeNoteIndices=new Set();
   setMicUI('standby');
   idle();
 }
+
+// ── DROP A TRACK: drag an audio file (e.g. a Logic Pro bounce) anywhere on the page, or use the Track button ──
+// The file plays through the same analyser the microphone feeds, so every view works on it. It loops until you press STOP.
+(function(){
+  const css=document.createElement('style');
+  css.textContent='#dropVeil{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;'+
+    'background:rgba(3,5,8,.82);border:3px dashed var(--primary-gold,#d4af37);color:var(--primary-gold,#d4af37);'+
+    'font:700 22px/1.4 system-ui,sans-serif;letter-spacing:.06em;text-align:center;pointer-events:none}'+
+    '#dropVeil.on{display:flex}';
+  document.head.appendChild(css);
+  const veil=document.createElement('div'); veil.id='dropVeil';
+  veil.textContent='Drop your track here to analyze it';
+  document.body.appendChild(veil);
+
+  const AUDIO_EXT=/\.(wav|wave|aif|aiff|aifc|caf|mp3|m4a|aac|flac|ogg|oga|opus|mp4)$/i;
+  const isAudio=f=>f&&((f.type||'').indexOf('audio/')===0||AUDIO_EXT.test(f.name||''));
+  const hasFiles=e=>e.dataTransfer&&Array.prototype.indexOf.call(e.dataTransfer.types||[],'Files')>=0;
+
+  async function startFile(file){
+    if(!isAudio(file)){
+      const led=document.getElementById('statusLed'); if(led){led.textContent='NOT AN AUDIO FILE'; setTimeout(()=>{if(!isOn)led.textContent='STANDBY';},2500);}
+      return;
+    }
+    if(isOn) stop();
+    setMicUI('waiting');
+    try{
+      fileUrl=URL.createObjectURL(file);
+      fileEl=new Audio(); fileEl.src=fileUrl; fileEl.loop=true; fileEl.preload='auto';
+      audioCtx=new AudioContext();
+      analyser=audioCtx.createAnalyser();
+      analyser.fftSize=FFT;
+      analyser.smoothingTimeConstant=parseFloat(smEl.value);
+      const src=audioCtx.createMediaElementSource(fileEl);
+      src.connect(analyser);
+      analyser.connect(audioCtx.destination);        // file mode is audible (mic mode stays silent to avoid feedback)
+      tdb=new Float32Array(FFT);
+      fdb=new Float32Array(analyser.frequencyBinCount);
+      await audioCtx.resume();
+      await fileEl.play();
+      isOn=true;
+      setMicUI('live');
+      const led=document.getElementById('statusLed');
+      if(led) led.textContent='● FILE: '+(file.name.length>22?file.name.slice(0,21)+'…':file.name);
+      listenBtn.textContent='■ Deactivate';
+      hideMicModal();
+      clearManualNotes();
+      _stopSyntheticLoop();
+      loop();
+    }catch(e){
+      console.error('TRACK FAILED:',e.name,e.message);
+      stop();
+      const led=document.getElementById('statusLed'); if(led) led.textContent='⚠ CAN\'T PLAY THAT FILE';
+    }
+  }
+  window.startFile=startFile;
+
+  let depth=0;
+  document.addEventListener('dragenter',e=>{if(!hasFiles(e))return;e.preventDefault();depth++;veil.classList.add('on');});
+  document.addEventListener('dragover',e=>{if(!hasFiles(e))return;e.preventDefault();e.dataTransfer.dropEffect='copy';});
+  document.addEventListener('dragleave',e=>{if(!hasFiles(e))return;depth=Math.max(0,depth-1);if(!depth)veil.classList.remove('on');});
+  document.addEventListener('drop',e=>{
+    if(!hasFiles(e))return;
+    e.preventDefault(); depth=0; veil.classList.remove('on');
+    const files=Array.from(e.dataTransfer.files||[]);
+    const f=files.find(isAudio)||files[0];
+    startFile(f);
+  });
+  const tb=document.getElementById('trackBtn'), ti=document.getElementById('trackInput');
+  if(tb&&ti){
+    tb.onclick=()=>ti.click();
+    ti.onchange=()=>{const f=ti.files&&ti.files[0]; ti.value=''; if(f)startFile(f);};
+  }
+})();
 
 // ── MIC PERMISSION MODAL ─────────────────────────────────────────────────────
 const _micMessages = {
